@@ -1,0 +1,4 @@
+{
+  "name": "@warengine/shared-kernel",
+  "exports": "./mod.ts"
+}

@@ -1,0 +1,45 @@
+# Dependencias
+node_modules/
+.deno/
+
+# Variables de entorno (nunca subir al repositorio)
+.env
+.env.local
+.env.*.local
+
+# Build de Next.js
+.next/
+FRONT/.next/
+FRONT/out/
+
+# Compilados
+dist/
+build/
+*.tsbuildinfo
+
+# Cobertura de tests
+coverage/
+
+# Volúmenes de Docker (si se mapean localmente)
+docker/volumes/
+mysql-data/
+
+# Logs
+*.log
+npm-debug.log*
+
+# Editores
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Sistema operativo
+.DS_Store
+Thumbs.db
+
+# Drizzle cache
+BACK/packages/database/.drizzle/

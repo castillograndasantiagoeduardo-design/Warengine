@@ -1,0 +1,4 @@
+{
+  "name": "@warengine/core",
+  "exports": "./mod.ts"
+}

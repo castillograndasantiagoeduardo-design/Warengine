@@ -1,0 +1,4 @@
+{
+  "name": "@warengine/database",
+  "exports": "./mod.ts"
+}
