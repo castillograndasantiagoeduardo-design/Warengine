@@ -10,8 +10,8 @@ export * from './tool-names.ts';
 
 
 // ─── Módulo: autenticacion ─────────────────────────────────────
-//export * from './autenticacion/login.schema.ts';
-
+export * from './autenticacion/login.schema.ts';
+export * from './autenticacion/renovar-token.schema.ts';
 // ─── Módulo: inventario ────────────────────────────────────────
 // (los esquemas se agregarán cuando se implemente el módulo)
 

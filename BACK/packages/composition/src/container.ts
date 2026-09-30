@@ -8,22 +8,50 @@
  *   4. Instancia los servicios técnicos (platform): jwt, hashing, mailer…
  *   5. Instancia los casos de uso (core) pasándoles los repositorios y servicios.
  *   6. Devuelve un objeto con todos los casos de uso listos para usar.
- *
- * apps/api y apps/mcp-server llaman a createContainer() en su main.ts y solo
- * usan el resultado. Nunca importan database ni platform directamente.
- *
- * REGLA: este archivo es el único "punto de acople" permitido. Si en
- * apps/api aparece un import de @warengine/database, es una violación.
  */
 
-// TODO: implementar cuando existan los primeros casos de uso.
+import { getDatabase } from '../../database/src/client.ts';
+import { DrizzleUsuarioRepository } from '../../database/src/repositories/autenticacion/drizzle-usuario.repository.ts';
+import { DrizzleRolRepository } from '../../database/src/repositories/autenticacion/drizzle-rol.repository.ts';
+import { DrizzleRefreshTokenRepository } from '../../database/src/repositories/autenticacion/drizzle-refresh-token.repository.ts';
 
-export type AppContainer = Record<PropertyKey, never>;
-// Los casos de uso se agregarán aquí módulo por módulo.
-// Ejemplo: { login: LoginUseCase; }
+import { JwtTokenService } from '../../platform/src/jwt/jwt-token-service.ts';
+import { Argon2PasswordHasher } from '../../platform/src/hashing/argon2-password-hasher.ts';
 
+import { LoginUseCase } from '../../core/src/autenticacion/application/use-cases/LoginUseCase.ts';
+import { ValidarPermisoUseCase } from '../../core/src/autenticacion/application/use-cases/ValidarPermisoUseCase.ts';
+import { RenovarTokenUseCase } from '../../core/src/autenticacion/application/use-cases/RenovarTokenUseCase.ts';
 
-export function createContainer(_env: Record<string, string>): AppContainer {
-  // TODO: instanciar repositorios, servicios y casos de uso.
-  return {} as AppContainer;
+export interface AppContainer {
+  autenticacion: {
+    login: LoginUseCase;
+    validarPermiso: ValidarPermisoUseCase;
+    renovarToken: RenovarTokenUseCase;
+  };
+}
+
+export function createContainer(_env?: Record<string, string>): AppContainer {
+  const db = getDatabase();
+
+  // 1. Instanciar Repositorios
+  const usuarioRepository = new DrizzleUsuarioRepository(db);
+  const rolRepository = new DrizzleRolRepository(db);
+  const refreshTokenRepository = new DrizzleRefreshTokenRepository(db);
+
+  // 2. Instanciar Servicios Técnicos
+  const tokenService = new JwtTokenService(refreshTokenRepository);
+  const passwordHasher = new Argon2PasswordHasher();
+
+  // 3. Instanciar Casos de Uso
+  const loginUseCase = new LoginUseCase(usuarioRepository, passwordHasher, tokenService);
+  const validarPermisoUseCase = new ValidarPermisoUseCase(tokenService, usuarioRepository, rolRepository);
+  const renovarTokenUseCase = new RenovarTokenUseCase(tokenService, usuarioRepository);
+
+  return {
+    autenticacion: {
+      login: loginUseCase,
+      validarPermiso: validarPermisoUseCase,
+      renovarToken: renovarTokenUseCase,
+    },
+  };
 }
