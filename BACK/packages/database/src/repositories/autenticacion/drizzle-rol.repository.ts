@@ -1,7 +1,7 @@
 import { eq } from 'drizzle-orm';
 import { Database } from '../../client.ts';
 import { rol_permisos, permisos } from '../../schema/autenticacion.schema.ts';
-import { IRolRepository } from '../../../../core/src/autenticacion/domain/repositories/IRolRepository.ts';
+import { IRolRepository } from '@warengine/core';
 
 export class DrizzleRolRepository implements IRolRepository {
   constructor(private readonly db: Database) {}

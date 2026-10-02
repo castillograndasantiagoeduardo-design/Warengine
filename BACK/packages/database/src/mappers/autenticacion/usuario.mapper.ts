@@ -1,4 +1,4 @@
-import { Usuario } from '../../../../core/src/autenticacion/domain/entities/Usuario.ts';
+import { Usuario } from '@warengine/core';
 import { UsuarioRecord } from '../../schema/autenticacion.schema.ts';
 
 export function fromRow(row: UsuarioRecord): Usuario {

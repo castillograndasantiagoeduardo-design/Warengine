@@ -1,7 +1,7 @@
 import { eq, and } from 'drizzle-orm';
 import { Database } from '../../client.ts';
 import { refresh_tokens } from '../../schema/autenticacion.schema.ts';
-import { IRefreshTokenRepository } from '../../../../core/src/autenticacion/domain/repositories/IRefreshTokenRepository.ts';
+import { IRefreshTokenRepository } from '@warengine/core';
 
 export class DrizzleRefreshTokenRepository implements IRefreshTokenRepository {
   constructor(private readonly db: Database) {}

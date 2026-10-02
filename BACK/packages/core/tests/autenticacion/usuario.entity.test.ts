@@ -2,8 +2,8 @@
  * usuario.entity.test.ts — Pruebas unitarias de la entidad Usuario.
  * Verifica la regla de negocio de tokens_invalidados_en.
  */
-import { assertEquals } from 'jsr:@std/assert';
-import { Usuario } from '../../src/autenticacion/domain/entities/Usuario.ts';
+import { assertEquals } from 'jsr:@std/assert@^1';
+import { Usuario } from '../../mod.ts';
 
 function makeUsuario(invalidadoEn: Date | null) {
   return new Usuario('uuid-001', 'test@warengine.local', 'hash', 1, true, false, invalidadoEn);

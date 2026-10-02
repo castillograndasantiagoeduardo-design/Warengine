@@ -1,5 +1,4 @@
-import { Result } from '../../../../../shared-kernel/mod.ts';
-import { DomainError } from '../../../../../shared-kernel/mod.ts';
+import { Result, DomainError } from '@warengine/shared-kernel';
 import { IUsuarioRepository } from '../../domain/repositories/IUsuarioRepository.ts';
 import { IPasswordService } from '../../domain/services/IPasswordService.ts';
 import { ITokenService, AuthTokens } from '../../domain/services/ITokenService.ts';

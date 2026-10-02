@@ -1,6 +1,5 @@
 import { SignJWT, jwtVerify } from 'jose';
-import { ITokenService, AuthTokens, AccessTokenPayload } from '../../../core/src/autenticacion/domain/services/ITokenService.ts';
-import { IRefreshTokenRepository } from '../../../core/src/autenticacion/domain/repositories/IRefreshTokenRepository.ts';
+import { ITokenService, AuthTokens, AccessTokenPayload, IRefreshTokenRepository } from '@warengine/core';
 
 const JWT_SECRET = new TextEncoder().encode(Deno.env.get('JWT_SECRET') || 'warengine_secret_key_123');
 

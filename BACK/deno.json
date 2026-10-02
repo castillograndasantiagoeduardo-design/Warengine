@@ -29,10 +29,10 @@
     "hono": "npm:hono@^4.6.11"
   },
   "tasks": {
-    "dev-api": "deno run --allow-net --allow-env --allow-read --allow-ffi --allow-run apps/api/src/main.ts",
-    "dev-mcp": "deno run --allow-net --allow-env --allow-read --allow-ffi --allow-run apps/mcp-server/src/main.ts",
-    "seed": "deno run --allow-net --allow-env --allow-read --allow-ffi --allow-run packages/database/src/seeds/run.ts",
-    "seed:dev": "NODE_ENV=development deno run --allow-net --allow-env --allow-read --allow-ffi --allow-run packages/database/src/seeds/run.ts",
+    "dev-api": "deno run --allow-net --allow-env --allow-read --allow-ffi --allow-run --env apps/api/src/main.ts",
+    "dev-mcp": "deno run --allow-net --allow-env --allow-read --allow-ffi --allow-run --env apps/mcp-server/src/main.ts",
+    "seed": "deno run --allow-net --allow-env --allow-read --allow-ffi --allow-run --env packages/database/src/seeds/run.ts",
+    "seed:dev": "NODE_ENV=development deno run --allow-net --allow-env --allow-read --allow-ffi --allow-run --env packages/database/src/seeds/run.ts",
     "test": "deno test --allow-all",
     "lint": "deno lint",
     "check": "deno check apps/api/src/main.ts apps/mcp-server/src/main.ts"

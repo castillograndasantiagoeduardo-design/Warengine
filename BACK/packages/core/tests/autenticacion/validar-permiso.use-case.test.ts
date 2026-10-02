@@ -1,12 +1,16 @@
 /**
  * validar-permiso.use-case.test.ts — Pruebas unitarias del ValidarPermisoUseCase.
  */
-import { assertEquals } from 'jsr:@std/assert';
-import { ValidarPermisoUseCase } from '../../src/autenticacion/application/use-cases/ValidarPermisoUseCase.ts';
-import { IUsuarioRepository } from '../../src/autenticacion/domain/repositories/IUsuarioRepository.ts';
-import { IRolRepository } from '../../src/autenticacion/domain/repositories/IRolRepository.ts';
-import { ITokenService, AuthTokens, AccessTokenPayload } from '../../src/autenticacion/domain/services/ITokenService.ts';
-import { Usuario } from '../../src/autenticacion/domain/entities/Usuario.ts';
+import { assertEquals } from 'jsr:@std/assert@^1';
+import {
+  ValidarPermisoUseCase,
+  IUsuarioRepository,
+  IRolRepository,
+  ITokenService,
+  AuthTokens,
+  AccessTokenPayload,
+  Usuario,
+} from '../../mod.ts';
 
 // ─── Factories de mocks ──────────────────────────────────────────────────────
 
@@ -20,13 +24,14 @@ function makePayload(overrides: Partial<AccessTokenPayload> = {}): AccessTokenPa
 
 function makeTokenService(payload: AccessTokenPayload, failValidation = false): ITokenService {
   return {
-    generarTokens: async (_id: string, _rolId: number): Promise<AuthTokens> => ({ accessToken: '', refreshToken: '' }),
-    validarAccessToken: async (_t: string) => {
-      if (failValidation) throw new Error('Token inválido');
-      return payload;
+    generarTokens: (_id: string, _rolId: number): Promise<AuthTokens> =>
+      Promise.resolve({ accessToken: '', refreshToken: '' }),
+    validarAccessToken: (_t: string) => {
+      if (failValidation) return Promise.reject(new Error('Token inválido'));
+      return Promise.resolve(payload);
     },
-    validarRefreshToken: async (_t: string) => ({ usuarioId: payload.usuarioId }),
-    revocarRefreshToken: async (_t: string) => {},
+    validarRefreshToken: (_t: string) => Promise.resolve({ usuarioId: payload.usuarioId }),
+    revocarRefreshToken: (_t: string) => Promise.resolve(),
   };
 }
 
@@ -36,14 +41,14 @@ function makeUsuario(invalidadoEn: Date | null = null): Usuario {
 
 function makeUsuarioRepository(usuario: Usuario | null): IUsuarioRepository {
   return {
-    findByEmail: async (_email: string) => usuario,
-    findById: async (_id: string) => usuario,
+    findByEmail: (_email: string) => Promise.resolve(usuario),
+    findById: (_id: string) => Promise.resolve(usuario),
   };
 }
 
 function makeRolRepository(permisos: string[]): IRolRepository {
   return {
-    obtenerPermisosDeRol: async (_rolId: number) => permisos,
+    obtenerPermisosDeRol: (_rolId: number) => Promise.resolve(permisos),
   };
 }
 
@@ -121,4 +126,19 @@ Deno.test('ValidarPermisoUseCase: aprueba sin verificar permisos si no se requie
   const result = await useCase.execute({ accessToken: 'valid_token' }); // sin permisoRequerido
 
   assertEquals(result.isSuccess, true);
+});
+
+Deno.test('ValidarPermisoUseCase: rechaza con USUARIO_INACTIVO si el usuario está desactivado', async () => {
+  const payload = makePayload();
+  const usuarioInactivo = new Usuario('uuid-001', 'test@warengine.local', 'hash', 1, false, false, null);
+  const useCase = new ValidarPermisoUseCase(
+    makeTokenService(payload),
+    makeUsuarioRepository(usuarioInactivo),
+    makeRolRepository(['inventario:leer'])
+  );
+
+  const result = await useCase.execute({ accessToken: 'valid_token', permisoRequerido: 'inventario:leer' });
+
+  assertEquals(result.isFailure, true);
+  assertEquals(result.error.code, 'USUARIO_INACTIVO');
 });

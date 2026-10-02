@@ -18,9 +18,11 @@ import { DrizzleRefreshTokenRepository } from '../../database/src/repositories/a
 import { JwtTokenService } from '../../platform/src/jwt/jwt-token-service.ts';
 import { Argon2PasswordHasher } from '../../platform/src/hashing/argon2-password-hasher.ts';
 
-import { LoginUseCase } from '../../core/src/autenticacion/application/use-cases/LoginUseCase.ts';
-import { ValidarPermisoUseCase } from '../../core/src/autenticacion/application/use-cases/ValidarPermisoUseCase.ts';
-import { RenovarTokenUseCase } from '../../core/src/autenticacion/application/use-cases/RenovarTokenUseCase.ts';
+import {
+  LoginUseCase,
+  ValidarPermisoUseCase,
+  RenovarTokenUseCase,
+} from '@warengine/core';
 
 export interface AppContainer {
   autenticacion: {

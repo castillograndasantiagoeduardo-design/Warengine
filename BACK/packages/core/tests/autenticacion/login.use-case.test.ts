@@ -4,12 +4,16 @@
  * Estrategia: mocks manuales de todas las dependencias (ports).
  * No se toca la BD ni se genera JWT real: solo se verifica la lógica de orquestación.
  */
-import { assertEquals } from 'jsr:@std/assert';
-import { LoginUseCase } from '../../src/autenticacion/application/use-cases/LoginUseCase.ts';
-import { IUsuarioRepository } from '../../src/autenticacion/domain/repositories/IUsuarioRepository.ts';
-import { IPasswordService } from '../../src/autenticacion/domain/services/IPasswordService.ts';
-import { ITokenService, AuthTokens, AccessTokenPayload } from '../../src/autenticacion/domain/services/ITokenService.ts';
-import { Usuario } from '../../src/autenticacion/domain/entities/Usuario.ts';
+import { assertEquals } from 'jsr:@std/assert@^1';
+import {
+  LoginUseCase,
+  IUsuarioRepository,
+  IPasswordService,
+  ITokenService,
+  AuthTokens,
+  AccessTokenPayload,
+  Usuario,
+} from '../../mod.ts';
 
 // ─── Factories de mocks ──────────────────────────────────────────────────────
 
@@ -27,15 +31,15 @@ function makeUsuario(overrides: Partial<ConstructorParameters<typeof Usuario>> =
 
 function makeUsuarioRepository(usuario: Usuario | null): IUsuarioRepository {
   return {
-    findByEmail: async (_email: string) => usuario,
-    findById: async (_id: string) => usuario,
+    findByEmail: (_email: string) => Promise.resolve(usuario),
+    findById: (_id: string) => Promise.resolve(usuario),
   };
 }
 
 function makePasswordService(isValid: boolean): IPasswordService {
   return {
-    comparar: async (_plain: string, _hash: string) => isValid,
-    hashear: async (plain: string) => `hashed_${plain}`,
+    comparar: (_plain: string, _hash: string) => Promise.resolve(isValid),
+    hashear: (plain: string) => Promise.resolve(`hashed_${plain}`),
   };
 }
 
@@ -43,12 +47,12 @@ const TOKENS_MOCK: AuthTokens = { accessToken: 'at_test', refreshToken: 'rt_test
 
 function makeTokenService(): ITokenService {
   return {
-    generarTokens: async (_id: string, _rolId: number) => TOKENS_MOCK,
-    validarAccessToken: async (_t: string): Promise<AccessTokenPayload> => ({
+    generarTokens: (_id: string, _rolId: number) => Promise.resolve(TOKENS_MOCK),
+    validarAccessToken: (_t: string): Promise<AccessTokenPayload> => Promise.resolve({
       usuarioId: 'uuid-001', rolId: 1, iat: new Date()
     }),
-    validarRefreshToken: async (_t: string) => ({ usuarioId: 'uuid-001' }),
-    revocarRefreshToken: async (_t: string) => {},
+    validarRefreshToken: (_t: string) => Promise.resolve({ usuarioId: 'uuid-001' }),
+    revocarRefreshToken: (_t: string) => Promise.resolve(),
   };
 }
 

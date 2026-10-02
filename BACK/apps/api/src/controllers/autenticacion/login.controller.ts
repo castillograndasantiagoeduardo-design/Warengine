@@ -2,6 +2,7 @@ import { Context } from 'hono';
 import { loginSchema } from '@warengine/contracts';
 import { AppContainer } from '@warengine/composition';
 import { presentResult } from '../../presenters/result.presenter.ts';
+import { setAuthCookies } from '../../utils/cookie.ts';
 
 export function loginController(container: AppContainer) {
   return async (c: Context) => {
@@ -20,8 +21,12 @@ export function loginController(container: AppContainer) {
         passwordPlain: password
       });
 
+      if (useCaseResult.isSuccess) {
+        setAuthCookies(c, useCaseResult.value);
+      }
+
       return presentResult(c, useCaseResult);
-    } catch (e) {
+    } catch (_e) {
       return c.json({ error: 'INTERNAL_ERROR', message: 'Error procesando la solicitud' }, 500);
     }
   };

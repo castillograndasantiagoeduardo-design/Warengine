@@ -1,5 +1,4 @@
-import { Result } from '../../../../../shared-kernel/mod.ts';
-import { DomainError } from '../../../../../shared-kernel/mod.ts';
+import { Result, DomainError } from '@warengine/shared-kernel';
 import { IUsuarioRepository } from '../../domain/repositories/IUsuarioRepository.ts';
 import { ITokenService, AuthTokens } from '../../domain/services/ITokenService.ts';
 import { TokenInvalidoError, UsuarioInactivoError } from '../../domain/errors/AutenticacionErrors.ts';
@@ -36,7 +35,7 @@ export class RenovarTokenUseCase {
       // Generar nuevo par
       const tokens = await this.tokenService.generarTokens(usuario.id, usuario.rolId);
       return Result.ok(tokens);
-    } catch (e) {
+    } catch (_e) {
       return Result.fail(new TokenInvalidoError('Refresh token inválido o expirado.'));
     }
   }

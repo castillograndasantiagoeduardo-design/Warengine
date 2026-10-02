@@ -1,4 +1,4 @@
-import { DomainError } from '../../../../../shared-kernel/mod.ts';
+import { DomainError } from '@warengine/shared-kernel';
 
 export class CredencialesInvalidasError extends DomainError {
   public readonly code = 'CREDENCIALES_INVALIDAS';

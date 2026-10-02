@@ -1,0 +1,27 @@
+### 1. Login Superadmin (Establece cookies HttpOnly y devuelve tokens)
+# @name login
+POST http://localhost:8017/auth/login
+Content-Type: application/json
+
+{
+  "email": "superadmin@warengine.local",
+  "password": "Warengine.Admin.2026!"
+}
+
+### 2. Renovar Token (Funciona enviando el refreshToken en JSON o en Cookie)
+POST http://localhost:8017/auth/renovar-token
+Content-Type: application/json
+
+{
+  "refreshToken": "{{login.response.body.refreshToken}}"
+}
+
+### 3. Verificar Sesión Protegida (Ruta de prueba que valida token)
+GET http://localhost:8017/auth/verificar
+Authorization: Bearer {{login.response.body.accessToken}}
+
+### 4. Cerrar Sesión (Limpia las cookies HttpOnly)
+POST http://localhost:8017/auth/logout
+
+### 5. Health Check (Verificación de estado del servidor)
+GET http://localhost:8017/health

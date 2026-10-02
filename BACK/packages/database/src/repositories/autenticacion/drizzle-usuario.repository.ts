@@ -1,8 +1,7 @@
 import { eq } from 'drizzle-orm';
 import { Database } from '../../client.ts';
 import { usuarios } from '../../schema/autenticacion.schema.ts';
-import { IUsuarioRepository } from '../../../../core/src/autenticacion/domain/repositories/IUsuarioRepository.ts';
-import { Usuario } from '../../../../core/src/autenticacion/domain/entities/Usuario.ts';
+import { IUsuarioRepository, Usuario } from '@warengine/core';
 import { fromRow } from '../../mappers/autenticacion/usuario.mapper.ts';
 
 export class DrizzleUsuarioRepository implements IUsuarioRepository {

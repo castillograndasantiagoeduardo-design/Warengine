@@ -1,9 +1,8 @@
-import { Result } from '../../../../../shared-kernel/mod.ts';
-import { DomainError } from '../../../../../shared-kernel/mod.ts';
+import { Result, DomainError } from '@warengine/shared-kernel';
 import { IUsuarioRepository } from '../../domain/repositories/IUsuarioRepository.ts';
 import { IRolRepository } from '../../domain/repositories/IRolRepository.ts';
 import { ITokenService } from '../../domain/services/ITokenService.ts';
-import { TokenInvalidoError, PermisoDenegadoError } from '../../domain/errors/AutenticacionErrors.ts';
+import { TokenInvalidoError, PermisoDenegadoError, UsuarioInactivoError } from '../../domain/errors/AutenticacionErrors.ts';
 
 export interface ValidarPermisoRequest {
   accessToken: string;
@@ -28,6 +27,10 @@ export class ValidarPermisoUseCase {
         return Result.fail(new TokenInvalidoError('Usuario no encontrado.'));
       }
 
+      if (!usuario.isActive) {
+        return Result.fail(new UsuarioInactivoError());
+      }
+
       if (usuario.credencialesFueronInvalidadas(payload.iat)) {
         return Result.fail(new TokenInvalidoError('Token revocado, inicie sesión de nuevo.'));
       }
@@ -41,7 +44,7 @@ export class ValidarPermisoUseCase {
       }
 
       return Result.ok();
-    } catch (e) {
+    } catch (_e) {
       return Result.fail(new TokenInvalidoError());
     }
   }

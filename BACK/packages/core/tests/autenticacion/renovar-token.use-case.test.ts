@@ -1,28 +1,31 @@
 /**
  * renovar-token.use-case.test.ts — Pruebas unitarias del RenovarTokenUseCase.
  */
-import { assertEquals } from 'jsr:@std/assert';
-import { RenovarTokenUseCase } from '../../src/autenticacion/application/use-cases/RenovarTokenUseCase.ts';
-import { IUsuarioRepository } from '../../src/autenticacion/domain/repositories/IUsuarioRepository.ts';
-import { ITokenService, AuthTokens, AccessTokenPayload } from '../../src/autenticacion/domain/services/ITokenService.ts';
-import { Usuario } from '../../src/autenticacion/domain/entities/Usuario.ts';
+import { assertEquals } from 'jsr:@std/assert@^1';
+import {
+  RenovarTokenUseCase,
+  IUsuarioRepository,
+  ITokenService,
+  AuthTokens,
+  AccessTokenPayload,
+  Usuario,
+} from '../../mod.ts';
 
 // ─── Factories de mocks ──────────────────────────────────────────────────────
 
 const TOKENS_NUEVOS: AuthTokens = { accessToken: 'nuevo_at', refreshToken: 'nuevo_rt' };
 
 function makeTokenService(opts: { failValidation?: boolean; usuarioId?: string } = {}): ITokenService {
-  let revocado = false;
   return {
-    generarTokens: async (_id: string, _rolId: number) => TOKENS_NUEVOS,
-    validarAccessToken: async (_t: string): Promise<AccessTokenPayload> => ({
+    generarTokens: (_id: string, _rolId: number) => Promise.resolve(TOKENS_NUEVOS),
+    validarAccessToken: (_t: string): Promise<AccessTokenPayload> => Promise.resolve({
       usuarioId: 'uuid-001', rolId: 1, iat: new Date()
     }),
-    validarRefreshToken: async (_t: string) => {
-      if (opts.failValidation) throw new Error('RT inválido');
-      return { usuarioId: opts.usuarioId ?? 'uuid-001' };
+    validarRefreshToken: (_t: string) => {
+      if (opts.failValidation) return Promise.reject(new Error('RT inválido'));
+      return Promise.resolve({ usuarioId: opts.usuarioId ?? 'uuid-001' });
     },
-    revocarRefreshToken: async (_t: string) => { revocado = true; },
+    revocarRefreshToken: (_t: string) => Promise.resolve(),
   };
 }
 
@@ -32,8 +35,8 @@ function makeUsuario(isActive = true): Usuario {
 
 function makeUsuarioRepository(usuario: Usuario | null): IUsuarioRepository {
   return {
-    findByEmail: async (_email: string) => usuario,
-    findById: async (_id: string) => usuario,
+    findByEmail: (_email: string) => Promise.resolve(usuario),
+    findById: (_id: string) => Promise.resolve(usuario),
   };
 }
 
