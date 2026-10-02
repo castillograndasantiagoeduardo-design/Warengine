@@ -1,4 +1,5 @@
 {
+  "nodeModulesDir": "auto",
   "workspace": {
     "members": [
       "apps/api",
@@ -19,11 +20,19 @@
     "@warengine/contracts": "../SHARED/contracts/src/index.ts",
     "zod": "npm:zod@^3.24.0",
     "drizzle-orm": "npm:drizzle-orm@^0.38.4",
-    "drizzle-kit": "npm:drizzle-kit@^0.30.5"
+    "drizzle-orm/": "npm:/drizzle-orm@^0.38.4/",
+    "drizzle-kit": "npm:drizzle-kit@^0.30.5",
+    "mysql2": "npm:mysql2@^3.12.0",
+    "mysql2/": "npm:/mysql2@^3.12.0/",
+    "argon2": "npm:argon2@^0.41.1",
+    "jose": "npm:jose@^5.9.3",
+    "hono": "npm:hono@^4.6.11"
   },
   "tasks": {
-    "dev-api": "deno run --allow-net --allow-env --allow-read apps/api/src/main.ts",
-    "dev-mcp": "deno run --allow-net --allow-env --allow-read apps/mcp-server/src/main.ts",
+    "dev-api": "deno run --allow-net --allow-env --allow-read --allow-ffi --allow-run --env apps/api/src/main.ts",
+    "dev-mcp": "deno run --allow-net --allow-env --allow-read --allow-ffi --allow-run --env apps/mcp-server/src/main.ts",
+    "seed": "deno run --allow-net --allow-env --allow-read --allow-ffi --allow-run --env packages/database/src/seeds/run.ts",
+    "seed:dev": "NODE_ENV=development deno run --allow-net --allow-env --allow-read --allow-ffi --allow-run --env packages/database/src/seeds/run.ts",
     "test": "deno test --allow-all",
     "lint": "deno lint",
     "check": "deno check apps/api/src/main.ts apps/mcp-server/src/main.ts"

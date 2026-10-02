@@ -1,16 +1,31 @@
 /**
  * main.ts — Punto de entrada de la API REST de Warengine.
- *
- * Responsabilidades de este archivo:
- *  1. Leer la configuración del entorno.
- *  2. Crear el contenedor de dependencias (composition root).
- *  3. Registrar rutas y middlewares en el servidor HTTP.
- *  4. Arrancar el servidor en el puerto configurado.
- *
- * PROHIBIDO en este archivo:
- *  - Lógica de negocio de cualquier tipo.
- *  - Importaciones directas de Drizzle, repositorios o entidades de dominio.
- *  - Todo eso llega a través del contenedor de dependencias.
  */
+import { Hono } from 'hono';
+import { cors } from 'hono/cors';
+import { createContainer } from '@warengine/composition';
+import { createAutenticacionRoutes } from './routes/autenticacion.routes.ts';
 
-// TODO: implementar cuando se instalen las dependencias HTTP (Hono u Oak).
+const app = new Hono();
+const container = createContainer();
+
+// CORS habilitado con credentials para cookies HttpOnly desde el Frontend
+app.use(
+  '*',
+  cors({
+    origin: (origin) => origin || 'http://localhost:3000',
+    credentials: true,
+    allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowHeaders: ['Content-Type', 'Authorization'],
+  })
+);
+
+// Rutas base
+app.get('/health', (c) => c.text('Warengine API - OK'));
+
+// Registro de módulos
+const authRoutes = createAutenticacionRoutes(container);
+app.route('/auth', authRoutes);
+
+console.log('🚀 Warengine API escuchando en http://localhost:8017');
+Deno.serve({ port: 8017 }, app.fetch);

@@ -14,4 +14,14 @@
  * y @warengine/contracts.
  */
 
-// TODO: exportar módulos cuando se implementen uno por uno.
+// ─── Módulo: Autenticación ──────────────────────────────────────────────────
+export * from './src/modules/autenticacion/domain/entities/Usuario.ts';
+export * from './src/modules/autenticacion/domain/errors/AutenticacionErrors.ts';
+export * from './src/modules/autenticacion/domain/repositories/IUsuarioRepository.ts';
+export * from './src/modules/autenticacion/domain/repositories/IRolRepository.ts';
+export * from './src/modules/autenticacion/domain/repositories/IRefreshTokenRepository.ts';
+export * from './src/modules/autenticacion/domain/services/IPasswordService.ts';
+export * from './src/modules/autenticacion/domain/services/ITokenService.ts';
+export * from './src/modules/autenticacion/application/use-cases/LoginUseCase.ts';
+export * from './src/modules/autenticacion/application/use-cases/RenovarTokenUseCase.ts';
+export * from './src/modules/autenticacion/application/use-cases/ValidarPermisoUseCase.ts';
