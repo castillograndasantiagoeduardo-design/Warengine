@@ -25,3 +25,18 @@ export * from './src/modules/autenticacion/domain/services/ITokenService.ts';
 export * from './src/modules/autenticacion/application/use-cases/LoginUseCase.ts';
 export * from './src/modules/autenticacion/application/use-cases/RenovarTokenUseCase.ts';
 export * from './src/modules/autenticacion/application/use-cases/ValidarPermisoUseCase.ts';
+
+// ─── Módulo: Administración ─────────────────────────────────────────────────
+export * from './src/modules/administracion/domain/entities/Sucursal.ts';
+export * from './src/modules/administracion/domain/entities/UsuarioGestionado.ts';
+export * from './src/modules/administracion/domain/errors/AdministracionErrors.ts';
+export * from './src/modules/administracion/domain/repositories/ISucursalRepository.ts';
+export * from './src/modules/administracion/domain/repositories/IGestionUsuarioRepository.ts';
+export * from './src/modules/administracion/application/use-cases/CrearSucursalUseCase.ts';
+export * from './src/modules/administracion/application/use-cases/EditarSucursalUseCase.ts';
+export * from './src/modules/administracion/application/use-cases/ListarSucursalesUseCase.ts';
+export * from './src/modules/administracion/application/use-cases/CrearUsuarioUseCase.ts';
+export * from './src/modules/administracion/application/use-cases/CambiarRolUsuarioUseCase.ts';
+export * from './src/modules/administracion/application/use-cases/CambiarEstadoUsuarioUseCase.ts';
+export * from './src/modules/administracion/application/use-cases/ListarUsuariosUseCase.ts';
+
