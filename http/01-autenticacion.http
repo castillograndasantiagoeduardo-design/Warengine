@@ -1,0 +1,133 @@
+# ==============================================================================
+# MÓDULO: AUTENTICACIÓN
+# Requiere: REST Client (extensión VS Code)
+# Base URL: http://localhost:8017
+# ==============================================================================
+
+@baseUrl = http://localhost:8017
+
+# ------------------------------------------------------------------------------
+# UC-AUTH-01: Login con credenciales válidas
+# RF: Autenticación de usuarios
+# Resultado esperado: 200 OK con accessToken y refreshToken
+# ------------------------------------------------------------------------------
+
+### Login Superadmin (caso feliz)
+# @name login
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "superadmin@warengine.local",
+  "password": "Warengine.Admin.2026!"
+}
+
+###
+
+# ------------------------------------------------------------------------------
+# UC-AUTH-02: Verificar sesión activa con token válido
+# RF: Validación de tokens JWT
+# Resultado esperado: 200 OK con mensaje de sesión activa
+# ------------------------------------------------------------------------------
+
+### Verificar sesión activa
+GET {{baseUrl}}/auth/verificar
+Authorization: Bearer {{login.response.body.accessToken}}
+
+###
+
+# ------------------------------------------------------------------------------
+# UC-AUTH-03: Renovar access token usando refresh token
+# RF: Renovación de tokens
+# Resultado esperado: 200 OK con nuevo accessToken
+# ------------------------------------------------------------------------------
+
+### Renovar token con refreshToken del login anterior
+POST {{baseUrl}}/auth/renovar-token
+Content-Type: application/json
+
+{
+  "refreshToken": "{{login.response.body.refreshToken}}"
+}
+
+###
+
+# ------------------------------------------------------------------------------
+# UC-AUTH-04: Cerrar sesión
+# RF: Cierre de sesión
+# Resultado esperado: 200 OK, cookies HttpOnly limpiadas
+# ------------------------------------------------------------------------------
+
+### Logout (cierra sesión)
+POST {{baseUrl}}/auth/logout
+Authorization: Bearer {{login.response.body.accessToken}}
+
+###
+
+# ------------------------------------------------------------------------------
+# UC-AUTH-05: Health Check del servidor
+# Resultado esperado: 200 OK con texto "Warengine API - OK"
+# ------------------------------------------------------------------------------
+
+### Health Check
+GET {{baseUrl}}/health
+
+###
+
+# ==============================================================================
+# CASOS DE ERROR ESPERADOS
+# ==============================================================================
+
+# ------------------------------------------------------------------------------
+# UC-AUTH-ERR-01: Login con contraseña incorrecta → 401
+# ------------------------------------------------------------------------------
+
+### Login fallido - contraseña incorrecta
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "superadmin@warengine.local",
+  "password": "ContrasenaIncorrecta!"
+}
+
+###
+
+# ------------------------------------------------------------------------------
+# UC-AUTH-ERR-02: Login con email inexistente → 401
+# ------------------------------------------------------------------------------
+
+### Login fallido - email no registrado
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "noexiste@warengine.local",
+  "password": "Warengine.Admin.2026!"
+}
+
+###
+
+# ------------------------------------------------------------------------------
+# UC-AUTH-ERR-03: Acceder a ruta protegida sin token → 401
+# ------------------------------------------------------------------------------
+
+### Ruta protegida sin token (debe devolver 401)
+GET {{baseUrl}}/auth/verificar
+
+###
+
+# ------------------------------------------------------------------------------
+# UC-AUTH-ERR-04: Validación de esquema - email inválido → 400
+# ------------------------------------------------------------------------------
+
+### Login con email inválido
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "no-es-un-email",
+  "password": "Warengine.Admin.2026!"
+}
+
+###

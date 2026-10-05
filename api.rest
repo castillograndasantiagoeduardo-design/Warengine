@@ -1,6 +1,39 @@
-### 1. Login Superadmin (Establece cookies HttpOnly y devuelve tokens)
+# ==============================================================================
+# WARENGINE API - Master Test Suite
+# Requiere: REST Client (extensión VS Code)
+# Servidor: http://localhost:8017  (deno task dev-api)
+#
+# ARCHIVOS DE PRUEBA POR MÓDULO:
+#   http/01-autenticacion.http  — Login, renovar token, logout, verificar
+#   http/02-sucursales.http     — CRUD de sucursales (RF-ADM-C1, C2, C3)
+#   http/03-usuarios.http       — Gestión de usuarios (RF-ADM-C5, C6, C7, C8)
+#
+# ESTADO DE ENDPOINTS (probado 2026-10-05):
+#   ✅ POST   /auth/login
+#   ✅ POST   /auth/renovar-token
+#   ✅ GET    /auth/verificar
+#   ✅ POST   /auth/logout
+#   ✅ GET    /health
+#   ✅ GET    /administracion/sucursales
+#   ✅ POST   /administracion/sucursales
+#   ✅ PUT    /administracion/sucursales/:id
+#   ✅ GET    /administracion/usuarios
+#   ✅ GET    /administracion/usuarios?rolId=&sucursalId=
+#   ✅ POST   /administracion/usuarios
+#   ✅ PUT    /administracion/usuarios/:id/rol
+#   ✅ PUT    /administracion/usuarios/:id/estado
+# ==============================================================================
+
+@baseUrl = http://localhost:8017
+
+# ==============================================================================
+# INICIO RÁPIDO — Login + pruebas básicas en un solo archivo
+# Para pruebas completas, abre los archivos en http/
+# ==============================================================================
+
+### 1. Login Superadmin
 # @name login
-POST http://localhost:8017/auth/login
+POST {{baseUrl}}/auth/login
 Content-Type: application/json
 
 {
@@ -8,20 +41,148 @@ Content-Type: application/json
   "password": "Warengine.Admin.2026!"
 }
 
-### 2. Renovar Token (Funciona enviando el refreshToken en JSON o en Cookie)
-POST http://localhost:8017/auth/renovar-token
+###
+
+### 2. Renovar Token
+POST {{baseUrl}}/auth/renovar-token
 Content-Type: application/json
 
 {
   "refreshToken": "{{login.response.body.refreshToken}}"
 }
 
-### 3. Verificar Sesión Protegida (Ruta de prueba que valida token)
-GET http://localhost:8017/auth/verificar
+###
+
+### 3. Verificar Sesión
+GET {{baseUrl}}/auth/verificar
 Authorization: Bearer {{login.response.body.accessToken}}
 
-### 4. Cerrar Sesión (Limpia las cookies HttpOnly)
-POST http://localhost:8017/auth/logout
+###
 
-### 5. Health Check (Verificación de estado del servidor)
-GET http://localhost:8017/health
+### 4. Cerrar Sesión
+POST {{baseUrl}}/auth/logout
+Authorization: Bearer {{login.response.body.accessToken}}
+
+###
+
+### 5. Health Check
+GET {{baseUrl}}/health
+
+###
+
+# ==============================================================================
+# MÓDULO ADMINISTRACIÓN - SUCURSALES
+# ==============================================================================
+
+### 6. Listar Sucursales (RF-ADM-C1)
+GET {{baseUrl}}/administracion/sucursales
+Authorization: Bearer {{login.response.body.accessToken}}
+
+###
+
+### 7. Crear Sucursal (RF-ADM-C2)
+# @name crearSucursal
+POST {{baseUrl}}/administracion/sucursales
+Authorization: Bearer {{login.response.body.accessToken}}
+Content-Type: application/json
+
+{
+  "nombre": "Sucursal Norte",
+  "direccion": "Calle 170 # 15-20, Bogotá",
+  "contacto": "+57 300 1234567"
+}
+
+###
+
+### 8. Editar Sucursal (RF-ADM-C3)
+PUT {{baseUrl}}/administracion/sucursales/{{crearSucursal.response.body.id}}
+Authorization: Bearer {{login.response.body.accessToken}}
+Content-Type: application/json
+
+{
+  "nombre": "Sucursal Principal Central",
+  "direccion": "Cra 7 # 72-10, Bogotá",
+  "contacto": "admin@warengine.local",
+  "isActive": true
+}
+
+###
+
+# ==============================================================================
+# MÓDULO ADMINISTRACIÓN - USUARIOS
+# ==============================================================================
+
+### 9. Listar Usuarios (RF-ADM-C5)
+GET {{baseUrl}}/administracion/usuarios
+Authorization: Bearer {{login.response.body.accessToken}}
+
+###
+
+### 10. Listar Usuarios con Filtro por Rol (RF-ADM-C5)
+GET {{baseUrl}}/administracion/usuarios?rolId=2&sucursalId=1
+Authorization: Bearer {{login.response.body.accessToken}}
+
+###
+
+### 11. Crear Usuario + Empleado Atómico (RF-ADM-C6)
+# @name crearUsuario
+POST {{baseUrl}}/administracion/usuarios
+Authorization: Bearer {{login.response.body.accessToken}}
+Content-Type: application/json
+
+{
+  "nombre": "Juan Pérez",
+  "tipoDocumento": "CC",
+  "numeroDocumento": "1020304050",
+  "email": "juan.perez@warengine.local",
+  "password": "Password.2026!",
+  "rolId": 2,
+  "sucursalId": 1,
+  "cargo": "Administrador de Sucursal"
+}
+
+###
+
+### 12. Cambiar Rol de Usuario (RF-ADM-C7)
+PUT {{baseUrl}}/administracion/usuarios/{{crearUsuario.response.body.id}}/rol
+Authorization: Bearer {{login.response.body.accessToken}}
+Content-Type: application/json
+
+{
+  "rolId": 3
+}
+
+###
+
+### 13. Cambiar Estado de Usuario - Desactivar (RF-ADM-C8)
+PUT {{baseUrl}}/administracion/usuarios/{{crearUsuario.response.body.id}}/estado
+Authorization: Bearer {{login.response.body.accessToken}}
+Content-Type: application/json
+
+{
+  "isActive": false
+}
+
+###
+
+### 14. Cambiar Estado de Usuario - Reactivar (RF-ADM-C8)
+PUT {{baseUrl}}/administracion/usuarios/{{crearUsuario.response.body.id}}/estado
+Authorization: Bearer {{login.response.body.accessToken}}
+Content-Type: application/json
+
+{
+  "isActive": true
+}
+
+###
+
+### 15. Regla de Negocio: Intentar desactivar Super Admin (debe retornar 400)
+PUT {{baseUrl}}/administracion/usuarios/{{login.response.body.usuario.id}}/estado
+Authorization: Bearer {{login.response.body.accessToken}}
+Content-Type: application/json
+
+{
+  "isActive": false
+}
+
+###

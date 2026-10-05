@@ -9,6 +9,7 @@ export interface DatosSucursal {
 export interface ISucursalRepository {
   listar(): Promise<Sucursal[]>;
   findById(id: number): Promise<Sucursal | null>;
+  findByNombre(nombre: string): Promise<Sucursal | null>;
   crear(datos: DatosSucursal): Promise<Sucursal>;
   actualizar(
     id: number,

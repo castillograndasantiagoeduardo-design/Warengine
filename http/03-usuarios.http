@@ -1,0 +1,335 @@
+# ==============================================================================
+# MÓDULO: ADMINISTRACIÓN - GESTIÓN DE USUARIOS Y PERSONAL
+# Requiere: REST Client (extensión VS Code)
+# Roles requeridos: super-admin
+#   - Permisos: autenticacion:gestionar-usuarios, autenticacion:asignar-roles
+# Base URL: http://localhost:8017
+# ==============================================================================
+#
+# FLUJO DE PRUEBA RECOMENDADO:
+#   1. Login
+#   2. Listar usuarios (ver estado inicial)
+#   3. Crear usuario nuevo
+#   4. Listar usuarios con filtros
+#   5. Cambiar rol del usuario creado
+#   6. Desactivar usuario
+#   7. Reactivar usuario
+#   8. Intentar desactivar super admin (debe fallar)
+#
+# Roles disponibles en la BD:
+#   1 = super-admin
+#   2 = admin-sucursal
+#   3 = cajero-vendedor
+#   4 = admin-logistica
+#
+# Tipos de documento válidos: CC, CE
+# ==============================================================================
+
+@baseUrl = http://localhost:8017
+
+# ------------------------------------------------------------------------------
+# SETUP: Login como Super Admin
+# Ejecutar PRIMERO antes de cualquier otro request
+# ------------------------------------------------------------------------------
+
+### Login como Super Admin
+# @name login
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "superadmin@warengine.local",
+  "password": "Warengine.Admin.2026!"
+}
+
+###
+
+# ==============================================================================
+# RF-ADM-C5: LISTAR USUARIOS
+# ==============================================================================
+
+# ------------------------------------------------------------------------------
+# UC-USR-01: Listar todos los usuarios sin filtros
+# Resultado esperado: 200 OK con array de usuarios
+# Verificado: [{id, nombre, email, rolId, rolNombre, sucursalId, sucursalNombre, isActive}]
+# ------------------------------------------------------------------------------
+
+### Listar todos los usuarios
+GET {{baseUrl}}/administracion/usuarios
+Authorization: Bearer {{login.response.body.accessToken}}
+
+###
+
+# ------------------------------------------------------------------------------
+# UC-USR-02: Listar usuarios filtrados por rol
+# rolId=2 → admin-sucursal
+# Resultado esperado: 200 OK solo con usuarios de ese rol
+# ------------------------------------------------------------------------------
+
+### Listar usuarios con rol admin-sucursal (rolId=2)
+GET {{baseUrl}}/administracion/usuarios?rolId=2
+Authorization: Bearer {{login.response.body.accessToken}}
+
+###
+
+# ------------------------------------------------------------------------------
+# UC-USR-03: Listar usuarios filtrados por sucursal
+# Resultado esperado: 200 OK solo con usuarios de esa sucursal
+# ------------------------------------------------------------------------------
+
+### Listar usuarios de la sucursal 1 (Sede Principal)
+GET {{baseUrl}}/administracion/usuarios?sucursalId=1
+Authorization: Bearer {{login.response.body.accessToken}}
+
+###
+
+# ------------------------------------------------------------------------------
+# UC-USR-04: Listar usuarios con filtro combinado (rol + sucursal)
+# Resultado esperado: 200 OK con array filtrado
+# ------------------------------------------------------------------------------
+
+### Listar usuarios - filtro combinado rolId=2 y sucursalId=2
+GET {{baseUrl}}/administracion/usuarios?rolId=2&sucursalId=2
+Authorization: Bearer {{login.response.body.accessToken}}
+
+###
+
+# ==============================================================================
+# RF-ADM-C6: CREAR USUARIO + EMPLEADO (ATÓMICO)
+# ==============================================================================
+
+# ------------------------------------------------------------------------------
+# UC-USR-05: Crear usuario con todos los campos
+# Crea atómicamente: usuario en auth + empleado en administracion
+# Resultado esperado: 201 Created con el perfil del usuario
+# Verificado: {"id":"uuid", "nombre":"Juan Perez", "rolId":2, "isActive":true}
+# ------------------------------------------------------------------------------
+
+### Crear usuario Admin de Sucursal - caso completo
+# @name crearUsuario
+POST {{baseUrl}}/administracion/usuarios
+Authorization: Bearer {{login.response.body.accessToken}}
+Content-Type: application/json
+
+{
+  "nombre": "Juan Pérez",
+  "tipoDocumento": "CC",
+  "numeroDocumento": "1020304050",
+  "email": "juan.perez@warengine.local",
+  "password": "Password.2026!",
+  "rolId": 2,
+  "sucursalId": 1,
+  "cargo": "Administrador de Sucursal"
+}
+
+###
+
+# ------------------------------------------------------------------------------
+# UC-USR-06: Crear usuario Cajero-Vendedor sin cargo (campo opcional)
+# Resultado esperado: 201 Created
+# ------------------------------------------------------------------------------
+
+### Crear usuario Cajero-Vendedor (sin campo cargo)
+# @name crearCajero
+POST {{baseUrl}}/administracion/usuarios
+Authorization: Bearer {{login.response.body.accessToken}}
+Content-Type: application/json
+
+{
+  "nombre": "María Gómez",
+  "tipoDocumento": "CE",
+  "numeroDocumento": "987654321",
+  "email": "maria.gomez@warengine.local",
+  "password": "SecurePass.2026!",
+  "rolId": 3,
+  "sucursalId": 1
+}
+
+###
+
+# ==============================================================================
+# RF-ADM-C7: CAMBIAR ROL DE USUARIO
+# ==============================================================================
+
+# ------------------------------------------------------------------------------
+# UC-USR-07: Cambiar rol de un usuario (admin-sucursal → cajero-vendedor)
+# Invalida automáticamente tokens activos del usuario afectado
+# Resultado esperado: 200 OK con el usuario actualizado (rolNombre nuevo)
+# Verificado: {"rolId":3, "rolNombre":"cajero-vendedor"}
+# ------------------------------------------------------------------------------
+
+### Cambiar rol a cajero-vendedor (rolId: 3)
+PUT {{baseUrl}}/administracion/usuarios/{{crearUsuario.response.body.id}}/rol
+Authorization: Bearer {{login.response.body.accessToken}}
+Content-Type: application/json
+
+{
+  "rolId": 3
+}
+
+###
+
+# ------------------------------------------------------------------------------
+# UC-USR-08: Cambiar rol de usuario a admin-logistica (rolId: 4)
+# Resultado esperado: 200 OK con rolNombre: "admin-logistica"
+# ------------------------------------------------------------------------------
+
+### Cambiar rol a admin-logistica (rolId: 4)
+PUT {{baseUrl}}/administracion/usuarios/{{crearUsuario.response.body.id}}/rol
+Authorization: Bearer {{login.response.body.accessToken}}
+Content-Type: application/json
+
+{
+  "rolId": 4
+}
+
+###
+
+# ==============================================================================
+# RF-ADM-C8: CAMBIAR ESTADO DE USUARIO (ACTIVAR / DESACTIVAR)
+# ==============================================================================
+
+# ------------------------------------------------------------------------------
+# UC-USR-09: Desactivar un usuario
+# Revoca refresh tokens e invalida sesiones activas del usuario
+# Resultado esperado: 200 OK con isActive: false
+# Verificado: {"isActive":false}
+# ------------------------------------------------------------------------------
+
+### Desactivar usuario (isActive: false)
+PUT {{baseUrl}}/administracion/usuarios/{{crearUsuario.response.body.id}}/estado
+Authorization: Bearer {{login.response.body.accessToken}}
+Content-Type: application/json
+
+{
+  "isActive": false
+}
+
+###
+
+# ------------------------------------------------------------------------------
+# UC-USR-10: Reactivar un usuario desactivado
+# Resultado esperado: 200 OK con isActive: true
+# Verificado: {"isActive":true}
+# ------------------------------------------------------------------------------
+
+### Reactivar usuario (isActive: true)
+PUT {{baseUrl}}/administracion/usuarios/{{crearUsuario.response.body.id}}/estado
+Authorization: Bearer {{login.response.body.accessToken}}
+Content-Type: application/json
+
+{
+  "isActive": true
+}
+
+###
+
+# ==============================================================================
+# CASOS DE ERROR ESPERADOS / REGLAS DE NEGOCIO
+# ==============================================================================
+
+# ------------------------------------------------------------------------------
+# UC-USR-ERR-01: Intentar desactivar al Super Admin (REGLA DE NEGOCIO)
+# No se puede dejar el sistema sin Super Admin activo
+# Resultado esperado: 400 con error de dominio
+# Verificado: 400 ERROR
+# ------------------------------------------------------------------------------
+
+### Error (regla de negocio): desactivar super admin - debe fallar
+PUT {{baseUrl}}/administracion/usuarios/{{login.response.body.usuario.id}}/estado
+Authorization: Bearer {{login.response.body.accessToken}}
+Content-Type: application/json
+
+{
+  "isActive": false
+}
+
+###
+
+# ------------------------------------------------------------------------------
+# UC-USR-ERR-02: Crear usuario con email duplicado → error de dominio
+# ------------------------------------------------------------------------------
+
+### Error: email duplicado (ejecuta UC-USR-05 primero)
+POST {{baseUrl}}/administracion/usuarios
+Authorization: Bearer {{login.response.body.accessToken}}
+Content-Type: application/json
+
+{
+  "nombre": "Otro Juan",
+  "tipoDocumento": "CC",
+  "numeroDocumento": "9999999999",
+  "email": "juan.perez@warengine.local",
+  "password": "OtraPass.2026!",
+  "rolId": 3,
+  "sucursalId": 1
+}
+
+###
+
+# ------------------------------------------------------------------------------
+# UC-USR-ERR-03: Crear usuario con tipo de documento inválido → 400
+# tipoDocumento solo acepta: CC, CE
+# ------------------------------------------------------------------------------
+
+### Error: tipo de documento inválido
+POST {{baseUrl}}/administracion/usuarios
+Authorization: Bearer {{login.response.body.accessToken}}
+Content-Type: application/json
+
+{
+  "nombre": "Test User",
+  "tipoDocumento": "PASSPORT",
+  "numeroDocumento": "AB123456",
+  "email": "test@warengine.local",
+  "password": "TestPass.2026!",
+  "rolId": 3,
+  "sucursalId": 1
+}
+
+###
+
+# ------------------------------------------------------------------------------
+# UC-USR-ERR-04: Crear usuario con contraseña corta (< 8 chars) → 400
+# ------------------------------------------------------------------------------
+
+### Error: contraseña demasiado corta
+POST {{baseUrl}}/administracion/usuarios
+Authorization: Bearer {{login.response.body.accessToken}}
+Content-Type: application/json
+
+{
+  "nombre": "Test Corto",
+  "tipoDocumento": "CC",
+  "numeroDocumento": "12345",
+  "email": "corto@warengine.local",
+  "password": "123",
+  "rolId": 3,
+  "sucursalId": 1
+}
+
+###
+
+# ------------------------------------------------------------------------------
+# UC-USR-ERR-05: Cambiar rol con rolId inexistente → error de dominio
+# ------------------------------------------------------------------------------
+
+### Error: rolId que no existe en la BD
+PUT {{baseUrl}}/administracion/usuarios/{{crearUsuario.response.body.id}}/rol
+Authorization: Bearer {{login.response.body.accessToken}}
+Content-Type: application/json
+
+{
+  "rolId": 999
+}
+
+###
+
+# ------------------------------------------------------------------------------
+# UC-USR-ERR-06: Acceder sin token → 401 Unauthorized
+# ------------------------------------------------------------------------------
+
+### Error: sin token de autorización
+GET {{baseUrl}}/administracion/usuarios
+
+###

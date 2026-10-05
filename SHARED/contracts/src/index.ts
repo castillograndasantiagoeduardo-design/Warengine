@@ -19,7 +19,8 @@ export * from './autenticacion/renovar-token.schema.ts';
 // (los esquemas se agregarán cuando se implemente el módulo)
 
 // ─── Módulo: administracion ────────────────────────────────────
-// (los esquemas se agregarán cuando se implemente el módulo)
+export * from './administracion/sucursal.schema.ts';
+export * from './administracion/usuario.schema.ts';
 
 // ─── Módulo: logistica ─────────────────────────────────────────
 // (los esquemas se agregarán cuando se implemente el módulo)

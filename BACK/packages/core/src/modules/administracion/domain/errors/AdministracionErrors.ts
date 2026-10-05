@@ -5,6 +5,13 @@ export class SucursalNoEncontradaError extends DomainError {
   constructor() { super('La sucursal no existe.'); }
 }
 
+export class SucursalDuplicadaError extends DomainError {
+  public readonly code = 'SUCURSAL_DUPLICADA';
+  constructor(nombre: string) {
+    super(`Ya existe una sucursal con el nombre "${nombre}".`);
+  }
+}
+
 export class SucursalInactivaError extends DomainError {
   public readonly code = 'SUCURSAL_INACTIVA';
   constructor() { super('No se puede asignar una sucursal inactiva.'); }

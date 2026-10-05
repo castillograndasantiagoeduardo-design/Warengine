@@ -1,4 +1,4 @@
-import { eq } from 'drizzle-orm';
+import { eq, sql } from 'drizzle-orm';
 import { Database } from '../../client.ts';
 import { sucursales } from '../../schema/administracion.schema.ts';
 import { DatosSucursal, ISucursalRepository, Sucursal } from '@warengine/core';
@@ -17,6 +17,16 @@ export class DrizzleSucursalRepository implements ISucursalRepository {
       .select()
       .from(sucursales)
       .where(eq(sucursales.id_sucursal, id))
+      .limit(1);
+    return row ? sucursalFromRow(row) : null;
+  }
+
+  public async findByNombre(nombre: string): Promise<Sucursal | null> {
+    // Búsqueda case-insensitive: "Sucursal Norte" == "sucursal norte"
+    const [row] = await this.db
+      .select()
+      .from(sucursales)
+      .where(sql`LOWER(${sucursales.nombre}) = LOWER(${nombre})`)
       .limit(1);
     return row ? sucursalFromRow(row) : null;
   }
