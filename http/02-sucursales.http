@@ -1,0 +1,255 @@
+# ==============================================================================
+# MÓDULO: ADMINISTRACIÓN - GESTIÓN DE SUCURSALES
+# Requiere: REST Client (extensión VS Code)
+# Roles requeridos: super-admin (permiso: administracion:gestionar-sucursales)
+# Base URL: http://localhost:8017
+# ==============================================================================
+#
+# IMPORTANTE: Ejecuta primero el request "Login" para obtener el token.
+# El token se guarda automáticamente en la variable {{login.response.body.accessToken}}
+#
+# Roles en la BD:
+#   1 = super-admin
+#   2 = admin-sucursal
+#   3 = cajero-vendedor
+#   4 = admin-logistica
+# ==============================================================================
+
+@baseUrl = http://localhost:8017
+
+# ------------------------------------------------------------------------------
+# SETUP: Login como Super Admin
+# Ejecutar PRIMERO antes de cualquier otro request de este archivo
+# ------------------------------------------------------------------------------
+
+### Login como Super Admin
+# @name login
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "superadmin@warengine.local",
+  "password": "Warengine.Admin.2026!"
+}
+
+###
+
+# ==============================================================================
+# RF-ADM-C1: LISTAR SUCURSALES
+# ==============================================================================
+
+# ------------------------------------------------------------------------------
+# UC-SUC-01: Listar todas las sucursales activas e inactivas
+# Resultado esperado: 200 OK con array de sucursales
+# Verificado: [{id:1, nombre:"Sede Principal (Sistema)", isActive:true}]
+# ------------------------------------------------------------------------------
+
+### Listar todas las sucursales
+GET {{baseUrl}}/administracion/sucursales
+Authorization: Bearer {{login.response.body.accessToken}}
+
+###
+
+# ==============================================================================
+# RF-ADM-C2: CREAR SUCURSAL
+# ==============================================================================
+
+# ------------------------------------------------------------------------------
+# UC-SUC-02: Crear sucursal con todos los campos
+# Resultado esperado: 201 Created con el objeto creado
+# Verificado: {"id":2, "nombre":"Sucursal Norte", "isActive":true}
+# ------------------------------------------------------------------------------
+
+### Crear sucursal - caso completo
+# @name crearSucursal
+POST {{baseUrl}}/administracion/sucursales
+Authorization: Bearer {{login.response.body.accessToken}}
+Content-Type: application/json
+
+{
+  "nombre": "Sucursal Norte",
+  "direccion": "Calle 170 # 15-20, Bogotá",
+  "contacto": "+57 300 1234567"
+}
+
+###
+
+# ------------------------------------------------------------------------------
+# UC-SUC-03: Crear sucursal solo con el nombre (campos opcionales omitidos)
+# Resultado esperado: 201 Created
+# ------------------------------------------------------------------------------
+
+### Crear sucursal - solo nombre (campos opcionales omitidos)
+POST {{baseUrl}}/administracion/sucursales
+Authorization: Bearer {{login.response.body.accessToken}}
+Content-Type: application/json
+
+{
+  "nombre": "Sucursal Mínima"
+}
+
+###
+
+# ==============================================================================
+# RF-ADM-C3: EDITAR SUCURSAL
+# ==============================================================================
+
+# ------------------------------------------------------------------------------
+# UC-SUC-04: Editar nombre, dirección y contacto de una sucursal existente
+# Reemplaza {{crearSucursal.response.body.id}} con el ID retornado por UC-SUC-02
+# Resultado esperado: 200 OK con datos actualizados
+# Verificado: {"id":2, "nombre":"Sucursal Norte Actualizada", ...}
+# ------------------------------------------------------------------------------
+
+### Editar sucursal - actualizar nombre y contacto
+PUT {{baseUrl}}/administracion/sucursales/{{crearSucursal.response.body.id}}
+Authorization: Bearer {{login.response.body.accessToken}}
+Content-Type: application/json
+
+{
+  "nombre": "Sucursal Norte Actualizada",
+  "contacto": "norte@warengine.local",
+  "isActive": true
+}
+
+###
+
+# ------------------------------------------------------------------------------
+# UC-SUC-05: Desactivar una sucursal (isActive: false)
+# Resultado esperado: 200 OK con isActive: false
+# ------------------------------------------------------------------------------
+
+### Desactivar sucursal
+PUT {{baseUrl}}/administracion/sucursales/{{crearSucursal.response.body.id}}
+Authorization: Bearer {{login.response.body.accessToken}}
+Content-Type: application/json
+
+{
+  "isActive": false
+}
+
+###
+
+# ------------------------------------------------------------------------------
+# UC-SUC-06: Reactivar una sucursal (isActive: true)
+# Resultado esperado: 200 OK con isActive: true
+# ------------------------------------------------------------------------------
+
+### Reactivar sucursal
+PUT {{baseUrl}}/administracion/sucursales/{{crearSucursal.response.body.id}}
+Authorization: Bearer {{login.response.body.accessToken}}
+Content-Type: application/json
+
+{
+  "isActive": true
+}
+
+###
+
+# ==============================================================================
+# CASOS DE ERROR ESPERADOS
+# ==============================================================================
+
+# ------------------------------------------------------------------------------
+# UC-SUC-ERR-01: Crear sucursal sin nombre → 400 VALIDATION_ERROR
+# ------------------------------------------------------------------------------
+
+### Error: crear sucursal sin nombre obligatorio
+POST {{baseUrl}}/administracion/sucursales
+Authorization: Bearer {{login.response.body.accessToken}}
+Content-Type: application/json
+
+{
+  "direccion": "Calle sin nombre"
+}
+
+###
+
+# ------------------------------------------------------------------------------
+# UC-SUC-ERR-02: Crear sucursal con nombre demasiado corto (< 3 chars) → 400
+# ------------------------------------------------------------------------------
+
+### Error: nombre demasiado corto
+POST {{baseUrl}}/administracion/sucursales
+Authorization: Bearer {{login.response.body.accessToken}}
+Content-Type: application/json
+
+{
+  "nombre": "AB"
+}
+
+###
+
+# ------------------------------------------------------------------------------
+# UC-SUC-ERR-03: Crear sucursal con nombre duplicado → 400 SUCURSAL_DUPLICADA
+# (Regla de negocio: no pueden existir dos sucursales con el mismo nombre)
+# Ejecuta UC-SUC-02 primero, luego envía el mismo nombre → debe fallar
+# Verificado: 400 {"error":"SUCURSAL_DUPLICADA"}
+# ------------------------------------------------------------------------------
+
+### Error (regla de negocio): nombre exacto duplicado
+POST {{baseUrl}}/administracion/sucursales
+Authorization: Bearer {{login.response.body.accessToken}}
+Content-Type: application/json
+
+{
+  "nombre": "Sucursal Norte",
+  "direccion": "Otra dirección"
+}
+
+###
+
+# ------------------------------------------------------------------------------
+# UC-SUC-ERR-04: Nombre duplicado en diferente capitalización → 400
+# La validación es case-insensitive: "sucursal norte" == "SUCURSAL NORTE"
+# Verificado: 400 {"error":"SUCURSAL_DUPLICADA"}
+# ------------------------------------------------------------------------------
+
+### Error (regla de negocio): mismo nombre en mayúsculas (case-insensitive)
+POST {{baseUrl}}/administracion/sucursales
+Authorization: Bearer {{login.response.body.accessToken}}
+Content-Type: application/json
+
+{
+  "nombre": "SUCURSAL NORTE"
+}
+
+###
+
+# ------------------------------------------------------------------------------
+# UC-SUC-ERR-05: Editar sucursal con body vacío → 400
+# (refine: debe enviar al menos un campo)
+# ------------------------------------------------------------------------------
+
+### Error: editar sin enviar ningún campo
+PUT {{baseUrl}}/administracion/sucursales/1
+Authorization: Bearer {{login.response.body.accessToken}}
+Content-Type: application/json
+
+{}
+
+###
+
+# ------------------------------------------------------------------------------
+# UC-SUC-ERR-06: Editar sucursal con ID inválido → 400
+# ------------------------------------------------------------------------------
+
+### Error: ID de sucursal inválido
+PUT {{baseUrl}}/administracion/sucursales/abc
+Authorization: Bearer {{login.response.body.accessToken}}
+Content-Type: application/json
+
+{
+  "nombre": "Nombre Nuevo"
+}
+
+###
+
+# ------------------------------------------------------------------------------
+# UC-SUC-ERR-07: Acceder sin token → 401 Unauthorized
+# ------------------------------------------------------------------------------
+
+### Error: sin token de autorización
+GET {{baseUrl}}/administracion/sucursales
+
+###
