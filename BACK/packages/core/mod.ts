@@ -41,4 +41,26 @@ export * from './src/modules/administracion/application/use-cases/CrearUsuarioUs
 export * from './src/modules/administracion/application/use-cases/CambiarRolUsuarioUseCase.ts';
 export * from './src/modules/administracion/application/use-cases/CambiarEstadoUsuarioUseCase.ts';
 export * from './src/modules/administracion/application/use-cases/ListarUsuariosUseCase.ts';
+
+// ─── Módulo: Inventario ─────────────────────────────────────────────────────
+export * from './src/modules/inventario/domain/entities/Categoria.ts';
+export * from './src/modules/inventario/domain/entities/Proveedor.ts';
+export * from './src/modules/inventario/domain/errors/InventarioErrors.ts';
+export * from './src/modules/inventario/domain/repositories/ICategoriaRepository.ts';
+export * from './src/modules/inventario/domain/repositories/IProveedorRepository.ts';
+export * from './src/modules/inventario/application/ports/auditoria.service.ts';
+export * from './src/modules/inventario/application/use-cases/ListarCategoriasUseCase.ts';
+export * from './src/modules/inventario/application/use-cases/ObtenerCategoriaPorIdUseCase.ts';
+export * from './src/modules/inventario/application/use-cases/CrearCategoriaUseCase.ts';
+export * from './src/modules/inventario/application/use-cases/EditarCategoriaUseCase.ts';
+export * from './src/modules/inventario/application/use-cases/InactivarCategoriaUseCase.ts';
+export * from './src/modules/inventario/application/use-cases/ReactivarCategoriaUseCase.ts';
+export * from './src/modules/inventario/application/use-cases/CambiarEstadoCategoriaUseCase.ts';
+export * from './src/modules/inventario/application/use-cases/ListarProveedoresUseCase.ts';
+export * from './src/modules/inventario/application/use-cases/ObtenerProveedorPorIdUseCase.ts';
+export * from './src/modules/inventario/application/use-cases/CrearProveedorUseCase.ts';
+export * from './src/modules/inventario/application/use-cases/EditarProveedorUseCase.ts';
+export * from './src/modules/inventario/application/use-cases/InactivarProveedorUseCase.ts';
+export * from './src/modules/inventario/application/use-cases/ReactivarProveedorUseCase.ts';
+export * from './src/modules/inventario/application/use-cases/CambiarEstadoProveedorUseCase.ts';
 export * from './src/modules/administracion/application/use-cases/ConsultarAuditoriaUseCase.ts';

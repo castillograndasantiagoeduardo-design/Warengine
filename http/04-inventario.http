@@ -1,0 +1,248 @@
+# ==============================================================================
+# MÓDULO: INVENTARIO - CATEGORÍAS (RF-ADM-B5) Y PROVEEDORES (RF-ADM-B6)
+# Requiere: REST Client (extensión VS Code)
+# Roles requeridos:
+#   - Lectura: super-admin, admin-sucursal, cajero-vendedor (inventario:leer)
+#   - Escritura: super-admin, admin-sucursal (inventario:escribir)
+# Base URL: http://localhost:8017
+# ==============================================================================
+
+@baseUrl = http://localhost:8017
+
+# ------------------------------------------------------------------------------
+# SETUP: Login como Super Admin / Admin Sucursal (caso feliz)
+# ------------------------------------------------------------------------------
+
+### Login Superadmin
+# @name login
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "superadmin@warengine.local",
+  "password": "Warengine.Admin.2026!"
+}
+
+###
+
+# ==============================================================================
+# RF-ADM-B5: GESTIÓN DE CATEGORÍAS DE PRODUCTO
+# ==============================================================================
+
+### UC-CAT-01: Listar todas las categorías (con paginación por defecto)
+# Esperado: 200 OK con { items: [], total: N, page: 1, limit: 10, totalPages: M }
+GET {{baseUrl}}/inventario/categorias
+Authorization: Bearer {{login.response.body.accessToken}}
+
+###
+
+### UC-CAT-02: Crear nueva categoría
+# Esperado: 201 Created con { id, nombre, isActive: true }
+# @name crearCategoria
+POST {{baseUrl}}/inventario/categorias
+Authorization: Bearer {{login.response.body.accessToken}}
+Content-Type: application/json
+
+{
+  "nombre": "Abarrotes y Granos"
+}
+
+###
+
+### UC-CAT-03: Obtener categoría por ID
+# Esperado: 200 OK con { id, nombre, isActive }
+GET {{baseUrl}}/inventario/categorias/{{crearCategoria.response.body.id}}
+Authorization: Bearer {{login.response.body.accessToken}}
+
+###
+
+### UC-CAT-04: Listar categorías con búsqueda y filtro de estado activo
+# Esperado: 200 OK
+GET {{baseUrl}}/inventario/categorias?busqueda=Abarrotes&isActive=true&page=1&limit=5
+Authorization: Bearer {{login.response.body.accessToken}}
+
+###
+
+### UC-CAT-05: Editar categoría
+# Esperado: 200 OK con categoría actualizada
+PUT {{baseUrl}}/inventario/categorias/{{crearCategoria.response.body.id}}
+Authorization: Bearer {{login.response.body.accessToken}}
+Content-Type: application/json
+
+{
+  "nombre": "Abarrotes, Granos y Semillas"
+}
+
+###
+
+### UC-CAT-06: Inactivar categoría (borrado lógico: is_active = 0)
+# Esperado: 200 OK con isActive: false
+PUT {{baseUrl}}/inventario/categorias/{{crearCategoria.response.body.id}}/estado
+Authorization: Bearer {{login.response.body.accessToken}}
+Content-Type: application/json
+
+{
+  "isActive": false
+}
+
+###
+
+### UC-CAT-07: Reactivar categoría (is_active = 1)
+# Esperado: 200 OK con isActive: true
+PUT {{baseUrl}}/inventario/categorias/{{crearCategoria.response.body.id}}/estado
+Authorization: Bearer {{login.response.body.accessToken}}
+Content-Type: application/json
+
+{
+  "isActive": true
+}
+
+###
+
+# ==============================================================================
+# RF-ADM-B6: GESTIÓN DE PROVEEDORES
+# ==============================================================================
+
+### UC-PROV-01: Listar proveedores con paginación
+# Esperado: 200 OK con { items: [], total: N, page: 1, limit: 10, totalPages: M }
+GET {{baseUrl}}/inventario/proveedores
+Authorization: Bearer {{login.response.body.accessToken}}
+
+###
+
+### UC-PROV-02: Crear proveedor
+# Esperado: 201 Created con { id, nombre, contacto, isActive: true }
+# @name crearProveedor
+POST {{baseUrl}}/inventario/proveedores
+Authorization: Bearer {{login.response.body.accessToken}}
+Content-Type: application/json
+
+{
+  "nombre": "Molinos del Oriente S.A.",
+  "contacto": "ventas@molinosoriente.com / Tel: 601 2345678"
+}
+
+###
+
+### UC-PROV-03: Obtener proveedor por ID
+# Esperado: 200 OK con { id, nombre, contacto, isActive }
+GET {{baseUrl}}/inventario/proveedores/{{crearProveedor.response.body.id}}
+Authorization: Bearer {{login.response.body.accessToken}}
+
+###
+
+### UC-PROV-04: Listar proveedores con búsqueda por nombre y activos
+# Esperado: 200 OK
+GET {{baseUrl}}/inventario/proveedores?busqueda=Molinos&isActive=true&page=1&limit=5
+Authorization: Bearer {{login.response.body.accessToken}}
+
+###
+
+### UC-PROV-05: Editar proveedor
+# Esperado: 200 OK con proveedor actualizado
+PUT {{baseUrl}}/inventario/proveedores/{{crearProveedor.response.body.id}}
+Authorization: Bearer {{login.response.body.accessToken}}
+Content-Type: application/json
+
+{
+  "nombre": "Molinos del Oriente y Cía S.A.",
+  "contacto": "contacto@molinosoriente.com"
+}
+
+###
+
+### UC-PROV-06: Inactivar proveedor (borrado lógico: is_active = 0)
+# Esperado: 200 OK con isActive: false
+PUT {{baseUrl}}/inventario/proveedores/{{crearProveedor.response.body.id}}/estado
+Authorization: Bearer {{login.response.body.accessToken}}
+Content-Type: application/json
+
+{
+  "isActive": false
+}
+
+###
+
+### UC-PROV-07: Reactivar proveedor (is_active = 1)
+# Esperado: 200 OK con isActive: true
+PUT {{baseUrl}}/inventario/proveedores/{{crearProveedor.response.body.id}}/estado
+Authorization: Bearer {{login.response.body.accessToken}}
+Content-Type: application/json
+
+{
+  "isActive": true
+}
+
+###
+
+# ==============================================================================
+# CASOS DE ERROR LISTOS PARA EJECUTAR
+# ==============================================================================
+
+### ERR-01: Validación Zod - Crear categoría con nombre vacío
+# Esperado: 400 Bad Request
+POST {{baseUrl}}/inventario/categorias
+Authorization: Bearer {{login.response.body.accessToken}}
+Content-Type: application/json
+
+{
+  "nombre": ""
+}
+
+###
+
+### ERR-02: Not Found - Obtener categoría con ID que no existe
+# Esperado: 404 Not Found con code CATEGORIA_NO_ENCONTRADA
+GET {{baseUrl}}/inventario/categorias/888888
+Authorization: Bearer {{login.response.body.accessToken}}
+
+###
+
+### ERR-03: Validación Zod - Crear proveedor con nombre vacío
+# Esperado: 400 Bad Request
+POST {{baseUrl}}/inventario/proveedores
+Authorization: Bearer {{login.response.body.accessToken}}
+Content-Type: application/json
+
+{
+  "nombre": ""
+}
+
+###
+
+### ERR-04: Not Found - Obtener proveedor con ID que no existe
+# Esperado: 404 Not Found con code PROVEEDOR_NO_ENCONTRADO
+GET {{baseUrl}}/inventario/proveedores/888888
+Authorization: Bearer {{login.response.body.accessToken}}
+
+###
+
+### ERR-05: Unauthorized - Petición sin token de autenticación
+# Esperado: 401 Unauthorized
+GET {{baseUrl}}/inventario/categorias
+
+###
+
+### ERR-06: Setup Login Cajero/Vendedor para prueba 403
+# @name loginCajero
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "cajero.test@warengine.local",
+  "password": "Password.2026!"
+}
+
+###
+
+### ERR-07: Forbidden - Cajero intenta crear categoría (carece de permiso inventario:escribir)
+# Esperado: 403 Forbidden con code PERMISO_DENEGADO
+POST {{baseUrl}}/inventario/categorias
+Authorization: Bearer {{loginCajero.response.body.accessToken}}
+Content-Type: application/json
+
+{
+  "nombre": "Intento no autorizado"
+}
+
+###

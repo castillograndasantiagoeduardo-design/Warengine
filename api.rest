@@ -7,8 +7,9 @@
 #   http/01-autenticacion.http  — Login, renovar token, logout, verificar
 #   http/02-sucursales.http     — CRUD de sucursales (RF-ADM-C1, C2, C3)
 #   http/03-usuarios.http       — Gestión de usuarios (RF-ADM-C5, C6, C7, C8)
+#   http/04-inventario.http     — Gestión de categorías y proveedores (RF-ADM-B5, B6)
 #
-# ESTADO DE ENDPOINTS (probado 2026-10-05):
+# ESTADO DE ENDPOINTS (probado 2026-10-06):
 #   ✅ POST   /auth/login
 #   ✅ POST   /auth/renovar-token
 #   ✅ GET    /auth/verificar
@@ -22,6 +23,16 @@
 #   ✅ POST   /administracion/usuarios
 #   ✅ PUT    /administracion/usuarios/:id/rol
 #   ✅ PUT    /administracion/usuarios/:id/estado
+#   ✅ GET    /inventario/categorias
+#   ✅ GET    /inventario/categorias/:id
+#   ✅ POST   /inventario/categorias
+#   ✅ PUT    /inventario/categorias/:id
+#   ✅ PUT    /inventario/categorias/:id/estado
+#   ✅ GET    /inventario/proveedores
+#   ✅ GET    /inventario/proveedores/:id
+#   ✅ POST   /inventario/proveedores
+#   ✅ PUT    /inventario/proveedores/:id
+#   ✅ PUT    /inventario/proveedores/:id/estado
 # ==============================================================================
 
 @baseUrl = http://localhost:8017
@@ -186,3 +197,211 @@ Content-Type: application/json
 }
 
 ###
+
+# ==============================================================================
+# MÓDULO INVENTARIO - CATEGORÍAS DE PRODUCTO (RF-ADM-B5)
+# ==============================================================================
+
+### 16. Listar Categorías con paginación, búsqueda y filtro de estado (RF-ADM-B5)
+# Esperado: 200 OK con { items: [...], total, page, limit, totalPages }
+GET {{baseUrl}}/inventario/categorias?busqueda=Bebidas&isActive=true&page=1&limit=10
+Authorization: Bearer {{login.response.body.accessToken}}
+
+###
+
+### 17. Crear Categoría (RF-ADM-B5)
+# Esperado: 201 Created con { id, nombre, isActive: true }
+# @name crearCategoria
+POST {{baseUrl}}/inventario/categorias
+Authorization: Bearer {{login.response.body.accessToken}}
+Content-Type: application/json
+
+{
+  "nombre": "Bebidas Azucaradas y Refrescos"
+}
+
+###
+
+### 18. Obtener Categoría por ID (RF-ADM-B5)
+# Esperado: 200 OK con { id, nombre, isActive }
+GET {{baseUrl}}/inventario/categorias/{{crearCategoria.response.body.id}}
+Authorization: Bearer {{login.response.body.accessToken}}
+
+###
+
+### 19. Editar Categoría (RF-ADM-B5)
+# Esperado: 200 OK con la categoría modificada
+PUT {{baseUrl}}/inventario/categorias/{{crearCategoria.response.body.id}}
+Authorization: Bearer {{login.response.body.accessToken}}
+Content-Type: application/json
+
+{
+  "nombre": "Bebidas y Refrescos Embotellados"
+}
+
+###
+
+### 20. Inactivar Categoría (RF-ADM-B5)
+# Esperado: 200 OK con { id, nombre, isActive: false }
+PUT {{baseUrl}}/inventario/categorias/{{crearCategoria.response.body.id}}/estado
+Authorization: Bearer {{login.response.body.accessToken}}
+Content-Type: application/json
+
+{
+  "isActive": false
+}
+
+###
+
+### 21. Reactivar Categoría (RF-ADM-B5)
+# Esperado: 200 OK con { id, nombre, isActive: true }
+PUT {{baseUrl}}/inventario/categorias/{{crearCategoria.response.body.id}}/estado
+Authorization: Bearer {{login.response.body.accessToken}}
+Content-Type: application/json
+
+{
+  "isActive": true
+}
+
+###
+
+# ==============================================================================
+# MÓDULO INVENTARIO - PROVEEDORES (RF-ADM-B6)
+# ==============================================================================
+
+### 22. Listar Proveedores con paginación, búsqueda y filtro de estado (RF-ADM-B6)
+# Esperado: 200 OK con { items: [...], total, page, limit, totalPages }
+GET {{baseUrl}}/inventario/proveedores?busqueda=Lácteos&isActive=true&page=1&limit=10
+Authorization: Bearer {{login.response.body.accessToken}}
+
+###
+
+### 23. Crear Proveedor (RF-ADM-B6)
+# Esperado: 201 Created con { id, nombre, contacto, isActive: true }
+# @name crearProveedor
+POST {{baseUrl}}/inventario/proveedores
+Authorization: Bearer {{login.response.body.accessToken}}
+Content-Type: application/json
+
+{
+  "nombre": "Distribuidora Lácteos del Campo S.A.S.",
+  "contacto": "ventas@lacteosdelcampo.com / +57 310 9876543"
+}
+
+###
+
+### 24. Obtener Proveedor por ID (RF-ADM-B6)
+# Esperado: 200 OK con { id, nombre, contacto, isActive }
+GET {{baseUrl}}/inventario/proveedores/{{crearProveedor.response.body.id}}
+Authorization: Bearer {{login.response.body.accessToken}}
+
+###
+
+### 25. Editar Proveedor (RF-ADM-B6)
+# Esperado: 200 OK con el proveedor modificado
+PUT {{baseUrl}}/inventario/proveedores/{{crearProveedor.response.body.id}}
+Authorization: Bearer {{login.response.body.accessToken}}
+Content-Type: application/json
+
+{
+  "nombre": "Distribuidora Lácteos del Campo Colombia",
+  "contacto": "pedidos@lacteosdelcampo.com"
+}
+
+###
+
+### 26. Inactivar Proveedor (RF-ADM-B6)
+# Esperado: 200 OK con { id, nombre, contacto, isActive: false }
+PUT {{baseUrl}}/inventario/proveedores/{{crearProveedor.response.body.id}}/estado
+Authorization: Bearer {{login.response.body.accessToken}}
+Content-Type: application/json
+
+{
+  "isActive": false
+}
+
+###
+
+### 27. Reactivar Proveedor (RF-ADM-B6)
+# Esperado: 200 OK con { id, nombre, contacto, isActive: true }
+PUT {{baseUrl}}/inventario/proveedores/{{crearProveedor.response.body.id}}/estado
+Authorization: Bearer {{login.response.body.accessToken}}
+Content-Type: application/json
+
+{
+  "isActive": true
+}
+
+###
+
+# ==============================================================================
+# CASOS DE ERROR LISTOS PARA EJECUTAR (VALIDACIONES Y PERMISOS)
+# ==============================================================================
+
+### 28. Error: Crear Categoría con cuerpo inválido (nombre vacío - Validación Zod)
+# Esperado: 400 Bad Request con { error: "VALIDATION_ERROR", issues: [...] }
+POST {{baseUrl}}/inventario/categorias
+Authorization: Bearer {{login.response.body.accessToken}}
+Content-Type: application/json
+
+{
+  "nombre": ""
+}
+
+###
+
+### 29. Error: Obtener Categoría con ID inexistente
+# Esperado: 404 Not Found con { error: "CATEGORIA_NO_ENCONTRADA", message: "La categoría no existe." }
+GET {{baseUrl}}/inventario/categorias/999999
+Authorization: Bearer {{login.response.body.accessToken}}
+
+###
+
+### 30. Error: Crear Proveedor con cuerpo inválido (nombre vacío - Validación Zod)
+# Esperado: 400 Bad Request con { error: "VALIDATION_ERROR", issues: [...] }
+POST {{baseUrl}}/inventario/proveedores
+Authorization: Bearer {{login.response.body.accessToken}}
+Content-Type: application/json
+
+{
+  "nombre": ""
+}
+
+###
+
+### 31. Error: Obtener Proveedor con ID inexistente
+# Esperado: 404 Not Found con { error: "PROVEEDOR_NO_ENCONTRADO", message: "El proveedor no existe." }
+GET {{baseUrl}}/inventario/proveedores/999999
+Authorization: Bearer {{login.response.body.accessToken}}
+
+###
+
+### 32. Error: Petición sin autenticación (Falta cabecera Authorization)
+# Esperado: 401 Unauthorized con { error: "UNAUTHORIZED", message: "Falta token de autorización" }
+GET {{baseUrl}}/inventario/categorias
+
+###
+
+### 33. Setup para prueba 403: Login Cajero/Vendedor (sin permiso inventario:escribir)
+# @name loginCajero
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "cajero.test@warengine.local",
+  "password": "Password.2026!"
+}
+
+###
+
+### 34. Error: Intento de escritura con rol sin permiso (Cajero/Vendedor en POST /inventario/categorias)
+# Esperado: 403 Forbidden con { error: "PERMISO_DENEGADO", message: "No tienes permiso para realizar esta acción." }
+POST {{baseUrl}}/inventario/categorias
+Authorization: Bearer {{loginCajero.response.body.accessToken}}
+Content-Type: application/json
+
+{
+  "nombre": "Categoría Intento Cajero"
+}
+
+###

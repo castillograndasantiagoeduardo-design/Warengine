@@ -20,7 +20,6 @@
 #   1 = super-admin
 #   2 = admin-sucursal
 #   3 = cajero-vendedor
-#   4 = admin-logistica
 #
 # Tipos de documento válidos: CC, CE
 # ==============================================================================
@@ -170,17 +169,17 @@ Content-Type: application/json
 ###
 
 # ------------------------------------------------------------------------------
-# UC-USR-08: Cambiar rol de usuario a admin-logistica (rolId: 4)
-# Resultado esperado: 200 OK con rolNombre: "admin-logistica"
+# UC-USR-08: Cambiar rol de usuario nuevamente a admin-sucursal (rolId: 2)
+# Resultado esperado: 200 OK con rolNombre: "admin-sucursal"
 # ------------------------------------------------------------------------------
 
-### Cambiar rol a admin-logistica (rolId: 4)
+### Cambiar rol de regreso a admin-sucursal (rolId: 2)
 PUT {{baseUrl}}/administracion/usuarios/{{crearUsuario.response.body.id}}/rol
 Authorization: Bearer {{login.response.body.accessToken}}
 Content-Type: application/json
 
 {
-  "rolId": 4
+  "rolId": 2
 }
 
 ###
