@@ -1,5 +1,11 @@
 import { Result, DomainError } from '@warengine/shared-kernel';
 import { IGestionUsuarioRepository } from '../../domain/repositories/IGestionUsuarioRepository.ts';
+import { IAuditor } from '../../domain/repositories/IAuditoriaRepository.ts';
+import {
+  ACCIONES_AUDITORIA,
+  ActorAuditoria,
+  ENTIDADES_AUDITORIA,
+} from '../../domain/entities/LogAuditoria.ts';
 import { UsuarioGestionado } from '../../domain/entities/UsuarioGestionado.ts';
 import {
   UsuarioNoEncontradoError,
@@ -9,12 +15,16 @@ import {
 export interface CambiarEstadoUsuarioRequest {
   usuarioId: string;
   isActive: boolean;
+  actor: ActorAuditoria;
 }
 
 export type CambiarEstadoUsuarioResponse = Result<UsuarioGestionado, DomainError>;
 
 export class CambiarEstadoUsuarioUseCase {
-  constructor(private readonly usuarioRepository: IGestionUsuarioRepository) {}
+  constructor(
+    private readonly usuarioRepository: IGestionUsuarioRepository,
+    private readonly auditor: IAuditor,
+  ) {}
 
   public async execute(request: CambiarEstadoUsuarioRequest): Promise<CambiarEstadoUsuarioResponse> {
     const usuario = await this.usuarioRepository.findById(request.usuarioId);
@@ -28,6 +38,14 @@ export class CambiarEstadoUsuarioUseCase {
     }
 
     await this.usuarioRepository.actualizarEstado(usuario.id, request.isActive, new Date());
+
+    await this.auditor.registrar({
+      actor: request.actor,
+      accion: request.isActive ? ACCIONES_AUDITORIA.ACTIVAR : ACCIONES_AUDITORIA.INACTIVAR,
+      entidad: ENTIDADES_AUDITORIA.USUARIOS,
+      entidadId: usuario.id,
+      detalles: { email: usuario.email },
+    });
 
     const actualizado = await this.usuarioRepository.findById(usuario.id);
     return Result.ok(actualizado ?? usuario);

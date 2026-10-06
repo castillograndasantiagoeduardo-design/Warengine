@@ -2,6 +2,7 @@ import { crearSucursalSchema, editarSucursalSchema } from '@warengine/contracts'
 import { AppContainer } from '@warengine/composition';
 import { presentResult } from '../../presenters/result.presenter.ts';
 import { leerJson, safeHandler } from '../../utils/handler.ts';
+import { obtenerActor } from '../../utils/actor.ts';
 
 export function listarSucursalesController(container: AppContainer) {
   return safeHandler(async (c) =>
@@ -15,7 +16,10 @@ export function crearSucursalController(container: AppContainer) {
     if (!parsed.success) {
       return c.json({ error: 'VALIDATION_ERROR', issues: parsed.error.errors }, 400);
     }
-    const result = await container.administracion.crearSucursal.execute(parsed.data);
+    const result = await container.administracion.crearSucursal.execute({
+      ...parsed.data,
+      actor: obtenerActor(c),
+    });
     return presentResult(c, result, 201);
   });
 }
@@ -30,6 +34,9 @@ export function editarSucursalController(container: AppContainer) {
     if (!parsed.success) {
       return c.json({ error: 'VALIDATION_ERROR', issues: parsed.error.errors }, 400);
     }
-    return presentResult(c, await container.administracion.editarSucursal.execute({ id, ...parsed.data }));
+    return presentResult(
+      c,
+      await container.administracion.editarSucursal.execute({ id, ...parsed.data, actor: obtenerActor(c) }),
+    );
   });
 }

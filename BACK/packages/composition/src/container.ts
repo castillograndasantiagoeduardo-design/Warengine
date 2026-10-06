@@ -15,6 +15,7 @@ import { DrizzleUsuarioRepository } from '../../database/src/repositories/autent
 import { DrizzleRolRepository } from '../../database/src/repositories/autenticacion/drizzle-rol.repository.ts';
 import { DrizzleRefreshTokenRepository } from '../../database/src/repositories/autenticacion/drizzle-refresh-token.repository.ts';
 import { DrizzleSucursalRepository } from '../../database/src/repositories/administracion/drizzle-sucursal.repository.ts';
+import { DrizzleAuditoriaRepository } from '../../database/src/repositories/administracion/drizzle-auditoria.repository.ts';
 import { DrizzleGestionUsuarioRepository } from '../../database/src/repositories/administracion/drizzle-gestion-usuario.repository.ts';
 
 import { JwtTokenService } from '../../platform/src/jwt/jwt-token-service.ts';
@@ -31,6 +32,7 @@ import {
   CrearUsuarioUseCase,
   CambiarRolUsuarioUseCase,
   CambiarEstadoUsuarioUseCase,
+  ConsultarAuditoriaUseCase,
 } from '@warengine/core';
 
 export interface AppContainer {
@@ -47,6 +49,7 @@ export interface AppContainer {
     crearUsuario: CrearUsuarioUseCase;
     cambiarRolUsuario: CambiarRolUsuarioUseCase;
     cambiarEstadoUsuario: CambiarEstadoUsuarioUseCase;
+    consultarAuditoria: ConsultarAuditoriaUseCase;
   };
 }
 
@@ -59,7 +62,7 @@ export function createContainer(_env?: Record<string, string>): AppContainer {
   const refreshTokenRepository = new DrizzleRefreshTokenRepository(db);
   const sucursalRepository = new DrizzleSucursalRepository(db);
   const gestionUsuarioRepository = new DrizzleGestionUsuarioRepository(db);
-
+  const auditoriaRepository = new DrizzleAuditoriaRepository(db);
   // 2. Instanciar Servicios Técnicos
   const tokenService = new JwtTokenService(refreshTokenRepository);
   const passwordHasher = new Argon2PasswordHasher();
@@ -70,17 +73,25 @@ export function createContainer(_env?: Record<string, string>): AppContainer {
   const renovarTokenUseCase = new RenovarTokenUseCase(tokenService, usuarioRepository);
 
   const listarSucursalesUseCase = new ListarSucursalesUseCase(sucursalRepository);
-  const crearSucursalUseCase = new CrearSucursalUseCase(sucursalRepository);
-  const editarSucursalUseCase = new EditarSucursalUseCase(sucursalRepository);
+  const crearSucursalUseCase = new CrearSucursalUseCase(sucursalRepository, auditoriaRepository);
+    const editarSucursalUseCase = new EditarSucursalUseCase(sucursalRepository, auditoriaRepository);
 
   const listarUsuariosUseCase = new ListarUsuariosUseCase(gestionUsuarioRepository);
   const crearUsuarioUseCase = new CrearUsuarioUseCase(
     gestionUsuarioRepository,
     sucursalRepository,
     passwordHasher,
+    auditoriaRepository,
   );
-  const cambiarRolUsuarioUseCase = new CambiarRolUsuarioUseCase(gestionUsuarioRepository);
-  const cambiarEstadoUsuarioUseCase = new CambiarEstadoUsuarioUseCase(gestionUsuarioRepository);
+  const cambiarRolUsuarioUseCase = new CambiarRolUsuarioUseCase(
+    gestionUsuarioRepository,
+    auditoriaRepository,
+  );
+ const cambiarEstadoUsuarioUseCase = new CambiarEstadoUsuarioUseCase(
+    gestionUsuarioRepository,
+    auditoriaRepository,
+  );
+  const consultarAuditoriaUseCase = new ConsultarAuditoriaUseCase(auditoriaRepository);
 
   return {
     autenticacion: {
@@ -96,6 +107,7 @@ export function createContainer(_env?: Record<string, string>): AppContainer {
       crearUsuario: crearUsuarioUseCase,
       cambiarRolUsuario: cambiarRolUsuarioUseCase,
       cambiarEstadoUsuario: cambiarEstadoUsuarioUseCase,
+      consultarAuditoria: consultarAuditoriaUseCase,
     },
   };
 }
