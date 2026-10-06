@@ -1,0 +1,64 @@
+@baseUrl = http://localhost:8017
+
+### Login como Super Admin
+# @name login
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "superadmin@warengine.local",
+  "password": "Warengine.Admin.2026!"
+}
+
+###
+
+### Generar un log: crear sucursal (esperado: 201)
+POST {{baseUrl}}/administracion/sucursales
+Authorization: Bearer {{login.response.body.accessToken}}
+Content-Type: application/json
+
+{ "nombre": "Sucursal Auditoría Test", "direccion": "Calle 10 # 5-20" }
+
+###
+
+### Generar un log: editar sucursal (cambia el 2 por el id creado; esperado: 200)
+PUT {{baseUrl}}/administracion/sucursales/2
+Authorization: Bearer {{login.response.body.accessToken}}
+Content-Type: application/json
+
+{ "direccion": "Carrera 7 # 12-30" }
+
+###
+
+### Últimos registros (esperado: 200 con items, total, pagina, limite, totalPaginas)
+GET {{baseUrl}}/administracion/auditoria
+Authorization: Bearer {{login.response.body.accessToken}}
+
+###
+
+### Filtrar por acción
+GET {{baseUrl}}/administracion/auditoria?accion=editar
+Authorization: Bearer {{login.response.body.accessToken}}
+
+###
+
+### Filtrar por entidad y fechas (ajusta a hoy)
+GET {{baseUrl}}/administracion/auditoria?entidad=sucursales&desde=2026-10-01&hasta=2026-10-31
+Authorization: Bearer {{login.response.body.accessToken}}
+
+###
+
+### Error: fecha inválida (esperado: 400 VALIDATION_ERROR)
+GET {{baseUrl}}/administracion/auditoria?desde=ayer
+Authorization: Bearer {{login.response.body.accessToken}}
+
+###
+
+### Error: desde > hasta (esperado: 400 FILTRO_AUDITORIA_INVALIDO)
+GET {{baseUrl}}/administracion/auditoria?desde=2026-10-31&hasta=2026-10-01
+Authorization: Bearer {{login.response.body.accessToken}}
+
+###
+
+### Error: sin token (esperado: 401)
+GET {{baseUrl}}/administracion/auditoria
