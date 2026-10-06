@@ -5,13 +5,13 @@ import {
   crearSucursalController,
   editarSucursalController,
   listarSucursalesController,
-} from '../controllers/administracion/sucursal.controllers.ts';
+} from '../controllers/administracion/sucursal.controller.ts';
 import {
   cambiarEstadoUsuarioController,
   cambiarRolUsuarioController,
   crearUsuarioController,
   listarUsuariosController,
-} from '../controllers/administracion/usuario.controllers.ts';
+} from '../controllers/administracion/usuario.controller.ts';
 
 // Códigos tal como están en la tabla `permisos` (seed). Solo super-admin los tiene.
 const PERMISO_SUCURSALES = 'administracion:gestionar-sucursales';

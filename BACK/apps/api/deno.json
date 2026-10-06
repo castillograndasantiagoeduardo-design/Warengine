@@ -1,3 +1,4 @@
 {
-  "imports": {}
+  "name": "@warengine/api",
+  "exports": "./src/main.ts"
 }

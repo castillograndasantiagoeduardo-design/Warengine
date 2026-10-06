@@ -1,3 +1,4 @@
 {
-  "imports": {}
+  "name": "@warengine/mcp-server",
+  "exports": "./src/main.ts"
 }
