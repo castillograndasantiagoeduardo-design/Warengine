@@ -2,6 +2,12 @@ import { Result, DomainError } from '@warengine/shared-kernel';
 import { IPasswordService } from '../../../autenticacion/domain/services/IPasswordService.ts';
 import { ISucursalRepository } from '../../domain/repositories/ISucursalRepository.ts';
 import { IGestionUsuarioRepository } from '../../domain/repositories/IGestionUsuarioRepository.ts';
+import { IAuditor } from '../../domain/repositories/IAuditoriaRepository.ts';
+import {
+  ACCIONES_AUDITORIA,
+  ActorAuditoria,
+  ENTIDADES_AUDITORIA,
+} from '../../domain/entities/LogAuditoria.ts';
 import { UsuarioGestionado } from '../../domain/entities/UsuarioGestionado.ts';
 import {
   SucursalNoEncontradaError,
@@ -20,6 +26,7 @@ export interface CrearUsuarioRequest {
   rolId: number;
   sucursalId: number;
   cargo?: string;
+  actor: ActorAuditoria;
 }
 
 export type CrearUsuarioResponse = Result<UsuarioGestionado, DomainError>;
@@ -29,6 +36,7 @@ export class CrearUsuarioUseCase {
     private readonly usuarioRepository: IGestionUsuarioRepository,
     private readonly sucursalRepository: ISucursalRepository,
     private readonly passwordService: IPasswordService,
+    private readonly auditor: IAuditor,
   ) {}
 
   public async execute(request: CrearUsuarioRequest): Promise<CrearUsuarioResponse> {
@@ -57,6 +65,19 @@ export class CrearUsuarioUseCase {
       email: request.email,
       passwordHash,
       rolId: request.rolId,
+    });
+
+    // Nunca se registra la contraseña, el hash ni el número de documento.
+    await this.auditor.registrar({
+      actor: request.actor,
+      accion: ACCIONES_AUDITORIA.CREAR,
+      entidad: ENTIDADES_AUDITORIA.USUARIOS,
+      entidadId: creado.id,
+      detalles: {
+        email: creado.email,
+        rolId: creado.rolId,
+        sucursalId: creado.sucursalId,
+      },
     });
 
     return Result.ok(creado);

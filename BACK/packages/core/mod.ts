@@ -29,9 +29,11 @@ export * from './src/modules/autenticacion/application/use-cases/ValidarPermisoU
 // ─── Módulo: Administración ─────────────────────────────────────────────────
 export * from './src/modules/administracion/domain/entities/Sucursal.ts';
 export * from './src/modules/administracion/domain/entities/UsuarioGestionado.ts';
+export * from './src/modules/administracion/domain/entities/LogAuditoria.ts';
 export * from './src/modules/administracion/domain/errors/AdministracionErrors.ts';
 export * from './src/modules/administracion/domain/repositories/ISucursalRepository.ts';
 export * from './src/modules/administracion/domain/repositories/IGestionUsuarioRepository.ts';
+export * from './src/modules/administracion/domain/repositories/IAuditoriaRepository.ts';
 export * from './src/modules/administracion/application/use-cases/CrearSucursalUseCase.ts';
 export * from './src/modules/administracion/application/use-cases/EditarSucursalUseCase.ts';
 export * from './src/modules/administracion/application/use-cases/ListarSucursalesUseCase.ts';
@@ -61,3 +63,4 @@ export * from './src/modules/inventario/application/use-cases/EditarProveedorUse
 export * from './src/modules/inventario/application/use-cases/InactivarProveedorUseCase.ts';
 export * from './src/modules/inventario/application/use-cases/ReactivarProveedorUseCase.ts';
 export * from './src/modules/inventario/application/use-cases/CambiarEstadoProveedorUseCase.ts';
+export * from './src/modules/administracion/application/use-cases/ConsultarAuditoriaUseCase.ts';
