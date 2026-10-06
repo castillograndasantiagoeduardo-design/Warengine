@@ -1,6 +1,6 @@
 import { type Database } from '../client.ts';
-import { permisos, rol_permisos, roles } from '../schema/autenticacion.schema.ts';
-import { sql } from 'drizzle-orm';
+import { permisos, rol_permisos, roles, usuarios } from '../schema/autenticacion.schema.ts';
+import { eq, sql } from 'drizzle-orm';
 
 const ROLES = [
   {
@@ -10,11 +10,6 @@ const ROLES = [
   },
   { id_rol: 2, nombre: 'admin-sucursal', descripcion: 'Administrador de Almacén y de Sucursal' },
   { id_rol: 3, nombre: 'cajero-vendedor', descripcion: 'Cajero y Vendedor B2B' },
-  {
-    id_rol: 4,
-    nombre: 'admin-logistica',
-    descripcion: 'Administrador de Logística y activos fijos',
-  },
 ];
 
 const PERMISOS = [
@@ -221,17 +216,34 @@ const ASIGNACIONES: Record<string, string[]> = {
     'mcp:consultar',
     'mcp:ejecutar-herramientas',
   ],
-  'admin-logistica': [
-    ...PERMISOS_LOGISTICA,
-    // Opcionales, según lo que necesite este rol:
-    // 'inventario:leer',   // ver stock y catálogo
-    // 'mcp:consultar',     // usar el asistente IA
-  ],
   'super-admin': PERMISOS.map((p) => p.codigo),
 };
 
 export async function seedAutenticacion(db: Database) {
-  // 1. Roles
+  // 1. Limpieza preventiva del rol obsoleto 'admin-logistica' si existiera en la BD
+  const rolesExistentes = await db.select().from(roles);
+  const rolLogistica = rolesExistentes.find((r) => r.nombre === 'admin-logistica');
+  const rolAdminSucursal = rolesExistentes.find((r) => r.nombre === 'admin-sucursal');
+
+  if (rolLogistica) {
+    if (rolAdminSucursal) {
+      // Migrar usuarios que pudieran tener admin-logistica hacia admin-sucursal para respetar FK restrict
+      await db
+        .update(usuarios)
+        .set({ rol_id: rolAdminSucursal.id_rol })
+        .where(eq(usuarios.rol_id, rolLogistica.id_rol));
+    }
+
+    // Eliminar asignaciones de permisos del rol obsoleto
+    await db.delete(rol_permisos).where(eq(rol_permisos.rol_id, rolLogistica.id_rol));
+
+    // Eliminar el rol de la BD
+    await db.delete(roles).where(eq(roles.id_rol, rolLogistica.id_rol));
+
+    console.log('🧹 Rol obsoleto "admin-logistica" eliminado y dependencias depuradas.');
+  }
+
+  // 2. Roles vigentes
   await db.insert(roles).values(ROLES).onDuplicateKeyUpdate({
     set: {
       nombre: sql`VALUES(nombre)`,
@@ -239,7 +251,7 @@ export async function seedAutenticacion(db: Database) {
     },
   });
 
-  // 2. Permisos
+  // 3. Permisos
   await db.insert(permisos).values(PERMISOS).onDuplicateKeyUpdate({
     set: {
       codigo: sql`VALUES(codigo)`,
@@ -248,15 +260,14 @@ export async function seedAutenticacion(db: Database) {
     },
   });
 
-  // 3. Obtener IDs mapeados (por si cambian)
+  // 4. Obtener IDs mapeados vigentes
   const rolesDb = await db.select().from(roles);
   const permisosDb = await db.select().from(permisos);
 
-  //Crea dos "diccionarios" (Map) en la memoria RAM
   const rolesMap = new Map(rolesDb.map((r) => [r.nombre, r.id_rol]));
   const permisosMap = new Map(permisosDb.map((p) => [p.codigo, p.id_permiso]));
 
-  // 4. Asignaciones (limpiar previas y volver a insertar para asegurar idempotencia)
+  // 5. Asignaciones de permisos (idempotente)
   const relaciones = [];
   for (const [nombreRol, codigosPermisos] of Object.entries(ASIGNACIONES)) {
     const rolId = rolesMap.get(nombreRol);
@@ -281,3 +292,4 @@ export async function seedAutenticacion(db: Database) {
 
   console.log('✅ Seed de Autenticación completado exitosamente.');
 }
+
