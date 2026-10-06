@@ -5,7 +5,7 @@
 > escribir cualquier línea de código. Si no entiendes algo de aquí, pregunta
 > antes de improvisar.
 >
-> **Última actualización:** 27 de septiembre de 2026 · **Script SQL de
+> **Última actualización:** 6 de octubre de 2026 · **Script SQL de
 > referencia:** `docs/database/WARENGINE_FULL_BD.sql` (versión 2: 25 triggers,
 > 18 CHECK). Si este documento y el script SQL se contradicen, **gana el
 > script**: corrige este archivo y avisa al equipo. Actualiza la fecha de arriba
@@ -109,14 +109,18 @@ flowchart TD
 |                           |                                                                                                                                                                                                                                                     |
 | ------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Propósito**             | Las reglas de negocio reales de Warengine, independientes de cómo se almacenen o transmitan.                                                                                                                                                        |
-| **Qué SÍ contiene**       | Entidades (`Factura`, `Producto`, `Activo`), value objects (`Sku`), invariantes del negocio y los **errores de dominio** en `domain/errors/` (ej. `stock-insuficiente.error.ts` con la clase `StockInsuficienteError`, que extiende `DomainError`). |
-| **Qué NO contiene**       | Imports de Drizzle, código HTTP, JWT, ni el nombre de ninguna tabla. Si aparece `SELECT` o `drizzle`, está en el lugar equivocado.                                                                                                                  |
-| **Principio SOLID**       | **DIP**: el dominio define contratos (ports) y no depende de ninguna implementación. `database` y `platform` dependen de `core`, no al revés.                                                                                                       |
-| **Convención de nombres** | Entidades en PascalCase (`Factura.ts`). Errores: `<nombre-en-espanol>.error.ts`.                                                                                                                                                                    |
-| **Ejemplo real**          | `facturacion/domain/Factura.ts` — tiene `anular(autorizadoPor)` que solo funciona si la factura está en estado `emitida`.                                                                                                                           |
+| **Qué SÍ contiene**       | Entidades (`Factura`, `Producto`, `Activo`), value objects (`Sku`), invariantes del negocio, los **errores de dominio** en `domain/errors/` (ej. `stock-insuficiente.error.ts`) y las **interfaces de repositorios de entidades** en `domain/repositories/` (ej. `ISucursalRepository.ts`, `IUsuarioRepository.ts`, `ICategoriaRepository.ts`, `IProveedorRepository.ts`). |
+| **Qué NO contiene**       | Imports de Drizzle, código HTTP, JWT, ni el nombre de ninguna tabla. Si aparece `SELECT` o `drizzle`, está en el lugar equivocado. Tampoco servicios técnicos de infraestructura externa.                                                                                   |
+| **Principio SOLID**       | **DIP (Inversión de Dependencias)**: el dominio define contratos y no depende de ninguna implementación. `database` y `platform` dependen de `core`, no al revés.                                                                                                       |
+| **Convención de nombres** | Entidades en PascalCase (`Factura.ts`). Errores: `<nombre-en-espanol>.error.ts`. Repositorios de entidades: `I<Entidad>Repository.ts`.                                                                                                             |
+| **Ejemplo real**          | `administracion/domain/repositories/ISucursalRepository.ts` — define `interface ISucursalRepository { findById(id: number): Promise<Sucursal \| null>; ... }`.                                                                                   |
 
-> La carpeta `domain/errors/` se crea la primera vez que un módulo necesita un
-> error propio.
+> **Pauta Profesional (DDD & Inversión de Dependencias):**
+> Las interfaces de repositorios de entidades se ubican en `domain/repositories/` porque
+> en DDD el repositorio representa una colección en memoria del agregado/entidad.
+> Ubicarlas en el Dominio garantiza que los Servicios de Dominio (`domain/services/`) puedan
+> verificar reglas de negocio sobre repositorios sin violar la regla de capas (el Dominio jamás
+> puede importar nada de la capa de Aplicación).
 
 ---
 
@@ -125,9 +129,9 @@ flowchart TD
 |                           |                                                                                                                                                                                                                            |
 | ------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Propósito**             | Orquestan el dominio para cumplir un caso de uso concreto del negocio. Son el "cerebro" de Warengine.                                                                                                                      |
-| **Qué SÍ contiene**       | Clases o funciones que reciben DTOs de entrada (validados con contracts), usan entidades, llaman a ports y devuelven un `Result`.                                                                                          |
+| **Qué SÍ contiene**       | Clases o funciones que reciben DTOs de entrada (validados con contracts), usan entidades, llaman a repositorios del dominio o a ports técnicos y devuelven un `Result`.                                                     |
 | **Qué NO contiene**       | Imports de Drizzle, código HTTP, datos de sesión leídos "de la nada". Recibe todo por inyección. **Tampoco toca el stock en los flujos que ya mueve un trigger** (ver sección 6.1).                                        |
-| **Principio SOLID**       | **SRP + ISP**: cada caso de uso hace exactamente una cosa y usa ports pequeños y específicos.                                                                                                                              |
+| **Principio SOLID**       | **SRP + ISP**: cada caso de uso hace exactamente una cosa y usa interfaces pequeñas y específicas.                                                                                                                         |
 | **Convención de nombres** | `<accion-en-espanol>.use-case.ts`. Ej.: `emitir-factura.use-case.ts`, `login.use-case.ts`.                                                                                                                                 |
 | **Ejemplo real**          | `emitir-factura.use-case.ts` — verifica el turno de caja abierto, arma la `Factura` con sus totales, la persiste con sus ítems y pagos en **una sola transacción**. No inserta el movimiento de stock: lo hace el trigger. |
 
@@ -137,12 +141,12 @@ flowchart TD
 
 |                           |                                                                                                                                                                                           |
 | ------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Propósito**             | Definir _qué_ necesita el caso de uso sin decir _cómo_ se implementa (interfaces TypeScript).                                                                                             |
-| **Qué SÍ contiene**       | Interfaces de repositorios (`IUsuarioRepository`, `IProductoRepository`) e interfaces de servicios externos (`IPasswordHasher`, `ITokenService`, `IMailer`, `ITotpService`).              |
-| **Qué NO contiene**       | Implementaciones. Ni una línea de Drizzle, fetch, Argon2 o correo. Solo las firmas.                                                                                                       |
-| **Principio SOLID**       | **DIP + ISP**: al depender de interfaces se puede cambiar MySQL por otro motor, o Argon2 por bcrypt, sin tocar un caso de uso.                                                            |
-| **Convención de nombres** | `<entidad-en-espanol>.repository.ts` para repositorios; `<servicio-en-ingles>.ts` para servicios técnicos (`password-hasher.ts`, `token-service.ts`).                                     |
-| **Ejemplo real**          | `autenticacion/application/ports/usuario.repository.ts` — `interface IUsuarioRepository { findByEmail(email: string): Promise<Usuario \| null>; save(usuario: Usuario): Promise<void>; }` |
+| **Propósito**             | Definir contratos (interfaces TypeScript) para **servicios técnicos externos y dependencias de orquestación** que el Caso de Uso necesita para cumplir su flujo (puertos técnicos / Driven Ports).                               |
+| **Qué SÍ contiene**       | Interfaces de servicios técnicos externos de orquestación: `IAuditoriaService`, `IPasswordHasher`, `ITokenService`, `IMailer`, `ITotpService`, pasarelas de pago (`IPaymentGateway`), generadores de reportes/PDF.              |
+| **Qué NO contiene**       | Implementaciones técnicas (van en `platform` o `database`), ni interfaces de repositorios de entidades de dominio (que van en `domain/repositories/`).                                     |
+| **Principio SOLID**       | **DIP + ISP**: el caso de uso orquesta el flujo dependiendo de contratos de servicios externos sin acoplarse a librerías técnicas o proveedores de infraestructura.                       |
+| **Convención de nombres** | `<servicio-en-espanol-o-ingles>.service.ts` o `<servicio-en-ingles>.ts` (`auditoria.service.ts`, `token-service.ts`, `mailer.service.ts`).                                               |
+| **Ejemplo real**          | `inventario/application/ports/auditoria.service.ts` — `interface IAuditoriaService { registrar(evento: EventoAuditoria): Promise<void>; }`.                                               |
 
 ---
 
@@ -256,34 +260,38 @@ datos**: lee la sección 6 antes de escribirlos.
 ### autenticacion
 
 - **domain**: `Usuario`, `Rol`, `Permiso`, `IntentoLogin`, `PoliticaContrasena`,
-  interfaz `IAuthorizationPolicy`
+  `IAuthorizationPolicy`, `IUsuarioRepository`, `IRolRepository`, `IRefreshTokenRepository`
 - **use-cases**: `login`, `logout`, `refresh-token`, `solicitar-recuperacion`,
   `restablecer-contrasena`, `verificar-2fa` ⚙️ (ver sección 7)
-- **ports**: `usuario.repository.ts`, `password-hasher.ts`, `token-service.ts`,
-  `mailer.ts`, `totp-service.ts`
+- **ports**: `password-hasher.ts`, `token-service.ts`, `mailer.ts`, `totp-service.ts`
 - **services**: `rbac-authorization-policy.ts`
 
 ### inventario
 
-- **domain**: `Producto`, `Sku`, `StockSucursal`, `MovimientoInventario`
+- **domain**: `Producto`, `Sku`, `StockSucursal`, `MovimientoInventario`, `Categoria`, `Proveedor`,
+  `ICategoriaRepository`, `IProveedorRepository`
 - **use-cases**: `crear-producto`, `registrar-entrada` ⚙️, `registrar-salida` ⚙️
   (salida manual: merma/daño), `ajustar-stock` ⚙️, `listar-stock-bajo`,
   `kardex`, `gestionar-categorias`, `gestionar-proveedores`
+- **ports**: `auditoria.service.ts`
 
 ### facturacion
 
-- **domain**: `Factura`, `ItemFactura`, `Pago`, `TurnoCaja`, `Cliente`
+- **domain**: `Factura`, `ItemFactura`, `Pago`, `TurnoCaja`, `Cliente`,
+  `IFacturaRepository`, `IClienteRepository`, `ITurnoCajaRepository`
 - **use-cases**: `abrir-turno`, `cerrar-turno` ⚙️, `emitir-factura` ⚙️,
   `anular-factura` ⚙️, `registrar-devolucion` ⚙️, `registrar-cliente`,
   `buscar-cliente`
+- **ports**: `impresora-fiscal.service.ts`, `dian.service.ts` (cuando aplique)
 
 ### administracion
 
 - **domain**: `Sucursal`, `Empleado`, `HistorialSalario`, `AlertaAdmin`,
-  `LogAuditoria`
+  `LogAuditoria`, `ISucursalRepository`, `IGestionUsuarioRepository`
 - **use-cases**: `gestionar-sucursales`, `gestionar-usuarios` ⚙️, `asignar-rol`
   ⚙️, `dashboard-metricas`, `consultar-auditoria`, `crear-alerta`,
   `atender-alerta`
+- **ports**: (servicios técnicos cuando aplique)
 
 ### logistica
 
@@ -377,8 +385,8 @@ datos**: lee la sección 6 antes de escribirlos.
       parámetros?
 - [ ] ¿Lo que se expone al exterior es un DTO y no una entidad de dominio ni una
       fila de BD?
-- [ ] ¿El port está declarado en `core/application/ports/` como interfaz, y su
-      implementación se llama `drizzle-<entidad>.repository.ts`?
+- [ ] ¿La interfaz del repositorio de entidad está declarada en `core/domain/repositories/` como `I<Entidad>Repository.ts`, y su implementación en database como `drizzle-<entidad>.repository.ts`?
+- [ ] ¿Los servicios técnicos externos requeridos por el caso de uso están declarados como puertos en `core/application/ports/`?
 - [ ] ¿La implementación está conectada en `composition/container.ts`?
 - [ ] ¿Los errores de MySQL (45000, 3819, 1213, 1062, 1451/1452) se traducen a
       `DomainError` dentro de `database`?

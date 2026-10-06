@@ -20,11 +20,21 @@ export function presentResult<T>(c: Context, result: Result<T, DomainError>, suc
     case 'PERMISO_DENEGADO':
       status = 403; // Forbidden
       break;
+    case 'CATEGORIA_NO_ENCONTRADA':
+    case 'PROVEEDOR_NO_ENCONTRADO':
+    case 'SUCURSAL_NO_ENCONTRADA':
+    case 'USUARIO_NO_ENCONTRADO':
+      status = 404; // Not Found
+      break;
     case 'REQUIERE_2FA':
       status = 428; // Precondition Required
       break;
     default:
-      status = 400;
+      if (error.code.endsWith('_NO_ENCONTRADO') || error.code.endsWith('_NO_ENCONTRADA')) {
+        status = 404;
+      } else {
+        status = 400;
+      }
   }
 
   return c.json({ error: error.code, message: error.message }, status);
