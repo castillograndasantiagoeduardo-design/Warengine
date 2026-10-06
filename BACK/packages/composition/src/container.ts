@@ -73,17 +73,24 @@ export function createContainer(_env?: Record<string, string>): AppContainer {
   const renovarTokenUseCase = new RenovarTokenUseCase(tokenService, usuarioRepository);
 
   const listarSucursalesUseCase = new ListarSucursalesUseCase(sucursalRepository);
-  const crearSucursalUseCase = new CrearSucursalUseCase(sucursalRepository);
-  const editarSucursalUseCase = new EditarSucursalUseCase(sucursalRepository);
+  const crearSucursalUseCase = new CrearSucursalUseCase(sucursalRepository, auditoriaRepository);
+    const editarSucursalUseCase = new EditarSucursalUseCase(sucursalRepository, auditoriaRepository);
 
   const listarUsuariosUseCase = new ListarUsuariosUseCase(gestionUsuarioRepository);
   const crearUsuarioUseCase = new CrearUsuarioUseCase(
     gestionUsuarioRepository,
     sucursalRepository,
     passwordHasher,
+    auditoriaRepository,
   );
-  const cambiarRolUsuarioUseCase = new CambiarRolUsuarioUseCase(gestionUsuarioRepository);
-  const cambiarEstadoUsuarioUseCase = new CambiarEstadoUsuarioUseCase(gestionUsuarioRepository);
+  const cambiarRolUsuarioUseCase = new CambiarRolUsuarioUseCase(
+    gestionUsuarioRepository,
+    auditoriaRepository,
+  );
+ const cambiarEstadoUsuarioUseCase = new CambiarEstadoUsuarioUseCase(
+    gestionUsuarioRepository,
+    auditoriaRepository,
+  );
   const consultarAuditoriaUseCase = new ConsultarAuditoriaUseCase(auditoriaRepository);
 
   return {
