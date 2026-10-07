@@ -23,6 +23,9 @@ export function presentResult<T>(c: Context, result: Result<T, DomainError>, suc
     case 'REQUIERE_2FA':
       status = 428; // Precondition Required
       break;
+    case 'CLIENTE_B2B_DATOS_INCOMPLETOS':
+      status = 422; // Regla de negocio violada
+      break;
     default:
       status = 400;
   }

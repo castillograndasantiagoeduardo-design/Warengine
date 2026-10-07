@@ -1,0 +1,198 @@
+# ==============================================================================
+# MÓDULO: FACTURACIÓN - CLIENTES (directorio y registro)
+# Requiere: REST Client (extensión VS Code)
+# Base URL: http://localhost:8017
+#
+# Ruta base del módulo: /ventas  (montada en main.ts)
+#   GET  /ventas/clientes         → buscar clientes (permiso: facturacion:consultar)
+#   POST /ventas/clientes         → registrar cliente (permiso: facturacion:gestionar-clientes)
+#
+# Roles con acceso:
+#   3 = cajero-vendedor   → tiene facturacion:consultar + facturacion:gestionar-clientes
+#   2 = admin-sucursal    → ídem (más permisos extra)
+#   1 = super-admin       → todos los permisos
+#
+# FLUJO RECOMENDADO:
+#   1. Ejecutar el Login de Super Admin (o cajero si ya existe)
+#   2. Registrar B2C
+#   3. Registrar B2B
+#   4. Repetir el mismo documento → 200 yaExistia: true
+#   5. Buscar por texto
+#   6. Filtrar por tipo de documento
+#   7. Probar error B2B sin datos obligatorios → 422
+# ==============================================================================
+
+@baseUrl = http://localhost:8017
+
+# ==============================================================================
+# PASO 1 — LOGIN (usa super-admin; tiene todos los permisos)
+# ==============================================================================
+
+### 1. Login Super Admin
+# @name login
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "superadmin@warengine.local",
+  "password": "Warengine.Admin.2026!"
+}
+
+###
+
+# ==============================================================================
+# PASO 2 — REGISTRAR CLIENTES  →  POST /ventas/clientes
+# ==============================================================================
+
+### 2. Registrar cliente B2C (caso feliz - sin dirección ni teléfono)
+# Resultado esperado: 201 Created  +  { cliente: {...}, yaExistia: false }
+# @name clienteB2C
+POST {{baseUrl}}/ventas/clientes
+Authorization: Bearer {{login.response.body.accessToken}}
+Content-Type: application/json
+
+{
+  "tipoDocumento": "CC",
+  "numeroDocumento": "1234567890",
+  "nombreRazonSocial": "Ana Pérez",
+  "tipoCliente": "B2C"
+}
+
+###
+
+### 3. Registrar cliente B2B (exige dirección y teléfono)
+# Resultado esperado: 201 Created  +  { cliente: {...}, yaExistia: false }
+# @name clienteB2B
+POST {{baseUrl}}/ventas/clientes
+Authorization: Bearer {{login.response.body.accessToken}}
+Content-Type: application/json
+
+{
+  "tipoDocumento": "NIT",
+  "numeroDocumento": "900123456",
+  "nombreRazonSocial": "Ferretería Andina SAS",
+  "tipoCliente": "B2B",
+  "telefono": "3101234567",
+  "direccion": "Cra 10 # 20-30, Duitama"
+}
+
+###
+
+### 4. Repetir el mismo documento (idempotencia RF-FMC-D2)
+# Resultado esperado: 200 OK  +  { cliente: {...}, yaExistia: true }
+POST {{baseUrl}}/ventas/clientes
+Authorization: Bearer {{login.response.body.accessToken}}
+Content-Type: application/json
+
+{
+  "tipoDocumento": "CC",
+  "numeroDocumento": "1234567890",
+  "nombreRazonSocial": "Ana Pérez",
+  "tipoCliente": "B2C"
+}
+
+###
+
+### 5. Registrar cliente con email y teléfono opcionales
+# Resultado esperado: 201 Created
+POST {{baseUrl}}/ventas/clientes
+Authorization: Bearer {{login.response.body.accessToken}}
+Content-Type: application/json
+
+{
+  "tipoDocumento": "RUT",
+  "numeroDocumento": "800987654",
+  "nombreRazonSocial": "Comercializadora del Norte Ltda",
+  "tipoCliente": "B2B",
+  "email": "contacto@comertenorte.co",
+  "telefono": "6016543210",
+  "direccion": "Av. El Dorado # 68C-61, Bogotá"
+}
+
+###
+
+# ==============================================================================
+# PASO 3 — BUSCAR CLIENTES  →  GET /ventas/clientes
+# ==============================================================================
+
+### 6. Buscar por texto (nombre o número de documento)
+# Resultado esperado: 200 OK + array de clientes que contengan "ana"
+GET {{baseUrl}}/ventas/clientes?texto=ana
+Authorization: Bearer {{login.response.body.accessToken}}
+
+###
+
+### 7. Filtrar solo por tipo de documento NIT
+# Resultado esperado: 200 OK + solo clientes con tipoDocumento NIT
+GET {{baseUrl}}/ventas/clientes?tipoDocumento=NIT
+Authorization: Bearer {{login.response.body.accessToken}}
+
+###
+
+### 8. Filtrar NIT con límite explícito
+# Resultado esperado: 200 OK + máximo 5 clientes NIT
+GET {{baseUrl}}/ventas/clientes?tipoDocumento=NIT&limite=5
+Authorization: Bearer {{login.response.body.accessToken}}
+
+###
+
+### 9. Buscar todos los clientes (sin filtro, límite por defecto = 20)
+# Resultado esperado: 200 OK + todos los clientes registrados hasta 20
+GET {{baseUrl}}/ventas/clientes
+Authorization: Bearer {{login.response.body.accessToken}}
+
+###
+
+# ==============================================================================
+# CASOS DE ERROR ESPERADOS
+# ==============================================================================
+
+### 10. ERROR 422 — B2B sin dirección ni teléfono
+# Resultado esperado: 422 Unprocessable Entity
+# { error: 'CLIENTE_B2B_DATOS_INCOMPLETOS' } o { error: 'VALIDATION_ERROR' }
+POST {{baseUrl}}/ventas/clientes
+Authorization: Bearer {{login.response.body.accessToken}}
+Content-Type: application/json
+
+{
+  "tipoDocumento": "NIT",
+  "numeroDocumento": "111222333",
+  "nombreRazonSocial": "Empresa Sin Datos SAS",
+  "tipoCliente": "B2B"
+}
+
+###
+
+### 11. ERROR 400 — tipo de documento inválido
+# Resultado esperado: 400 Bad Request + VALIDATION_ERROR
+POST {{baseUrl}}/ventas/clientes
+Authorization: Bearer {{login.response.body.accessToken}}
+Content-Type: application/json
+
+{
+  "tipoDocumento": "PASAPORTE",
+  "numeroDocumento": "A1234567",
+  "nombreRazonSocial": "Extranjero Test"
+}
+
+###
+
+### 12. ERROR 400 — documento muy corto (menos de 5 caracteres)
+# Resultado esperado: 400 Bad Request + VALIDATION_ERROR
+POST {{baseUrl}}/ventas/clientes
+Authorization: Bearer {{login.response.body.accessToken}}
+Content-Type: application/json
+
+{
+  "tipoDocumento": "CC",
+  "numeroDocumento": "123",
+  "nombreRazonSocial": "Test"
+}
+
+###
+
+### 13. ERROR 401 — sin token de autorización
+# Resultado esperado: 401 Unauthorized
+GET {{baseUrl}}/ventas/clientes
+
+###

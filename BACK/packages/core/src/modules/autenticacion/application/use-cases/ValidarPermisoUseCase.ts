@@ -9,7 +9,16 @@ export interface ValidarPermisoRequest {
   permisoRequerido?: string; // ej. 'facturacion:facturar'
 }
 
-export type ValidarPermisoResponse = Result<void, DomainError>;
+/**
+ * Identidad del usuario ya verificada (firma, vigencia, estado y revocación).
+ * Los controladores la usan para saber QUIÉN ejecuta la operación (auditoría, alcance).
+ */
+export interface IdentidadAutenticada {
+  usuarioId: string;
+  rolId: number;
+}
+
+export type ValidarPermisoResponse = Result<IdentidadAutenticada, DomainError>;
 
 export class ValidarPermisoUseCase {
   constructor(
@@ -43,7 +52,7 @@ export class ValidarPermisoUseCase {
         }
       }
 
-      return Result.ok();
+      return Result.ok({ usuarioId: usuario.id, rolId: usuario.rolId });
     } catch (_e) {
       return Result.fail(new TokenInvalidoError());
     }

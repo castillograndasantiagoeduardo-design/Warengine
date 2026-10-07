@@ -40,3 +40,9 @@ export * from './src/modules/administracion/application/use-cases/CambiarRolUsua
 export * from './src/modules/administracion/application/use-cases/CambiarEstadoUsuarioUseCase.ts';
 export * from './src/modules/administracion/application/use-cases/ListarUsuariosUseCase.ts';
 
+// ─── Módulo: Facturación ────────────────────────────────────────────────────
+export * from './src/modules/facturacion/domain/entities/Cliente.ts';
+export * from './src/modules/facturacion/domain/errors/FacturacionErrors.ts';
+export * from './src/modules/facturacion/domain/repositories/IClienteRepository.ts';
+export * from './src/modules/facturacion/application/use-cases/RegistrarClienteUseCase.ts';
+export * from './src/modules/facturacion/application/use-cases/BuscarClientesUseCase.ts';

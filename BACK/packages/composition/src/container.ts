@@ -16,6 +16,7 @@ import { DrizzleRolRepository } from '../../database/src/repositories/autenticac
 import { DrizzleRefreshTokenRepository } from '../../database/src/repositories/autenticacion/drizzle-refresh-token.repository.ts';
 import { DrizzleSucursalRepository } from '../../database/src/repositories/administracion/drizzle-sucursal.repository.ts';
 import { DrizzleGestionUsuarioRepository } from '../../database/src/repositories/administracion/drizzle-gestion-usuario.repository.ts';
+import { DrizzleClienteRepository } from '../../database/src/repositories/facturacion/drizzle-cliente.repository.ts';
 
 import { JwtTokenService } from '../../platform/src/jwt/jwt-token-service.ts';
 import { Argon2PasswordHasher } from '../../platform/src/hashing/argon2-password-hasher.ts';
@@ -31,6 +32,8 @@ import {
   CrearUsuarioUseCase,
   CambiarRolUsuarioUseCase,
   CambiarEstadoUsuarioUseCase,
+  RegistrarClienteUseCase,
+  BuscarClientesUseCase,
 } from '@warengine/core';
 
 export interface AppContainer {
@@ -48,6 +51,10 @@ export interface AppContainer {
     cambiarRolUsuario: CambiarRolUsuarioUseCase;
     cambiarEstadoUsuario: CambiarEstadoUsuarioUseCase;
   };
+  facturacion: {
+    registrarCliente: RegistrarClienteUseCase;
+    buscarClientes: BuscarClientesUseCase;
+  };
 }
 
 export function createContainer(_env?: Record<string, string>): AppContainer {
@@ -59,6 +66,7 @@ export function createContainer(_env?: Record<string, string>): AppContainer {
   const refreshTokenRepository = new DrizzleRefreshTokenRepository(db);
   const sucursalRepository = new DrizzleSucursalRepository(db);
   const gestionUsuarioRepository = new DrizzleGestionUsuarioRepository(db);
+  const clienteRepository = new DrizzleClienteRepository(db);
 
   // 2. Instanciar Servicios Técnicos
   const tokenService = new JwtTokenService(refreshTokenRepository);
@@ -81,6 +89,9 @@ export function createContainer(_env?: Record<string, string>): AppContainer {
   );
   const cambiarRolUsuarioUseCase = new CambiarRolUsuarioUseCase(gestionUsuarioRepository);
   const cambiarEstadoUsuarioUseCase = new CambiarEstadoUsuarioUseCase(gestionUsuarioRepository);
+  const registrarClienteUseCase = new RegistrarClienteUseCase(clienteRepository);
+  const buscarClientesUseCase = new BuscarClientesUseCase(clienteRepository);
+
 
   return {
     autenticacion: {
@@ -96,6 +107,10 @@ export function createContainer(_env?: Record<string, string>): AppContainer {
       crearUsuario: crearUsuarioUseCase,
       cambiarRolUsuario: cambiarRolUsuarioUseCase,
       cambiarEstadoUsuario: cambiarEstadoUsuarioUseCase,
+    },
+    facturacion: {
+      registrarCliente: registrarClienteUseCase,
+      buscarClientes: buscarClientesUseCase,
     },
   };
 }
