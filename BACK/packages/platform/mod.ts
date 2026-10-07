@@ -14,4 +14,3 @@
  * técnica. Si aquí aparece una regla de Warengine, está en el lugar equivocado.
  */
 
-export * from './src/logger/auditoria-consola.service.ts';

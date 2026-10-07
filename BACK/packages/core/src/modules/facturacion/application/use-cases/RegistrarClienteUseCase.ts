@@ -2,6 +2,12 @@ import { DomainError, Result } from '@warengine/shared-kernel';
 import { Cliente, TipoCliente, TipoDocumentoCliente } from '../../domain/entities/Cliente.ts';
 import { IClienteRepository } from '../../domain/repositories/IClienteRepository.ts';
 import { DatosClienteB2BIncompletosError } from '../../domain/errors/FacturacionErrors.ts';
+import { IAuditor } from '../../../auditoria/domain/repositories/IAuditoriaRepository.ts';
+import {
+    ACCIONES_AUDITORIA,
+    ActorAuditoria,
+    ENTIDADES_AUDITORIA,
+} from '../../../auditoria/domain/entities/LogAuditoria.ts';
 
 export interface RegistrarClienteRequest {
     tipoDocumento: TipoDocumentoCliente;
@@ -11,6 +17,7 @@ export interface RegistrarClienteRequest {
     email?: string;
     telefono?: string;
     direccion?: string;
+    actor: ActorAuditoria;
 }
 
 export interface RegistrarClienteResultado {
@@ -22,7 +29,10 @@ export interface RegistrarClienteResultado {
 export type RegistrarClienteResponse = Result<RegistrarClienteResultado, DomainError>;
 
 export class RegistrarClienteUseCase {
-    constructor(private readonly clienteRepository: IClienteRepository) { }
+    constructor(
+        private readonly clienteRepository: IClienteRepository,
+        private readonly auditor: IAuditor,
+    ) { }
 
     public async execute(request: RegistrarClienteRequest): Promise<RegistrarClienteResponse> {
         const numeroDocumento = request.numeroDocumento.trim();
@@ -52,6 +62,24 @@ export class RegistrarClienteUseCase {
             telefono,
             direccion,
         });
+
+        await this.auditor.registrar({
+            actor: request.actor,
+            accion: ACCIONES_AUDITORIA.CREAR,
+            entidad: ENTIDADES_AUDITORIA.CLIENTES,
+            entidadId: cliente.id,
+            detalles: {
+                despues: {
+                    tipoDocumento: cliente.tipoDocumento,
+                    nombreRazonSocial: cliente.nombreRazonSocial,
+                    tipoCliente: cliente.tipoCliente,
+                    email: cliente.email,
+                    telefono: cliente.telefono,
+                    direccion: cliente.direccion,
+                },
+            },
+        });
+
         return Result.ok({ cliente, yaExistia: false });
     }
 }

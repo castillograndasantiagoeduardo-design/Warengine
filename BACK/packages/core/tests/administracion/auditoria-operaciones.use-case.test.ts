@@ -86,7 +86,9 @@ Deno.test('CrearSucursal: registra la creación con actor, entidad y datos', asy
   assertEquals(eventos[0].entidad, 'sucursales');
   assertEquals(eventos[0].entidadId, '1');
   assertEquals(eventos[0].actor, actor);
-  assertEquals(eventos[0].detalles?.nombre, 'Sucursal Norte');
+  assertEquals(eventos[0].detalles, {
+    despues: { nombre: 'Sucursal Norte', direccion: 'Calle 1', contacto: null },
+  });
 });
 
 Deno.test('CrearSucursal: NO registra auditoría si la operación falla (nombre duplicado)', async () => {
@@ -127,6 +129,9 @@ Deno.test('CrearUsuario: registra la creación SIN contraseña ni documento', as
   assertEquals(result.isSuccess, true);
   assertEquals(eventos[0].entidad, 'usuarios');
   assertEquals(eventos[0].entidadId, 'u-new');
+  assertEquals(eventos[0].detalles, {
+    despues: { email: 'marta@warengine.local', rolId: 3, sucursalId: 1 },
+  });
   const texto = JSON.stringify(eventos[0]);
   assertEquals(texto.includes('ClaveSegura1'), false);
   assertEquals(texto.includes('hash-de-'), false);
@@ -139,7 +144,7 @@ Deno.test('CambiarRol: registra rol anterior y nuevo', async () => {
     .execute({ usuarioId: 'u-9', rolId: 2, actor });
 
   assertEquals(eventos[0].accion, 'cambiar_rol');
-  assertEquals(eventos[0].detalles, { rolAnterior: 3, rolNuevo: 2 });
+  assertEquals(eventos[0].detalles, { antes: { rolId: 3 }, despues: { rolId: 2 } });
 });
 
 Deno.test('CambiarRol: NO registra si el rol es el mismo (sin cambios)', async () => {
@@ -158,6 +163,8 @@ Deno.test('CambiarEstado: registra inactivar y activar según corresponda', asyn
     .execute({ usuarioId: 'u-9', isActive: true, actor });
 
   assertEquals(eventos.map((e) => e.accion), ['inactivar', 'activar']);
+  assertEquals(eventos[0].detalles, { antes: { isActive: true }, despues: { isActive: false } });
+  assertEquals(eventos[1].detalles, { antes: { isActive: false }, despues: { isActive: true } });
 });
 
 Deno.test('CambiarEstado: NO registra si el último Super Admin intenta desactivarse', async () => {

@@ -1,16 +1,27 @@
-/** Acciones estándar del log de auditoría. Los demás módulos deben reutilizarlas. */
+/**
+ * Acciones estándar del log de auditoría.
+ * Debe coincidir con ACCIONES_AUDITORIA de @warengine/contracts.
+ */
 export const ACCIONES_AUDITORIA = {
   CREAR: 'crear',
   EDITAR: 'editar',
   ACTIVAR: 'activar',
   INACTIVAR: 'inactivar',
   CAMBIAR_ROL: 'cambiar_rol',
+  ACCESO_DENEGADO: 'acceso_denegado',
 } as const;
 
-/** Nombres de entidad (coinciden con la tabla afectada). Se agregan al sumar módulos. */
+/**
+ * Nombres de entidad del log de auditoría.
+ * Debe coincidir con ENTIDADES_AUDITORIA de @warengine/contracts.
+ */
 export const ENTIDADES_AUDITORIA = {
   SUCURSALES: 'sucursales',
   USUARIOS: 'usuarios',
+  CATEGORIAS: 'categorias',
+  PROVEEDORES: 'proveedores',
+  CLIENTES: 'clientes',
+  ACCESO: 'acceso',
 } as const;
 
 /** Quién ejecuta la operación y desde dónde. Lo arma la capa HTTP a partir del token. */

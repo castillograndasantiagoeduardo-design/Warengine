@@ -1,13 +1,17 @@
 import { Result, DomainError } from '@warengine/shared-kernel';
 import { ICategoriaRepository } from '../../domain/repositories/ICategoriaRepository.ts';
-import { IAuditoriaService } from '../ports/auditoria.service.ts';
+import { IAuditor } from '../../../auditoria/domain/repositories/IAuditoriaRepository.ts';
+import {
+  ACCIONES_AUDITORIA,
+  ActorAuditoria,
+  ENTIDADES_AUDITORIA,
+} from '../../../auditoria/domain/entities/LogAuditoria.ts';
 import { Categoria } from '../../domain/entities/Categoria.ts';
 import { CategoriaNoEncontradaError } from '../../domain/errors/InventarioErrors.ts';
 
 export interface ReactivarCategoriaRequest {
   id: number;
-  usuarioId?: string | null;
-  ip?: string | null;
+  actor: ActorAuditoria;
 }
 
 export type ReactivarCategoriaResponse = Result<Categoria, DomainError>;
@@ -15,7 +19,7 @@ export type ReactivarCategoriaResponse = Result<Categoria, DomainError>;
 export class ReactivarCategoriaUseCase {
   constructor(
     private readonly categoriaRepository: ICategoriaRepository,
-    private readonly auditoriaService: IAuditoriaService,
+    private readonly auditor: IAuditor,
   ) {}
 
   public async execute(request: ReactivarCategoriaRequest): Promise<ReactivarCategoriaResponse> {
@@ -26,13 +30,15 @@ export class ReactivarCategoriaUseCase {
 
     const reactivada = await this.categoriaRepository.cambiarEstado(request.id, true);
 
-    await this.auditoriaService.registrar({
-      usuarioId: request.usuarioId,
-      accion: 'REACTIVAR',
-      entidad: 'categorias',
+    await this.auditor.registrar({
+      actor: request.actor,
+      accion: ACCIONES_AUDITORIA.ACTIVAR,
+      entidad: ENTIDADES_AUDITORIA.CATEGORIAS,
       entidadId: String(request.id),
-      detalles: { isActive: true },
-      ip: request.ip,
+      detalles: {
+        antes: { isActive: existente.isActive },
+        despues: { isActive: true },
+      },
     });
 
     return Result.ok(reactivada);

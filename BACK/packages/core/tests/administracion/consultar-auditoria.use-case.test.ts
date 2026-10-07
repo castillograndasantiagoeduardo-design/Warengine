@@ -9,6 +9,7 @@ import {
   IAuditoriaRepository,
   LogAuditoria,
 } from '../../mod.ts';
+import { consultarAuditoriaSchema } from '@warengine/contracts';
 
 function repoFalso(total = 0) {
   const llamadas: FiltrosAuditoria[] = [];
@@ -78,4 +79,27 @@ Deno.test('ConsultarAuditoria: rechaza desde posterior a hasta sin consultar la 
   assertEquals(result.isFailure, true);
   assertEquals(result.error.code, 'FILTRO_AUDITORIA_INVALIDO');
   assertEquals(llamadas.length, 0);
+});
+
+Deno.test('ConsultarAuditoria Schema: valida accion y entidad contra el catalogo y rechaza valores fuera de el', () => {
+  // Valores válidos
+  const valido = consultarAuditoriaSchema.safeParse({
+    accion: 'crear',
+    entidad: 'categorias',
+    pagina: '1',
+    limite: '20',
+  });
+  assertEquals(valido.success, true);
+
+  // Accion inválida
+  const accionInvalida = consultarAuditoriaSchema.safeParse({
+    accion: 'ACCION_INVENTADA',
+  });
+  assertEquals(accionInvalida.success, false);
+
+  // Entidad inválida
+  const entidadInvalida = consultarAuditoriaSchema.safeParse({
+    entidad: 'tabla_fantasma',
+  });
+  assertEquals(entidadInvalida.success, false);
 });

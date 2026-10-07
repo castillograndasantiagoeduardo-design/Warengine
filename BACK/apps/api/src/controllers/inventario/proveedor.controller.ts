@@ -7,7 +7,7 @@ import {
 import { AppContainer } from '@warengine/composition';
 import { presentResult } from '../../presenters/result.presenter.ts';
 import { leerJson, safeHandler } from '../../utils/handler.ts';
-import { obtenerIdentidad } from '../../utils/identidad.ts';
+import { obtenerActor } from '../../utils/actor.ts';
 
 export function listarProveedoresController(container: AppContainer) {
   return safeHandler(async (c) => {
@@ -35,11 +35,10 @@ export function crearProveedorController(container: AppContainer) {
     if (!parsed.success) {
       return c.json({ error: 'VALIDATION_ERROR', issues: parsed.error.errors }, 400);
     }
-    const identidad = obtenerIdentidad(c);
     const result = await container.inventario.crearProveedor.execute({
       nombre: parsed.data.nombre,
       contacto: parsed.data.contacto ?? null,
-      usuarioId: identidad.usuarioId,
+      actor: obtenerActor(c),
     });
     return presentResult(c, result, 201);
   });
@@ -55,11 +54,10 @@ export function editarProveedorController(container: AppContainer) {
     if (!parsed.success) {
       return c.json({ error: 'VALIDATION_ERROR', issues: parsed.error.errors }, 400);
     }
-    const identidad = obtenerIdentidad(c);
     const result = await container.inventario.editarProveedor.execute({
       id,
       ...parsed.data,
-      usuarioId: identidad.usuarioId,
+      actor: obtenerActor(c),
     });
     return presentResult(c, result);
   });
@@ -75,11 +73,10 @@ export function cambiarEstadoProveedorController(container: AppContainer) {
     if (!parsed.success) {
       return c.json({ error: 'VALIDATION_ERROR', issues: parsed.error.errors }, 400);
     }
-    const identidad = obtenerIdentidad(c);
     const result = await container.inventario.cambiarEstadoProveedor.execute({
       id,
       isActive: parsed.data.isActive,
-      usuarioId: identidad.usuarioId,
+      actor: obtenerActor(c),
     });
     return presentResult(c, result);
   });

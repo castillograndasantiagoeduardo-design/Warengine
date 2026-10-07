@@ -1,12 +1,12 @@
 import { Result, DomainError } from '@warengine/shared-kernel';
 import { ISucursalRepository } from '../../domain/repositories/ISucursalRepository.ts';
-import { IAuditor } from '../../domain/repositories/IAuditoriaRepository.ts';
+import { IAuditor } from '../../../auditoria/domain/repositories/IAuditoriaRepository.ts';
 import { Sucursal } from '../../domain/entities/Sucursal.ts';
 import {
   ACCIONES_AUDITORIA,
   ActorAuditoria,
   ENTIDADES_AUDITORIA,
-} from '../../domain/entities/LogAuditoria.ts';
+} from '../../../auditoria/domain/entities/LogAuditoria.ts';
 import { SucursalNoEncontradaError } from '../../domain/errors/AdministracionErrors.ts';
 
 export interface EditarSucursalRequest {

@@ -1,11 +1,11 @@
 import { Result, DomainError } from '@warengine/shared-kernel';
 import { IGestionUsuarioRepository } from '../../domain/repositories/IGestionUsuarioRepository.ts';
-import { IAuditor } from '../../domain/repositories/IAuditoriaRepository.ts';
+import { IAuditor } from '../../../auditoria/domain/repositories/IAuditoriaRepository.ts';
 import {
   ACCIONES_AUDITORIA,
   ActorAuditoria,
   ENTIDADES_AUDITORIA,
-} from '../../domain/entities/LogAuditoria.ts';
+} from '../../../auditoria/domain/entities/LogAuditoria.ts';
 import { UsuarioGestionado } from '../../domain/entities/UsuarioGestionado.ts';
 import {
   UsuarioNoEncontradoError,
@@ -44,7 +44,7 @@ export class CambiarEstadoUsuarioUseCase {
       accion: request.isActive ? ACCIONES_AUDITORIA.ACTIVAR : ACCIONES_AUDITORIA.INACTIVAR,
       entidad: ENTIDADES_AUDITORIA.USUARIOS,
       entidadId: usuario.id,
-      detalles: { email: usuario.email },
+      detalles: { antes: { isActive: usuario.isActive }, despues: { isActive: request.isActive } },
     });
 
     const actualizado = await this.usuarioRepository.findById(usuario.id);

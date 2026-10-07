@@ -1,7 +1,7 @@
 import { Result, DomainError } from '@warengine/shared-kernel';
 import { IAuditoriaRepository } from '../../domain/repositories/IAuditoriaRepository.ts';
 import { LogAuditoria } from '../../domain/entities/LogAuditoria.ts';
-import { FiltroAuditoriaInvalidoError } from '../../domain/errors/AdministracionErrors.ts';
+import { FiltroAuditoriaInvalidoError } from '../../domain/errors/AuditoriaErrors.ts';
 
 const LIMITE_POR_DEFECTO = 50;
 const LIMITE_MAXIMO = 200;

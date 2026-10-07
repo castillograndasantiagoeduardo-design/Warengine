@@ -995,4 +995,25 @@ BEGIN
     UPDATE usuarios SET tokens_invalidados_en = NOW() WHERE id_usuario = OLD.usuario_id;
 END$$
 
+-- 7.23 logs_auditoria: es un registro de auditoria inmutable (RNF-ADM-02).
+-- No se permite modificar registros historicos.
+CREATE TRIGGER trg_logs_auditoria_bloquea_update
+BEFORE UPDATE ON logs_auditoria
+FOR EACH ROW
+BEGIN
+    SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'logs_auditoria es de solo insercion: no se puede modificar un registro de auditoria.';
+END$$
+
+-- 7.24 logs_auditoria: por la misma razon de inmutabilidad, tampoco se pueden
+-- eliminar registros de auditoria.
+CREATE TRIGGER trg_logs_auditoria_bloquea_delete
+BEFORE DELETE ON logs_auditoria
+FOR EACH ROW
+BEGIN
+    SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'logs_auditoria es de solo insercion: no se puede eliminar un registro de auditoria.';
+END$$
+
 DELIMITER ;
+

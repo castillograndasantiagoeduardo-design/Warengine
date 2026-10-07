@@ -1,13 +1,17 @@
 import { Result, DomainError } from '@warengine/shared-kernel';
 import { ICategoriaRepository } from '../../domain/repositories/ICategoriaRepository.ts';
-import { IAuditoriaService } from '../ports/auditoria.service.ts';
+import { IAuditor } from '../../../auditoria/domain/repositories/IAuditoriaRepository.ts';
+import {
+  ACCIONES_AUDITORIA,
+  ActorAuditoria,
+  ENTIDADES_AUDITORIA,
+} from '../../../auditoria/domain/entities/LogAuditoria.ts';
 import { Categoria } from '../../domain/entities/Categoria.ts';
 import { CategoriaNoEncontradaError } from '../../domain/errors/InventarioErrors.ts';
 
 export interface InactivarCategoriaRequest {
   id: number;
-  usuarioId?: string | null;
-  ip?: string | null;
+  actor: ActorAuditoria;
 }
 
 export type InactivarCategoriaResponse = Result<Categoria, DomainError>;
@@ -15,7 +19,7 @@ export type InactivarCategoriaResponse = Result<Categoria, DomainError>;
 export class InactivarCategoriaUseCase {
   constructor(
     private readonly categoriaRepository: ICategoriaRepository,
-    private readonly auditoriaService: IAuditoriaService,
+    private readonly auditor: IAuditor,
   ) {}
 
   public async execute(request: InactivarCategoriaRequest): Promise<InactivarCategoriaResponse> {
@@ -26,13 +30,15 @@ export class InactivarCategoriaUseCase {
 
     const inactivada = await this.categoriaRepository.cambiarEstado(request.id, false);
 
-    await this.auditoriaService.registrar({
-      usuarioId: request.usuarioId,
-      accion: 'INACTIVAR',
-      entidad: 'categorias',
+    await this.auditor.registrar({
+      actor: request.actor,
+      accion: ACCIONES_AUDITORIA.INACTIVAR,
+      entidad: ENTIDADES_AUDITORIA.CATEGORIAS,
       entidadId: String(request.id),
-      detalles: { isActive: false },
-      ip: request.ip,
+      detalles: {
+        antes: { isActive: existente.isActive },
+        despues: { isActive: false },
+      },
     });
 
     return Result.ok(inactivada);

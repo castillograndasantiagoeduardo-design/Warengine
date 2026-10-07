@@ -5,7 +5,9 @@ import { usuarios } from './autenticacion.schema.ts';
 /**
  * Tabla: logs_auditoria
  * Registro de toda operación de creación, edición o inactivación (RNF-ADM-02).
- * La BD no tiene triggers de auditoría: el backend inserta una fila por operación.
+ * La BD no tiene triggers de auditoría (el backend inserta una fila por operación),
+ * pero cuenta con triggers de protección (trg_logs_auditoria_bloquea_update / delete)
+ * para garantizar su inmutabilidad (solo inserción).
  * Si se borra el usuario, el log se conserva con usuario_id NULL (ON DELETE SET NULL).
  */
 export const logs_auditoria = mysqlTable('logs_auditoria', {

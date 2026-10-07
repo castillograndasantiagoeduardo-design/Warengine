@@ -3,6 +3,7 @@ import { AppContainer } from '@warengine/composition';
 import { presentResult } from '../presenters/result.presenter.ts';
 import { getTokensFromCookies } from '../utils/cookie.ts';
 import { CLAVE_IDENTIDAD } from '../utils/identidad.ts';
+import { obtenerIp } from '../utils/ip.ts';
 
 export function authMiddleware(container: AppContainer, permisoRequerido?: string) {
   return async (c: Context, next: Next) => {
@@ -23,7 +24,10 @@ export function authMiddleware(container: AppContainer, permisoRequerido?: strin
 
     const result = await container.autenticacion.validarPermiso.execute({
       accessToken: token,
-      permisoRequerido
+      permisoRequerido,
+      ip: obtenerIp(c),
+      metodo: c.req.method,
+      ruta: c.req.path,
     });
 
     if (result.isFailure) {

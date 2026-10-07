@@ -13,6 +13,7 @@ export * from './tool-names.ts';
 export * from './autenticacion/login.schema.ts';
 export * from './autenticacion/renovar-token.schema.ts';
 export * from './administracion/auditoria.schema.ts';
+export * from './administracion/auditoria.catalogo.ts';
 // ─── Módulo: inventario ────────────────────────────────────────
 export * from './inventario/categoria.schema.ts';
 export * from './inventario/proveedor.schema.ts';

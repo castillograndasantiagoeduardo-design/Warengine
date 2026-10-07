@@ -5,6 +5,7 @@
 import { assertEquals } from 'jsr:@std/assert@^1';
 import {
   AccessTokenPayload,
+  IAuditor,
   IRolRepository,
   ITokenService,
   IUsuarioRepository,
@@ -32,6 +33,10 @@ function roles(permisos: string[]): IRolRepository {
   return { obtenerPermisosDeRol: () => Promise.resolve(permisos) };
 }
 
+const mockAuditor: IAuditor = {
+  registrar: () => Promise.resolve(),
+};
+
 const payload: AccessTokenPayload = {
   usuarioId: 'uuid-007',
   rolId: 2,
@@ -45,6 +50,7 @@ Deno.test('ValidarPermisoUseCase: devuelve usuarioId y rolId tomados de la BD, n
     tokenService(payload),
     usuarios(usuario),
     roles(['administracion:gestionar-sucursales']),
+    mockAuditor,
   );
 
   const result = await useCase.execute({
@@ -58,7 +64,12 @@ Deno.test('ValidarPermisoUseCase: devuelve usuarioId y rolId tomados de la BD, n
 
 Deno.test('ValidarPermisoUseCase: devuelve la identidad aunque no se exija un permiso', async () => {
   const usuario = new Usuario('uuid-007', 'a@warengine.local', 'hash', 2, true, false, null);
-  const useCase = new ValidarPermisoUseCase(tokenService(payload), usuarios(usuario), roles([]));
+  const useCase = new ValidarPermisoUseCase(
+    tokenService(payload),
+    usuarios(usuario),
+    roles([]),
+    mockAuditor,
+  );
 
   const result = await useCase.execute({ accessToken: 'ok' });
 

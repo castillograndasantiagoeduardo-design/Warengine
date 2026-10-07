@@ -30,7 +30,82 @@ Content-Type: application/json
 
 ###
 
-### Últimos registros (esperado: 200 con items, total, pagina, limite, totalPaginas)
+### Generar un log en inventario: crear categoría (esperado: 201)
+# Debe persistirse en logs_auditoria con accion='crear', entidad='categorias', detalles={ despues: { ... } }
+# @name crearCategoria
+POST {{baseUrl}}/inventario/categorias
+Authorization: Bearer {{login.response.body.accessToken}}
+Content-Type: application/json
+
+{
+  "nombre": "Bebidas y Licores Audit"
+}
+
+###
+
+### Verificar log de creación de categoría en logs_auditoria (esperado: 200)
+GET {{baseUrl}}/administracion/auditoria?entidad=categorias
+Authorization: Bearer {{login.response.body.accessToken}}
+
+###
+
+### Intento de login fallido: contraseña incorrecta (esperado: 401 CREDENCIALES_INVALIDAS)
+# Debe registrarse en la tabla intentos_login con exitoso=false (RF-SA-F4 / RF-SA-F5)
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "superadmin@warengine.local",
+  "password": "PasswordIncorrecto123!"
+}
+
+###
+
+### Crear usuario operador sin permiso de ver auditoría (rolId 3: cajero-vendedor)
+# @name crearUsuarioOperador
+POST {{baseUrl}}/administracion/usuarios
+Authorization: Bearer {{login.response.body.accessToken}}
+Content-Type: application/json
+
+{
+  "nombre": "Cajero Sin Permiso",
+  "tipoDocumento": "CC",
+  "numeroDocumento": "9876543210",
+  "email": "cajero.sinpermiso@warengine.local",
+  "password": "Password.2026!",
+  "rolId": 3,
+  "sucursalId": 1
+}
+
+###
+
+### Login con usuario operador sin permisos de auditoría
+# @name loginOperador
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "cajero.sinpermiso@warengine.local",
+  "password": "Password.2026!"
+}
+
+###
+
+### Acceso denegado: usuario sin permiso intenta consultar auditoría (esperado: 403 PERMISO_DENEGADO)
+# El middleware y ValidarPermisoUseCase deben registrar en logs_auditoria:
+# accion='acceso_denegado', entidad='acceso', detalles={ permisoRequerido: 'autenticacion:ver-auditoria', metodo: 'GET', ruta: '/administracion/auditoria' }
+GET {{baseUrl}}/administracion/auditoria
+Authorization: Bearer {{loginOperador.response.body.accessToken}}
+
+###
+
+### Verificar registro de acceso denegado en logs_auditoria (como Super Admin) (esperado: 200)
+GET {{baseUrl}}/administracion/auditoria?accion=acceso_denegado
+Authorization: Bearer {{login.response.body.accessToken}}
+
+###
+
+### Últimos registros de auditoría generales (esperado: 200 con items, total, pagina, limite, totalPaginas)
 GET {{baseUrl}}/administracion/auditoria
 Authorization: Bearer {{login.response.body.accessToken}}
 
@@ -42,7 +117,7 @@ Authorization: Bearer {{login.response.body.accessToken}}
 
 ###
 
-### Filtrar por entidad y fechas (ajusta a hoy)
+### Filtrar por entidad y fechas
 GET {{baseUrl}}/administracion/auditoria?entidad=sucursales&desde=2026-10-01&hasta=2026-10-31
 Authorization: Bearer {{login.response.body.accessToken}}
 

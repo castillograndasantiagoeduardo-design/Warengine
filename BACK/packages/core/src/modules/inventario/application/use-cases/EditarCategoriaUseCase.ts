@@ -1,6 +1,11 @@
 import { Result, DomainError } from '@warengine/shared-kernel';
 import { ICategoriaRepository } from '../../domain/repositories/ICategoriaRepository.ts';
-import { IAuditoriaService } from '../ports/auditoria.service.ts';
+import { IAuditor } from '../../../auditoria/domain/repositories/IAuditoriaRepository.ts';
+import {
+  ACCIONES_AUDITORIA,
+  ActorAuditoria,
+  ENTIDADES_AUDITORIA,
+} from '../../../auditoria/domain/entities/LogAuditoria.ts';
 import { Categoria } from '../../domain/entities/Categoria.ts';
 import { CategoriaNoEncontradaError } from '../../domain/errors/InventarioErrors.ts';
 
@@ -8,8 +13,7 @@ export interface EditarCategoriaRequest {
   id: number;
   nombre?: string;
   isActive?: boolean;
-  usuarioId?: string | null;
-  ip?: string | null;
+  actor: ActorAuditoria;
 }
 
 export type EditarCategoriaResponse = Result<Categoria, DomainError>;
@@ -17,7 +21,7 @@ export type EditarCategoriaResponse = Result<Categoria, DomainError>;
 export class EditarCategoriaUseCase {
   constructor(
     private readonly categoriaRepository: ICategoriaRepository,
-    private readonly auditoriaService: IAuditoriaService,
+    private readonly auditor: IAuditor,
   ) {}
 
   public async execute(request: EditarCategoriaRequest): Promise<EditarCategoriaResponse> {
@@ -26,16 +30,25 @@ export class EditarCategoriaUseCase {
       return Result.fail(new CategoriaNoEncontradaError());
     }
 
-    const { id, usuarioId, ip, ...cambios } = request;
+    const { id, actor, ...cambios } = request;
     const actualizada = await this.categoriaRepository.actualizar(id, cambios);
 
-    await this.auditoriaService.registrar({
-      usuarioId,
-      accion: 'EDITAR',
-      entidad: 'categorias',
+    const claves = (Object.keys(cambios) as Array<keyof typeof cambios>).filter(
+      (clave) => cambios[clave] !== undefined,
+    );
+    const antes: Record<string, unknown> = {};
+    const despues: Record<string, unknown> = {};
+    for (const clave of claves) {
+      antes[clave] = existente[clave];
+      despues[clave] = actualizada[clave];
+    }
+
+    await this.auditor.registrar({
+      actor,
+      accion: ACCIONES_AUDITORIA.EDITAR,
+      entidad: ENTIDADES_AUDITORIA.CATEGORIAS,
       entidadId: String(id),
-      detalles: { cambios },
-      ip,
+      detalles: { antes, despues },
     });
 
     return Result.ok(actualizada);

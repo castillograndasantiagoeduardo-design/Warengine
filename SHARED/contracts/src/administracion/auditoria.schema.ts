@@ -1,4 +1,8 @@
 import { z } from 'zod';
+import {
+  ACCIONES_AUDITORIA_VALORES,
+  ENTIDADES_AUDITORIA_VALORES,
+} from './auditoria.catalogo.ts';
 
 const SOLO_DIA = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -35,8 +39,8 @@ const fechaParam = (finDeDia: boolean) =>
 // Vienen por query string, por eso coerce
 export const consultarAuditoriaSchema = z.object({
   usuarioId: z.string().uuid({ message: 'usuarioId debe ser un UUID.' }).optional(),
-  accion: z.string().trim().min(1).max(50).optional(),
-  entidad: z.string().trim().min(1).max(100).optional(),
+  accion: z.enum(ACCIONES_AUDITORIA_VALORES).optional(),
+  entidad: z.enum(ENTIDADES_AUDITORIA_VALORES).optional(),
   desde: fechaParam(false),
   hasta: fechaParam(true),
   pagina: z.coerce.number().int().min(1).default(1),

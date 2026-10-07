@@ -2,6 +2,7 @@ import { crearClienteSchema, filtrosClientesSchema } from '@warengine/contracts'
 import { AppContainer } from '@warengine/composition';
 import { presentResult } from '../../presenters/result.presenter.ts';
 import { leerJson, safeHandler } from '../../utils/handler.ts';
+import { obtenerActor } from '../../utils/actor.ts';
 
 export function buscarClientesController(container: AppContainer) {
     return safeHandler(async (c) => {
@@ -19,7 +20,11 @@ export function registrarClienteController(container: AppContainer) {
         if (!parsed.success) {
             return c.json({ error: 'VALIDATION_ERROR', issues: parsed.error.errors }, 400);
         }
-        const result = await container.facturacion.registrarCliente.execute(parsed.data);
+        const actor = obtenerActor(c);
+        const result = await container.facturacion.registrarCliente.execute({
+            ...parsed.data,
+            actor,
+        });
         if (result.isFailure) return presentResult(c, result);
 
         // 201 si se creó, 200 si se reutilizó uno existente.
