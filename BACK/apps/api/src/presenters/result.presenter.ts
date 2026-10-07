@@ -29,6 +29,9 @@ export function presentResult<T>(c: Context, result: Result<T, DomainError>, suc
     case 'REQUIERE_2FA':
       status = 428; // Precondition Required
       break;
+    case 'CLIENTE_B2B_DATOS_INCOMPLETOS':
+      status = 422; // Regla de negocio violada
+      break;
     default:
       if (error.code.endsWith('_NO_ENCONTRADO') || error.code.endsWith('_NO_ENCONTRADA')) {
         status = 404;

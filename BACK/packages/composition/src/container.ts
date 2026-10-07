@@ -17,6 +17,7 @@ import { DrizzleRefreshTokenRepository } from '../../database/src/repositories/a
 import { DrizzleSucursalRepository } from '../../database/src/repositories/administracion/drizzle-sucursal.repository.ts';
 import { DrizzleAuditoriaRepository } from '../../database/src/repositories/administracion/drizzle-auditoria.repository.ts';
 import { DrizzleGestionUsuarioRepository } from '../../database/src/repositories/administracion/drizzle-gestion-usuario.repository.ts';
+import { DrizzleClienteRepository } from '../../database/src/repositories/facturacion/drizzle-cliente.repository.ts';
 import { DrizzleCategoriaRepository } from '../../database/src/repositories/inventario/drizzle-categoria.repository.ts';
 import { DrizzleProveedorRepository } from '../../database/src/repositories/inventario/drizzle-proveedor.repository.ts';
 
@@ -35,6 +36,8 @@ import {
   CrearUsuarioUseCase,
   CambiarRolUsuarioUseCase,
   CambiarEstadoUsuarioUseCase,
+  RegistrarClienteUseCase,
+  BuscarClientesUseCase,
   ListarCategoriasUseCase,
   ObtenerCategoriaPorIdUseCase,
   CrearCategoriaUseCase,
@@ -84,6 +87,10 @@ export interface AppContainer {
     reactivarProveedor: ReactivarProveedorUseCase;
     cambiarEstadoProveedor: CambiarEstadoProveedorUseCase;
   };
+  facturacion: {
+    registrarCliente: RegistrarClienteUseCase;
+    buscarClientes: BuscarClientesUseCase;
+  };
 }
 
 export function createContainer(_env?: Record<string, string>): AppContainer {
@@ -95,6 +102,7 @@ export function createContainer(_env?: Record<string, string>): AppContainer {
   const refreshTokenRepository = new DrizzleRefreshTokenRepository(db);
   const sucursalRepository = new DrizzleSucursalRepository(db);
   const gestionUsuarioRepository = new DrizzleGestionUsuarioRepository(db);
+  const clienteRepository = new DrizzleClienteRepository(db);
   const categoriaRepository = new DrizzleCategoriaRepository(db);
   const proveedorRepository = new DrizzleProveedorRepository(db);
 
@@ -153,6 +161,11 @@ export function createContainer(_env?: Record<string, string>): AppContainer {
     inactivarProveedorUseCase,
     reactivarProveedorUseCase,
   );
+  const cambiarRolUsuarioUseCase = new CambiarRolUsuarioUseCase(gestionUsuarioRepository);
+  const cambiarEstadoUsuarioUseCase = new CambiarEstadoUsuarioUseCase(gestionUsuarioRepository);
+  const registrarClienteUseCase = new RegistrarClienteUseCase(clienteRepository);
+  const buscarClientesUseCase = new BuscarClientesUseCase(clienteRepository);
+
 
   return {
     autenticacion: {
@@ -185,6 +198,10 @@ export function createContainer(_env?: Record<string, string>): AppContainer {
       inactivarProveedor: inactivarProveedorUseCase,
       reactivarProveedor: reactivarProveedorUseCase,
       cambiarEstadoProveedor: cambiarEstadoProveedorUseCase,
+    },
+    facturacion: {
+      registrarCliente: registrarClienteUseCase,
+      buscarClientes: buscarClientesUseCase,
     },
   };
 }

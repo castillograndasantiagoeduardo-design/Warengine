@@ -18,7 +18,8 @@ export * from './inventario/categoria.schema.ts';
 export * from './inventario/proveedor.schema.ts';
 
 // ─── Módulo: facturacion ───────────────────────────────────────
-// (los esquemas se agregarán cuando se implemente el módulo)
+export * from './facturacion/cliente.schema.ts';
+
 
 // ─── Módulo: administracion ────────────────────────────────────
 export * from './administracion/sucursal.schema.ts';
