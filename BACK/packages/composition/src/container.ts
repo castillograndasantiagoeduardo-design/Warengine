@@ -132,7 +132,7 @@ export function createContainer(_env?: Record<string, string>): AppContainer {
     gestionUsuarioRepository,
     auditoriaRepository,
   );
- const cambiarEstadoUsuarioUseCase = new CambiarEstadoUsuarioUseCase(
+  const cambiarEstadoUsuarioUseCase = new CambiarEstadoUsuarioUseCase(
     gestionUsuarioRepository,
     auditoriaRepository,
   );
@@ -161,8 +161,7 @@ export function createContainer(_env?: Record<string, string>): AppContainer {
     inactivarProveedorUseCase,
     reactivarProveedorUseCase,
   );
-  const cambiarRolUsuarioUseCase = new CambiarRolUsuarioUseCase(gestionUsuarioRepository);
-  const cambiarEstadoUsuarioUseCase = new CambiarEstadoUsuarioUseCase(gestionUsuarioRepository);
+  
   const registrarClienteUseCase = new RegistrarClienteUseCase(clienteRepository);
   const buscarClientesUseCase = new BuscarClientesUseCase(clienteRepository);
 
