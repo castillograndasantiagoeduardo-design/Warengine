@@ -12,7 +12,6 @@
 #   1 = super-admin
 #   2 = admin-sucursal
 #   3 = cajero-vendedor
-#   4 = admin-logistica
 # ==============================================================================
 
 @baseUrl = http://localhost:8017

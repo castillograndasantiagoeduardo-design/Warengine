@@ -7,6 +7,7 @@ import {
 import { AppContainer } from '@warengine/composition';
 import { presentResult } from '../../presenters/result.presenter.ts';
 import { leerJson, safeHandler } from '../../utils/handler.ts';
+import { obtenerActor } from '../../utils/actor.ts';
 
 export function listarUsuariosController(container: AppContainer) {
   return safeHandler(async (c) => {
@@ -28,6 +29,7 @@ export function crearUsuarioController(container: AppContainer) {
     const result = await container.administracion.crearUsuario.execute({
       ...resto,
       passwordPlain: password,
+      actor: obtenerActor(c),
     });
     return presentResult(c, result, 201);
   });
@@ -46,6 +48,7 @@ export function cambiarRolUsuarioController(container: AppContainer) {
     const result = await container.administracion.cambiarRolUsuario.execute({
       usuarioId,
       rolId: parsed.data.rolId,
+      actor: obtenerActor(c),
     });
     return presentResult(c, result);
   });
@@ -64,6 +67,7 @@ export function cambiarEstadoUsuarioController(container: AppContainer) {
     const result = await container.administracion.cambiarEstadoUsuario.execute({
       usuarioId,
       isActive: parsed.data.isActive,
+      actor: obtenerActor(c),
     });
     return presentResult(c, result);
   });

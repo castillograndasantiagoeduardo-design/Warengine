@@ -15,11 +15,15 @@ import { DrizzleUsuarioRepository } from '../../database/src/repositories/autent
 import { DrizzleRolRepository } from '../../database/src/repositories/autenticacion/drizzle-rol.repository.ts';
 import { DrizzleRefreshTokenRepository } from '../../database/src/repositories/autenticacion/drizzle-refresh-token.repository.ts';
 import { DrizzleSucursalRepository } from '../../database/src/repositories/administracion/drizzle-sucursal.repository.ts';
+import { DrizzleAuditoriaRepository } from '../../database/src/repositories/administracion/drizzle-auditoria.repository.ts';
 import { DrizzleGestionUsuarioRepository } from '../../database/src/repositories/administracion/drizzle-gestion-usuario.repository.ts';
 import { DrizzleClienteRepository } from '../../database/src/repositories/facturacion/drizzle-cliente.repository.ts';
+import { DrizzleCategoriaRepository } from '../../database/src/repositories/inventario/drizzle-categoria.repository.ts';
+import { DrizzleProveedorRepository } from '../../database/src/repositories/inventario/drizzle-proveedor.repository.ts';
 
 import { JwtTokenService } from '../../platform/src/jwt/jwt-token-service.ts';
 import { Argon2PasswordHasher } from '../../platform/src/hashing/argon2-password-hasher.ts';
+import { AuditoriaConsolaService } from '../../platform/src/logger/auditoria-consola.service.ts';
 
 import {
   LoginUseCase,
@@ -34,6 +38,21 @@ import {
   CambiarEstadoUsuarioUseCase,
   RegistrarClienteUseCase,
   BuscarClientesUseCase,
+  ListarCategoriasUseCase,
+  ObtenerCategoriaPorIdUseCase,
+  CrearCategoriaUseCase,
+  EditarCategoriaUseCase,
+  InactivarCategoriaUseCase,
+  ReactivarCategoriaUseCase,
+  CambiarEstadoCategoriaUseCase,
+  ListarProveedoresUseCase,
+  ObtenerProveedorPorIdUseCase,
+  CrearProveedorUseCase,
+  EditarProveedorUseCase,
+  InactivarProveedorUseCase,
+  ReactivarProveedorUseCase,
+  CambiarEstadoProveedorUseCase,
+  ConsultarAuditoriaUseCase,
 } from '@warengine/core';
 
 export interface AppContainer {
@@ -50,6 +69,23 @@ export interface AppContainer {
     crearUsuario: CrearUsuarioUseCase;
     cambiarRolUsuario: CambiarRolUsuarioUseCase;
     cambiarEstadoUsuario: CambiarEstadoUsuarioUseCase;
+    consultarAuditoria: ConsultarAuditoriaUseCase;
+  };
+  inventario: {
+    listarCategorias: ListarCategoriasUseCase;
+    obtenerCategoriaPorId: ObtenerCategoriaPorIdUseCase;
+    crearCategoria: CrearCategoriaUseCase;
+    editarCategoria: EditarCategoriaUseCase;
+    inactivarCategoria: InactivarCategoriaUseCase;
+    reactivarCategoria: ReactivarCategoriaUseCase;
+    cambiarEstadoCategoria: CambiarEstadoCategoriaUseCase;
+    listarProveedores: ListarProveedoresUseCase;
+    obtenerProveedorPorId: ObtenerProveedorPorIdUseCase;
+    crearProveedor: CrearProveedorUseCase;
+    editarProveedor: EditarProveedorUseCase;
+    inactivarProveedor: InactivarProveedorUseCase;
+    reactivarProveedor: ReactivarProveedorUseCase;
+    cambiarEstadoProveedor: CambiarEstadoProveedorUseCase;
   };
   facturacion: {
     registrarCliente: RegistrarClienteUseCase;
@@ -67,10 +103,14 @@ export function createContainer(_env?: Record<string, string>): AppContainer {
   const sucursalRepository = new DrizzleSucursalRepository(db);
   const gestionUsuarioRepository = new DrizzleGestionUsuarioRepository(db);
   const clienteRepository = new DrizzleClienteRepository(db);
+  const categoriaRepository = new DrizzleCategoriaRepository(db);
+  const proveedorRepository = new DrizzleProveedorRepository(db);
 
+  const auditoriaRepository = new DrizzleAuditoriaRepository(db);
   // 2. Instanciar Servicios Técnicos
   const tokenService = new JwtTokenService(refreshTokenRepository);
   const passwordHasher = new Argon2PasswordHasher();
+  const auditoriaService = new AuditoriaConsolaService();
 
   // 3. Instanciar Casos de Uso
   const loginUseCase = new LoginUseCase(usuarioRepository, passwordHasher, tokenService);
@@ -78,14 +118,48 @@ export function createContainer(_env?: Record<string, string>): AppContainer {
   const renovarTokenUseCase = new RenovarTokenUseCase(tokenService, usuarioRepository);
 
   const listarSucursalesUseCase = new ListarSucursalesUseCase(sucursalRepository);
-  const crearSucursalUseCase = new CrearSucursalUseCase(sucursalRepository);
-  const editarSucursalUseCase = new EditarSucursalUseCase(sucursalRepository);
+  const crearSucursalUseCase = new CrearSucursalUseCase(sucursalRepository, auditoriaRepository);
+    const editarSucursalUseCase = new EditarSucursalUseCase(sucursalRepository, auditoriaRepository);
 
   const listarUsuariosUseCase = new ListarUsuariosUseCase(gestionUsuarioRepository);
   const crearUsuarioUseCase = new CrearUsuarioUseCase(
     gestionUsuarioRepository,
     sucursalRepository,
     passwordHasher,
+    auditoriaRepository,
+  );
+  const cambiarRolUsuarioUseCase = new CambiarRolUsuarioUseCase(
+    gestionUsuarioRepository,
+    auditoriaRepository,
+  );
+ const cambiarEstadoUsuarioUseCase = new CambiarEstadoUsuarioUseCase(
+    gestionUsuarioRepository,
+    auditoriaRepository,
+  );
+  const consultarAuditoriaUseCase = new ConsultarAuditoriaUseCase(auditoriaRepository);
+
+  // Casos de uso de Categorías
+  const listarCategoriasUseCase = new ListarCategoriasUseCase(categoriaRepository);
+  const obtenerCategoriaPorIdUseCase = new ObtenerCategoriaPorIdUseCase(categoriaRepository);
+  const crearCategoriaUseCase = new CrearCategoriaUseCase(categoriaRepository, auditoriaService);
+  const editarCategoriaUseCase = new EditarCategoriaUseCase(categoriaRepository, auditoriaService);
+  const inactivarCategoriaUseCase = new InactivarCategoriaUseCase(categoriaRepository, auditoriaService);
+  const reactivarCategoriaUseCase = new ReactivarCategoriaUseCase(categoriaRepository, auditoriaService);
+  const cambiarEstadoCategoriaUseCase = new CambiarEstadoCategoriaUseCase(
+    inactivarCategoriaUseCase,
+    reactivarCategoriaUseCase,
+  );
+
+  // Casos de uso de Proveedores
+  const listarProveedoresUseCase = new ListarProveedoresUseCase(proveedorRepository);
+  const obtenerProveedorPorIdUseCase = new ObtenerProveedorPorIdUseCase(proveedorRepository);
+  const crearProveedorUseCase = new CrearProveedorUseCase(proveedorRepository, auditoriaService);
+  const editarProveedorUseCase = new EditarProveedorUseCase(proveedorRepository, auditoriaService);
+  const inactivarProveedorUseCase = new InactivarProveedorUseCase(proveedorRepository, auditoriaService);
+  const reactivarProveedorUseCase = new ReactivarProveedorUseCase(proveedorRepository, auditoriaService);
+  const cambiarEstadoProveedorUseCase = new CambiarEstadoProveedorUseCase(
+    inactivarProveedorUseCase,
+    reactivarProveedorUseCase,
   );
   const cambiarRolUsuarioUseCase = new CambiarRolUsuarioUseCase(gestionUsuarioRepository);
   const cambiarEstadoUsuarioUseCase = new CambiarEstadoUsuarioUseCase(gestionUsuarioRepository);
@@ -107,6 +181,23 @@ export function createContainer(_env?: Record<string, string>): AppContainer {
       crearUsuario: crearUsuarioUseCase,
       cambiarRolUsuario: cambiarRolUsuarioUseCase,
       cambiarEstadoUsuario: cambiarEstadoUsuarioUseCase,
+      consultarAuditoria: consultarAuditoriaUseCase,
+    },
+    inventario: {
+      listarCategorias: listarCategoriasUseCase,
+      obtenerCategoriaPorId: obtenerCategoriaPorIdUseCase,
+      crearCategoria: crearCategoriaUseCase,
+      editarCategoria: editarCategoriaUseCase,
+      inactivarCategoria: inactivarCategoriaUseCase,
+      reactivarCategoria: reactivarCategoriaUseCase,
+      cambiarEstadoCategoria: cambiarEstadoCategoriaUseCase,
+      listarProveedores: listarProveedoresUseCase,
+      obtenerProveedorPorId: obtenerProveedorPorIdUseCase,
+      crearProveedor: crearProveedorUseCase,
+      editarProveedor: editarProveedorUseCase,
+      inactivarProveedor: inactivarProveedorUseCase,
+      reactivarProveedor: reactivarProveedorUseCase,
+      cambiarEstadoProveedor: cambiarEstadoProveedorUseCase,
     },
     facturacion: {
       registrarCliente: registrarClienteUseCase,

@@ -14,4 +14,4 @@
  * técnica. Si aquí aparece una regla de Warengine, está en el lugar equivocado.
  */
 
-// TODO: exportar implementaciones cuando se desarrolle el módulo.
+export * from './src/logger/auditoria-consola.service.ts';

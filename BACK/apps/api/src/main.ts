@@ -7,6 +7,7 @@ import { createContainer } from '@warengine/composition';
 import { createAutenticacionRoutes } from './routes/autenticacion.routes.ts';
 import { createAdministracionRoutes } from './routes/administracion.routes.ts';
 import { createFacturacionRoutes } from './routes/facturacion.routes.ts';
+import { createInventarioRoutes } from './routes/inventario.routes.ts';
 
 const app = new Hono();
 const container = createContainer();
@@ -34,6 +35,8 @@ app.route('/administracion', adminRoutes);
 
 const facturacionRoutes = createFacturacionRoutes(container);
 app.route('/ventas', facturacionRoutes);
+const inventarioRoutes = createInventarioRoutes(container);
+app.route('/inventario', inventarioRoutes);
 
 console.log('🚀 Warengine API escuchando en http://localhost:8017');
 Deno.serve({ port: 8017 }, app.fetch);
