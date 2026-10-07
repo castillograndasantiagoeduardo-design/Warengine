@@ -196,3 +196,10 @@ Content-Type: application/json
 GET {{baseUrl}}/ventas/clientes
 
 ###
+
+### 14. Verificar auditoría de clientes creados en logs_auditoria
+# Resultado esperado: 200 OK con registros de entidad='clientes' y accion='crear'
+GET {{baseUrl}}/administracion/auditoria?entidad=clientes
+Authorization: Bearer {{login.response.body.accessToken}}
+
+###

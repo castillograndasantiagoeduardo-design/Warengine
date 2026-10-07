@@ -8,6 +8,7 @@ import {
   FiltrosAuditoria,
   IAuditoriaRepository,
   PaginaAuditoria,
+  sanitizarDetalles,
 } from '@warengine/core';
 import { logAuditoriaFromRow } from '../../mappers/administracion/log-auditoria.mapper.ts';
 
@@ -20,17 +21,18 @@ export class DrizzleAuditoriaRepository implements IAuditoriaRepository {
    */
   public async registrar(evento: EventoAuditoria): Promise<void> {
     try {
+      const detallesSanitizados = sanitizarDetalles(evento.detalles);
       await this.db.insert(logs_auditoria).values({
         usuario_id: evento.actor.usuarioId,
         accion: evento.accion,
         entidad: evento.entidad,
         entidad_id: evento.entidadId ?? null,
-        detalles: evento.detalles ?? null,
+        detalles: detallesSanitizados ?? null,
         ip: evento.actor.ip,
       });
     } catch (error) {
       console.error(
-        `[auditoria] No se pudo registrar ${evento.accion} sobre ${evento.entidad}:`,
+        `[auditoria] No se pudo registrar accion=${evento.accion} entidad=${evento.entidad} entidadId=${evento.entidadId ?? 'null'} usuarioId=${evento.actor.usuarioId}:`,
         error,
       );
     }

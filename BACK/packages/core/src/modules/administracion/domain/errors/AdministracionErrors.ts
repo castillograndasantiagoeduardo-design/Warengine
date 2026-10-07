@@ -42,9 +42,4 @@ export class UltimoSuperAdminError extends DomainError {
   constructor() {
     super('No puedes quitar el rol ni desactivar al único Super Admin activo.');
   }
-}
-
-export class FiltroAuditoriaInvalidoError extends DomainError {
-  public readonly code = 'FILTRO_AUDITORIA_INVALIDO';
-  constructor(mensaje: string) { super(mensaje); }
-}
+}

@@ -2,12 +2,12 @@ import { Result, DomainError } from '@warengine/shared-kernel';
 import { InactivarProveedorUseCase } from './InactivarProveedorUseCase.ts';
 import { ReactivarProveedorUseCase } from './ReactivarProveedorUseCase.ts';
 import { Proveedor } from '../../domain/entities/Proveedor.ts';
+import { ActorAuditoria } from '../../../auditoria/domain/entities/LogAuditoria.ts';
 
 export interface CambiarEstadoProveedorRequest {
   id: number;
   isActive: boolean;
-  usuarioId?: string | null;
-  ip?: string | null;
+  actor: ActorAuditoria;
 }
 
 export type CambiarEstadoProveedorResponse = Result<Proveedor, DomainError>;
@@ -22,14 +22,12 @@ export class CambiarEstadoProveedorUseCase {
     if (request.isActive) {
       return await this.reactivarProveedorUseCase.execute({
         id: request.id,
-        usuarioId: request.usuarioId,
-        ip: request.ip,
+        actor: request.actor,
       });
     } else {
       return await this.inactivarProveedorUseCase.execute({
         id: request.id,
-        usuarioId: request.usuarioId,
-        ip: request.ip,
+        actor: request.actor,
       });
     }
   }

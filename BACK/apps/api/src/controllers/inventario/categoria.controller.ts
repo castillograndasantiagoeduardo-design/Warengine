@@ -7,7 +7,7 @@ import {
 import { AppContainer } from '@warengine/composition';
 import { presentResult } from '../../presenters/result.presenter.ts';
 import { leerJson, safeHandler } from '../../utils/handler.ts';
-import { obtenerIdentidad } from '../../utils/identidad.ts';
+import { obtenerActor } from '../../utils/actor.ts';
 
 export function listarCategoriasController(container: AppContainer) {
   return safeHandler(async (c) => {
@@ -35,10 +35,9 @@ export function crearCategoriaController(container: AppContainer) {
     if (!parsed.success) {
       return c.json({ error: 'VALIDATION_ERROR', issues: parsed.error.errors }, 400);
     }
-    const identidad = obtenerIdentidad(c);
     const result = await container.inventario.crearCategoria.execute({
       nombre: parsed.data.nombre,
-      usuarioId: identidad.usuarioId,
+      actor: obtenerActor(c),
     });
     return presentResult(c, result, 201);
   });
@@ -54,11 +53,10 @@ export function editarCategoriaController(container: AppContainer) {
     if (!parsed.success) {
       return c.json({ error: 'VALIDATION_ERROR', issues: parsed.error.errors }, 400);
     }
-    const identidad = obtenerIdentidad(c);
     const result = await container.inventario.editarCategoria.execute({
       id,
       ...parsed.data,
-      usuarioId: identidad.usuarioId,
+      actor: obtenerActor(c),
     });
     return presentResult(c, result);
   });
@@ -74,11 +72,10 @@ export function cambiarEstadoCategoriaController(container: AppContainer) {
     if (!parsed.success) {
       return c.json({ error: 'VALIDATION_ERROR', issues: parsed.error.errors }, 400);
     }
-    const identidad = obtenerIdentidad(c);
     const result = await container.inventario.cambiarEstadoCategoria.execute({
       id,
       isActive: parsed.data.isActive,
-      usuarioId: identidad.usuarioId,
+      actor: obtenerActor(c),
     });
     return presentResult(c, result);
   });

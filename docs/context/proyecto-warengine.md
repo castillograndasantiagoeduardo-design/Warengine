@@ -142,11 +142,11 @@ flowchart TD
 |                           |                                                                                                                                                                                           |
 | ------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Propósito**             | Definir contratos (interfaces TypeScript) para **servicios técnicos externos y dependencias de orquestación** que el Caso de Uso necesita para cumplir su flujo (puertos técnicos / Driven Ports).                               |
-| **Qué SÍ contiene**       | Interfaces de servicios técnicos externos de orquestación: `IAuditoriaService`, `IPasswordHasher`, `ITokenService`, `IMailer`, `ITotpService`, pasarelas de pago (`IPaymentGateway`), generadores de reportes/PDF.              |
+| **Qué SÍ contiene**       | Interfaces de servicios técnicos externos de orquestación: `IAuditor`, `IPasswordHasher`, `ITokenService`, `IMailer`, `ITotpService`, pasarelas de pago (`IPaymentGateway`), generadores de reportes/PDF.              |
 | **Qué NO contiene**       | Implementaciones técnicas (van en `platform` o `database`), ni interfaces de repositorios de entidades de dominio (que van en `domain/repositories/`).                                     |
 | **Principio SOLID**       | **DIP + ISP**: el caso de uso orquesta el flujo dependiendo de contratos de servicios externos sin acoplarse a librerías técnicas o proveedores de infraestructura.                       |
-| **Convención de nombres** | `<servicio-en-espanol-o-ingles>.service.ts` o `<servicio-en-ingles>.ts` (`auditoria.service.ts`, `token-service.ts`, `mailer.service.ts`).                                               |
-| **Ejemplo real**          | `inventario/application/ports/auditoria.service.ts` — `interface IAuditoriaService { registrar(evento: EventoAuditoria): Promise<void>; }`.                                               |
+| **Convención de nombres** | `<servicio-en-espanol-o-ingles>.service.ts` o `<servicio-en-ingles>.ts` (`token-service.ts`, `mailer.service.ts`).                                               |
+| **Ejemplo real**          | `auditoria/domain/repositories/IAuditoriaRepository.ts` — `interface IAuditor { registrar(evento: EventoAuditoria): Promise<void>; }`.                                               |
 
 ---
 
@@ -273,7 +273,6 @@ datos**: lee la sección 6 antes de escribirlos.
 - **use-cases**: `crear-producto`, `registrar-entrada` ⚙️, `registrar-salida` ⚙️
   (salida manual: merma/daño), `ajustar-stock` ⚙️, `listar-stock-bajo`,
   `kardex`, `gestionar-categorias`, `gestionar-proveedores`
-- **ports**: `auditoria.service.ts`
 
 ### facturacion
 
@@ -287,11 +286,17 @@ datos**: lee la sección 6 antes de escribirlos.
 ### administracion
 
 - **domain**: `Sucursal`, `Empleado`, `HistorialSalario`, `AlertaAdmin`,
-  `LogAuditoria`, `ISucursalRepository`, `IGestionUsuarioRepository`
+  `ISucursalRepository`, `IGestionUsuarioRepository`
 - **use-cases**: `gestionar-sucursales`, `gestionar-usuarios` ⚙️, `asignar-rol`
-  ⚙️, `dashboard-metricas`, `consultar-auditoria`, `crear-alerta`,
-  `atender-alerta`
+  ⚙️, `dashboard-metricas`, `crear-alerta`, `atender-alerta`
 - **ports**: (servicios técnicos cuando aplique)
+
+### auditoria (transversal)
+
+- **domain**: `LogAuditoria`, `ActorAuditoria`, `ACCIONES_AUDITORIA`, `ENTIDADES_AUDITORIA`,
+  `IAuditor`, `IAuditoriaRepository`, `FiltrosAuditoria`, `PaginaAuditoria`, `sanitizarDetalles`
+- **use-cases**: `consultar-auditoria`
+- **repositories**: `drizzle-auditoria.repository.ts`
 
 ### logistica
 
@@ -303,6 +308,31 @@ datos**: lee la sección 6 antes de escribirlos.
 
 - **use-cases**: `registrar-invocacion-tool`
 - **ports**: `log-mcp-tool.repository.ts`
+
+---
+
+## 4.1 Sistema de Registro de Auditoría
+
+Warengine cuenta con un sistema unificado y transversal de auditoría con las siguientes directrices arquitectónicas:
+
+1. **Regla de oro:** **Se audita por evento de negocio dentro del caso de uso, no por verbo HTTP.** Está estrictamente prohibido implementar middlewares HTTP globales que auditen automáticamente todas las peticiones entrantes. La auditoría pertenece a la semántica del caso de uso.
+2. **Puerto único:** `IAuditor` (definido en `@warengine/core` en `modules/auditoria/domain/repositories/IAuditoriaRepository.ts`). Cualquier caso de uso que ejecute operaciones de mutación o eventos auditables recibe `IAuditor` en su constructor.
+3. **Catálogo de Acciones y Entidades:** Definido en `@warengine/contracts` (`auditoria.catalogo.ts`) y disponible en el core:
+   - `ACCIONES_AUDITORIA`: `crear`, `editar`, `activar`, `inactivar`, `cambiar_rol`, `acceso_denegado`. Siempre en minúsculas con guion bajo.
+   - `ENTIDADES_AUDITORIA`: `sucursales`, `usuarios`, `categorias`, `proveedores`, `clientes`, `acceso` (pseudo-entidad para accesos denegados).
+4. **Convención de `detalles`:** Todo evento auditable registra exclusivamente los cambios con la estructura `{ antes: {...}, despues: {...} }` conteniendo únicamente los campos afectados:
+   - `crear` → `{ despues: { ...datos creados } }`
+   - `editar` → `{ antes: { campo: valorViejo }, despues: { campo: valorNuevo } }`
+   - `activar` / `inactivar` → `{ antes: { isActive: bool }, despues: { isActive: bool } }`
+   - `cambiar_rol` → `{ antes: { rolId }, despues: { rolId } }`
+   - `acceso_denegado` → `{ permisoRequerido, metodo, ruta }`
+5. **Qué NUNCA se guarda en detalles:** Contraseñas en texto plano, hashes de contraseña (`argon2`), tokens JWT / refresh tokens, secretos TOTP, códigos OTP ni claves de autenticación.
+   - La función pura `sanitizarDetalles` en el dominio de auditoría redacta de forma recursiva con `'[REDACTADO]'` cualquier propiedad cuyo nombre coincida con el patrón `/pass|clave|hash|token|secret|totp|otp/i` antes de que el repositorio de auditoría inserte en la base de datos.
+6. **Destinos de persistencia:**
+   - `logs_auditoria`: Bitácora de eventos y mutaciones administrativas, de inventario y accesos denegados autenticados. Protegida por triggers MySQL de solo inserción (`trg_logs_auditoria_bloquea_update`, `trg_logs_auditoria_bloquea_delete`).
+   - `intentos_login`: Registro de intentos de autenticación exitosos y fallidos vía el puerto `IRegistroIntentosLogin` / `DrizzleIntentoLoginRepository`.
+   - `logs_mcp_tools`: Invocaciones de tools por el servidor MCP (cuando se definan).
+7. **Política de peticiones GET:** Las peticiones GET convencionales no se auditan (RNF-06 y RNF-ADM-02). Auditar todas las lecturas degradaría el rendimiento y saturaría el almacenamiento. Únicamente se auditan con eventos explícitos: lecturas de datos altamente sensibles (sueldos, reportes financieros), la consulta del propio log de auditoría o accesos denegados (403).
 
 ---
 

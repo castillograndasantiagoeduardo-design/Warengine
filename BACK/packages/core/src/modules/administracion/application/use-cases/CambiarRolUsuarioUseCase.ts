@@ -1,11 +1,11 @@
 import { Result, DomainError } from '@warengine/shared-kernel';
 import { IGestionUsuarioRepository } from '../../domain/repositories/IGestionUsuarioRepository.ts';
-import { IAuditor } from '../../domain/repositories/IAuditoriaRepository.ts';
+import { IAuditor } from '../../../auditoria/domain/repositories/IAuditoriaRepository.ts';
 import {
   ACCIONES_AUDITORIA,
   ActorAuditoria,
   ENTIDADES_AUDITORIA,
-} from '../../domain/entities/LogAuditoria.ts';
+} from '../../../auditoria/domain/entities/LogAuditoria.ts';
 import { UsuarioGestionado } from '../../domain/entities/UsuarioGestionado.ts';
 import {
   UsuarioNoEncontradoError,
@@ -51,7 +51,7 @@ export class CambiarRolUsuarioUseCase {
       accion: ACCIONES_AUDITORIA.CAMBIAR_ROL,
       entidad: ENTIDADES_AUDITORIA.USUARIOS,
       entidadId: usuario.id,
-      detalles: { rolAnterior: usuario.rolId, rolNuevo: request.rolId },
+      detalles: { antes: { rolId: usuario.rolId }, despues: { rolId: request.rolId } },
     });
 
     const actualizado = await this.usuarioRepository.findById(usuario.id);

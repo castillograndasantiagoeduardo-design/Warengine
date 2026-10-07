@@ -1,13 +1,17 @@
 import { Result, DomainError } from '@warengine/shared-kernel';
 import { IProveedorRepository } from '../../domain/repositories/IProveedorRepository.ts';
-import { IAuditoriaService } from '../ports/auditoria.service.ts';
+import { IAuditor } from '../../../auditoria/domain/repositories/IAuditoriaRepository.ts';
+import {
+  ACCIONES_AUDITORIA,
+  ActorAuditoria,
+  ENTIDADES_AUDITORIA,
+} from '../../../auditoria/domain/entities/LogAuditoria.ts';
 import { Proveedor } from '../../domain/entities/Proveedor.ts';
 import { ProveedorNoEncontradoError } from '../../domain/errors/InventarioErrors.ts';
 
 export interface ReactivarProveedorRequest {
   id: number;
-  usuarioId?: string | null;
-  ip?: string | null;
+  actor: ActorAuditoria;
 }
 
 export type ReactivarProveedorResponse = Result<Proveedor, DomainError>;
@@ -15,7 +19,7 @@ export type ReactivarProveedorResponse = Result<Proveedor, DomainError>;
 export class ReactivarProveedorUseCase {
   constructor(
     private readonly proveedorRepository: IProveedorRepository,
-    private readonly auditoriaService: IAuditoriaService,
+    private readonly auditor: IAuditor,
   ) {}
 
   public async execute(request: ReactivarProveedorRequest): Promise<ReactivarProveedorResponse> {
@@ -26,13 +30,15 @@ export class ReactivarProveedorUseCase {
 
     const reactivado = await this.proveedorRepository.cambiarEstado(request.id, true);
 
-    await this.auditoriaService.registrar({
-      usuarioId: request.usuarioId,
-      accion: 'REACTIVAR',
-      entidad: 'proveedores',
+    await this.auditor.registrar({
+      actor: request.actor,
+      accion: ACCIONES_AUDITORIA.ACTIVAR,
+      entidad: ENTIDADES_AUDITORIA.PROVEEDORES,
       entidadId: String(request.id),
-      detalles: { isActive: true },
-      ip: request.ip,
+      detalles: {
+        antes: { isActive: existente.isActive },
+        despues: { isActive: true },
+      },
     });
 
     return Result.ok(reactivado);

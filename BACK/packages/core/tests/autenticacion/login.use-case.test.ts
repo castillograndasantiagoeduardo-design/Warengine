@@ -13,6 +13,8 @@ import {
   AuthTokens,
   AccessTokenPayload,
   Usuario,
+  IRegistroIntentosLogin,
+  DatosIntentoLogin,
 } from '../../mod.ts';
 
 // ─── Factories de mocks ──────────────────────────────────────────────────────
@@ -23,9 +25,9 @@ function makeUsuario(overrides: Partial<ConstructorParameters<typeof Usuario>> =
     overrides[1] ?? 'test@warengine.local',
     overrides[2] ?? 'hash_seguro',
     overrides[3] ?? 1,
-    overrides[4] ?? true,  // isActive
+    overrides[4] ?? true, // isActive
     overrides[5] ?? false, // requiere2fa
-    overrides[6] ?? null   // tokensInvalidadosEn
+    overrides[6] ?? null, // tokensInvalidadosEn
   );
 }
 
@@ -48,82 +50,167 @@ const TOKENS_MOCK: AuthTokens = { accessToken: 'at_test', refreshToken: 'rt_test
 function makeTokenService(): ITokenService {
   return {
     generarTokens: (_id: string, _rolId: number) => Promise.resolve(TOKENS_MOCK),
-    validarAccessToken: (_t: string): Promise<AccessTokenPayload> => Promise.resolve({
-      usuarioId: 'uuid-001', rolId: 1, iat: new Date()
-    }),
+    validarAccessToken: (_t: string): Promise<AccessTokenPayload> =>
+      Promise.resolve({
+        usuarioId: 'uuid-001',
+        rolId: 1,
+        iat: new Date(),
+      }),
     validarRefreshToken: (_t: string) => Promise.resolve({ usuarioId: 'uuid-001' }),
     revocarRefreshToken: (_t: string) => Promise.resolve(),
   };
 }
 
+function makeRegistroIntentos(): {
+  registro: IRegistroIntentosLogin;
+  intentos: DatosIntentoLogin[];
+} {
+  const intentos: DatosIntentoLogin[] = [];
+  const registro: IRegistroIntentosLogin = {
+    registrar: (datos: DatosIntentoLogin) => {
+      intentos.push(datos);
+      return Promise.resolve();
+    },
+  };
+  return { registro, intentos };
+}
+
 // ─── Tests ───────────────────────────────────────────────────────────────────
 
-Deno.test('LoginUseCase: retorna tokens cuando las credenciales son válidas', async () => {
+Deno.test('LoginUseCase: retorna tokens cuando las credenciales son válidas y registra intento exitoso', async () => {
+  const { registro, intentos } = makeRegistroIntentos();
   const useCase = new LoginUseCase(
     makeUsuarioRepository(makeUsuario()),
     makePasswordService(true),
-    makeTokenService()
+    makeTokenService(),
+    registro,
   );
 
-  const result = await useCase.execute({ email: 'test@warengine.local', passwordPlain: 'pass123' });
+  const result = await useCase.execute({
+    email: 'test@warengine.local',
+    passwordPlain: 'pass123',
+    ip: '10.0.0.1',
+  });
 
   assertEquals(result.isSuccess, true);
   assertEquals(result.value.accessToken, 'at_test');
   assertEquals(result.value.refreshToken, 'rt_test');
+
+  assertEquals(intentos.length, 1);
+  assertEquals(intentos[0], {
+    email: 'test@warengine.local',
+    ip: '10.0.0.1',
+    exitoso: true,
+  });
 });
 
-Deno.test('LoginUseCase: falla con CREDENCIALES_INVALIDAS si el email no existe', async () => {
+Deno.test('LoginUseCase: falla con CREDENCIALES_INVALIDAS si el email no existe y registra intento fallido', async () => {
+  const { registro, intentos } = makeRegistroIntentos();
   const useCase = new LoginUseCase(
     makeUsuarioRepository(null),
     makePasswordService(true),
-    makeTokenService()
+    makeTokenService(),
+    registro,
   );
 
-  const result = await useCase.execute({ email: 'noexiste@x.com', passwordPlain: 'pass123' });
+  const result = await useCase.execute({
+    email: 'noexiste@x.com',
+    passwordPlain: 'pass123',
+    ip: '10.0.0.2',
+  });
 
   assertEquals(result.isFailure, true);
   assertEquals(result.error.code, 'CREDENCIALES_INVALIDAS');
+
+  assertEquals(intentos.length, 1);
+  assertEquals(intentos[0], {
+    email: 'noexiste@x.com',
+    ip: '10.0.0.2',
+    exitoso: false,
+  });
 });
 
-Deno.test('LoginUseCase: falla con CREDENCIALES_INVALIDAS si la contraseña es incorrecta', async () => {
+Deno.test('LoginUseCase: falla con CREDENCIALES_INVALIDAS si la contraseña es incorrecta y registra intento fallido', async () => {
+  const { registro, intentos } = makeRegistroIntentos();
   const useCase = new LoginUseCase(
     makeUsuarioRepository(makeUsuario()),
     makePasswordService(false), // contraseña incorrecta
-    makeTokenService()
+    makeTokenService(),
+    registro,
   );
 
-  const result = await useCase.execute({ email: 'test@warengine.local', passwordPlain: 'wrong' });
+  const result = await useCase.execute({
+    email: 'test@warengine.local',
+    passwordPlain: 'wrong',
+    ip: '10.0.0.3',
+  });
 
   assertEquals(result.isFailure, true);
   assertEquals(result.error.code, 'CREDENCIALES_INVALIDAS');
+
+  assertEquals(intentos.length, 1);
+  assertEquals(intentos[0], {
+    email: 'test@warengine.local',
+    ip: '10.0.0.3',
+    exitoso: false,
+  });
+  // Asegura que nunca se guarda la contraseña
+  const json = JSON.stringify(intentos[0]);
+  assertEquals(json.includes('wrong'), false);
 });
 
-Deno.test('LoginUseCase: falla con USUARIO_INACTIVO si el usuario está desactivado', async () => {
+Deno.test('LoginUseCase: falla con USUARIO_INACTIVO si el usuario está desactivado y registra intento fallido', async () => {
   const usuarioInactivo = new Usuario('uuid-001', 'test@warengine.local', 'hash', 1, false, false, null);
+  const { registro, intentos } = makeRegistroIntentos();
 
   const useCase = new LoginUseCase(
     makeUsuarioRepository(usuarioInactivo),
     makePasswordService(true),
-    makeTokenService()
+    makeTokenService(),
+    registro,
   );
 
-  const result = await useCase.execute({ email: 'test@warengine.local', passwordPlain: 'pass123' });
+  const result = await useCase.execute({
+    email: 'test@warengine.local',
+    passwordPlain: 'pass123',
+    ip: '10.0.0.4',
+  });
 
   assertEquals(result.isFailure, true);
   assertEquals(result.error.code, 'USUARIO_INACTIVO');
+
+  assertEquals(intentos.length, 1);
+  assertEquals(intentos[0], {
+    email: 'test@warengine.local',
+    ip: '10.0.0.4',
+    exitoso: false,
+  });
 });
 
-Deno.test('LoginUseCase: falla con REQUIERE_2FA si el usuario tiene 2FA activado', async () => {
+Deno.test('LoginUseCase: falla con REQUIERE_2FA si el usuario tiene 2FA activado y registra intento fallido', async () => {
   const usuario2fa = new Usuario('uuid-001', 'test@warengine.local', 'hash', 1, true, true, null);
+  const { registro, intentos } = makeRegistroIntentos();
 
   const useCase = new LoginUseCase(
     makeUsuarioRepository(usuario2fa),
     makePasswordService(true),
-    makeTokenService()
+    makeTokenService(),
+    registro,
   );
 
-  const result = await useCase.execute({ email: 'test@warengine.local', passwordPlain: 'pass123' });
+  const result = await useCase.execute({
+    email: 'test@warengine.local',
+    passwordPlain: 'pass123',
+    ip: '10.0.0.5',
+  });
 
   assertEquals(result.isFailure, true);
   assertEquals(result.error.code, 'REQUIERE_2FA');
+
+  assertEquals(intentos.length, 1);
+  assertEquals(intentos[0], {
+    email: 'test@warengine.local',
+    ip: '10.0.0.5',
+    exitoso: false,
+  });
 });

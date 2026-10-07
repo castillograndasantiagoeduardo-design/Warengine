@@ -1,55 +1,51 @@
 import { assertEquals } from 'jsr:@std/assert@^1';
 import {
   Categoria,
-  CategoriaNoEncontradaError,
-  CambiarEstadoCategoriaUseCase,
-  CrearCategoriaUseCase,
-  DatosActualizarCategoria,
-  DatosCrearCategoria,
-  EditarCategoriaUseCase,
-  EventoAuditoria,
-  FiltrosListarCategorias,
-  IAuditoriaService,
   ICategoriaRepository,
+  DatosCrearCategoria,
+  DatosActualizarCategoria,
+  FiltrosListarCategorias,
+  ResultadoPaginado,
+  CrearCategoriaUseCase,
+  EditarCategoriaUseCase,
   InactivarCategoriaUseCase,
+  ReactivarCategoriaUseCase,
+  CambiarEstadoCategoriaUseCase,
   ListarCategoriasUseCase,
   ObtenerCategoriaPorIdUseCase,
-  ReactivarCategoriaUseCase,
-  ResultadoPaginado,
+  IAuditor,
+  EventoAuditoria,
+  ActorAuditoria,
+  ACCIONES_AUDITORIA,
+  ENTIDADES_AUDITORIA,
 } from '../../mod.ts';
 
-// ─── Fake In-Memory Repository & Audit ──────────────────────────────────────
+// ─── Fake Repository ─────────────────────────────────────────────────────────
 
 class FakeCategoriaRepository implements ICategoriaRepository {
   public categorias: Categoria[] = [];
   private nextId = 1;
 
-  public listar(filtros: FiltrosListarCategorias): Promise<ResultadoPaginado<Categoria>> {
+  public listar(params: FiltrosListarCategorias): Promise<ResultadoPaginado<Categoria>> {
     let filtradas = [...this.categorias];
 
-    if (filtros.busqueda) {
-      const q = filtros.busqueda.toLowerCase();
+    if (params.busqueda) {
+      const q = params.busqueda.toLowerCase();
       filtradas = filtradas.filter((c) => c.nombre.toLowerCase().includes(q));
     }
 
-    if (filtros.isActive !== undefined) {
-      filtradas = filtradas.filter((c) => c.isActive === filtros.isActive);
+    if (params.isActive !== undefined) {
+      filtradas = filtradas.filter((c) => c.isActive === params.isActive);
     }
 
     const total = filtradas.length;
-    const page = Math.max(1, filtros.page);
-    const limit = Math.max(1, filtros.limit);
+    const page = params.page ?? 1;
+    const limit = params.limit ?? 50;
+    const totalPages = Math.ceil(total / limit) || 1;
     const offset = (page - 1) * limit;
     const items = filtradas.slice(offset, offset + limit);
-    const totalPages = Math.ceil(total / limit) || 1;
 
-    return Promise.resolve({
-      items,
-      total,
-      page,
-      limit,
-      totalPages,
-    });
+    return Promise.resolve({ items, total, page, limit, totalPages });
   }
 
   public listarActivos(): Promise<Categoria[]> {
@@ -57,8 +53,8 @@ class FakeCategoriaRepository implements ICategoriaRepository {
   }
 
   public findById(id: number): Promise<Categoria | null> {
-    const found = this.categorias.find((c) => c.id === id);
-    return Promise.resolve(found ?? null);
+    const encontrada = this.categorias.find((c) => c.id === id) ?? null;
+    return Promise.resolve(encontrada);
   }
 
   public crear(datos: DatosCrearCategoria): Promise<Categoria> {
@@ -69,12 +65,11 @@ class FakeCategoriaRepository implements ICategoriaRepository {
 
   public actualizar(id: number, cambios: DatosActualizarCategoria): Promise<Categoria> {
     const idx = this.categorias.findIndex((c) => c.id === id);
-    if (idx === -1) throw new Error('Categoria no encontrada');
     const actual = this.categorias[idx];
     const actualizada = new Categoria(
       actual.id,
-      cambios.nombre !== undefined ? cambios.nombre : actual.nombre,
-      cambios.isActive !== undefined ? cambios.isActive : actual.isActive,
+      cambios.nombre ?? actual.nombre,
+      cambios.isActive ?? actual.isActive,
     );
     this.categorias[idx] = actualizada;
     return Promise.resolve(actualizada);
@@ -85,7 +80,7 @@ class FakeCategoriaRepository implements ICategoriaRepository {
   }
 }
 
-class FakeAuditoriaService implements IAuditoriaService {
+class FakeAuditor implements IAuditor {
   public eventos: EventoAuditoria[] = [];
 
   public registrar(evento: EventoAuditoria): Promise<void> {
@@ -93,6 +88,8 @@ class FakeAuditoriaService implements IAuditoriaService {
     return Promise.resolve();
   }
 }
+
+const actor: ActorAuditoria = { usuarioId: 'usr-123', ip: '192.168.1.10' };
 
 // ─── Tests ───────────────────────────────────────────────────────────────────
 
@@ -106,12 +103,12 @@ Deno.test('Categoria Entity: métodos activar e inactivar', () => {
   assertEquals(activa.isActive, true);
 });
 
-Deno.test('CrearCategoriaUseCase: crea una categoría y audita la acción', async () => {
+Deno.test('CrearCategoriaUseCase: crea una categoría y audita la acción con convención despues', async () => {
   const repo = new FakeCategoriaRepository();
-  const audit = new FakeAuditoriaService();
+  const audit = new FakeAuditor();
   const useCase = new CrearCategoriaUseCase(repo, audit);
 
-  const res = await useCase.execute({ nombre: 'Lácteos', usuarioId: 'usr-123' });
+  const res = await useCase.execute({ nombre: 'Lácteos', actor });
 
   assertEquals(res.isSuccess, true);
   assertEquals(res.value.nombre, 'Lácteos');
@@ -119,9 +116,13 @@ Deno.test('CrearCategoriaUseCase: crea una categoría y audita la acción', asyn
   assertEquals(repo.categorias.length, 1);
 
   assertEquals(audit.eventos.length, 1);
-  assertEquals(audit.eventos[0].accion, 'CREAR');
-  assertEquals(audit.eventos[0].entidad, 'categorias');
-  assertEquals(audit.eventos[0].usuarioId, 'usr-123');
+  assertEquals(audit.eventos[0].accion, ACCIONES_AUDITORIA.CREAR);
+  assertEquals(audit.eventos[0].entidad, ENTIDADES_AUDITORIA.CATEGORIAS);
+  assertEquals(audit.eventos[0].entidadId, '1');
+  assertEquals(audit.eventos[0].actor, actor);
+  assertEquals(audit.eventos[0].detalles, {
+    despues: { nombre: 'Lácteos', isActive: true },
+  });
 });
 
 Deno.test('ObtenerCategoriaPorIdUseCase: retorna categoría existente', async () => {
@@ -145,83 +146,107 @@ Deno.test('ObtenerCategoriaPorIdUseCase: falla con CATEGORIA_NO_ENCONTRADA si no
   assertEquals(res.error.code, 'CATEGORIA_NO_ENCONTRADA');
 });
 
-Deno.test('EditarCategoriaUseCase: edita campos y audita', async () => {
+Deno.test('EditarCategoriaUseCase: edita campos y audita con convención antes y despues', async () => {
   const repo = new FakeCategoriaRepository();
-  const audit = new FakeAuditoriaService();
+  const audit = new FakeAuditor();
   await repo.crear({ nombre: 'Carnes' });
 
   const useCase = new EditarCategoriaUseCase(repo, audit);
-  const res = await useCase.execute({ id: 1, nombre: 'Carnes Frías', usuarioId: 'usr-1' });
+  const res = await useCase.execute({ id: 1, nombre: 'Carnes Frías', actor });
 
   assertEquals(res.isSuccess, true);
   assertEquals(res.value.nombre, 'Carnes Frías');
   assertEquals(audit.eventos.length, 1);
-  assertEquals(audit.eventos[0].accion, 'EDITAR');
+  assertEquals(audit.eventos[0].accion, ACCIONES_AUDITORIA.EDITAR);
+  assertEquals(audit.eventos[0].entidad, ENTIDADES_AUDITORIA.CATEGORIAS);
+  assertEquals(audit.eventos[0].entidadId, '1');
+  assertEquals(audit.eventos[0].actor, actor);
+  assertEquals(audit.eventos[0].detalles, {
+    antes: { nombre: 'Carnes' },
+    despues: { nombre: 'Carnes Frías' },
+  });
 });
 
-Deno.test('EditarCategoriaUseCase: falla si el id no existe', async () => {
+Deno.test('EditarCategoriaUseCase: falla si el id no existe y NO audita', async () => {
   const repo = new FakeCategoriaRepository();
-  const audit = new FakeAuditoriaService();
+  const audit = new FakeAuditor();
   const useCase = new EditarCategoriaUseCase(repo, audit);
 
-  const res = await useCase.execute({ id: 99, nombre: 'No existe' });
+  const res = await useCase.execute({ id: 99, nombre: 'No existe', actor });
 
   assertEquals(res.isFailure, true);
   assertEquals(res.error.code, 'CATEGORIA_NO_ENCONTRADA');
+  assertEquals(audit.eventos.length, 0);
 });
 
-Deno.test('InactivarCategoriaUseCase: cambia isActive a false y audita', async () => {
+Deno.test('InactivarCategoriaUseCase: cambia isActive a false y audita antes y despues', async () => {
   const repo = new FakeCategoriaRepository();
-  const audit = new FakeAuditoriaService();
+  const audit = new FakeAuditor();
   await repo.crear({ nombre: 'Panadería' });
 
   const useCase = new InactivarCategoriaUseCase(repo, audit);
-  const res = await useCase.execute({ id: 1, usuarioId: 'usr-admin' });
+  const res = await useCase.execute({ id: 1, actor });
 
   assertEquals(res.isSuccess, true);
   assertEquals(res.value.isActive, false);
   assertEquals(audit.eventos.length, 1);
-  assertEquals(audit.eventos[0].accion, 'INACTIVAR');
+  assertEquals(audit.eventos[0].accion, ACCIONES_AUDITORIA.INACTIVAR);
+  assertEquals(audit.eventos[0].entidad, ENTIDADES_AUDITORIA.CATEGORIAS);
+  assertEquals(audit.eventos[0].entidadId, '1');
+  assertEquals(audit.eventos[0].actor, actor);
+  assertEquals(audit.eventos[0].detalles, {
+    antes: { isActive: true },
+    despues: { isActive: false },
+  });
 });
 
-Deno.test('InactivarCategoriaUseCase: falla si la categoría no existe', async () => {
+Deno.test('InactivarCategoriaUseCase: falla si la categoría no existe y NO audita', async () => {
   const repo = new FakeCategoriaRepository();
-  const audit = new FakeAuditoriaService();
+  const audit = new FakeAuditor();
   const useCase = new InactivarCategoriaUseCase(repo, audit);
 
-  const res = await useCase.execute({ id: 404 });
+  const res = await useCase.execute({ id: 404, actor });
   assertEquals(res.isFailure, true);
   assertEquals(res.error.code, 'CATEGORIA_NO_ENCONTRADA');
+  assertEquals(audit.eventos.length, 0);
 });
 
-Deno.test('ReactivarCategoriaUseCase: cambia isActive a true y audita', async () => {
+Deno.test('ReactivarCategoriaUseCase: cambia isActive a true y audita con activar', async () => {
   const repo = new FakeCategoriaRepository();
-  const audit = new FakeAuditoriaService();
+  const audit = new FakeAuditor();
   const cat = await repo.crear({ nombre: 'Aseo' });
   await repo.cambiarEstado(cat.id, false);
 
   const useCase = new ReactivarCategoriaUseCase(repo, audit);
-  const res = await useCase.execute({ id: cat.id, usuarioId: 'usr-admin' });
+  const res = await useCase.execute({ id: cat.id, actor });
 
   assertEquals(res.isSuccess, true);
   assertEquals(res.value.isActive, true);
   assertEquals(audit.eventos.length, 1);
-  assertEquals(audit.eventos[0].accion, 'REACTIVAR');
+  assertEquals(audit.eventos[0].accion, ACCIONES_AUDITORIA.ACTIVAR);
+  assertEquals(audit.eventos[0].entidad, ENTIDADES_AUDITORIA.CATEGORIAS);
+  assertEquals(audit.eventos[0].entidadId, String(cat.id));
+  assertEquals(audit.eventos[0].actor, actor);
+  assertEquals(audit.eventos[0].detalles, {
+    antes: { isActive: false },
+    despues: { isActive: true },
+  });
 });
 
-Deno.test('ReactivarCategoriaUseCase: falla si la categoría no existe', async () => {
+Deno.test('ReactivarCategoriaUseCase: falla si la categoría no existe y NO audita', async () => {
   const repo = new FakeCategoriaRepository();
-  const audit = new FakeAuditoriaService();
+  const audit = new FakeAuditor();
   const useCase = new ReactivarCategoriaUseCase(repo, audit);
 
-  const res = await useCase.execute({ id: 404 });
+  const res = await useCase.execute({ id: 404, actor });
   assertEquals(res.isFailure, true);
   assertEquals(res.error.code, 'CATEGORIA_NO_ENCONTRADA');
+  assertEquals(audit.eventos.length, 0);
 });
 
 Deno.test('CambiarEstadoCategoriaUseCase: delega correctamente según isActive', async () => {
   const repo = new FakeCategoriaRepository();
-  const audit = new FakeAuditoriaService();
+  const audit = new FakeAuditor();
   const inactivar = new InactivarCategoriaUseCase(repo, audit);
   const reactivar = new ReactivarCategoriaUseCase(repo, audit);
   const useCase = new CambiarEstadoCategoriaUseCase(inactivar, reactivar);
@@ -229,14 +254,18 @@ Deno.test('CambiarEstadoCategoriaUseCase: delega correctamente según isActive',
   await repo.crear({ nombre: 'Snacks' });
 
   // Inactivar
-  const resInact = await useCase.execute({ id: 1, isActive: false });
+  const resInact = await useCase.execute({ id: 1, isActive: false, actor });
   assertEquals(resInact.isSuccess, true);
   assertEquals(resInact.value.isActive, false);
 
   // Reactivar
-  const resAct = await useCase.execute({ id: 1, isActive: true });
+  const resAct = await useCase.execute({ id: 1, isActive: true, actor });
   assertEquals(resAct.isSuccess, true);
   assertEquals(resAct.value.isActive, true);
+
+  assertEquals(audit.eventos.length, 2);
+  assertEquals(audit.eventos[0].accion, ACCIONES_AUDITORIA.INACTIVAR);
+  assertEquals(audit.eventos[1].accion, ACCIONES_AUDITORIA.ACTIVAR);
 });
 
 Deno.test('ListarCategoriasUseCase: paginación y filtros de búsqueda', async () => {
