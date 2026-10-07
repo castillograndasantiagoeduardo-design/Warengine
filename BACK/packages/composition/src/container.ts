@@ -53,6 +53,7 @@ import {
   ReactivarProveedorUseCase,
   CambiarEstadoProveedorUseCase,
   ConsultarAuditoriaUseCase,
+  RestablecerPasswordUsuarioUseCase
 } from '@warengine/core';
 
 export interface AppContainer {
@@ -70,6 +71,7 @@ export interface AppContainer {
     cambiarRolUsuario: CambiarRolUsuarioUseCase;
     cambiarEstadoUsuario: CambiarEstadoUsuarioUseCase;
     consultarAuditoria: ConsultarAuditoriaUseCase;
+    restablecerPasswordUsuario: RestablecerPasswordUsuarioUseCase;
   };
   inventario: {
     listarCategorias: ListarCategoriasUseCase;
@@ -147,6 +149,11 @@ export function createContainer(_env?: Record<string, string>): AppContainer {
     gestionUsuarioRepository,
     auditoriaRepository,
   );
+  const restablecerPasswordUsuarioUseCase = new RestablecerPasswordUsuarioUseCase(
+    gestionUsuarioRepository,
+    passwordHasher,
+    auditoriaRepository,
+  );
   const consultarAuditoriaUseCase = new ConsultarAuditoriaUseCase(auditoriaRepository);
 
   // Casos de uso de Categorías
@@ -191,6 +198,7 @@ export function createContainer(_env?: Record<string, string>): AppContainer {
       cambiarRolUsuario: cambiarRolUsuarioUseCase,
       cambiarEstadoUsuario: cambiarEstadoUsuarioUseCase,
       consultarAuditoria: consultarAuditoriaUseCase,
+      restablecerPasswordUsuario: restablecerPasswordUsuarioUseCase,
     },
     inventario: {
       listarCategorias: listarCategoriasUseCase,

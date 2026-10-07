@@ -29,4 +29,6 @@ export interface IGestionUsuarioRepository {
   actualizarRol(id: string, rolId: number, invalidarTokensEn: Date): Promise<void>;
   /** Cambia el estado e invalida tokens (y revoca refresh tokens). */
   actualizarEstado(id: string, isActive: boolean, invalidarTokensEn: Date): Promise<void>;
+  /** Cambia el hash de la contraseña, invalida tokens y revoca los refresh tokens. */
+  actualizarPassword(id: string, passwordHash: string, invalidarTokensEn: Date): Promise<void>;
 }

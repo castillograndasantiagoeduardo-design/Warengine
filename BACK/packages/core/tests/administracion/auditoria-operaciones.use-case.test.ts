@@ -64,9 +64,10 @@ function usuariosFalsos(existente: UsuarioGestionado | null): IGestionUsuarioRep
     rolExiste: () => Promise.resolve(true),
     contarSuperAdminsActivos: () => Promise.resolve(2),
     crear: (d: NuevoUsuarioData) =>
-      Promise.resolve(new UsuarioGestionado('u-new', d.nombre, d.email, d.rolId, 'cajero-vendedor', d.sucursalId, 'Centro', true)),
+    Promise.resolve(new UsuarioGestionado('u-new', d.nombre, d.email, d.rolId, 'cajero-vendedor', d.sucursalId, 'Centro', true)),
     actualizarRol: () => Promise.resolve(),
     actualizarEstado: () => Promise.resolve(),
+    actualizarPassword: () => Promise.resolve(),
   };
 }
 

@@ -27,6 +27,7 @@ export * from './src/modules/administracion/application/use-cases/ListarSucursal
 export * from './src/modules/administracion/application/use-cases/CrearUsuarioUseCase.ts';
 export * from './src/modules/administracion/application/use-cases/CambiarRolUsuarioUseCase.ts';
 export * from './src/modules/administracion/application/use-cases/CambiarEstadoUsuarioUseCase.ts';
+export * from './src/modules/administracion/application/use-cases/RestablecerPasswordUsuarioUseCase.ts';
 export * from './src/modules/administracion/application/use-cases/ListarUsuariosUseCase.ts';
 
 // ─── Módulo: Auditoría ───────────────────────────────────────────────────────
