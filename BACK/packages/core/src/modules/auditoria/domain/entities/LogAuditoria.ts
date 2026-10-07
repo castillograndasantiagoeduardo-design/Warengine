@@ -9,6 +9,7 @@ export const ACCIONES_AUDITORIA = {
   INACTIVAR: 'inactivar',
   CAMBIAR_ROL: 'cambiar_rol',
   ACCESO_DENEGADO: 'acceso_denegado',
+  RESTABLECER_PASSWORD: 'restablecer_password',
 } as const;
 
 /**

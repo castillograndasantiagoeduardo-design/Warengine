@@ -133,4 +133,21 @@ export class DrizzleGestionUsuarioRepository implements IGestionUsuarioRepositor
       await tx.update(refresh_tokens).set({ revocado: 1 }).where(eq(refresh_tokens.usuario_id, id));
     });
   }
+
+  
+  public async actualizarPassword(
+    id: string,
+    passwordHash: string,
+    invalidarTokensEn: Date,
+  ): Promise<void> {
+    // El trigger de invalidación solo reacciona a cambios de rol o estado, no de contraseña:
+    // por eso aquí se marca tokens_invalidados_en y se revocan los refresh tokens a mano.
+    await this.db.transaction(async (tx) => {
+      await tx
+        .update(usuarios)
+        .set({ password_hash: passwordHash, tokens_invalidados_en: invalidarTokensEn })
+        .where(eq(usuarios.id_usuario, id));
+      await tx.update(refresh_tokens).set({ revocado: 1 }).where(eq(refresh_tokens.usuario_id, id));
+    });
+  }
 }

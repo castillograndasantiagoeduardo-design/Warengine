@@ -16,7 +16,13 @@ export const crearUsuarioSchema = z.object({
 
 export const cambiarRolSchema = z.object({ rolId: z.number().int().positive() });
 export const cambiarEstadoSchema = z.object({ isActive: z.boolean() });
-
+// RF-ADM-C9: el Super Admin define la nueva contraseña (temporal) del usuario.
+export const restablecerPasswordSchema = z.object({
+  nuevaPassword: z
+    .string({ required_error: 'La nueva contraseña es obligatoria.' })
+    .min(8, { message: 'La contraseña debe tener al menos 8 caracteres.' })
+    .max(128, { message: 'La contraseña no puede superar los 128 caracteres.' }),
+});
 // Vienen por query string, por eso coerce
 export const filtrosUsuariosSchema = z.object({
   rolId: z.coerce.number().int().positive().optional(),
@@ -27,3 +33,4 @@ export type CrearUsuarioInput = z.infer<typeof crearUsuarioSchema>;
 export type CambiarRolInput = z.infer<typeof cambiarRolSchema>;
 export type CambiarEstadoInput = z.infer<typeof cambiarEstadoSchema>;
 export type FiltrosUsuariosInput = z.infer<typeof filtrosUsuariosSchema>;
+export type RestablecerPasswordInput = z.infer<typeof restablecerPasswordSchema>;

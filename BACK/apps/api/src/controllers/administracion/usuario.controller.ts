@@ -3,6 +3,7 @@ import {
   cambiarRolSchema,
   crearUsuarioSchema,
   filtrosUsuariosSchema,
+  restablecerPasswordSchema,
 } from '@warengine/contracts';
 import { AppContainer } from '@warengine/composition';
 import { presentResult } from '../../presenters/result.presenter.ts';
@@ -67,6 +68,25 @@ export function cambiarEstadoUsuarioController(container: AppContainer) {
     const result = await container.administracion.cambiarEstadoUsuario.execute({
       usuarioId,
       isActive: parsed.data.isActive,
+      actor: obtenerActor(c),
+    });
+    return presentResult(c, result);
+  });
+}
+
+export function restablecerPasswordUsuarioController(container: AppContainer) {
+  return safeHandler(async (c) => {
+    const usuarioId = c.req.param('id');
+    if (!usuarioId) {
+      return c.json({ error: 'VALIDATION_ERROR', message: 'Id de usuario inválido.' }, 400);
+    }
+    const parsed = restablecerPasswordSchema.safeParse(await leerJson(c));
+    if (!parsed.success) {
+      return c.json({ error: 'VALIDATION_ERROR', issues: parsed.error.errors }, 400);
+    }
+    const result = await container.administracion.restablecerPasswordUsuario.execute({
+      usuarioId,
+      nuevaPassword: parsed.data.nuevaPassword,
       actor: obtenerActor(c),
     });
     return presentResult(c, result);

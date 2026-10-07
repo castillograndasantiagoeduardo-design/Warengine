@@ -5,6 +5,7 @@ export const ACCIONES_AUDITORIA = {
   INACTIVAR: 'inactivar',
   CAMBIAR_ROL: 'cambiar_rol',
   ACCESO_DENEGADO: 'acceso_denegado',
+   RESTABLECER_PASSWORD: 'restablecer_password',
 } as const;
 
 export type AccionAuditoria = (typeof ACCIONES_AUDITORIA)[keyof typeof ACCIONES_AUDITORIA];
@@ -16,6 +17,8 @@ export const ACCIONES_AUDITORIA_VALORES = [
   ACCIONES_AUDITORIA.INACTIVAR,
   ACCIONES_AUDITORIA.CAMBIAR_ROL,
   ACCIONES_AUDITORIA.ACCESO_DENEGADO,
+  ACCIONES_AUDITORIA.RESTABLECER_PASSWORD,
+  
 ] as const;
 
 export const ENTIDADES_AUDITORIA = {
