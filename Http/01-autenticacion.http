@@ -1,0 +1,252 @@
+# ==============================================================================
+# MÓDULO: AUTENTICACIÓN
+# Requiere: REST Client (extensión VS Code)
+# Base URL: http://localhost:8017
+# ==============================================================================
+
+@baseUrl = http://localhost:8017
+
+# ------------------------------------------------------------------------------
+# UC-AUTH-01: Login con credenciales válidas
+# RF: Autenticación de usuarios
+# Resultado esperado: 200 OK con accessToken y refreshToken
+# ------------------------------------------------------------------------------
+
+### Login Superadmin (caso feliz)
+# @name login
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "superadmin@warengine.local",
+  "password": "Warengine.Admin.2026!"
+}
+
+###
+
+# ------------------------------------------------------------------------------
+# UC-AUTH-02: Verificar sesión activa con token válido
+# RF: Validación de tokens JWT
+# Resultado esperado: 200 OK con mensaje de sesión activa
+# ------------------------------------------------------------------------------
+
+### Verificar sesión activa
+GET {{baseUrl}}/auth/verificar
+Authorization: Bearer {{login.response.body.accessToken}}
+
+###
+
+# ------------------------------------------------------------------------------
+# UC-AUTH-03: Renovar access token usando refresh token
+# RF: Renovación de tokens
+# Resultado esperado: 200 OK con nuevo accessToken
+# ------------------------------------------------------------------------------
+
+### Renovar token con refreshToken del login anterior
+POST {{baseUrl}}/auth/renovar-token
+Content-Type: application/json
+
+{
+  "refreshToken": "{{login.response.body.refreshToken}}"
+}
+
+###
+
+# ------------------------------------------------------------------------------
+# UC-AUTH-04: Cerrar sesión
+# RF: Cierre de sesión
+# Resultado esperado: 200 OK, cookies HttpOnly limpiadas
+# ------------------------------------------------------------------------------
+
+### Logout (cierra sesión)
+POST {{baseUrl}}/auth/logout
+Authorization: Bearer {{login.response.body.accessToken}}
+
+###
+
+# ------------------------------------------------------------------------------
+# UC-AUTH-05: Health Check del servidor
+# Resultado esperado: 200 OK con texto "Warengine API - OK"
+# ------------------------------------------------------------------------------
+
+### Health Check
+GET {{baseUrl}}/health
+
+###
+
+# ==============================================================================
+# CASOS DE ERROR ESPERADOS
+# ==============================================================================
+
+# ------------------------------------------------------------------------------
+# UC-AUTH-ERR-01: Login con contraseña incorrecta → 401
+# ------------------------------------------------------------------------------
+
+### Login fallido - contraseña incorrecta
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "superadmin@warengine.local",
+  "password": "ContrasenaIncorrecta!"
+}
+
+###
+
+# ------------------------------------------------------------------------------
+# UC-AUTH-ERR-02: Login con email inexistente → 401
+# ------------------------------------------------------------------------------
+
+### Login fallido - email no registrado
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "noexiste@warengine.local",
+  "password": "Warengine.Admin.2026!"
+}
+
+###
+
+# ------------------------------------------------------------------------------
+# UC-AUTH-ERR-03: Acceder a ruta protegida sin token → 401
+# ------------------------------------------------------------------------------
+
+### Ruta protegida sin token (debe devolver 401)
+GET {{baseUrl}}/auth/verificar
+
+###
+
+# ------------------------------------------------------------------------------
+# UC-AUTH-ERR-04: Validación de esquema - email inválido → 400
+# ------------------------------------------------------------------------------
+
+### Login con email inválido
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "no-es-un-email",
+  "password": "Warengine.Admin.2026!"
+}
+
+###
+
+# ==============================================================================
+# PRUEBAS DE BLOQUEO POR INTENTOS FALLIDOS (RF-SA-F1, F2, F3)
+# ==============================================================================
+
+# ------------------------------------------------------------------------------
+# Ráfaga de 6 logins fallidos seguidos:
+# Intentos 1 a 5 devuelven 401 CREDENCIALES_INVALIDAS
+# Intento 6 devuelve 429 Too Many Requests (LOGIN_BLOQUEADO)
+# ------------------------------------------------------------------------------
+
+### Intento fallido 1 de 5 (esperado 401)
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "bloqueo.test@warengine.local",
+  "password": "ClaveIncorrecta1!"
+}
+
+###
+
+### Intento fallido 2 de 5 (esperado 401)
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "bloqueo.test@warengine.local",
+  "password": "ClaveIncorrecta2!"
+}
+
+###
+
+### Intento fallido 3 de 5 (esperado 401)
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "bloqueo.test@warengine.local",
+  "password": "ClaveIncorrecta3!"
+}
+
+###
+
+### Intento fallido 4 de 5 (esperado 401)
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "bloqueo.test@warengine.local",
+  "password": "ClaveIncorrecta4!"
+}
+
+###
+
+### Intento fallido 5 de 5 (esperado 401)
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "bloqueo.test@warengine.local",
+  "password": "ClaveIncorrecta5!"
+}
+
+###
+
+### Intento fallido 6 (BLOQUEADO - esperado 429 Too Many Requests)
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "bloqueo.test@warengine.local",
+  "password": "ClaveIncorrecta6!"
+}
+
+###
+
+# ------------------------------------------------------------------------------
+# Login tras el bloqueo:
+# Aunque las credenciales sean correctas, el acceso sigue bloqueado
+# Resultado esperado: 429 LOGIN_BLOQUEADO sin revelar si la clave es correcta
+# ------------------------------------------------------------------------------
+
+### Login tras el bloqueo con contraseña correcta (esperado 429 LOGIN_BLOQUEADO)
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "bloqueo.test@warengine.local",
+  "password": "Warengine.Admin.2026!"
+}
+
+###
+
+# ------------------------------------------------------------------------------
+# Logout con refresh token en body (revocación real en BD)
+# Resultado esperado: 200 OK
+# ------------------------------------------------------------------------------
+
+### Logout pasando refresh token explícito
+POST {{baseUrl}}/auth/logout
+Content-Type: application/json
+
+{
+  "refreshToken": "{{login.response.body.refreshToken}}"
+}
+
+###
+
+### Logout idempotente sin token o token inexistente (esperado 200 OK)
+POST {{baseUrl}}/auth/logout
+Content-Type: application/json
+
+{
+  "refreshToken": "uuid-inexistente-o-ya-revocado"
+}
+
+###
+

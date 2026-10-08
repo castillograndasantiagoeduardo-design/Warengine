@@ -4,10 +4,10 @@
 # Servidor: http://localhost:8017  (deno task dev-api)
 #
 # ARCHIVOS DE PRUEBA POR MÓDULO:
-#   http/01-autenticacion.http  — Login, renovar token, logout, verificar
-#   http/02-sucursales.http     — CRUD de sucursales (RF-ADM-C1, C2, C3)
-#   http/03-usuarios.http       — Gestión de usuarios (RF-ADM-C5, C6, C7, C8)
-#   http/04-inventario.http     — Gestión de categorías y proveedores (RF-ADM-B5, B6)
+#   Http/01-autenticacion.http  — Login, renovar token, logout, verificar
+#   Http/02-sucursales.http     — CRUD de sucursales (RF-ADM-C1, C2, C3)
+#   Http/03-usuarios.http       — Gestión de usuarios (RF-ADM-C5, C6, C7, C8)
+#   Http/04-inventario.http     — Gestión de categorías y proveedores (RF-ADM-B5, B6)
 #
 # ESTADO DE ENDPOINTS (probado 2026-10-06):
 #   ✅ POST   /auth/login
@@ -39,7 +39,7 @@
 
 # ==============================================================================
 # INICIO RÁPIDO — Login + pruebas básicas en un solo archivo
-# Para pruebas completas, abre los archivos en http/
+# Para pruebas completas, abre los archivos en Http/
 # ==============================================================================
 
 ### 1. Login Superadmin
