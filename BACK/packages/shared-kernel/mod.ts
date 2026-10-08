@@ -11,3 +11,4 @@
 
 export { DomainError } from './src/DomainError.ts';
 export { Result } from './src/Result.ts';
+export type { ResultadoPaginado } from './src/Pagination.ts';

@@ -26,6 +26,10 @@ export function presentResult<T>(c: Context, result: Result<T, DomainError>, suc
     case 'USUARIO_NO_ENCONTRADO':
       status = 404; // Not Found
       break;
+    case 'SKU_DUPLICADO':
+    case 'STOCK_INSUFICIENTE':
+      status = 409; // Conflict
+      break;
     case 'REQUIERE_2FA':
       status = 428; // Precondition Required
       break;
@@ -36,6 +40,10 @@ export function presentResult<T>(c: Context, result: Result<T, DomainError>, suc
       status = 422;
       break;
     case 'CLIENTE_B2B_DATOS_INCOMPLETOS':
+    case 'CATEGORIA_INACTIVA':
+    case 'PROVEEDOR_INACTIVO':
+    case 'REFERENCIA_INVALIDA':
+    case 'SKU_MODIFICACION_NO_PERMITIDA':
       status = 422; // Regla de negocio violada
       break;
     default:

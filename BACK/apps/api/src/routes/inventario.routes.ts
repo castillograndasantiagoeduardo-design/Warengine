@@ -15,6 +15,13 @@ import {
   listarProveedoresController,
   obtenerProveedorPorIdController,
 } from '../controllers/inventario/proveedor.controller.ts';
+import {
+  cambiarEstadoProductoController,
+  crearProductoController,
+  editarProductoController,
+  listarProductosController,
+  obtenerProductoPorIdController,
+} from '../controllers/inventario/producto.controller.ts';
 
 // Códigos según la tabla `permisos` (seed).
 // `inventario:leer`: super-admin, admin-sucursal, cajero-vendedor
@@ -77,6 +84,33 @@ export function createInventarioRoutes(container: AppContainer): Hono {
     '/proveedores/:id/estado',
     authMiddleware(container, PERMISO_INVENTARIO_ESCRIBIR),
     cambiarEstadoProveedorController(container),
+  );
+
+  // ─── Productos (RF-ADM-B1, B2, B3, B4) ────────────────────────────────────
+  api.get(
+    '/productos',
+    authMiddleware(container, PERMISO_INVENTARIO_LEER),
+    listarProductosController(container),
+  );
+  api.get(
+    '/productos/:id',
+    authMiddleware(container, PERMISO_INVENTARIO_LEER),
+    obtenerProductoPorIdController(container),
+  );
+  api.post(
+    '/productos',
+    authMiddleware(container, PERMISO_INVENTARIO_ESCRIBIR),
+    crearProductoController(container),
+  );
+  api.put(
+    '/productos/:id',
+    authMiddleware(container, PERMISO_INVENTARIO_ESCRIBIR),
+    editarProductoController(container),
+  );
+  api.put(
+    '/productos/:id/estado',
+    authMiddleware(container, PERMISO_INVENTARIO_ESCRIBIR),
+    cambiarEstadoProductoController(container),
   );
 
   return api;
