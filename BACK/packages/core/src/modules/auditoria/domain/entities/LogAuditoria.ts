@@ -21,6 +21,7 @@ export const ENTIDADES_AUDITORIA = {
   CATEGORIAS: 'categorias',
   PROVEEDORES: 'proveedores',
   CLIENTES: 'clientes',
+  PRODUCTOS: 'productos',
   ACCESO: 'acceso',
 } as const;
 

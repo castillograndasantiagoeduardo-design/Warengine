@@ -63,3 +63,13 @@ export * from './src/modules/inventario/application/use-cases/EditarProveedorUse
 export * from './src/modules/inventario/application/use-cases/InactivarProveedorUseCase.ts';
 export * from './src/modules/inventario/application/use-cases/ReactivarProveedorUseCase.ts';
 export * from './src/modules/inventario/application/use-cases/CambiarEstadoProveedorUseCase.ts';
+export * from './src/modules/inventario/domain/entities/Producto.ts';
+export * from './src/modules/inventario/domain/value-objects/Sku.ts';
+export * from './src/modules/inventario/domain/repositories/IProductoRepository.ts';
+export * from './src/modules/inventario/application/use-cases/CrearProductoUseCase.ts';
+export * from './src/modules/inventario/application/use-cases/EditarProductoUseCase.ts';
+export * from './src/modules/inventario/application/use-cases/InactivarProductoUseCase.ts';
+export * from './src/modules/inventario/application/use-cases/ReactivarProductoUseCase.ts';
+export * from './src/modules/inventario/application/use-cases/CambiarEstadoProductoUseCase.ts';
+export * from './src/modules/inventario/application/use-cases/ListarProductosUseCase.ts';
+export * from './src/modules/inventario/application/use-cases/ObtenerProductoPorIdUseCase.ts';

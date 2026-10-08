@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { paginacionSchema, transformIsActive } from '../common/index.ts';
 
 export const crearCategoriaSchema = z.object({
   nombre: z
@@ -26,18 +27,12 @@ export const cambiarEstadoCategoriaSchema = z.object({
   isActive: z.boolean({ required_error: 'El campo isActive es obligatorio.' }),
 });
 
-export const filtrosCategoriasSchema = z.object({
-  busqueda: z.string().trim().optional(),
-  isActive: z
-    .string()
-    .optional()
-    .transform((val) => {
-      if (val === undefined || val === '') return undefined;
-      return val === 'true' || val === '1';
-    }),
-  page: z.coerce.number().int().positive().default(1),
-  limit: z.coerce.number().int().positive().max(100).default(10),
-});
+export const filtrosCategoriasSchema = z
+  .object({
+    busqueda: z.string().trim().optional(),
+    isActive: transformIsActive,
+  })
+  .merge(paginacionSchema);
 
 export const categoriaResponseSchema = z.object({
   id: z.number().int(),

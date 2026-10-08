@@ -9,19 +9,7 @@ import {
     TipoDocumentoCliente,
 } from '@warengine/core';
 import { clienteFromRow } from '../../mappers/facturacion/cliente.mapper.ts';
-
-const MYSQL_CLAVE_DUPLICADA = 1062;
-
-/** Según la versión de Drizzle, el error de mysql2 puede venir en error.cause. */
-function esClaveDuplicada(error: unknown): boolean {
-    const e = error as { errno?: number; cause?: { errno?: number } };
-    return e?.errno === MYSQL_CLAVE_DUPLICADA || e?.cause?.errno === MYSQL_CLAVE_DUPLICADA;
-}
-
-/** Evita que % y _ escritos por el usuario actúen como comodines de LIKE. */
-function escaparLike(texto: string): string {
-    return texto.replace(/[\\%_]/g, '\\$&');
-}
+import { esClaveDuplicada, escaparLike } from '../../errors/mysql-error-translator.ts';
 
 export class DrizzleClienteRepository implements IClienteRepository {
     constructor(private readonly db: Database) { }
