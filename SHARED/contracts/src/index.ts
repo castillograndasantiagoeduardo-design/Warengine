@@ -20,6 +20,7 @@ export * from './inventario/proveedor.schema.ts';
 
 // ─── Módulo: facturacion ───────────────────────────────────────
 export * from './facturacion/cliente.schema.ts';
+export * from './facturacion/turno-caja.schema.ts';
 
 
 // ─── Módulo: administracion ────────────────────────────────────

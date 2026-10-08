@@ -28,6 +28,7 @@ export const ENTIDADES_AUDITORIA = {
   PROVEEDORES: 'proveedores',
   CLIENTES: 'clientes',
   ACCESO: 'acceso',
+  TURNOS_CAJA: 'turnos_caja', 
 } as const;
 
 export type EntidadAuditoria = (typeof ENTIDADES_AUDITORIA)[keyof typeof ENTIDADES_AUDITORIA];
@@ -39,4 +40,5 @@ export const ENTIDADES_AUDITORIA_VALORES = [
   ENTIDADES_AUDITORIA.PROVEEDORES,
   ENTIDADES_AUDITORIA.CLIENTES,
   ENTIDADES_AUDITORIA.ACCESO,
+  ENTIDADES_AUDITORIA.TURNOS_CAJA, 
 ] as const;
