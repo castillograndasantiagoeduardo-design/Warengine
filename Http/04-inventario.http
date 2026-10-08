@@ -246,3 +246,329 @@ Content-Type: application/json
 }
 
 ###
+
+# ==============================================================================
+# RF-ADM-B1 / B2 / B3 / B4: GESTIÓN DE PRODUCTOS
+# ==============================================================================
+
+### SETUP-PROD-01: Crear categoría de apoyo para pruebas de producto
+# @name catParaProd
+POST {{baseUrl}}/inventario/categorias
+Authorization: Bearer {{login.response.body.accessToken}}
+Content-Type: application/json
+
+{
+  "nombre": "Lácteos y Derivados"
+}
+
+###
+
+### SETUP-PROD-02: Crear proveedor de apoyo para pruebas de producto
+# @name provParaProd
+POST {{baseUrl}}/inventario/proveedores
+Authorization: Bearer {{login.response.body.accessToken}}
+Content-Type: application/json
+
+{
+  "nombre": "Lacteos del Valle S.A.",
+  "contacto": "ventas@lacteosdelvalle.com"
+}
+
+###
+
+# ── RF-ADM-B1: Crear producto ──────────────────────────────────────────────────
+
+### UC-PROD-01: Crear producto completo (con categoría, proveedor y precio corporativo)
+# Esperado: 201 Created con { id, sku, nombre, precioCompra, precioVenta, precioCorporativo, isActive: true }
+# @name crearProducto
+POST {{baseUrl}}/inventario/productos
+Authorization: Bearer {{login.response.body.accessToken}}
+Content-Type: application/json
+
+{
+  "sku": "LAC-001",
+  "nombre": "Leche Entera 1L",
+  "categoriaId": {{catParaProd.response.body.id}},
+  "proveedorId": {{provParaProd.response.body.id}},
+  "precioCompra": 2500.00,
+  "precioVenta": 3200.00,
+  "precioCorporativo": 2900.00,
+  "stockInicial": 50,
+  "stockMinimo": 10
+}
+
+###
+
+### UC-PROD-02: Crear producto mínimo (sin categoría, proveedor ni precio corporativo)
+# Esperado: 201 Created
+# @name crearProductoMinimo
+POST {{baseUrl}}/inventario/productos
+Authorization: Bearer {{login.response.body.accessToken}}
+Content-Type: application/json
+
+{
+  "sku": "GEN-999",
+  "nombre": "Producto Genérico de Prueba",
+  "precioCompra": 1000.00,
+  "precioVenta": 1500.00
+}
+
+###
+
+# ── RF-ADM-B4: Listar y buscar productos ──────────────────────────────────────
+
+### UC-PROD-03: Listar productos (paginación por defecto) 
+# Esperado: 200 OK con { items: [...], total, page, limit, totalPages }
+GET {{baseUrl}}/inventario/productos
+Authorization: Bearer {{login.response.body.accessToken}}
+
+###
+
+### UC-PROD-04: Buscar productos por texto (nombre o SKU)
+# Esperado: 200 OK - lista filtrada
+GET {{baseUrl}}/inventario/productos?texto=leche&page=1&limit=10
+Authorization: Bearer {{login.response.body.accessToken}}
+
+###
+
+### UC-PROD-05: Filtrar productos por categoría
+# Esperado: 200 OK - solo productos de esa categoría
+GET {{baseUrl}}/inventario/productos?categoriaId={{catParaProd.response.body.id}}
+Authorization: Bearer {{login.response.body.accessToken}}
+
+###
+
+### UC-PROD-06: Filtrar productos por proveedor
+# Esperado: 200 OK - solo productos de ese proveedor
+GET {{baseUrl}}/inventario/productos?proveedorId={{provParaProd.response.body.id}}
+Authorization: Bearer {{login.response.body.accessToken}}
+
+###
+
+### UC-PROD-07: Filtrar solo productos activos
+# Esperado: 200 OK - solo isActive: true
+GET {{baseUrl}}/inventario/productos?isActive=true
+Authorization: Bearer {{login.response.body.accessToken}}
+
+###
+
+### UC-PROD-08: Filtrar productos con stock bajo (en cualquier sucursal)
+# Esperado: 200 OK - solo productos donde stock_actual <= stock_minimo
+GET {{baseUrl}}/inventario/productos?stockBajo=true
+Authorization: Bearer {{login.response.body.accessToken}}
+
+###
+
+### UC-PROD-09: Filtros combinados (activos + categoría + texto + paginación)
+# Esperado: 200 OK
+GET {{baseUrl}}/inventario/productos?texto=leche&categoriaId={{catParaProd.response.body.id}}&isActive=true&page=1&limit=5
+Authorization: Bearer {{login.response.body.accessToken}}
+
+###
+
+### UC-PROD-10: Obtener producto por ID
+# Esperado: 200 OK con todos los campos del producto
+GET {{baseUrl}}/inventario/productos/{{crearProducto.response.body.id}}
+Authorization: Bearer {{login.response.body.accessToken}}
+
+###
+
+# ── RF-ADM-B2: Editar producto (con historial de precios en auditoría) ─────────
+
+### UC-PROD-11: Editar nombre y precio de venta (genera cambioPrecio en auditoría)
+# Esperado: 200 OK con los nuevos valores
+PUT {{baseUrl}}/inventario/productos/{{crearProducto.response.body.id}}
+Authorization: Bearer {{login.response.body.accessToken}}
+Content-Type: application/json
+
+{
+  "nombre": "Leche Entera Descremada 1L",
+  "precioVenta": 3400.00,
+  "precioCorporativo": 3100.00
+}
+
+###
+
+### UC-PROD-12: Editar solo el proveedor
+# Esperado: 200 OK
+PUT {{baseUrl}}/inventario/productos/{{crearProducto.response.body.id}}
+Authorization: Bearer {{login.response.body.accessToken}}
+Content-Type: application/json
+
+{
+  "proveedorId": {{provParaProd.response.body.id}}
+}
+
+###
+
+### UC-PROD-13: Quitar proveedor (null)
+# Esperado: 200 OK con proveedorId: null
+PUT {{baseUrl}}/inventario/productos/{{crearProducto.response.body.id}}
+Authorization: Bearer {{login.response.body.accessToken}}
+Content-Type: application/json
+
+{
+  "proveedorId": null
+}
+
+###
+
+# ── RF-ADM-B3: Activar / Inactivar producto ───────────────────────────────────
+
+### UC-PROD-14: Inactivar producto (borrado lógico)
+# Esperado: 200 OK con isActive: false
+PUT {{baseUrl}}/inventario/productos/{{crearProducto.response.body.id}}/estado
+Authorization: Bearer {{login.response.body.accessToken}}
+Content-Type: application/json
+
+{
+  "isActive": false
+}
+
+###
+
+### UC-PROD-15: Reactivar producto
+# Esperado: 200 OK con isActive: true
+PUT {{baseUrl}}/inventario/productos/{{crearProducto.response.body.id}}/estado
+Authorization: Bearer {{login.response.body.accessToken}}
+Content-Type: application/json
+
+{
+  "isActive": true
+}
+
+###
+
+### UC-PROD-16: Filtrar solo productos INACTIVOS
+# Esperado: 200 OK - productos con isActive: false
+GET {{baseUrl}}/inventario/productos?isActive=false
+Authorization: Bearer {{login.response.body.accessToken}}
+
+###
+
+# ── Casos de Error de Productos ───────────────────────────────────────────────
+
+### ERR-PROD-01: Crear producto con SKU duplicado
+# Esperado: 409 Conflict con code SKU_DUPLICADO
+POST {{baseUrl}}/inventario/productos
+Authorization: Bearer {{login.response.body.accessToken}}
+Content-Type: application/json
+
+{
+  "sku": "LAC-001",
+  "nombre": "Copia con SKU repetido",
+  "precioCompra": 1000.00,
+  "precioVenta": 1500.00
+}
+
+###
+
+### ERR-PROD-02: Crear producto con categoría inexistente
+# Esperado: 404 Not Found con code CATEGORIA_NO_ENCONTRADA
+POST {{baseUrl}}/inventario/productos
+Authorization: Bearer {{login.response.body.accessToken}}
+Content-Type: application/json
+
+{
+  "sku": "ERR-CAT-404",
+  "nombre": "Producto categoría fantasma",
+  "categoriaId": 99999,
+  "precioCompra": 1000.00,
+  "precioVenta": 1500.00
+}
+
+###
+
+### ERR-PROD-03: Crear producto con categoría inactiva
+# Primero inactiva la categoría, luego intenta crear con ella
+# Esperado: 422 Unprocessable con code CATEGORIA_INACTIVA
+# PASO 1 - Inactivar la categoría
+PUT {{baseUrl}}/inventario/categorias/{{catParaProd.response.body.id}}/estado
+Authorization: Bearer {{login.response.body.accessToken}}
+Content-Type: application/json
+
+{
+  "isActive": false
+}
+
+###
+
+### ERR-PROD-03b: Crear producto con la categoría ya inactiva
+# Esperado: 422 Unprocessable con code CATEGORIA_INACTIVA
+POST {{baseUrl}}/inventario/productos
+Authorization: Bearer {{login.response.body.accessToken}}
+Content-Type: application/json
+
+{
+  "sku": "ERR-CAT-422",
+  "nombre": "Producto categoría inactiva",
+  "categoriaId": {{catParaProd.response.body.id}},
+  "precioCompra": 1000.00,
+  "precioVenta": 1500.00
+}
+
+###
+
+### ERR-PROD-04: Crear producto con precio de venta <= 0
+# Esperado: 400 Bad Request VALIDATION_ERROR
+POST {{baseUrl}}/inventario/productos
+Authorization: Bearer {{login.response.body.accessToken}}
+Content-Type: application/json
+
+{
+  "sku": "ERR-PRECIO",
+  "nombre": "Precio inválido",
+  "precioCompra": 1000.00,
+  "precioVenta": -5.00
+}
+
+###
+
+### ERR-PROD-05: Crear producto con precio con más de 2 decimales
+# Esperado: 400 Bad Request VALIDATION_ERROR
+POST {{baseUrl}}/inventario/productos
+Authorization: Bearer {{login.response.body.accessToken}}
+Content-Type: application/json
+
+{
+  "sku": "ERR-DECIMAL",
+  "nombre": "Precio con muchos decimales",
+  "precioCompra": 1000.555,
+  "precioVenta": 1500.00
+}
+
+###
+
+### ERR-PROD-06: Obtener producto con ID inexistente
+# Esperado: 404 Not Found con code PRODUCTO_NO_ENCONTRADO
+GET {{baseUrl}}/inventario/productos/00000000-0000-0000-0000-000000000000
+Authorization: Bearer {{login.response.body.accessToken}}
+
+###
+
+### ERR-PROD-07: Editar producto inexistente
+# Esperado: 404 Not Found con code PRODUCTO_NO_ENCONTRADO
+PUT {{baseUrl}}/inventario/productos/00000000-0000-0000-0000-000000000000
+Authorization: Bearer {{login.response.body.accessToken}}
+Content-Type: application/json
+
+{
+  "nombre": "No existe"
+}
+
+###
+
+### ERR-PROD-08: Cajero intenta crear un producto (sin permiso inventario:escribir)
+# Esperado: 403 Forbidden con code PERMISO_DENEGADO
+POST {{baseUrl}}/inventario/productos
+Authorization: Bearer {{loginCajero.response.body.accessToken}}
+Content-Type: application/json
+
+{
+  "sku": "NO-AUTH",
+  "nombre": "Acceso denegado",
+  "precioCompra": 1000.00,
+  "precioVenta": 1500.00
+}
+
+###

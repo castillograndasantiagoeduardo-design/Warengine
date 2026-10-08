@@ -21,6 +21,9 @@ import { DrizzleGestionUsuarioRepository } from '../../database/src/repositories
 import { DrizzleClienteRepository } from '../../database/src/repositories/facturacion/drizzle-cliente.repository.ts';
 import { DrizzleCategoriaRepository } from '../../database/src/repositories/inventario/drizzle-categoria.repository.ts';
 import { DrizzleProveedorRepository } from '../../database/src/repositories/inventario/drizzle-proveedor.repository.ts';
+import { DrizzleProductoRepository } from '../../database/src/repositories/inventario/drizzle-producto.repository.ts';
+import { DrizzleTurnoCajaRepository } from '../../database/src/repositories/facturacion/drizzle-turno-caja.repository.ts';
+import { DrizzleSucursalOperadorRepository } from '../../database/src/repositories/facturacion/drizzle-sucursal-operador.repository.ts';
 
 import { JwtTokenService } from '../../platform/src/jwt/jwt-token-service.ts';
 import { Argon2PasswordHasher } from '../../platform/src/hashing/argon2-password-hasher.ts';
@@ -56,7 +59,16 @@ import {
   ReactivarProveedorUseCase,
   CambiarEstadoProveedorUseCase,
   ConsultarAuditoriaUseCase,
-  RestablecerPasswordUsuarioUseCase
+  ListarProductosUseCase,
+  ObtenerProductoPorIdUseCase,
+  CrearProductoUseCase,
+  EditarProductoUseCase,
+  InactivarProductoUseCase,
+  ReactivarProductoUseCase,
+  CambiarEstadoProductoUseCase,
+  RestablecerPasswordUsuarioUseCase,
+  AbrirTurnoCajaUseCase,
+  ObtenerTurnoActualUseCase,
 } from '@warengine/core';
 import { parseEnteroPositivo } from './env-parsers.ts';
 export { parseEnteroPositivo };
@@ -94,10 +106,19 @@ export interface AppContainer {
     inactivarProveedor: InactivarProveedorUseCase;
     reactivarProveedor: ReactivarProveedorUseCase;
     cambiarEstadoProveedor: CambiarEstadoProveedorUseCase;
+    listarProductos: ListarProductosUseCase;
+    obtenerProductoPorId: ObtenerProductoPorIdUseCase;
+    crearProducto: CrearProductoUseCase;
+    editarProducto: EditarProductoUseCase;
+    inactivarProducto: InactivarProductoUseCase;
+    reactivarProducto: ReactivarProductoUseCase;
+    cambiarEstadoProducto: CambiarEstadoProductoUseCase;
   };
   facturacion: {
     registrarCliente: RegistrarClienteUseCase;
     buscarClientes: BuscarClientesUseCase;
+    abrirTurnoCaja: AbrirTurnoCajaUseCase;
+    obtenerTurnoActual: ObtenerTurnoActualUseCase;
   };
 }
 
@@ -114,9 +135,12 @@ export function createContainer(_env?: Record<string, string>): AppContainer {
   const clienteRepository = new DrizzleClienteRepository(db);
   const categoriaRepository = new DrizzleCategoriaRepository(db);
   const proveedorRepository = new DrizzleProveedorRepository(db);
+  const productoRepository = new DrizzleProductoRepository(db);
 
+  
   const auditoriaRepository = new DrizzleAuditoriaRepository(db);
-
+  const turnoCajaRepository = new DrizzleTurnoCajaRepository(db);
+  const sucursalOperadorRepository = new DrizzleSucursalOperadorRepository(db);
   // 2. Instanciar Servicios Técnicos
   const jwtSecret = obtenerJwtSecret(_env);
   const tokenService = new JwtTokenService(refreshTokenRepository, jwtSecret);
@@ -194,6 +218,12 @@ export function createContainer(_env?: Record<string, string>): AppContainer {
     passwordHasher,
     auditoriaRepository,
   );
+  const abrirTurnoCajaUseCase = new AbrirTurnoCajaUseCase(
+    turnoCajaRepository,
+    sucursalOperadorRepository,
+    auditoriaRepository,
+  );
+  const obtenerTurnoActualUseCase = new ObtenerTurnoActualUseCase(turnoCajaRepository);
   const consultarAuditoriaUseCase = new ConsultarAuditoriaUseCase(auditoriaRepository);
 
   // Casos de uso de Categorías
@@ -218,6 +248,28 @@ export function createContainer(_env?: Record<string, string>): AppContainer {
   const cambiarEstadoProveedorUseCase = new CambiarEstadoProveedorUseCase(
     inactivarProveedorUseCase,
     reactivarProveedorUseCase,
+  );
+
+  // Casos de uso de Productos
+  const listarProductosUseCase = new ListarProductosUseCase(productoRepository);
+  const obtenerProductoPorIdUseCase = new ObtenerProductoPorIdUseCase(productoRepository);
+  const crearProductoUseCase = new CrearProductoUseCase(
+    productoRepository,
+    categoriaRepository,
+    proveedorRepository,
+    auditoriaRepository,
+  );
+  const editarProductoUseCase = new EditarProductoUseCase(
+    productoRepository,
+    categoriaRepository,
+    proveedorRepository,
+    auditoriaRepository,
+  );
+  const inactivarProductoUseCase = new InactivarProductoUseCase(productoRepository, auditoriaRepository);
+  const reactivarProductoUseCase = new ReactivarProductoUseCase(productoRepository, auditoriaRepository);
+  const cambiarEstadoProductoUseCase = new CambiarEstadoProductoUseCase(
+    inactivarProductoUseCase,
+    reactivarProductoUseCase,
   );
 
   const registrarClienteUseCase = new RegistrarClienteUseCase(clienteRepository, auditoriaRepository);
@@ -256,10 +308,20 @@ export function createContainer(_env?: Record<string, string>): AppContainer {
       inactivarProveedor: inactivarProveedorUseCase,
       reactivarProveedor: reactivarProveedorUseCase,
       cambiarEstadoProveedor: cambiarEstadoProveedorUseCase,
+      listarProductos: listarProductosUseCase,
+      obtenerProductoPorId: obtenerProductoPorIdUseCase,
+      crearProducto: crearProductoUseCase,
+      editarProducto: editarProductoUseCase,
+      inactivarProducto: inactivarProductoUseCase,
+      reactivarProducto: reactivarProductoUseCase,
+      cambiarEstadoProducto: cambiarEstadoProductoUseCase,
     },
     facturacion: {
       registrarCliente: registrarClienteUseCase,
       buscarClientes: buscarClientesUseCase,
+      abrirTurnoCaja: abrirTurnoCajaUseCase,
+      obtenerTurnoActual: obtenerTurnoActualUseCase,
+      
     },
   };
 }

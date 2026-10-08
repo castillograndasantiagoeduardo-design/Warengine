@@ -67,3 +67,22 @@ export * from './src/modules/inventario/application/use-cases/EditarProveedorUse
 export * from './src/modules/inventario/application/use-cases/InactivarProveedorUseCase.ts';
 export * from './src/modules/inventario/application/use-cases/ReactivarProveedorUseCase.ts';
 export * from './src/modules/inventario/application/use-cases/CambiarEstadoProveedorUseCase.ts';
+export * from './src/modules/inventario/domain/entities/Producto.ts';
+export * from './src/modules/inventario/domain/value-objects/Sku.ts';
+export * from './src/modules/inventario/domain/repositories/IProductoRepository.ts';
+export * from './src/modules/inventario/application/use-cases/CrearProductoUseCase.ts';
+export * from './src/modules/inventario/application/use-cases/EditarProductoUseCase.ts';
+export * from './src/modules/inventario/application/use-cases/InactivarProductoUseCase.ts';
+export * from './src/modules/inventario/application/use-cases/ReactivarProductoUseCase.ts';
+export * from './src/modules/inventario/application/use-cases/CambiarEstadoProductoUseCase.ts';
+export * from './src/modules/inventario/application/use-cases/ListarProductosUseCase.ts';
+export * from './src/modules/inventario/application/use-cases/ObtenerProductoPorIdUseCase.ts';
+
+
+// ─── Módulo: Facturacion ─────────────────────────────────────────────────────
+export * from './src/modules/facturacion/domain/entities/TurnoCaja.ts';
+export * from './src/modules/facturacion/domain/errors/TurnoCajaErrors.ts';
+export * from './src/modules/facturacion/domain/repositories/ITurnoCajaRepository.ts';
+export * from './src/modules/facturacion/domain/repositories/ISucursalOperadorRepository.ts';
+export * from './src/modules/facturacion/application/use-cases/AbrirTurnoCajaUseCase.ts';
+export * from './src/modules/facturacion/application/use-cases/ObtenerTurnoActualUseCase.ts';

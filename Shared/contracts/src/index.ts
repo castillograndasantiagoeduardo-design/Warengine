@@ -6,9 +6,8 @@ export * from './roles.ts';
 export * from './permissions.ts';
 export * from './tool-names.ts';
 
-
-
-
+// ─── Comunes (paginación, filtros base) ────────────────────────
+export * from './common/index.ts';
 // ─── Módulo: autenticacion ─────────────────────────────────────
 export * from './autenticacion/login.schema.ts';
 export * from './autenticacion/renovar-token.schema.ts';
@@ -17,9 +16,11 @@ export * from './administracion/auditoria.catalogo.ts';
 // ─── Módulo: inventario ────────────────────────────────────────
 export * from './inventario/categoria.schema.ts';
 export * from './inventario/proveedor.schema.ts';
+export * from './inventario/producto.schema.ts';
 
 // ─── Módulo: facturacion ───────────────────────────────────────
 export * from './facturacion/cliente.schema.ts';
+export * from './facturacion/turno-caja.schema.ts';
 
 
 // ─── Módulo: administracion ────────────────────────────────────

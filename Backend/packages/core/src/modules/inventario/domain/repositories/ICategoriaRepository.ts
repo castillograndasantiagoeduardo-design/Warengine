@@ -16,13 +16,8 @@ export interface FiltrosListarCategorias {
   limit: number;
 }
 
-export interface ResultadoPaginado<T> {
-  items: T[];
-  total: number;
-  page: number;
-  limit: number;
-  totalPages: number;
-}
+import type { ResultadoPaginado } from '@warengine/shared-kernel';
+export type { ResultadoPaginado };
 
 export interface ICategoriaRepository {
   listar(filtros: FiltrosListarCategorias): Promise<ResultadoPaginado<Categoria>>;
