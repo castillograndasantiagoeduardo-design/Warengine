@@ -9,6 +9,7 @@ export const ACCIONES_AUDITORIA = {
   INACTIVAR: 'inactivar',
   CAMBIAR_ROL: 'cambiar_rol',
   ACCESO_DENEGADO: 'acceso_denegado',
+  RESTABLECER_PASSWORD: 'restablecer_password',
 } as const;
 
 /**
@@ -22,6 +23,7 @@ export const ENTIDADES_AUDITORIA = {
   PROVEEDORES: 'proveedores',
   CLIENTES: 'clientes',
   PRODUCTOS: 'productos',
+  TURNOS_CAJA: 'turnos_caja',
   ACCESO: 'acceso',
 } as const;
 

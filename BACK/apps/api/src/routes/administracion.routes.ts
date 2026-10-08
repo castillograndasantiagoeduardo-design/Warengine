@@ -11,6 +11,8 @@ import {
   cambiarRolUsuarioController,
   crearUsuarioController,
   listarUsuariosController,
+  restablecerPasswordUsuarioController,
+
 } from '../controllers/administracion/usuario.controller.ts';
 
 import { consultarAuditoriaController } from '../controllers/administracion/auditoria.controller.ts';
@@ -29,12 +31,14 @@ export function createAdministracionRoutes(container: AppContainer): Hono {
   api.post('/sucursales', authMiddleware(container, PERMISO_SUCURSALES), crearSucursalController(container));
   api.put('/sucursales/:id', authMiddleware(container, PERMISO_SUCURSALES), editarSucursalController(container));
 
-  // Usuarios (RF-ADM-C5, C6, C7, C8)
+
+  // Usuarios (RF-ADM-C5, C6, C7, C8, C9)
+
   api.get('/usuarios', authMiddleware(container, PERMISO_USUARIOS), listarUsuariosController(container));
   api.post('/usuarios', authMiddleware(container, PERMISO_USUARIOS), crearUsuarioController(container));
   api.put('/usuarios/:id/rol', authMiddleware(container, PERMISO_ROLES), cambiarRolUsuarioController(container));
   api.put('/usuarios/:id/estado', authMiddleware(container, PERMISO_USUARIOS), cambiarEstadoUsuarioController(container));
-  
+  api.put('/usuarios/:id/password', authMiddleware(container, PERMISO_USUARIOS), restablecerPasswordUsuarioController(container));
   // Auditoría
   api.get('/auditoria', authMiddleware(container, PERMISO_AUDITORIA), consultarAuditoriaController(container));
   return api;

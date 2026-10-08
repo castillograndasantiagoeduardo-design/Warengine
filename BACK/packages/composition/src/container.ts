@@ -22,6 +22,8 @@ import { DrizzleClienteRepository } from '../../database/src/repositories/factur
 import { DrizzleCategoriaRepository } from '../../database/src/repositories/inventario/drizzle-categoria.repository.ts';
 import { DrizzleProveedorRepository } from '../../database/src/repositories/inventario/drizzle-proveedor.repository.ts';
 import { DrizzleProductoRepository } from '../../database/src/repositories/inventario/drizzle-producto.repository.ts';
+import { DrizzleTurnoCajaRepository } from '../../database/src/repositories/facturacion/drizzle-turno-caja.repository.ts';
+import { DrizzleSucursalOperadorRepository } from '../../database/src/repositories/facturacion/drizzle-sucursal-operador.repository.ts';
 
 import { JwtTokenService } from '../../platform/src/jwt/jwt-token-service.ts';
 import { Argon2PasswordHasher } from '../../platform/src/hashing/argon2-password-hasher.ts';
@@ -61,6 +63,9 @@ import {
   InactivarProductoUseCase,
   ReactivarProductoUseCase,
   CambiarEstadoProductoUseCase,
+  RestablecerPasswordUsuarioUseCase,
+  AbrirTurnoCajaUseCase,
+  ObtenerTurnoActualUseCase,
 } from '@warengine/core';
 
 export interface AppContainer {
@@ -78,6 +83,7 @@ export interface AppContainer {
     cambiarRolUsuario: CambiarRolUsuarioUseCase;
     cambiarEstadoUsuario: CambiarEstadoUsuarioUseCase;
     consultarAuditoria: ConsultarAuditoriaUseCase;
+    restablecerPasswordUsuario: RestablecerPasswordUsuarioUseCase;
   };
   inventario: {
     listarCategorias: ListarCategoriasUseCase;
@@ -105,6 +111,8 @@ export interface AppContainer {
   facturacion: {
     registrarCliente: RegistrarClienteUseCase;
     buscarClientes: BuscarClientesUseCase;
+    abrirTurnoCaja: AbrirTurnoCajaUseCase;
+    obtenerTurnoActual: ObtenerTurnoActualUseCase;
   };
 }
 
@@ -123,8 +131,10 @@ export function createContainer(_env?: Record<string, string>): AppContainer {
   const proveedorRepository = new DrizzleProveedorRepository(db);
   const productoRepository = new DrizzleProductoRepository(db);
 
+  
   const auditoriaRepository = new DrizzleAuditoriaRepository(db);
-
+  const turnoCajaRepository = new DrizzleTurnoCajaRepository(db);
+  const sucursalOperadorRepository = new DrizzleSucursalOperadorRepository(db);
   // 2. Instanciar Servicios Técnicos
   const tokenService = new JwtTokenService(refreshTokenRepository);
   const passwordHasher = new Argon2PasswordHasher();
@@ -163,6 +173,17 @@ export function createContainer(_env?: Record<string, string>): AppContainer {
     gestionUsuarioRepository,
     auditoriaRepository,
   );
+  const restablecerPasswordUsuarioUseCase = new RestablecerPasswordUsuarioUseCase(
+    gestionUsuarioRepository,
+    passwordHasher,
+    auditoriaRepository,
+  );
+  const abrirTurnoCajaUseCase = new AbrirTurnoCajaUseCase(
+    turnoCajaRepository,
+    sucursalOperadorRepository,
+    auditoriaRepository,
+  );
+  const obtenerTurnoActualUseCase = new ObtenerTurnoActualUseCase(turnoCajaRepository);
   const consultarAuditoriaUseCase = new ConsultarAuditoriaUseCase(auditoriaRepository);
 
   // Casos de uso de Categorías
@@ -229,6 +250,7 @@ export function createContainer(_env?: Record<string, string>): AppContainer {
       cambiarRolUsuario: cambiarRolUsuarioUseCase,
       cambiarEstadoUsuario: cambiarEstadoUsuarioUseCase,
       consultarAuditoria: consultarAuditoriaUseCase,
+      restablecerPasswordUsuario: restablecerPasswordUsuarioUseCase,
     },
     inventario: {
       listarCategorias: listarCategoriasUseCase,
@@ -256,6 +278,9 @@ export function createContainer(_env?: Record<string, string>): AppContainer {
     facturacion: {
       registrarCliente: registrarClienteUseCase,
       buscarClientes: buscarClientesUseCase,
+      abrirTurnoCaja: abrirTurnoCajaUseCase,
+      obtenerTurnoActual: obtenerTurnoActualUseCase,
+      
     },
   };
 }

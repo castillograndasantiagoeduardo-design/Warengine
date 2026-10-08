@@ -332,3 +332,46 @@ Content-Type: application/json
 GET {{baseUrl}}/administracion/usuarios
 
 ###
+
+# ------------------------------------------------------------------------------
+# RF-ADM-C9: RESTABLECER CONTRASEÑA (Super Admin)
+# Para comprobar que se cierran las sesiones: antes de restablecer, haz login con
+# el usuario afectado y guarda su token; después de restablecer, ese token debe dar 401.
+# ------------------------------------------------------------------------------
+
+### Restablecer la contraseña del usuario creado arriba (esperado: 200)
+PUT {{baseUrl}}/administracion/usuarios/{{crearUsuario.response.body.id}}/password
+Authorization: Bearer {{login.response.body.accessToken}}
+Content-Type: application/json
+
+{
+  "nuevaPassword": "Temporal.2026"
+}
+
+###
+
+### Error: contraseña de menos de 8 caracteres (esperado: 400 VALIDATION_ERROR)
+PUT {{baseUrl}}/administracion/usuarios/{{crearUsuario.response.body.id}}/password
+Authorization: Bearer {{login.response.body.accessToken}}
+Content-Type: application/json
+
+{
+  "nuevaPassword": "corta"
+}
+
+###
+
+### Error: usuario inexistente (esperado: error USUARIO_NO_ENCONTRADO)
+PUT {{baseUrl}}/administracion/usuarios/00000000-0000-0000-0000-000000000000/password
+Authorization: Bearer {{login.response.body.accessToken}}
+Content-Type: application/json
+
+{
+  "nuevaPassword": "Temporal.2026"
+}
+
+###
+
+### Verificar la auditoría (esperado: un registro "restablecer_password" sin contraseña)
+GET {{baseUrl}}/administracion/auditoria?accion=restablecer_password
+Authorization: Bearer {{login.response.body.accessToken}}

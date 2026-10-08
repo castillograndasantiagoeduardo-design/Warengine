@@ -33,6 +33,12 @@ export function presentResult<T>(c: Context, result: Result<T, DomainError>, suc
     case 'REQUIERE_2FA':
       status = 428; // Precondition Required
       break;
+        case 'TURNO_YA_ABIERTO':
+      status = 409; // Conflicto con el estado actual
+      break;
+    case 'OPERADOR_SIN_SUCURSAL':
+      status = 422;
+      break;
     case 'CLIENTE_B2B_DATOS_INCOMPLETOS':
     case 'CATEGORIA_INACTIVA':
     case 'PROVEEDOR_INACTIVO':

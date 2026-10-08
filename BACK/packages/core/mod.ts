@@ -27,6 +27,7 @@ export * from './src/modules/administracion/application/use-cases/ListarSucursal
 export * from './src/modules/administracion/application/use-cases/CrearUsuarioUseCase.ts';
 export * from './src/modules/administracion/application/use-cases/CambiarRolUsuarioUseCase.ts';
 export * from './src/modules/administracion/application/use-cases/CambiarEstadoUsuarioUseCase.ts';
+export * from './src/modules/administracion/application/use-cases/RestablecerPasswordUsuarioUseCase.ts';
 export * from './src/modules/administracion/application/use-cases/ListarUsuariosUseCase.ts';
 
 // ─── Módulo: Auditoría ───────────────────────────────────────────────────────
@@ -73,3 +74,12 @@ export * from './src/modules/inventario/application/use-cases/ReactivarProductoU
 export * from './src/modules/inventario/application/use-cases/CambiarEstadoProductoUseCase.ts';
 export * from './src/modules/inventario/application/use-cases/ListarProductosUseCase.ts';
 export * from './src/modules/inventario/application/use-cases/ObtenerProductoPorIdUseCase.ts';
+
+
+// ─── Módulo: Facturacion ─────────────────────────────────────────────────────
+export * from './src/modules/facturacion/domain/entities/TurnoCaja.ts';
+export * from './src/modules/facturacion/domain/errors/TurnoCajaErrors.ts';
+export * from './src/modules/facturacion/domain/repositories/ITurnoCajaRepository.ts';
+export * from './src/modules/facturacion/domain/repositories/ISucursalOperadorRepository.ts';
+export * from './src/modules/facturacion/application/use-cases/AbrirTurnoCajaUseCase.ts';
+export * from './src/modules/facturacion/application/use-cases/ObtenerTurnoActualUseCase.ts';
