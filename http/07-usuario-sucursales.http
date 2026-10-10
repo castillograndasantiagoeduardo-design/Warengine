@@ -1,0 +1,88 @@
+@baseUrl = http://localhost:8017
+@usuarioId = USUARIO_ID
+
+### Login como Super Admin
+# @name login
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "superadmin@warengine.local",
+  "password": "Warengine.Admin.2026!"
+}
+
+###
+
+### Ver las sucursales del usuario (esperado: 200 con principal, adicionales y autorizadas)
+GET {{baseUrl}}/administracion/usuarios/{{usuarioId}}/sucursales
+Authorization: Bearer {{login.response.body.accessToken}}
+
+###
+
+### Asignar principal 1 y adicionales 2 y 3 (esperado: 200)
+PUT {{baseUrl}}/administracion/usuarios/{{usuarioId}}/sucursales
+Authorization: Bearer {{login.response.body.accessToken}}
+Content-Type: application/json
+
+{
+  "sucursalPrincipalId": 1,
+  "sucursalesAdicionalesIds": [2, 3]
+}
+
+###
+
+### Repetir lo mismo (esperado: 200 y SIN cambios: no cierra sesiones ni crea log)
+PUT {{baseUrl}}/administracion/usuarios/{{usuarioId}}/sucursales
+Authorization: Bearer {{login.response.body.accessToken}}
+Content-Type: application/json
+
+{
+  "sucursalPrincipalId": 1,
+  "sucursalesAdicionalesIds": [3, 2]
+}
+
+###
+
+### Quitar todas las adicionales (esperado: 200)
+PUT {{baseUrl}}/administracion/usuarios/{{usuarioId}}/sucursales
+Authorization: Bearer {{login.response.body.accessToken}}
+Content-Type: application/json
+
+{
+  "sucursalPrincipalId": 1
+}
+
+###
+
+### Filtrar usuarios por sucursal: incluye a quienes la tienen como adicional (esperado: 200)
+GET {{baseUrl}}/administracion/usuarios?sucursalId=2
+Authorization: Bearer {{login.response.body.accessToken}}
+
+###
+
+### Verificar la auditoría (esperado: registros "editar / usuarios" con antes y después)
+GET {{baseUrl}}/administracion/auditoria?entidad=usuarios&accion=editar
+Authorization: Bearer {{login.response.body.accessToken}}
+
+###
+
+### Error: sucursal inexistente (esperado: SUCURSAL_NO_ENCONTRADA)
+PUT {{baseUrl}}/administracion/usuarios/{{usuarioId}}/sucursales
+Authorization: Bearer {{login.response.body.accessToken}}
+Content-Type: application/json
+
+{
+  "sucursalPrincipalId": 1,
+  "sucursalesAdicionalesIds": [9999]
+}
+
+###
+
+### Error: falta la principal (esperado: 400 VALIDATION_ERROR)
+PUT {{baseUrl}}/administracion/usuarios/{{usuarioId}}/sucursales
+Authorization: Bearer {{login.response.body.accessToken}}
+Content-Type: application/json
+
+{
+  "sucursalesAdicionalesIds": [2]
+}
