@@ -131,3 +131,109 @@ Content-Type: application/json
 }
 
 ###
+
+# ==============================================================================
+# PRUEBAS DE BLOQUEO POR INTENTOS FALLIDOS (RF-SA-F1, F2, F3)
+# ==============================================================================
+
+# ------------------------------------------------------------------------------
+# Ráfaga de 6 logins fallidos seguidos para un mismo email.
+# Intentos 1 a 5 devuelven 401 (CREDENCIALES_INVALIDAS).
+# El 6.º intento devuelve 429 Too Many Requests (LOGIN_BLOQUEADO).
+# ------------------------------------------------------------------------------
+
+### Intento 1 fallido (401)
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "bloqueo-test@warengine.local",
+  "password": "ClaveIncorrecta1!"
+}
+
+###
+
+### Intento 2 fallido (401)
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "bloqueo-test@warengine.local",
+  "password": "ClaveIncorrecta2!"
+}
+
+###
+
+### Intento 3 fallido (401)
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "bloqueo-test@warengine.local",
+  "password": "ClaveIncorrecta3!"
+}
+
+###
+
+### Intento 4 fallido (401)
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "bloqueo-test@warengine.local",
+  "password": "ClaveIncorrecta4!"
+}
+
+###
+
+### Intento 5 fallido (401)
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "bloqueo-test@warengine.local",
+  "password": "ClaveIncorrecta5!"
+}
+
+###
+
+### Intento 6 fallido → BLOQUEADO (429 Too Many Requests)
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "bloqueo-test@warengine.local",
+  "password": "ClaveIncorrecta6!"
+}
+
+###
+
+# ------------------------------------------------------------------------------
+# Intento de login tras el bloqueo (incluso con contraseña correcta).
+# Debe devolver 429 LOGIN_BLOQUEADO sin verificar la contraseña.
+# ------------------------------------------------------------------------------
+
+### Login con clave correcta durante ventana de bloqueo → 429
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "bloqueo-test@warengine.local",
+  "password": "Warengine.Admin.2026!"
+}
+
+###
+
+# ------------------------------------------------------------------------------
+# Logout manual explícito (RF-SA-G1)
+# Revoca el refresh token y limpia cookies HttpOnly
+# ------------------------------------------------------------------------------
+
+### Logout manual
+POST {{baseUrl}}/auth/logout
+Content-Type: application/json
+
+{}
+
+###
+

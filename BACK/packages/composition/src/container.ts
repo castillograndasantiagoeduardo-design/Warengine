@@ -27,9 +27,12 @@ import { DrizzleSucursalOperadorRepository } from '../../database/src/repositori
 
 import { JwtTokenService } from '../../platform/src/jwt/jwt-token-service.ts';
 import { Argon2PasswordHasher } from '../../platform/src/hashing/argon2-password-hasher.ts';
+import { validarYObtenerJwtSecret } from '../../platform/src/config/jwt.config.ts';
 
 import {
   LoginUseCase,
+  LogoutUseCase,
+  PoliticaBloqueoLogin,
   ValidarPermisoUseCase,
   RenovarTokenUseCase,
   ListarSucursalesUseCase,
@@ -71,6 +74,7 @@ import {
 export interface AppContainer {
   autenticacion: {
     login: LoginUseCase;
+    logout: LogoutUseCase;
     validarPermiso: ValidarPermisoUseCase;
     renovarToken: RenovarTokenUseCase;
   };
@@ -116,7 +120,35 @@ export interface AppContainer {
   };
 }
 
+function leerEnteroPositivo(
+  valor: string | undefined,
+  porDefecto: number,
+  nombreVariable: string,
+): number {
+  if (valor === undefined || valor.trim() === '') {
+    return porDefecto;
+  }
+  const parsed = Number(valor);
+  if (!Number.isInteger(parsed) || parsed <= 0) {
+    throw new Error(
+      `Configuración inválida: la variable de entorno ${nombreVariable} debe ser un entero positivo mayor a 0 (recibido: "${valor}").`,
+    );
+  }
+  return parsed;
+}
+
 export function createContainer(_env?: Record<string, string>): AppContainer {
+  const getEnv = (key: string): string | undefined => _env?.[key] ?? Deno.env.get(key);
+
+  const politicaBloqueo: PoliticaBloqueoLogin = {
+    maxIntentosCuenta: leerEnteroPositivo(getEnv('LOGIN_MAX_INTENTOS_CUENTA'), 5, 'LOGIN_MAX_INTENTOS_CUENTA'),
+    ventanaCuentaMinutos: leerEnteroPositivo(getEnv('LOGIN_VENTANA_CUENTA_MIN'), 5, 'LOGIN_VENTANA_CUENTA_MIN'),
+    maxIntentosIp: leerEnteroPositivo(getEnv('LOGIN_MAX_INTENTOS_IP'), 20, 'LOGIN_MAX_INTENTOS_IP'),
+    ventanaIpMinutos: leerEnteroPositivo(getEnv('LOGIN_VENTANA_IP_MIN'), 15, 'LOGIN_VENTANA_IP_MIN'),
+  };
+
+  const jwtSecret = validarYObtenerJwtSecret(getEnv('JWT_SECRET'));
+
   const db = getDatabase();
 
   // 1. Instanciar Repositorios
@@ -136,7 +168,7 @@ export function createContainer(_env?: Record<string, string>): AppContainer {
   const turnoCajaRepository = new DrizzleTurnoCajaRepository(db);
   const sucursalOperadorRepository = new DrizzleSucursalOperadorRepository(db);
   // 2. Instanciar Servicios Técnicos
-  const tokenService = new JwtTokenService(refreshTokenRepository);
+  const tokenService = new JwtTokenService(refreshTokenRepository, jwtSecret);
   const passwordHasher = new Argon2PasswordHasher();
 
   // 3. Instanciar Casos de Uso
@@ -145,7 +177,10 @@ export function createContainer(_env?: Record<string, string>): AppContainer {
     passwordHasher,
     tokenService,
     intentoLoginRepository,
+    intentoLoginRepository,
+    politicaBloqueo,
   );
+  const logoutUseCase = new LogoutUseCase(tokenService);
   const validarPermisoUseCase = new ValidarPermisoUseCase(
     tokenService,
     usuarioRepository,
@@ -238,6 +273,7 @@ export function createContainer(_env?: Record<string, string>): AppContainer {
   return {
     autenticacion: {
       login: loginUseCase,
+      logout: logoutUseCase,
       validarPermiso: validarPermisoUseCase,
       renovarToken: renovarTokenUseCase,
     },

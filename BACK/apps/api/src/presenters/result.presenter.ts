@@ -33,6 +33,9 @@ export function presentResult<T>(c: Context, result: Result<T, DomainError>, suc
     case 'REQUIERE_2FA':
       status = 428; // Precondition Required
       break;
+    case 'LOGIN_BLOQUEADO':
+      status = 429; // Too Many Requests
+      break;
         case 'TURNO_YA_ABIERTO':
       status = 409; // Conflicto con el estado actual
       break;

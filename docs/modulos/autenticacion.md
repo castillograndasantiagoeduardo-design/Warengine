@@ -34,7 +34,8 @@ El módulo de Autenticación de Warengine implementa un sistema de **login segur
 
 | Funcionalidad | Descripción |
 |---|---|
-| **Login** | Autentica al usuario por email y contraseña. Devuelve un Access Token (15 min) y un Refresh Token (7 días). |
+| **Login** | Autentica al usuario por email y contraseña. Aplica rate limiting y bloqueo por cuenta e IP ante intentos fallidos. Devuelve Access Token (15 min) y Refresh Token (7 días). |
+| **Logout** | Revoca el Refresh Token en la base de datos y limpia las cookies HttpOnly de forma idempotente. |
 | **Renovar Token** | Rota el Refresh Token y emite un nuevo par, invalidando el anterior (previene replay attacks). |
 | **Validar Permiso** | Verifica que un Access Token sea válido, que las credenciales no hayan sido revocadas, y que el rol del usuario tenga el permiso específico requerido. |
 | **RBAC Granular** | Los permisos se asignan directamente a roles (ej. `facturacion:facturar`). El código nunca verifica si el usuario es "admin" sino si tiene el permiso exacto requerido. |
@@ -216,6 +217,7 @@ Este método garantiza que si un administrador revoca todas las sesiones de un u
 | `PermisoDenegadoError` | `PERMISO_DENEGADO` | 403 | Token válido pero el rol no tiene el permiso requerido |
 | `TokenInvalidoError` | `TOKEN_INVALIDO` | 401 | JWT inválido, expirado, revocado o credenciales invalidadas |
 | `Requiere2FAError` | `REQUIERE_2FA` | 428 | Usuario con 2FA activado (flujo pendiente) |
+| `LoginBloqueadoError` | `LOGIN_BLOQUEADO` | 429 | Demasiados intentos fallidos por cuenta o por IP |
 
 ### 5.3 Ports (Interfaces)
 
@@ -228,6 +230,8 @@ Los ports son los contratos que el Core necesita del mundo exterior. **El Core n
 | [`IUsuarioRepository`](file:///c:/Users/USUARIO/Desktop/WARENGINE/BACK/packages/core/src/autenticacion/domain/repositories/IUsuarioRepository.ts) | `findByEmail`, `findById` | Buscar usuarios en la BD |
 | [`IRolRepository`](file:///c:/Users/USUARIO/Desktop/WARENGINE/BACK/packages/core/src/autenticacion/domain/repositories/IRolRepository.ts) | `obtenerPermisosDeRol` | Obtener lista de permisos por rol |
 | [`IRefreshTokenRepository`](file:///c:/Users/USUARIO/Desktop/WARENGINE/BACK/packages/core/src/autenticacion/domain/repositories/IRefreshTokenRepository.ts) | `guardar`, `validar`, `revocar` | Gestionar tokens de renovación |
+| [`IRegistroIntentosLogin`](file:///c:/Users/USUARIO/Desktop/WARENGINE/BACK/packages/core/src/modules/autenticacion/domain/repositories/IRegistroIntentosLogin.ts) | `registrar` | Auditoría de intentos de login |
+| [`IControlIntentosLogin`](file:///c:/Users/USUARIO/Desktop/WARENGINE/BACK/packages/core/src/modules/autenticacion/domain/repositories/IControlIntentosLogin.ts) | `contarFallosRecientesPorEmail`, `contarFallosRecientesPorIp` | Conteo de intentos para rate limiting y bloqueo |
 
 #### Servicios
 
@@ -240,23 +244,40 @@ Los ports son los contratos que el Core necesita del mundo exterior. **El Core n
 
 #### `LoginUseCase`
 
-[`LoginUseCase.ts`](file:///c:/Users/USUARIO/Desktop/WARENGINE/BACK/packages/core/src/autenticacion/application/use-cases/LoginUseCase.ts)
+[`LoginUseCase.ts`](file:///c:/Users/USUARIO/Desktop/WARENGINE/BACK/packages/core/src/modules/autenticacion/application/use-cases/LoginUseCase.ts)
 
-**Dependencias:** `IUsuarioRepository`, `IPasswordService`, `ITokenService`
+**Dependencias:** `IUsuarioRepository`, `IPasswordService`, `ITokenService`, `IRegistroIntentosLogin`, `IControlIntentosLogin`, `PoliticaBloqueoLogin`
 
 ```
-Request: { email, passwordPlain }
+Request: { email, passwordPlain, ip }
 
-1. Buscar usuario por email
-   └─ Si no existe → CREDENCIALES_INVALIDAS (intencionalmente igual al error de contraseña)
-2. Verificar que el usuario esté activo
-   └─ Si no → USUARIO_INACTIVO
-3. Comparar contraseña con Argon2
-   └─ Si no coincide → CREDENCIALES_INVALIDAS
-4. Verificar si requiere 2FA
-   └─ Si sí → REQUIERE_2FA (flujo pendiente de implementar)
-5. Generar par de tokens (Access + Refresh)
-   └─ Devolver Result.ok({ accessToken, refreshToken })
+1. Verificar bloqueo por cuenta (email) en ventana deslizante (def: 5 fallos en 5 min)
+   └─ Si fallos >= límite → LOGIN_BLOQUEADO (HTTP 429). NO se inserta en intentos_login.
+2. Si la IP es conocida (no null ni 'desconocida'), verificar bloqueo por IP (def: 20 fallos en 15 min)
+   └─ Si fallos >= límite → LOGIN_BLOQUEADO (HTTP 429). NO se inserta en intentos_login.
+3. Buscar usuario por email
+   └─ Si no existe → registrar fallo en intentos_login y devolver CREDENCIALES_INVALIDAS
+4. Verificar que el usuario esté activo
+   └─ Si no → registrar fallo en intentos_login y devolver USUARIO_INACTIVO
+5. Comparar contraseña con Argon2
+   └─ Si no coincide → registrar fallo en intentos_login y devolver CREDENCIALES_INVALIDAS
+6. Verificar si requiere 2FA
+   └─ Si sí → registrar fallo en intentos_login y devolver REQUIERE_2FA
+7. Generar tokens (Access + Refresh), registrar intento exitoso y devolver Result.ok({ accessToken, refreshToken })
+```
+
+#### `LogoutUseCase`
+
+[`LogoutUseCase.ts`](file:///c:/Users/USUARIO/Desktop/WARENGINE/BACK/packages/core/src/modules/autenticacion/application/use-cases/LogoutUseCase.ts)
+
+**Dependencias:** `ITokenService`
+
+```
+Request: { refreshToken? }
+
+1. Si el token está presente, revocarlo en la base de datos via ITokenService.
+2. Es idempotente: si el token no existe, está ausente o ya fue revocado, devuelve éxito.
+3. El controlador siempre responde 200 y limpia las cookies HttpOnly.
 ```
 
 #### `ValidarPermisoUseCase`
@@ -362,10 +383,10 @@ Implementa `IRolRepository`. Hace un `INNER JOIN` entre `rol_permisos` y `permis
 
 [`drizzle-refresh-token.repository.ts`](file:///c:/Users/USUARIO/Desktop/WARENGINE/BACK/packages/database/src/repositories/autenticacion/drizzle-refresh-token.repository.ts)
 
-Implementa `IRefreshTokenRepository`. Gestiona el ciclo de vida de los refresh tokens en BD:
-- `guardar`: inserta con fecha de expiración
-- `validar`: busca por token + `revocado=0`, verifica que `new Date() < expira_en`
-- `revocar`: hace `UPDATE SET revocado=1`
+Implementa `IRefreshTokenRepository`. Gestiona el ciclo de vida de los refresh tokens en BD protegiéndolos con hash:
+- `guardar`: calcula el hash SHA-256 (hex) con `crypto.subtle` e inserta con fecha de expiración
+- `validar`: busca por SHA-256 del token + `revocado=0`, verifica que `new Date() < expira_en`
+- `revocar`: hace `UPDATE SET revocado=1` buscando por SHA-256 del token
 
 ### 7.4 `usuario.mapper.ts`
 
@@ -651,9 +672,14 @@ SEED_SUPERADMIN_PASSWORD=MiClave.Segura2026! deno task seed:dev
 | `DB_NAME` | ✅ | Nombre de la BD (`warengine`) |
 | `DB_USER` | ✅ | Usuario de MySQL |
 | `DB_PASSWORD` | ✅ | Contraseña del usuario |
-| `JWT_SECRET` | ✅ | Mínimo 32 caracteres aleatorios. Firman todos los Access Tokens |
-| `NODE_ENV` | ⚡ | `development` activa el seed del super-admin |
+| `JWT_SECRET` | ✅ | Mínimo 32 caracteres aleatorios. Firman todos los Access Tokens. Validadas al arrancar |
+| `NODE_ENV` | ⚡ | `development` permite cookies sobre HTTP. Otros valores fuerzan `secure=true` |
 | `SEED_SUPERADMIN_PASSWORD` | ⚡ | Contraseña inicial del super-admin (solo en `development`, mín. 12 chars) |
+| `CORS_ORIGENES` | ⚡ | Lista permitida de orígenes para CORS (por defecto `http://localhost:3000`) |
+| `LOGIN_MAX_INTENTOS_CUENTA` | ⚡ | Máximo intentos fallidos por cuenta antes de bloquear (por defecto: `5`) |
+| `LOGIN_VENTANA_CUENTA_MIN` | ⚡ | Ventana deslizante en minutos para bloqueo por cuenta (por defecto: `5`) |
+| `LOGIN_MAX_INTENTOS_IP` | ⚡ | Máximo intentos fallidos por IP antes de bloquear (por defecto: `20`) |
+| `LOGIN_VENTANA_IP_MIN` | ⚡ | Ventana deslizante en minutos para bloqueo por IP (por defecto: `15`) |
 
 ---
 

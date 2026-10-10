@@ -9,9 +9,12 @@ export * from './src/modules/autenticacion/domain/repositories/IUsuarioRepositor
 export * from './src/modules/autenticacion/domain/repositories/IRolRepository.ts';
 export * from './src/modules/autenticacion/domain/repositories/IRefreshTokenRepository.ts';
 export * from './src/modules/autenticacion/domain/repositories/IRegistroIntentosLogin.ts';
+export * from './src/modules/autenticacion/domain/repositories/IControlIntentosLogin.ts';
+export * from './src/modules/autenticacion/domain/value-objects/PoliticaBloqueoLogin.ts';
 export * from './src/modules/autenticacion/domain/services/IPasswordService.ts';
 export * from './src/modules/autenticacion/domain/services/ITokenService.ts';
 export * from './src/modules/autenticacion/application/use-cases/LoginUseCase.ts';
+export * from './src/modules/autenticacion/application/use-cases/LogoutUseCase.ts';
 export * from './src/modules/autenticacion/application/use-cases/RenovarTokenUseCase.ts';
 export * from './src/modules/autenticacion/application/use-cases/ValidarPermisoUseCase.ts';
 

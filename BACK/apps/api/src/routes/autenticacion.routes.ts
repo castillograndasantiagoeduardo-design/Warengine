@@ -10,7 +10,7 @@ export function createAutenticacionRoutes(container: AppContainer): Hono {
 
   api.post('/login', loginController(container));
   api.post('/renovar-token', renovarTokenController(container));
-  api.post('/logout', logoutController());
+  api.post('/logout', logoutController(container));
   api.get('/verificar', authMiddleware(container), (c) => {
     return c.json({ ok: true, message: 'Sesión activa y autenticada correctamente' });
   });
