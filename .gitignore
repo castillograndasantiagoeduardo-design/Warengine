@@ -10,7 +10,8 @@ node_modules/
 # Build de Next.js
 .next/
 FRONT/.next/
-FRONT/out/
+Frontend/.next/
+Frontend/out/
 
 # Compilados
 dist/
@@ -42,4 +43,4 @@ npm-debug.log*
 Thumbs.db
 
 # Drizzle cache
-BACK/packages/database/.drizzle/
+Backend/packages/database/.drizzle/

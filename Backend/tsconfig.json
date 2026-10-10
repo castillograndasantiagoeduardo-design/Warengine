@@ -1,0 +1,25 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "strict": true,
+    "noEmit": true,
+    "allowImportingTsExtensions": true,
+    "skipLibCheck": true,
+    "ignoreDeprecations": "5.0",
+    "paths": {
+      "@warengine/shared-kernel": ["./packages/shared-kernel/mod.ts"],
+      "@warengine/core": ["./packages/core/mod.ts"],
+      "@warengine/database": ["./packages/database/mod.ts"],
+      "@warengine/platform": ["./packages/platform/mod.ts"],
+      "@warengine/composition": ["./packages/composition/mod.ts"],
+      "@warengine/contracts": ["../Shared/contracts/src/index.ts"]
+    }
+  },
+  "include": [
+    "./deno.d.ts",
+    "apps/**/*.ts",
+    "packages/**/*.ts"
+  ]
+}
