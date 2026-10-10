@@ -1,7 +1,8 @@
 import { Context } from 'hono';
 import { setCookie, deleteCookie, getCookie } from 'hono/cookie';
 
-const isProduction = Deno.env.get('NODE_ENV') === 'production';
+// El atributo secure debe ser true salvo que NODE_ENV sea explícitamente 'development' (RF-SA-D2).
+const isSecure = Deno.env.get('NODE_ENV') !== 'development';
 
 export const COOKIE_NAMES = {
   ACCESS_TOKEN: 'access_token',
@@ -10,12 +11,12 @@ export const COOKIE_NAMES = {
 
 export function setAuthCookies(
   c: Context,
-  tokens: { accessToken: string; refreshToken: string }
+  tokens: { accessToken: string; refreshToken: string },
 ): void {
   // Access Token Cookie (15 minutos)
   setCookie(c, COOKIE_NAMES.ACCESS_TOKEN, tokens.accessToken, {
     httpOnly: true,
-    secure: isProduction,
+    secure: isSecure,
     sameSite: 'Lax',
     path: '/',
     maxAge: 15 * 60, // 900s = 15 minutos
@@ -24,7 +25,7 @@ export function setAuthCookies(
   // Refresh Token Cookie (7 días)
   setCookie(c, COOKIE_NAMES.REFRESH_TOKEN, tokens.refreshToken, {
     httpOnly: true,
-    secure: isProduction,
+    secure: isSecure,
     sameSite: 'Lax',
     path: '/',
     maxAge: 7 * 24 * 60 * 60, // 604800s = 7 días
@@ -34,12 +35,12 @@ export function setAuthCookies(
 export function clearAuthCookies(c: Context): void {
   deleteCookie(c, COOKIE_NAMES.ACCESS_TOKEN, {
     path: '/',
-    secure: isProduction,
+    secure: isSecure,
     sameSite: 'Lax',
   });
   deleteCookie(c, COOKIE_NAMES.REFRESH_TOKEN, {
     path: '/',
-    secure: isProduction,
+    secure: isSecure,
     sameSite: 'Lax',
   });
 }

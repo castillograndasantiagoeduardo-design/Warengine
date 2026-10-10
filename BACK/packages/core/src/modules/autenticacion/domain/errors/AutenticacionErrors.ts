@@ -34,3 +34,11 @@ export class Requiere2FAError extends DomainError {
     super('Se requiere código de autenticación de dos factores.');
   }
 }
+
+export class LoginBloqueadoError extends DomainError {
+  public readonly code = 'LOGIN_BLOQUEADO';
+  constructor(mensaje = 'Demasiados intentos fallidos. Intenta de nuevo en unos minutos.') {
+    super(mensaje);
+  }
+}
+

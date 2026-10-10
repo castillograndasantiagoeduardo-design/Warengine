@@ -5,7 +5,7 @@
 > escribir cualquier línea de código. Si no entiendes algo de aquí, pregunta
 > antes de improvisar.
 >
-> **Última actualización:** 6 de octubre de 2026 · **Script SQL de
+> **Última actualización:** 10 de octubre de 2026 · **Script SQL de
 > referencia:** `docs/database/WARENGINE_FULL_BD.sql` (versión 2: 25 triggers,
 > 18 CHECK). Si este documento y el script SQL se contradicen, **gana el
 > script**: corrige este archivo y avisa al equipo. Actualiza la fecha de arriba
@@ -783,6 +783,43 @@ Detalles que importan:
 Contraseñas con Argon2 (o bcrypt), nunca en texto plano. Todo error de login es
 genérico ("credenciales incorrectas"): no distingue usuario inexistente,
 contraseña errónea ni cuenta inactiva.
+
+### 7.6 Política de bloqueo por intentos fallidos (RF-SA-F1, RF-SA-F2, RF-SA-F3)
+
+Para mitigar ataques de fuerza bruta y adivinación de contraseñas:
+
+- **Fuente única de verdad:** Tabla `intentos_login` (email, ip, exitoso, fecha), usando los índices `idx_intentos_login_email` e `idx_intentos_login_ip`.
+- **Por cuenta (email):** Máximo 5 intentos fallidos en una ventana deslizante de 5 minutos.
+  - El conteo se reinicia con el último intento exitoso de ese email (un login válido reinicia el contador).
+  - Se aplica al texto del email incluso si no existe en la base de datos (previene enumeración de usuarios).
+- **Por IP:** Máximo 20 intentos fallidos en una ventana deslizante de 15 minutos.
+  - **NO** se reinicia con un éxito (evita que un atacante intercale logins válidos propios para resetear el límite de su IP).
+  - Si la IP es `null` o `'desconocida'`, no se activa el límite por IP para evitar agrupar a todos los clientes no identificados en un solo bloqueo global.
+- **Respuesta ante bloqueo:** Error de dominio `LoginBloqueadoError` (`LOGIN_BLOQUEADO`) mapeado a HTTP 429 ("Demasiados intentos fallidos. Intenta de nuevo en unos minutos.").
+- **Protección contra DoS permanente:** Los intentos rechazados por estar bloqueados **NO** se insertan en `intentos_login` para evitar extender indefinidamente el bloqueo a usuarios legítimos.
+- **Configuración inyectada:** Objeto `PoliticaBloqueoLogin` configurable mediante variables opcionales:
+  `LOGIN_MAX_INTENTOS_CUENTA` (def: 5), `LOGIN_VENTANA_CUENTA_MIN` (def: 5),
+  `LOGIN_MAX_INTENTOS_IP` (def: 20) y `LOGIN_VENTANA_IP_MIN` (def: 15). Todas validadas como enteros positivos > 0 al arrancar en el container.
+
+### 7.7 Logout real y revocación de sesión (RF-SA-G1)
+
+- `LogoutUseCase` recibe el refresh token de la cookie de sesión y lo marca como `revocado = 1` en la tabla `refresh_tokens`.
+- Es idempotente: token ausente, desconocido o ya revocado devuelve éxito (200 OK) y limpia las cookies `access_token` y `refresh_token`.
+- Solo revoca la sesión actual (no invalida `tokens_invalidados_en` de todas las demás sesiones del usuario).
+- No se audita en `logs_auditoria` (ADR 0002, sección 6: gestión de sesión no es mutación de negocio).
+- El access token (15 minutos) sigue siendo válido hasta su expiración natural porque es stateless.
+
+### 7.8 Refresh tokens protegidos con hash SHA-256
+
+- La columna `refresh_tokens.token_hash` almacena el hash criptográfico SHA-256 (en formato hexadecimal, 64 caracteres) generado con `crypto.subtle`.
+- El token en claro viaja únicamente en la cookie `refresh_token` (`httpOnly`, `SameSite=Lax`, `secure`).
+- Ante una fuga de base de datos, los tokens almacenados no pueden utilizarse directamente.
+
+### 7.9 CORS y cookies seguras
+
+- **CORS restrictivo:** `apps/api/src/main.ts` valida el origen de la petición contra una lista blanca leída de `CORS_ORIGENES` (por defecto `http://localhost:3000`). Si el origen no está en la lista, no se emiten cabeceras CORS.
+- **Cookies seguras:** En `utils/cookie.ts`, el flag `secure` se evalúa como `true` a menos que `NODE_ENV` sea explícitamente `'development'`.
+- **JWT_SECRET obligatorio:** Debe tener al menos 32 caracteres y se valida en `platform/src/config/jwt.config.ts`. Si no está definido o es menor a 32 caracteres, la API se niega a arrancar.
 
 ---
 

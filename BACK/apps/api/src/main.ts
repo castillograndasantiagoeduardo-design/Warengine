@@ -12,15 +12,27 @@ import { createInventarioRoutes } from './routes/inventario.routes.ts';
 const app = new Hono();
 const container = createContainer();
 
-// CORS habilitado con credentials para cookies HttpOnly desde el Frontend
+// Orígenes permitidos para CORS leídos de CORS_ORIGENES (separados por coma)
+const corsOrigenesRaw = Deno.env.get('CORS_ORIGENES') || 'http://localhost:3000';
+const origenesPermitidos = corsOrigenesRaw
+  .split(',')
+  .map((o) => o.trim())
+  .filter((o) => o.length > 0);
+
+// CORS habilitado con credentials solo para los orígenes en la lista permitida (RF-SA-D3)
 app.use(
   '*',
   cors({
-    origin: (origin) => origin || 'http://localhost:3000',
+    origin: (origin) => {
+      if (origin && origenesPermitidos.includes(origin)) {
+        return origin;
+      }
+      return null;
+    },
     credentials: true,
     allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowHeaders: ['Content-Type', 'Authorization'],
-  })
+  }),
 );
 
 // Rutas base
