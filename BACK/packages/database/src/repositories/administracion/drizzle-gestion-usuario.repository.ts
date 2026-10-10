@@ -1,7 +1,7 @@
-import { and, count, eq, type SQL } from 'drizzle-orm';
+import { and, count, eq, exists, or, type SQL } from 'drizzle-orm';
 import { Database } from '../../client.ts';
 import { empleados, sucursales } from '../../schema/administracion.schema.ts';
-import { refresh_tokens, roles, usuarios } from '../../schema/autenticacion.schema.ts';
+import { refresh_tokens, roles, usuario_sucursales, usuarios } from '../../schema/autenticacion.schema.ts';
 import {
   FiltrosUsuarios,
   IGestionUsuarioRepository,
@@ -36,7 +36,20 @@ export class DrizzleGestionUsuarioRepository implements IGestionUsuarioRepositor
   public async listar(filtros: FiltrosUsuarios): Promise<UsuarioGestionado[]> {
     const condiciones: SQL[] = [];
     if (filtros.rolId) condiciones.push(eq(usuarios.rol_id, filtros.rolId));
-    if (filtros.sucursalId) condiciones.push(eq(empleados.sucursal_id, filtros.sucursalId));
+    if (filtros.sucursalId) {
+      // Pertenece a la sucursal si es su principal O si la tiene entre las adicionales (RF-ADM-C10).
+      const enAdicionales = exists(
+        this.db
+          .select({ uno: usuario_sucursales.sucursal_id })
+          .from(usuario_sucursales)
+          .where(and(
+            eq(usuario_sucursales.usuario_id, usuarios.id_usuario),
+            eq(usuario_sucursales.sucursal_id, filtros.sucursalId),
+          )),
+      );
+      const pertenece = or(eq(empleados.sucursal_id, filtros.sucursalId), enAdicionales);
+      if (pertenece) condiciones.push(pertenece);
+    }
 
     const rows = await this.consulta()
       .where(condiciones.length > 0 ? and(...condiciones) : undefined)

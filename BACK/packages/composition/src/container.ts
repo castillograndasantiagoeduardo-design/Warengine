@@ -23,6 +23,8 @@ import { DrizzleCategoriaRepository } from '../../database/src/repositories/inve
 import { DrizzleProveedorRepository } from '../../database/src/repositories/inventario/drizzle-proveedor.repository.ts';
 import { DrizzleProductoRepository } from '../../database/src/repositories/inventario/drizzle-producto.repository.ts';
 import { DrizzleTurnoCajaRepository } from '../../database/src/repositories/facturacion/drizzle-turno-caja.repository.ts';
+import { DrizzleUsuarioSucursalRepository } from '../../database/src/repositories/administracion/drizzle-usuario-sucursal.repository.ts';
+
 import { DrizzleSucursalOperadorRepository } from '../../database/src/repositories/facturacion/drizzle-sucursal-operador.repository.ts';
 
 import { JwtTokenService } from '../../platform/src/jwt/jwt-token-service.ts';
@@ -69,6 +71,8 @@ import {
   RestablecerPasswordUsuarioUseCase,
   AbrirTurnoCajaUseCase,
   ObtenerTurnoActualUseCase,
+  AsignarSucursalesUsuarioUseCase,
+  ObtenerSucursalesUsuarioUseCase,
 } from '@warengine/core';
 
 export interface AppContainer {
@@ -88,6 +92,9 @@ export interface AppContainer {
     cambiarEstadoUsuario: CambiarEstadoUsuarioUseCase;
     consultarAuditoria: ConsultarAuditoriaUseCase;
     restablecerPasswordUsuario: RestablecerPasswordUsuarioUseCase;
+    asignarSucursalesUsuario: AsignarSucursalesUsuarioUseCase;
+    obtenerSucursalesUsuario: ObtenerSucursalesUsuarioUseCase;
+
   };
   inventario: {
     listarCategorias: ListarCategoriasUseCase;
@@ -162,8 +169,7 @@ export function createContainer(_env?: Record<string, string>): AppContainer {
   const categoriaRepository = new DrizzleCategoriaRepository(db);
   const proveedorRepository = new DrizzleProveedorRepository(db);
   const productoRepository = new DrizzleProductoRepository(db);
-
-  
+  const usuarioSucursalRepository = new DrizzleUsuarioSucursalRepository(db);
   const auditoriaRepository = new DrizzleAuditoriaRepository(db);
   const turnoCajaRepository = new DrizzleTurnoCajaRepository(db);
   const sucursalOperadorRepository = new DrizzleSucursalOperadorRepository(db);
@@ -218,8 +224,20 @@ export function createContainer(_env?: Record<string, string>): AppContainer {
     sucursalOperadorRepository,
     auditoriaRepository,
   );
+  const asignarSucursalesUsuarioUseCase = new AsignarSucursalesUsuarioUseCase(
+    gestionUsuarioRepository,
+    sucursalRepository,
+    usuarioSucursalRepository,
+    auditoriaRepository,
+  );
+  const obtenerSucursalesUsuarioUseCase = new ObtenerSucursalesUsuarioUseCase(
+    gestionUsuarioRepository,
+    sucursalRepository,
+    usuarioSucursalRepository,  
+  );
   const obtenerTurnoActualUseCase = new ObtenerTurnoActualUseCase(turnoCajaRepository);
   const consultarAuditoriaUseCase = new ConsultarAuditoriaUseCase(auditoriaRepository);
+  
 
   // Casos de uso de Categorías
   const listarCategoriasUseCase = new ListarCategoriasUseCase(categoriaRepository);
@@ -287,6 +305,8 @@ export function createContainer(_env?: Record<string, string>): AppContainer {
       cambiarEstadoUsuario: cambiarEstadoUsuarioUseCase,
       consultarAuditoria: consultarAuditoriaUseCase,
       restablecerPasswordUsuario: restablecerPasswordUsuarioUseCase,
+      asignarSucursalesUsuario: asignarSucursalesUsuarioUseCase,
+      obtenerSucursalesUsuario: obtenerSucursalesUsuarioUseCase,
     },
     inventario: {
       listarCategorias: listarCategoriasUseCase,

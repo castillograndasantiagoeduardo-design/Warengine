@@ -16,6 +16,11 @@ import {
 } from '../controllers/administracion/usuario.controller.ts';
 
 import { consultarAuditoriaController } from '../controllers/administracion/auditoria.controller.ts';
+  // Usuarios (RF-ADM-C5, C6, C7, C8, C9, C10)
+import {
+  asignarSucursalesUsuarioController,
+  obtenerSucursalesUsuarioController,
+} from '../controllers/administracion/usuario-sucursal.controller.ts';
 
 // Códigos tal como están en la tabla `permisos` (seed). Solo super-admin los tiene.
 const PERMISO_SUCURSALES = 'administracion:gestionar-sucursales';
@@ -39,6 +44,8 @@ export function createAdministracionRoutes(container: AppContainer): Hono {
   api.put('/usuarios/:id/rol', authMiddleware(container, PERMISO_ROLES), cambiarRolUsuarioController(container));
   api.put('/usuarios/:id/estado', authMiddleware(container, PERMISO_USUARIOS), cambiarEstadoUsuarioController(container));
   api.put('/usuarios/:id/password', authMiddleware(container, PERMISO_USUARIOS), restablecerPasswordUsuarioController(container));
+   api.get('/usuarios/:id/sucursales', authMiddleware(container, PERMISO_USUARIOS), obtenerSucursalesUsuarioController(container));
+  api.put('/usuarios/:id/sucursales', authMiddleware(container, PERMISO_USUARIOS), asignarSucursalesUsuarioController(container));
   // Auditoría
   api.get('/auditoria', authMiddleware(container, PERMISO_AUDITORIA), consultarAuditoriaController(container));
   return api;
