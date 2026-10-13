@@ -18,6 +18,7 @@ export function presentResult<T>(c: Context, result: Result<T, DomainError>, suc
       status = 401; // Unauthorized
       break;
     case 'PERMISO_DENEGADO':
+    case 'SUCURSAL_FUERA_DE_ALCANCE':
       status = 403; // Forbidden
       break;
     case 'CATEGORIA_NO_ENCONTRADA':

@@ -1,0 +1,40 @@
+@baseUrl = http://localhost:8017
+
+### Login como Super Admin
+# @name login
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "superadmin@warengine.local",
+  "password": "Warengine.Admin.2026!"
+}
+
+###
+
+### Alertas de todas las sucursales (esperado: 200 con items, total, page, limit, totalPages)
+GET {{baseUrl}}/administracion/alertas-stock
+Authorization: Bearer {{login.response.body.accessToken}}
+
+###
+
+### Alertas de una sucursal (el Super Admin puede pedir cualquiera)
+GET {{baseUrl}}/administracion/alertas-stock?sucursalId=1
+Authorization: Bearer {{login.response.body.accessToken}}
+
+###
+
+### Paginación
+GET {{baseUrl}}/administracion/alertas-stock?page=2&limit=5
+Authorization: Bearer {{login.response.body.accessToken}}
+
+###
+
+### Error: sucursalId inválido (esperado: 400 VALIDATION_ERROR)
+GET {{baseUrl}}/administracion/alertas-stock?sucursalId=abc
+Authorization: Bearer {{login.response.body.accessToken}}
+
+###
+
+### Sin token (esperado: 401)
+GET {{baseUrl}}/administracion/alertas-stock
