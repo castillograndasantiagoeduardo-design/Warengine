@@ -1,0 +1,122 @@
+# ==============================================================================
+# MÓDULO: ADMINISTRACIÓN - HISTORIAL SALARIAL DE EMPLEADOS
+# Requisito SRS:
+#   - RF-ADM-C14: Historial de salarios de empleados
+#   - RNF-ADM-02: Auditoría inmutable de ajustes y aumentos salariales
+#
+# Requiere: REST Client (extensión VS Code)
+# Base URL: http://localhost:8017
+# Permiso requerido: administracion:gestionar-salarios (Super Admin)
+# ==============================================================================
+
+@baseUrl = http://localhost:8017
+@empleadoId = EMPLEADO_UUID
+
+# ------------------------------------------------------------------------------
+# SETUP: Login como Super Admin
+# ------------------------------------------------------------------------------
+
+### Login como Super Admin
+# @name login
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "superadmin@warengine.local",
+  "password": "Warengine.Admin.2026!"
+}
+
+###
+
+# ==============================================================================
+# PASO 1: OBTENER UN EMPLEADO
+# ==============================================================================
+
+### Listar empleados para copiar un id_empleado real
+# @name listarEmpleados
+GET {{baseUrl}}/administracion/empleados
+Authorization: Bearer {{login.response.body.accessToken}}
+
+###
+
+# ==============================================================================
+# RF-ADM-C14: HISTORIAL Y AUMENTOS SALARIALES
+# ==============================================================================
+
+### UC-SAL-01: Consultar historial salarial del empleado
+# Resultado esperado: 200 OK con array de registros salariales ordenados cronológicamente
+GET {{baseUrl}}/administracion/empleados/{{empleadoId}}/salarios
+Authorization: Bearer {{login.response.body.accessToken}}
+
+###
+
+### UC-SAL-02: Registrar aumento salarial al empleado
+# Nota: En base de datos, el trigger trg_historial_salarios_sync actualiza
+# automáticamente `empleados.sueldo_actual` sin requerir UPDATE directo.
+# Resultado esperado: 201 Created con el registro de ajuste salarial
+POST {{baseUrl}}/administracion/empleados/{{empleadoId}}/salarios
+Authorization: Bearer {{login.response.body.accessToken}}
+Content-Type: application/json
+
+{
+  "sueldo": 2500000.00,
+  "fechaEfectiva": "2026-11-01",
+  "motivo": "Aumento por ascenso a Coordinador de Área"
+}
+
+###
+
+### UC-SAL-03: Registrar segundo ajuste salarial (sin fecha manual, toma CURDATE)
+# Resultado esperado: 201 Created
+POST {{baseUrl}}/administracion/empleados/{{empleadoId}}/salarios
+Authorization: Bearer {{login.response.body.accessToken}}
+Content-Type: application/json
+
+{
+  "sueldo": 2800000.00,
+  "motivo": "Reajuste salarial anual pactado"
+}
+
+###
+
+### UC-SAL-04: Verificar que el empleado refleja el nuevo sueldo actual
+# Resultado esperado: 200 OK con sueldoActual: 2800000
+GET {{baseUrl}}/administracion/empleados/{{empleadoId}}
+Authorization: Bearer {{login.response.body.accessToken}}
+
+###
+
+### UC-SAL-05: Error de validación Zod al enviar sueldo inválido (negativo o <= 0)
+# Resultado esperado: 400 Bad Request
+POST {{baseUrl}}/administracion/empleados/{{empleadoId}}/salarios
+Authorization: Bearer {{login.response.body.accessToken}}
+Content-Type: application/json
+
+{
+  "sueldo": -50000,
+  "motivo": "Sueldo negativo no permitido"
+}
+
+###
+
+### UC-SAL-06: Error al registrar salario en empleado inexistente
+# Resultado esperado: 404 Not Found con code "EMPLEADO_NO_ENCONTRADO"
+POST {{baseUrl}}/administracion/empleados/00000000-0000-0000-0000-000000000000/salarios
+Authorization: Bearer {{login.response.body.accessToken}}
+Content-Type: application/json
+
+{
+  "sueldo": 2000000.00,
+  "motivo": "Empleado inexistente"
+}
+
+###
+
+# ==============================================================================
+# AUDITORÍA (RNF-ADM-02)
+# ==============================================================================
+
+### UC-AUD-01: Verificar eventos de auditoría para 'historial_salarios'
+# Resultado esperado: 200 OK con trazas de acción 'crear' conteniendo sueldoAnterior y sueldoNuevo
+GET {{baseUrl}}/administracion/auditoria?entidad=historial_salarios
+Authorization: Bearer {{login.response.body.accessToken}}

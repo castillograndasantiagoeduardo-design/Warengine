@@ -33,6 +33,7 @@ export const ENTIDADES_AUDITORIA = {
   TURNOS_CAJA: 'turnos_caja',
   AREAS: 'areas',
   EMPLEADOS: 'empleados',
+  HISTORIAL_SALARIOS: 'historial_salarios',
 } as const;
 
 export type EntidadAuditoria = (typeof ENTIDADES_AUDITORIA)[keyof typeof ENTIDADES_AUDITORIA];
@@ -48,4 +49,5 @@ export const ENTIDADES_AUDITORIA_VALORES = [
   ENTIDADES_AUDITORIA.TURNOS_CAJA,
   ENTIDADES_AUDITORIA.AREAS,
   ENTIDADES_AUDITORIA.EMPLEADOS,
+  ENTIDADES_AUDITORIA.HISTORIAL_SALARIOS,
 ] as const;

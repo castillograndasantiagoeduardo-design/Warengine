@@ -34,6 +34,10 @@ import {
   listarEmpleadosController,
   obtenerEmpleadoPorIdController,
 } from '../controllers/administracion/empleado.controller.ts';
+import {
+  consultarHistorialSalariosController,
+  registrarAumentoSalarioController,
+} from '../controllers/administracion/historial-salario.controller.ts';
 
 // Códigos tal como están en la tabla `permisos` (seed).
 const PERMISO_SUCURSALES = 'administracion:gestionar-sucursales';
@@ -42,6 +46,7 @@ const PERMISO_USUARIOS = 'autenticacion:gestionar-usuarios';
 const PERMISO_ROLES = 'autenticacion:asignar-roles';
 const PERMISO_AUDITORIA = 'autenticacion:ver-auditoria';
 const PERMISO_ALERTAS = 'administracion:gestionar-alertas';
+const PERMISO_SALARIOS = 'administracion:gestionar-salarios';
 
 export function createAdministracionRoutes(container: AppContainer): Hono {
   const api = new Hono();
@@ -57,10 +62,12 @@ export function createAdministracionRoutes(container: AppContainer): Hono {
   api.put('/areas/:id', authMiddleware(container, PERMISO_SUCURSALES), editarAreaController(container));
   api.delete('/areas/:id', authMiddleware(container, PERMISO_SUCURSALES), eliminarAreaController(container));
 
-  // Empleados (RF-ADM-C5, C12)
+  // Empleados (RF-ADM-C5, C12, C14)
   api.get('/empleados', authMiddleware(container, PERMISO_PERSONAL), listarEmpleadosController(container));
   api.get('/empleados/:id', authMiddleware(container, PERMISO_PERSONAL), obtenerEmpleadoPorIdController(container));
   api.put('/empleados/:id', authMiddleware(container, PERMISO_PERSONAL), editarEmpleadoController(container));
+  api.get('/empleados/:id/salarios', authMiddleware(container, PERMISO_SALARIOS), consultarHistorialSalariosController(container));
+  api.post('/empleados/:id/salarios', authMiddleware(container, PERMISO_SALARIOS), registrarAumentoSalarioController(container));
 
   // Usuarios (RF-ADM-C5, C6, C7, C8, C9)
   api.get('/usuarios', authMiddleware(container, PERMISO_USUARIOS), listarUsuariosController(container));
