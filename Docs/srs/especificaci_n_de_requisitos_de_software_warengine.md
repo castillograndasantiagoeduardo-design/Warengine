@@ -53,31 +53,27 @@
 
 ## 1. Introducción
 
-Este documento constituye la Especificación de Requisitos de Software (SRS) del
-proyecto **Warengine**, una plataforma integral de gestión de inventario,
-facturación y control de personal que incorpora un servidor intermedio basado en
-el **Model Context Protocol (MCP)** para permitir consultas en lenguaje natural
-sobre la información operativa del negocio. El documento se elabora conforme al
-estándar **IEEE Std 830-1998**.
+Este documento constituye la Especificación de Requisitos de Software (SRS) del proyecto
+**Warengine**, una plataforma integral de gestión de inventario, facturación y control de personal
+que incorpora un servidor intermedio basado en el **Model Context Protocol (MCP)** para permitir
+consultas en lenguaje natural sobre la información operativa del negocio. El documento se elabora
+conforme al estándar **IEEE Std 830-1998**.
 
 ### 1.1 Propósito
 
-Definir de forma completa, clara y verificable los requisitos funcionales y no
-funcionales del sistema Warengine, de manera que sirva como acuerdo entre el
-equipo de desarrollo y el cliente, y como base para el diseño, la construcción y
-las pruebas del software. Está dirigido al equipo de desarrollo, a los
-instructores evaluadores del programa ADSO del SENA y a los usuarios finales y
+Definir de forma completa, clara y verificable los requisitos funcionales y no funcionales del
+sistema Warengine, de manera que sirva como acuerdo entre el equipo de desarrollo y el cliente, y
+como base para el diseño, la construcción y las pruebas del software. Está dirigido al equipo de
+desarrollo, a los instructores evaluadores del programa ADSO del SENA y a los usuarios finales y
 propietarios del negocio que validarán el producto.
 
 ### 1.2 Alcance
 
-El producto a desarrollar se denomina **Warengine**. Comprende la gestión de
-productos, categorías, proveedores, entradas y salidas de mercancía,
-facturación, clientes, usuarios y roles, junto con un asistente conversacional
-conectado mediante un servidor MCP que consulta la base de datos a través de
-herramientas (_Tools_) controladas. Queda fuera del alcance de esta versión la
-integración con facturación electrónica ante la DIAN, la contabilidad general y
-la nómina.
+El producto a desarrollar se denomina **Warengine**. Comprende la gestión de productos, categorías,
+proveedores, entradas y salidas de mercancía, facturación, clientes, usuarios y roles, junto con un
+asistente conversacional conectado mediante un servidor MCP que consulta la base de datos a través
+de herramientas (_Tools_) controladas. Queda fuera del alcance de esta versión la integración con
+facturación electrónica ante la DIAN, la contabilidad general y la nómina.
 
 ### 1.3 Personal Involucrado
 
@@ -90,22 +86,18 @@ la nómina.
 ### 1.4 Definiciones, Acrónimos y Abreviaturas
 
 - **ADSO:** Análisis y Desarrollo de Software, programa de formación del SENA.
-- **API:** Interfaz de Programación de Aplicaciones (_Application Programming
-  Interface_).
-- **MCP (Model Context Protocol):** Protocolo que expone herramientas (_Tools_)
-  para que un modelo de inteligencia artificial consulte datos de forma segura y
-  estructurada.
-- **Tool:** Operación específica y acotada que el servidor MCP pone a
-  disposición del asistente de IA.
+- **API:** Interfaz de Programación de Aplicaciones (_Application Programming Interface_).
+- **MCP (Model Context Protocol):** Protocolo que expone herramientas (_Tools_) para que un modelo
+  de inteligencia artificial consulte datos de forma segura y estructurada.
+- **Tool:** Operación específica y acotada que el servidor MCP pone a disposición del asistente de
+  IA.
 - **RBAC:** Control de Acceso Basado en Roles (_Role-Based Access Control_).
-- **ORM:** Mapeo Objeto-Relacional (_Object-Relational Mapping_); en este
-  proyecto se emplea Drizzle ORM.
-- **SRS:** Especificación de Requisitos de Software (_Software Requirements
-  Specification_).
+- **ORM:** Mapeo Objeto-Relacional (_Object-Relational Mapping_); en este proyecto se emplea Drizzle
+  ORM.
+- **SRS:** Especificación de Requisitos de Software (_Software Requirements Specification_).
 - **POS:** Punto de Venta (_Point of Sale_).
 - **JWT:** JSON Web Token, mecanismo de autenticación basado en tokens firmados.
-- **SKU:** _Stock Keeping Unit_, código único de identificación de un artículo
-  del inventario.
+- **SKU:** _Stock Keeping Unit_, código único de identificación de un artículo del inventario.
 
 ### 1.5 Referencias
 
@@ -115,11 +107,10 @@ la nómina.
 
 ### 1.6 Resumen
 
-El capítulo 2 presenta una descripción general del producto: perspectiva,
-funcionalidad principal, perfiles de usuario, restricciones, suposiciones y
-evolución previsible. El capítulo 3 detalla los requisitos específicos
-(interfaces, funcionales y no funcionales), identificados unívocamente para su
-trazabilidad. El capítulo 4 recopila los apéndices.
+El capítulo 2 presenta una descripción general del producto: perspectiva, funcionalidad principal,
+perfiles de usuario, restricciones, suposiciones y evolución previsible. El capítulo 3 detalla los
+requisitos específicos (interfaces, funcionales y no funcionales), identificados unívocamente para
+su trazabilidad. El capítulo 4 recopila los apéndices.
 
 ---
 
@@ -127,28 +118,27 @@ trazabilidad. El capítulo 4 recopila los apéndices.
 
 ### 2.1 Perspectiva del Producto
 
-Warengine es un producto independiente de tipo plataforma web, compuesto por
-tres piezas:
+Warengine es un producto independiente de tipo plataforma web, compuesto por tres piezas:
 
-1. **Backend:** Construido con Deno, TypeScript y Drizzle ORM sobre MySQL
-   aplicando Clean Architecture y principios SOLID.
+1. **Backend:** Construido con Deno, TypeScript y Drizzle ORM sobre MySQL aplicando Clean
+   Architecture y principios SOLID.
 2. **Frontend:** Desarrollado en React y Next.js.
-3. **Servidor MCP:** Capa de presentación adicional que reutiliza los mismos
-   casos de uso de la aplicación. El asistente de IA nunca accede directamente a
-   la base de datos: solo invoca las _Tools_ expuestas por el servidor MCP.
+3. **Servidor MCP:** Capa de presentación adicional que reutiliza los mismos casos de uso de la
+   aplicación. El asistente de IA nunca accede directamente a la base de datos: solo invoca las
+   _Tools_ expuestas por el servidor MCP.
 
 ### 2.2 Funcionalidad del Producto
 
-- **Gestión de inventario:** Productos, categorías, proveedores, entradas,
-  salidas y control de existencias por sucursal.
-- **Facturación y punto de venta:** Creación de facturas, registro de clientes y
-  consulta de disponibilidad de artículos.
-- **Control de personal y roles:** Administración de usuarios y asignación de
-  permisos mediante RBAC.
-- **Asistente conversacional con MCP:** Consultas en lenguaje natural sobre
-  stock, rotación, ventas y alertas con métricas en tiempo real.
-- **Reportes y auditoría:** Registro de logs operacionales y métricas
-  financieras para soporte en la toma de decisiones.
+- **Gestión de inventario:** Productos, categorías, proveedores, entradas, salidas y control de
+  existencias por sucursal.
+- **Facturación y punto de venta:** Creación de facturas, registro de clientes y consulta de
+  disponibilidad de artículos.
+- **Control de personal y roles:** Administración de usuarios y asignación de permisos mediante
+  RBAC.
+- **Asistente conversacional con MCP:** Consultas en lenguaje natural sobre stock, rotación, ventas
+  y alertas con métricas en tiempo real.
+- **Reportes y auditoría:** Registro de logs operacionales y métricas financieras para soporte en la
+  toma de decisiones.
 
 ### 2.3 Características de los Usuarios
 
@@ -160,24 +150,21 @@ tres piezas:
 
 ### 2.4 Restricciones
 
-- Backend implementado exclusivamente en **Deno** con **TypeScript**, **Clean
-  Architecture** y principios **SOLID**.
+- Backend implementado exclusivamente en **Deno** con **TypeScript**, **Clean Architecture** y
+  principios **SOLID**.
 - Persistencia relacional en **MySQL** a través de **Drizzle ORM**.
 - Frontend construido sobre **React** y **Next.js**.
-- Acceso de IA restringido exclusivamente a las _Tools_ del servidor MCP (acceso
-  directo a SQL estrictamente prohibido).
-- Plataforma web accesible desde navegadores modernos (Chrome, Edge, Firefox).
-  Sin cliente móvil nativo en esta versión.
-- Cumplimiento estricto de cronogramas y directrices de calidad del programa
-  ADSO del SENA.
+- Acceso de IA restringido exclusivamente a las _Tools_ del servidor MCP (acceso directo a SQL
+  estrictamente prohibido).
+- Plataforma web accesible desde navegadores modernos (Chrome, Edge, Firefox). Sin cliente móvil
+  nativo en esta versión.
+- Cumplimiento estricto de cronogramas y directrices de calidad del programa ADSO del SENA.
 
 ### 2.5 Suposiciones y Dependencias
 
 - Conexión a internet estable en puntos de venta y almacén.
-- Disponibilidad de un proveedor LLM compatible con Model Context Protocol
-  (MCP).
-- El cliente completará la carga inicial de datos maestros previa al paso a
-  producción.
+- Disponibilidad de un proveedor LLM compatible con Model Context Protocol (MCP).
+- El cliente completará la carga inicial de datos maestros previa al paso a producción.
 - Disponibilidad de servidor de base de datos y entorno Deno actualizado.
 
 ### 2.6 Evolución Previsible del Sistema
@@ -185,8 +172,7 @@ tres piezas:
 - Integración con facturación electrónica y reportes tributarios (DIAN).
 - Módulo predictivo de demanda y reabastecimiento automático.
 - Aplicativo móvil para escaneo de códigos de barra en conteo de inventario.
-- Extensión del catálogo de Tools MCP y arquitectura multiempresa
-  (multi-tenant).
+- Extensión del catálogo de Tools MCP y arquitectura multiempresa (multi-tenant).
 
 ---
 
@@ -354,15 +340,14 @@ tres piezas:
 
 #### Requisitos No Funcionales del Módulo 2
 
-- **RNF-ADM-01:** El dashboard principal debe cargar métricas en menos de 3
-  segundos con hasta 12 meses de datos históricos.
-- **RNF-ADM-02:** Toda mutación en Inventario, Catálogo, Personal o Sedes debe
-  persistirse en el log de auditoría (usuario, fecha, hora, detalle).
-- **RNF-ADM-03:** Las interfaces y endpoints deben exigir autorización RBAC
-  validada en frontend y backend según los middlewares de seguridad.
-- **RNF-ADM-04:** Un Administrador de Sucursal solo podrá ver y alterar datos de
-  su propia sede asignada; la visibilidad transversal queda reservada a
-  SuperAdmin.
+- **RNF-ADM-01:** El dashboard principal debe cargar métricas en menos de 3 segundos con hasta 12
+  meses de datos históricos.
+- **RNF-ADM-02:** Toda mutación en Inventario, Catálogo, Personal o Sedes debe persistirse en el log
+  de auditoría (usuario, fecha, hora, detalle).
+- **RNF-ADM-03:** Las interfaces y endpoints deben exigir autorización RBAC validada en frontend y
+  backend según los middlewares de seguridad.
+- **RNF-ADM-04:** Un Administrador de Sucursal solo podrá ver y alterar datos de su propia sede
+  asignada; la visibilidad transversal queda reservada a SuperAdmin.
 
 ---
 
@@ -419,7 +404,7 @@ tres piezas:
 | **RF-FMC-D3**  | Filtros por tipo de documento              | Segmentación inmediata por CC, NIT o RUT.                                              | Funcional | Alta / Esencial |
 | **RF-FMC-D4**  | Búsqueda por Nombre/NIT/Razón Social       | Motor de consulta por nombre completo, identificación o razón social.                  | Funcional | Alta / Esencial |
 | **RF-FMC-D5**  | Distintivo visual B2B vs B2C               | Indicador rápido para distinguir consumidor final de cuenta corporativa.               | Funcional | Media           |
-| **RF-FMC-D6**  | Selección y asignación directa             | Carga inmediata del tercero en la factura con reajuste de listas de precios si aplica. | Funcional | Alta / Esencial |
+| **RF-FMC-D6**  | Selección y asignacicón directa            | Carga inmediata del tercero en la factura con reajuste de listas de precios si aplica. | Funcional | Alta / Esencial |
 | **RF-FMC-D7**  | Cambio de cliente asignado                 | Sustitución del cliente activo en factura reabriendo el directorio.                    | Funcional | Media           |
 | **RF-FMC-D8**  | Acceso a registro desde directorio         | Botón rápido dentro del buscador para dar de alta a un tercero inexistente.            | Funcional | Media           |
 | **RF-FMC-D10** | Prevención de duplicados por documento     | Validación previa para evitar clientes duplicados con igual identificación.            | Funcional | Alta / Esencial |
@@ -455,24 +440,20 @@ tres piezas:
 
 #### Bloque G - Detalle de Interacciones y Botones
 
-- **RF-FMC-D1a:** Botón "+ Nuevo Cliente" abre el formulario de registro listo
-  para captura.
-- **RF-FMC-D2a:** Botón "Guardar Cliente" habilitado solo con formulario válido;
-  deduplica si el documento coincide.
-- **RF-FMC-D3a:** Botón "Agregar (+)" valida disponibilidad en bodega previa
-  inclusión en la lista de venta.
-- **RF-FMC-D6a:** Controles numéricos (+ / -) recalculan importes y respetan
-  inventario disponible.
-- **RF-FMC-D7a:** Botón "Eliminar Ítem" solicita confirmación en partidas con
-  descuento especial o grandes cantidades.
-- **RF-FMC-D9a:** Botón "Copiar SKU" transfiere el identificador al
-  portapapeles.
-- **RF-FMC-D10a:** Botón "Procesar Factura y Despachar" se activa exclusivamente
-  con ítems y cliente definidos.
-- **RF-FMC-D11a:** Botón "Cancelar Factura" requiere confirmación para descartar
-  el borrador en preparación.
-- **RF-FMC-G1 a G4:** Flujo de envío de alertas con validación de motivos y
-  selector de prioridad.
+- **RF-FMC-D1a:** Botón "+ Nuevo Cliente" abre el formulario de registro listo para captura.
+- **RF-FMC-D2a:** Botón "Guardar Cliente" habilitado solo con formulario válido; deduplica si el
+  documento coincide.
+- **RF-FMC-D3a:** Botón "Agregar (+)" valida disponibilidad en bodega previa inclusión en la lista
+  de venta.
+- **RF-FMC-D6a:** Controles numéricos (+ / -) recalculan importes y respetan inventario disponible.
+- **RF-FMC-D7a:** Botón "Eliminar Ítem" solicita confirmación en partidas con descuento especial o
+  grandes cantidades.
+- **RF-FMC-D9a:** Botón "Copiar SKU" transfiere el identificador al portapapeles.
+- **RF-FMC-D10a:** Botón "Procesar Factura y Despachar" se activa exclusivamente con ítems y cliente
+  definidos.
+- **RF-FMC-D11a:** Botón "Cancelar Factura" requiere confirmación para descartar el borrador en
+  preparación.
+- **RF-FMC-G1 a G4:** Flujo de envío de alertas con validación de motivos y selector de prioridad.
 
 ---
 
@@ -557,27 +538,26 @@ tres piezas:
 
 - Interfaz web responsiva desarrollada en React y Next.js.
 - Menú dinámico renderizado según el rol asignado por RBAC.
-- Asistente conversacional embebido en un drawer/panel lateral sin interrumpir
-  el flujo de trabajo principal.
+- Asistente conversacional embebido en un drawer/panel lateral sin interrumpir el flujo de trabajo
+  principal.
 
 #### 3.1.2 Interfaces de Hardware
 
 - Compatibilidad estándar sin hardware propietario.
-- Integración plug-and-play con lectores de códigos de barras (emulación de
-  teclado) e impresoras térmicas de tickets (ESC/POS).
+- Integración plug-and-play con lectores de códigos de barras (emulación de teclado) e impresoras
+  térmicas de tickets (ESC/POS).
 
 #### 3.1.3 Interfaces de Software
 
 - **Backend:** Deno + TypeScript + Drizzle ORM comunicándose con MySQL.
-- **Servidor MCP:** Servidor intermedio que expone herramientas estructuradas
-  consumidas por el agente LLM a través de la especificación Model Context
-  Protocol.
+- **Servidor MCP:** Servidor intermedio que expone herramientas estructuradas consumidas por el
+  agente LLM a través de la especificación Model Context Protocol.
 
 #### 3.1.4 Interfaces de Comunicación
 
 - REST API sobre HTTPS con cargas de datos serializadas en JSON.
-- Autenticación distribuida mediante tokens JWT en cookies con atributos
-  `HttpOnly`, `Secure` y `SameSite`.
+- Autenticación distribuida mediante tokens JWT en cookies con atributos `HttpOnly`, `Secure` y
+  `SameSite`.
 
 ---
 
@@ -599,68 +579,63 @@ tres piezas:
 
 #### 3.3.1 Requisitos de Rendimiento
 
-- **RNF-01:** El sistema debe soportar al menos 20 usuarios concurrentes sin
-  degradación perceptible.
-- **RNF-02:** El 95% de las peticiones de inventario y facturación deben
-  resolverse en menos de 2 segundos.
+- **RNF-01:** El sistema debe soportar al menos 20 usuarios concurrentes sin degradación
+  perceptible.
+- **RNF-02:** El 95% de las peticiones de inventario y facturación deben resolverse en menos de 2
+  segundos.
 - **RNF-03:** Respuestas del asistente de IA en un tiempo máximo de 10 segundos.
 
 #### 3.3.2 Requisitos de Seguridad
 
 - **RNF-04:** Cifrado de contraseñas mediante hashing con sal (bcrypt o Argon2).
-- **RNF-05:** Validación RBAC estricta tanto en cliente (UI) como en
-  controlador/casos de uso (backend).
-- **RNF-06:** Registro en log de auditoría de toda operación de creación,
-  modificación o baja (usuario, fecha, hora, detalle).
-- **RNF-07:** El servidor MCP solo expondrá Tools parametrizadas; queda
-  prohibida la inyección o ejecución de SQL arbitrario.
+- **RNF-05:** Validación RBAC estricta tanto en cliente (UI) como en controlador/casos de uso
+  (backend).
+- **RNF-06:** Registro en log de auditoría de toda operación de creación, modificación o baja
+  (usuario, fecha, hora, detalle).
+- **RNF-07:** El servidor MCP solo expondrá Tools parametrizadas; queda prohibida la inyección o
+  ejecución de SQL arbitrario.
 
 #### 3.3.3 Requisitos de Fiabilidad
 
-- **RNF-08:** Degradación elegante: ante cortes del servicio de IA, las
-  funciones de facturación, almacén y personal siguen operando de forma
-  autónoma.
-- **RNF-09:** Operaciones de venta ejecutadas bajo transacciones de base de
-  datos atómicas (ACID) para impedir desfases entre ventas y existencias.
-- **RNF-10:** Respaldos automáticos diarios de la base de datos con retención de
-  los últimos 15 días.
+- **RNF-08:** Degradación elegante: ante cortes del servicio de IA, las funciones de facturación,
+  almacén y personal siguen operando de forma autónoma.
+- **RNF-09:** Operaciones de venta ejecutadas bajo transacciones de base de datos atómicas (ACID)
+  para impedir desfases entre ventas y existencias.
+- **RNF-10:** Respaldos automáticos diarios de la base de datos con retención de los últimos 15
+  días.
 
 #### 3.3.4 Requisitos de Disponibilidad
 
-- **RNF-11:** Disponibilidad garantizada de al menos el 99% en horario comercial
-  (excluyendo ventanas pactadas de soporte).
-- **RNF-12:** RTO (Recovery Time Objective) no mayor a 5 minutos ante
-  interrupciones del servidor MCP o proveedor de IA.
+- **RNF-11:** Disponibilidad garantizada de al menos el 99% en horario comercial (excluyendo
+  ventanas pactadas de soporte).
+- **RNF-12:** RTO (Recovery Time Objective) no mayor a 5 minutos ante interrupciones del servidor
+  MCP o proveedor de IA.
 
 #### 3.3.5 Requisitos de Mantenibilidad
 
-- **RNF-13:** Adherencia estricta a Clean Architecture: endpoints REST y Tools
-  MCP reutilizan el mismo caso de uso sin duplicar reglas de negocio.
-- **RNF-14:** Cobertura de pruebas automatizadas mínima del 70% sobre casos de
-  uso críticos.
-- **RNF-15:** Control de versiones del esquema relacional mediante migraciones
-  de Drizzle ORM.
+- **RNF-13:** Adherencia estricta a Clean Architecture: endpoints REST y Tools MCP reutilizan el
+  mismo caso de uso sin duplicar reglas de negocio.
+- **RNF-14:** Cobertura de pruebas automatizadas mínima del 70% sobre casos de uso críticos.
+- **RNF-15:** Control de versiones del esquema relacional mediante migraciones de Drizzle ORM.
 
 #### 3.3.6 Requisitos de Portabilidad
 
-- **RNF-16:** Backend desplegable en contenedores Docker ejecutando Deno sin
-  dependencias de un SO específico.
-- **RNF-17:** Compatibilidad visual y funcional en las dos últimas versiones
-  estables de navegadores modernos (Chrome, Firefox, Edge) en resoluciones
-  desktop y tablet.
+- **RNF-16:** Backend desplegable en contenedores Docker ejecutando Deno sin dependencias de un SO
+  específico.
+- **RNF-17:** Compatibilidad visual y funcional en las dos últimas versiones estables de navegadores
+  modernos (Chrome, Firefox, Edge) en resoluciones desktop y tablet.
 
 ---
 
 ### 3.4 Otros Requisitos
 
-- **RNF-18:** Cumplimiento de la Ley 1581 de 2012 (Habeas Data, Colombia) para
-  el tratamiento de datos de personas naturales y jurídicas.
-- **RNF-19:** Capacidad de exportación de balances e informes en formatos PDF y
-  hojas de cálculo (Excel).
+- **RNF-18:** Cumplimiento de la Ley 1581 de 2012 (Habeas Data, Colombia) para el tratamiento de
+  datos de personas naturales y jurídicas.
+- **RNF-19:** Capacidad de exportación de balances e informes en formatos PDF y hojas de cálculo
+  (Excel).
 
 ---
 
 ## 4. Apéndices
 
-_Documentación complementaria sujeta a adiciones durante el ciclo de vida del
-proyecto._
+_Documentación complementaria sujeta a adiciones durante el ciclo de vida del proyecto._

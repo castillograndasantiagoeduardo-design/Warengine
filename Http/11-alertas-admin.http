@@ -1,0 +1,136 @@
+# ==============================================================================
+# MÓDULO: ADMINISTRACIÓN - GESTIÓN DE ALERTAS ADMINISTRATIVAS
+# Requisito SRS:
+#   - RF-ADM-C13: Gestión de alertas administrativas (alertas_admin)
+#   - RNF-ADM-04: Alcance por sucursal (Super Admin global; Admin local su sede)
+#   - RNF-ADM-02: Auditoría inmutable de creación y atención de alertas
+#
+# Requiere: REST Client (extensión VS Code)
+# Base URL: http://localhost:8017
+# Permiso requerido: administracion:gestionar-alertas
+# ==============================================================================
+
+@baseUrl = http://localhost:8017
+@alertaId = ALERTA_UUID
+
+# ------------------------------------------------------------------------------
+# SETUP: Login como Super Admin
+# ------------------------------------------------------------------------------
+
+### Login como Super Admin
+# @name login
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "superadmin@warengine.local",
+  "password": "Warengine.Admin.2026!"
+}
+
+###
+
+# ==============================================================================
+# RF-ADM-C13: CREACIÓN Y CONSULTA DE ALERTAS ADMINISTRATIVAS
+# ==============================================================================
+
+### UC-ALT-01: Listar todas las alertas administrativas (sin filtros)
+# Resultado esperado: 200 OK con array de alertas ordenadas por prioridad urgente y fecha
+GET {{baseUrl}}/administracion/alertas
+Authorization: Bearer {{login.response.body.accessToken}}
+
+###
+
+### UC-ALT-02: Emitir alerta administrativa urgente
+# Resultado esperado: 201 Created con estado 'pendiente'
+# @name crearAlertaUrgente
+POST {{baseUrl}}/administracion/alertas
+Authorization: Bearer {{login.response.body.accessToken}}
+Content-Type: application/json
+
+{
+  "sucursalId": 1,
+  "motivo": "Fallo crítico en impresora fiscal",
+  "prioridad": "urgente",
+  "descripcion": "La impresora no emite tirillas y los turnos de caja no pueden cerrar."
+}
+
+###
+
+### UC-ALT-03: Emitir alerta administrativa de prioridad normal
+# Resultado esperado: 201 Created
+POST {{baseUrl}}/administracion/alertas
+Authorization: Bearer {{login.response.body.accessToken}}
+Content-Type: application/json
+
+{
+  "sucursalId": 1,
+  "motivo": "Revisión programada de inventario físico",
+  "prioridad": "normal",
+  "descripcion": "Se requiere apoyo del personal de bodega este viernes a las 18:00."
+}
+
+###
+
+### UC-ALT-04: Listar alertas filtradas por estado 'pendiente' y prioridad 'urgente'
+# Resultado esperado: 200 OK con alertas coincidentes
+GET {{baseUrl}}/administracion/alertas?estado=pendiente&prioridad=urgente
+Authorization: Bearer {{login.response.body.accessToken}}
+
+###
+
+### UC-ALT-05: Listar alertas filtradas por sucursal 1
+# Resultado esperado: 200 OK
+GET {{baseUrl}}/administracion/alertas?sucursalId=1
+Authorization: Bearer {{login.response.body.accessToken}}
+
+###
+
+# ==============================================================================
+# ATENCIÓN Y CAMBIO DE ESTADO
+# ==============================================================================
+
+### UC-ALT-06: Marcar alerta como 'visto'
+# Nota: Configura @alertaId con un ID generado en UC-ALT-02
+# Resultado esperado: 200 OK con estado 'visto' y fechaAtencion null
+PUT {{baseUrl}}/administracion/alertas/{{alertaId}}/estado
+Authorization: Bearer {{login.response.body.accessToken}}
+Content-Type: application/json
+
+{
+  "estado": "visto"
+}
+
+###
+
+### UC-ALT-07: Marcar alerta como 'atendido'
+# Resultado esperado: 200 OK con estado 'atendido' y fechaAtencion con timestamp actual
+PUT {{baseUrl}}/administracion/alertas/{{alertaId}}/estado
+Authorization: Bearer {{login.response.body.accessToken}}
+Content-Type: application/json
+
+{
+  "estado": "atendido"
+}
+
+###
+
+### UC-ALT-08: Error al intentar enviar un estado no permitido
+# Resultado esperado: 400 Bad Request
+PUT {{baseUrl}}/administracion/alertas/{{alertaId}}/estado
+Authorization: Bearer {{login.response.body.accessToken}}
+Content-Type: application/json
+
+{
+  "estado": "cancelado"
+}
+
+###
+
+# ==============================================================================
+# AUDITORÍA (RNF-ADM-02)
+# ==============================================================================
+
+### UC-AUD-01: Verificar eventos de auditoría para 'alertas_admin'
+# Resultado esperado: 200 OK con trazas de 'crear' y 'editar' de alertas
+GET {{baseUrl}}/administracion/auditoria?entidad=alertas_admin
+Authorization: Bearer {{login.response.body.accessToken}}
