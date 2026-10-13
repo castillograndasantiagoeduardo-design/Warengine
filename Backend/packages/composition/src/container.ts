@@ -26,6 +26,8 @@ import { DrizzleTurnoCajaRepository } from '../../database/src/repositories/fact
 import { DrizzleUsuarioSucursalRepository } from '../../database/src/repositories/administracion/drizzle-usuario-sucursal.repository.ts';
 import { DrizzleSucursalesAutorizadasRepository } from '../../database/src/repositories/autenticacion/drizzle-sucursales-autorizadas.repository.ts';
 import { DrizzleAlertaStockRepository } from '../../database/src/repositories/administracion/drizzle-alerta-stock.repository.ts';
+import { DrizzleAreaRepository } from '../../database/src/repositories/administracion/drizzle-area.repository.ts';
+import { DrizzleEmpleadoRepository } from '../../database/src/repositories/administracion/drizzle-empleado.repository.ts';
 
 import { DrizzleSucursalOperadorRepository } from '../../database/src/repositories/facturacion/drizzle-sucursal-operador.repository.ts';
 
@@ -42,6 +44,13 @@ import {
   ListarSucursalesUseCase,
   CrearSucursalUseCase,
   EditarSucursalUseCase,
+  ListarAreasPorSucursalUseCase,
+  CrearAreaUseCase,
+  EditarAreaUseCase,
+  EliminarAreaUseCase,
+  ListarEmpleadosUseCase,
+  ObtenerEmpleadoPorIdUseCase,
+  EditarEmpleadoUseCase,
   ListarUsuariosUseCase,
   CrearUsuarioUseCase,
   CambiarRolUsuarioUseCase,
@@ -91,6 +100,13 @@ export interface AppContainer {
     listarSucursales: ListarSucursalesUseCase;
     crearSucursal: CrearSucursalUseCase;
     editarSucursal: EditarSucursalUseCase;
+    listarAreasPorSucursal: ListarAreasPorSucursalUseCase;
+    crearArea: CrearAreaUseCase;
+    editarArea: EditarAreaUseCase;
+    eliminarArea: EliminarAreaUseCase;
+    listarEmpleados: ListarEmpleadosUseCase;
+    obtenerEmpleadoPorId: ObtenerEmpleadoPorIdUseCase;
+    editarEmpleado: EditarEmpleadoUseCase;
     listarUsuarios: ListarUsuariosUseCase;
     crearUsuario: CrearUsuarioUseCase;
     cambiarRolUsuario: CambiarRolUsuarioUseCase;
@@ -100,7 +116,6 @@ export interface AppContainer {
     asignarSucursalesUsuario: AsignarSucursalesUsuarioUseCase;
     obtenerSucursalesUsuario: ObtenerSucursalesUsuarioUseCase;
     consultarAlertasStock: ConsultarAlertasStockUseCase;
-
   };
   inventario: {
     listarCategorias: ListarCategoriasUseCase;
@@ -170,6 +185,8 @@ export function createContainer(_env?: Record<string, string>): AppContainer {
   const refreshTokenRepository = new DrizzleRefreshTokenRepository(db);
   const intentoLoginRepository = new DrizzleIntentoLoginRepository(db);
   const sucursalRepository = new DrizzleSucursalRepository(db);
+  const areaRepository = new DrizzleAreaRepository(db);
+  const empleadoRepository = new DrizzleEmpleadoRepository(db);
   const gestionUsuarioRepository = new DrizzleGestionUsuarioRepository(db);
   const clienteRepository = new DrizzleClienteRepository(db);
   const categoriaRepository = new DrizzleCategoriaRepository(db);
@@ -212,6 +229,26 @@ export function createContainer(_env?: Record<string, string>): AppContainer {
   const listarSucursalesUseCase = new ListarSucursalesUseCase(sucursalRepository);
   const crearSucursalUseCase = new CrearSucursalUseCase(sucursalRepository, auditoriaRepository);
   const editarSucursalUseCase = new EditarSucursalUseCase(sucursalRepository, auditoriaRepository);
+
+  const listarAreasPorSucursalUseCase = new ListarAreasPorSucursalUseCase(
+    areaRepository,
+    sucursalRepository,
+  );
+  const crearAreaUseCase = new CrearAreaUseCase(
+    areaRepository,
+    sucursalRepository,
+    auditoriaRepository,
+  );
+  const editarAreaUseCase = new EditarAreaUseCase(areaRepository, auditoriaRepository);
+  const eliminarAreaUseCase = new EliminarAreaUseCase(areaRepository, auditoriaRepository);
+
+  const listarEmpleadosUseCase = new ListarEmpleadosUseCase(empleadoRepository);
+  const obtenerEmpleadoPorIdUseCase = new ObtenerEmpleadoPorIdUseCase(empleadoRepository);
+  const editarEmpleadoUseCase = new EditarEmpleadoUseCase(
+    empleadoRepository,
+    areaRepository,
+    auditoriaRepository,
+  );
 
   const listarUsuariosUseCase = new ListarUsuariosUseCase(gestionUsuarioRepository);
   const crearUsuarioUseCase = new CrearUsuarioUseCase(
@@ -318,6 +355,13 @@ export function createContainer(_env?: Record<string, string>): AppContainer {
       listarSucursales: listarSucursalesUseCase,
       crearSucursal: crearSucursalUseCase,
       editarSucursal: editarSucursalUseCase,
+      listarAreasPorSucursal: listarAreasPorSucursalUseCase,
+      crearArea: crearAreaUseCase,
+      editarArea: editarAreaUseCase,
+      eliminarArea: eliminarAreaUseCase,
+      listarEmpleados: listarEmpleadosUseCase,
+      obtenerEmpleadoPorId: obtenerEmpleadoPorIdUseCase,
+      editarEmpleado: editarEmpleadoUseCase,
       listarUsuarios: listarUsuariosUseCase,
       crearUsuario: crearUsuarioUseCase,
       cambiarRolUsuario: cambiarRolUsuarioUseCase,

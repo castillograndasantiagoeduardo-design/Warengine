@@ -24,6 +24,8 @@ export * from './facturacion/turno-caja.schema.ts';
 
 // ─── Módulo: administracion ────────────────────────────────────
 export * from './administracion/sucursal.schema.ts';
+export * from './administracion/area.schema.ts';
+export * from './administracion/empleado.schema.ts';
 export * from './administracion/usuario.schema.ts';
 export * from './administracion/auditoria.schema.ts';
 export * from './administracion/auditoria.catalogo.ts';
