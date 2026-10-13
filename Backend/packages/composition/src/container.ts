@@ -29,6 +29,7 @@ import { DrizzleAlertaStockRepository } from '../../database/src/repositories/ad
 import { DrizzleAreaRepository } from '../../database/src/repositories/administracion/drizzle-area.repository.ts';
 import { DrizzleEmpleadoRepository } from '../../database/src/repositories/administracion/drizzle-empleado.repository.ts';
 import { DrizzleHistorialSalarioRepository } from '../../database/src/repositories/administracion/drizzle-historial-salario.repository.ts';
+import { DrizzleAlertaAdminRepository } from '../../database/src/repositories/administracion/drizzle-alerta-admin.repository.ts';
 
 import { DrizzleSucursalOperadorRepository } from '../../database/src/repositories/facturacion/drizzle-sucursal-operador.repository.ts';
 
@@ -89,6 +90,9 @@ import {
   ConsultarAlertasStockUseCase,
   RegistrarAumentoSalarioUseCase,
   ConsultarHistorialSalariosUseCase,
+  CrearAlertaAdminUseCase,
+  ListarAlertasAdminUseCase,
+  AtenderAlertaAdminUseCase,
 } from '@warengine/core';
 
 export interface AppContainer {
@@ -121,6 +125,9 @@ export interface AppContainer {
     consultarAlertasStock: ConsultarAlertasStockUseCase;
     registrarAumentoSalario: RegistrarAumentoSalarioUseCase;
     consultarHistorialSalarios: ConsultarHistorialSalariosUseCase;
+    crearAlertaAdmin: CrearAlertaAdminUseCase;
+    listarAlertasAdmin: ListarAlertasAdminUseCase;
+    atenderAlertaAdmin: AtenderAlertaAdminUseCase;
   };
   inventario: {
     listarCategorias: ListarCategoriasUseCase;
@@ -202,6 +209,7 @@ export function createContainer(_env?: Record<string, string>): AppContainer {
   const auditoriaRepository = new DrizzleAuditoriaRepository(db);
   const sucursalesAutorizadasRepository = new DrizzleSucursalesAutorizadasRepository(db);
   const alertaStockRepository = new DrizzleAlertaStockRepository(db);
+  const alertaAdminRepository = new DrizzleAlertaAdminRepository(db);
   const turnoCajaRepository = new DrizzleTurnoCajaRepository(db);
   const sucursalOperadorRepository = new DrizzleSucursalOperadorRepository(db);
   // 2. Instanciar Servicios Técnicos
@@ -263,6 +271,19 @@ export function createContainer(_env?: Record<string, string>): AppContainer {
   const consultarHistorialSalariosUseCase = new ConsultarHistorialSalariosUseCase(
     empleadoRepository,
     historialSalarioRepository,
+  );
+  const crearAlertaAdminUseCase = new CrearAlertaAdminUseCase(
+    sucursalRepository,
+    alertaAdminRepository,
+    auditoriaRepository,
+  );
+  const listarAlertasAdminUseCase = new ListarAlertasAdminUseCase(
+    resolverAlcanceSucursalUseCase,
+    alertaAdminRepository,
+  );
+  const atenderAlertaAdminUseCase = new AtenderAlertaAdminUseCase(
+    alertaAdminRepository,
+    auditoriaRepository,
   );
 
   const listarUsuariosUseCase = new ListarUsuariosUseCase(gestionUsuarioRepository);
@@ -388,6 +409,9 @@ export function createContainer(_env?: Record<string, string>): AppContainer {
       obtenerSucursalesUsuario: obtenerSucursalesUsuarioUseCase,
       registrarAumentoSalario: registrarAumentoSalarioUseCase,
       consultarHistorialSalarios: consultarHistorialSalariosUseCase,
+      crearAlertaAdmin: crearAlertaAdminUseCase,
+      listarAlertasAdmin: listarAlertasAdminUseCase,
+      atenderAlertaAdmin: atenderAlertaAdminUseCase,
     },
     inventario: {
       listarCategorias: listarCategoriasUseCase,

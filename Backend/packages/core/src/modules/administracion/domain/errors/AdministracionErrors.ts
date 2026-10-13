@@ -77,4 +77,10 @@ export class EmpleadoInactivoError extends DomainError {
   public readonly code = 'EMPLEADO_INACTIVO';
   constructor() { super('No se puede registrar o modificar el salario de un empleado inactivo.'); }
 }
+
+export class AlertaAdminNoEncontradaError extends DomainError {
+  public readonly code = 'ALERTA_ADMIN_NO_ENCONTRADA';
+  constructor() { super('La alerta administrativa no existe.'); }
+}
+
 

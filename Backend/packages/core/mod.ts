@@ -30,11 +30,13 @@ export * from './src/modules/administracion/domain/entities/AlertaStock.ts';
 export * from './src/modules/administracion/domain/entities/Area.ts';
 export * from './src/modules/administracion/domain/entities/Empleado.ts';
 export * from './src/modules/administracion/domain/entities/HistorialSalario.ts';
+export * from './src/modules/administracion/domain/entities/AlertaAdmin.ts';
 export * from './src/modules/administracion/domain/errors/AdministracionErrors.ts';
 export * from './src/modules/administracion/domain/repositories/ISucursalRepository.ts';
 export * from './src/modules/administracion/domain/repositories/IAreaRepository.ts';
 export * from './src/modules/administracion/domain/repositories/IEmpleadoRepository.ts';
 export * from './src/modules/administracion/domain/repositories/IHistorialSalarioRepository.ts';
+export * from './src/modules/administracion/domain/repositories/IAlertaAdminRepository.ts';
 export * from './src/modules/administracion/domain/repositories/IGestionUsuarioRepository.ts';
 export * from './src/modules/administracion/domain/repositories/IUsuarioSucursalRepository.ts';
 export * from './src/modules/administracion/domain/repositories/IAlertaStockRepository.ts';
@@ -58,6 +60,10 @@ export * from './src/modules/administracion/application/use-cases/ListarUsuarios
 export * from './src/modules/administracion/application/use-cases/ConsultarAlertasStockUseCase.ts';
 export * from './src/modules/administracion/application/use-cases/RegistrarAumentoSalarioUseCase.ts';
 export * from './src/modules/administracion/application/use-cases/ConsultarHistorialSalariosUseCase.ts';
+export * from './src/modules/administracion/application/use-cases/CrearAlertaAdminUseCase.ts';
+export * from './src/modules/administracion/application/use-cases/ListarAlertasAdminUseCase.ts';
+export * from './src/modules/administracion/application/use-cases/AtenderAlertaAdminUseCase.ts';
+
 
 
 // ─── Módulo: Auditoría ───────────────────────────────────────────────────────

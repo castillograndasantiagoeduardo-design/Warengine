@@ -38,6 +38,11 @@ import {
   consultarHistorialSalariosController,
   registrarAumentoSalarioController,
 } from '../controllers/administracion/historial-salario.controller.ts';
+import {
+  cambiarEstadoAlertaAdminController,
+  crearAlertaAdminController,
+  listarAlertasAdminController,
+} from '../controllers/administracion/alerta-admin.controller.ts';
 
 // Códigos tal como están en la tabla `permisos` (seed).
 const PERMISO_SUCURSALES = 'administracion:gestionar-sucursales';
@@ -78,9 +83,12 @@ export function createAdministracionRoutes(container: AppContainer): Hono {
   api.get('/usuarios/:id/sucursales', authMiddleware(container, PERMISO_USUARIOS), obtenerSucursalesUsuarioController(container));
   api.put('/usuarios/:id/sucursales', authMiddleware(container, PERMISO_USUARIOS), asignarSucursalesUsuarioController(container));
 
-  // Auditoría
+  // Auditoría y Alertas
   api.get('/auditoria', authMiddleware(container, PERMISO_AUDITORIA), consultarAuditoriaController(container));
   api.get('/alertas-stock', authMiddleware(container, PERMISO_ALERTAS), consultarAlertasStockController(container));
+  api.get('/alertas', authMiddleware(container, PERMISO_ALERTAS), listarAlertasAdminController(container));
+  api.post('/alertas', authMiddleware(container, PERMISO_ALERTAS), crearAlertaAdminController(container));
+  api.put('/alertas/:id/estado', authMiddleware(container, PERMISO_ALERTAS), cambiarEstadoAlertaAdminController(container));
 
   return api;
 }

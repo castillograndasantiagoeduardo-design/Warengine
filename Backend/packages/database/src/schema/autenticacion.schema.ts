@@ -1,6 +1,7 @@
 import { sql } from 'drizzle-orm';
 import {
   char,
+  check,
   date,
   datetime,
   decimal,
@@ -132,6 +133,37 @@ export const historial_salarios = mysqlTable('historial_salarios', {
 ]);
 
 /**
+ * Tabla: alertas_admin
+ * Alertas operativas y administrativas del sistema (RF-ADM-C13).
+ */
+export const alertas_admin = mysqlTable('alertas_admin', {
+  id_alerta_admin: char('id_alerta_admin', { length: 36 })
+    .notNull()
+    .default(sql.raw('(UUID())'))
+    .primaryKey(),
+  usuario_id: char('usuario_id', { length: 36 })
+    .notNull()
+    .references(() => usuarios.id_usuario, { onDelete: 'restrict' }),
+  sucursal_id: int('sucursal_id')
+    .notNull()
+    .references(() => sucursales.id_sucursal, { onDelete: 'restrict' }),
+  motivo: varchar('motivo', { length: 100 }).notNull(),
+  prioridad: varchar('prioridad', { length: 10 }).notNull().default('normal'),
+  descripcion: varchar('descripcion', { length: 500 }),
+  estado: varchar('estado', { length: 20 }).notNull().default('pendiente'),
+  fecha_creacion: datetime('fecha_creacion', { mode: 'date' })
+    .notNull()
+    .default(sql.raw('CURRENT_TIMESTAMP')),
+  fecha_atencion: datetime('fecha_atencion', { mode: 'date' }),
+}, (table) => [
+  index('idx_alertas_usuario_id').on(table.usuario_id),
+  index('idx_alertas_sucursal_id').on(table.sucursal_id),
+  index('idx_alertas_estado').on(table.estado),
+  check('chk_alertas_prioridad', sql`${table.prioridad} IN ('urgente', 'normal')`),
+  check('chk_alertas_estado', sql`${table.estado} IN ('pendiente', 'visto', 'atendido')`),
+]);
+
+/**
  * Tabla: refresh_tokens
  * Tokens criptográficos para renovación de sesión.
  */
@@ -206,4 +238,6 @@ export type IntentoLoginRecord = typeof intentos_login.$inferSelect;
 export type NuevoIntentoLoginRecord = typeof intentos_login.$inferInsert;
 export type HistorialSalarioRecord = typeof historial_salarios.$inferSelect;
 export type NuevoHistorialSalarioRecord = typeof historial_salarios.$inferInsert;
+export type AlertaAdminRecord = typeof alertas_admin.$inferSelect;
+export type NuevaAlertaAdminRecord = typeof alertas_admin.$inferInsert;
 
