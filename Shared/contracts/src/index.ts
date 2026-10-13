@@ -28,6 +28,7 @@ export * from './administracion/usuario.schema.ts';
 export * from './administracion/auditoria.schema.ts';
 export * from './administracion/auditoria.catalogo.ts';
 export * from './administracion/asignacion-sucursales.schema.ts';
+export * from './administracion/alerta-stock.schema.ts';
 
 // ─── Módulo: logistica ─────────────────────────────────────────
 // (los esquemas se agregarán cuando se implemente el módulo)

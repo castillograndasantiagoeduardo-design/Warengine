@@ -5,26 +5,33 @@
 // ─── Módulo: Autenticación ──────────────────────────────────────────────────
 export * from './src/modules/autenticacion/domain/entities/Usuario.ts';
 export * from './src/modules/autenticacion/domain/errors/AutenticacionErrors.ts';
+export * from './src/modules/autenticacion/domain/errors/AlcanceErrors.ts';
 export * from './src/modules/autenticacion/domain/repositories/IUsuarioRepository.ts';
 export * from './src/modules/autenticacion/domain/repositories/IRolRepository.ts';
 export * from './src/modules/autenticacion/domain/repositories/IRefreshTokenRepository.ts';
 export * from './src/modules/autenticacion/domain/repositories/IRegistroIntentosLogin.ts';
 export * from './src/modules/autenticacion/domain/repositories/IControlIntentosLogin.ts';
+export * from './src/modules/autenticacion/domain/repositories/ISucursalesAutorizadasRepository.ts';
 export * from './src/modules/autenticacion/domain/value-objects/PoliticaBloqueoLogin.ts';
+export * from './src/modules/autenticacion/domain/value-objects/AlcanceSucursal.ts';
 export * from './src/modules/autenticacion/domain/services/IPasswordService.ts';
 export * from './src/modules/autenticacion/domain/services/ITokenService.ts';
 export * from './src/modules/autenticacion/application/use-cases/LoginUseCase.ts';
 export * from './src/modules/autenticacion/application/use-cases/LogoutUseCase.ts';
 export * from './src/modules/autenticacion/application/use-cases/RenovarTokenUseCase.ts';
 export * from './src/modules/autenticacion/application/use-cases/ValidarPermisoUseCase.ts';
+export * from './src/modules/autenticacion/application/use-cases/ResolverAlcanceSucursalUseCase.ts';
+
 
 // ─── Módulo: Administración ─────────────────────────────────────────────────
 export * from './src/modules/administracion/domain/entities/Sucursal.ts';
 export * from './src/modules/administracion/domain/entities/UsuarioGestionado.ts';
+export * from './src/modules/administracion/domain/entities/AlertaStock.ts';
 export * from './src/modules/administracion/domain/errors/AdministracionErrors.ts';
 export * from './src/modules/administracion/domain/repositories/ISucursalRepository.ts';
 export * from './src/modules/administracion/domain/repositories/IGestionUsuarioRepository.ts';
 export * from './src/modules/administracion/domain/repositories/IUsuarioSucursalRepository.ts';
+export * from './src/modules/administracion/domain/repositories/IAlertaStockRepository.ts';
 export * from './src/modules/administracion/application/use-cases/CrearSucursalUseCase.ts';
 export * from './src/modules/administracion/application/use-cases/EditarSucursalUseCase.ts';
 export * from './src/modules/administracion/application/use-cases/ListarSucursalesUseCase.ts';
@@ -35,6 +42,7 @@ export * from './src/modules/administracion/application/use-cases/RestablecerPas
 export * from './src/modules/administracion/application/use-cases/AsignarSucursalesUsuarioUseCase.ts';
 export * from './src/modules/administracion/application/use-cases/ObtenerSucursalesUsuarioUseCase.ts';
 export * from './src/modules/administracion/application/use-cases/ListarUsuariosUseCase.ts';
+export * from './src/modules/administracion/application/use-cases/ConsultarAlertasStockUseCase.ts';
 
 // ─── Módulo: Auditoría ───────────────────────────────────────────────────────
 export * from './src/modules/auditoria/domain/entities/LogAuditoria.ts';

@@ -24,6 +24,8 @@ import { DrizzleProveedorRepository } from '../../database/src/repositories/inve
 import { DrizzleProductoRepository } from '../../database/src/repositories/inventario/drizzle-producto.repository.ts';
 import { DrizzleTurnoCajaRepository } from '../../database/src/repositories/facturacion/drizzle-turno-caja.repository.ts';
 import { DrizzleUsuarioSucursalRepository } from '../../database/src/repositories/administracion/drizzle-usuario-sucursal.repository.ts';
+import { DrizzleSucursalesAutorizadasRepository } from '../../database/src/repositories/autenticacion/drizzle-sucursales-autorizadas.repository.ts';
+import { DrizzleAlertaStockRepository } from '../../database/src/repositories/administracion/drizzle-alerta-stock.repository.ts';
 
 import { DrizzleSucursalOperadorRepository } from '../../database/src/repositories/facturacion/drizzle-sucursal-operador.repository.ts';
 
@@ -73,6 +75,8 @@ import {
   ObtenerTurnoActualUseCase,
   AsignarSucursalesUsuarioUseCase,
   ObtenerSucursalesUsuarioUseCase,
+  ResolverAlcanceSucursalUseCase,
+  ConsultarAlertasStockUseCase,
 } from '@warengine/core';
 
 export interface AppContainer {
@@ -81,6 +85,7 @@ export interface AppContainer {
     logout: LogoutUseCase;
     validarPermiso: ValidarPermisoUseCase;
     renovarToken: RenovarTokenUseCase;
+    resolverAlcanceSucursal: ResolverAlcanceSucursalUseCase;
   };
   administracion: {
     listarSucursales: ListarSucursalesUseCase;
@@ -94,6 +99,7 @@ export interface AppContainer {
     restablecerPasswordUsuario: RestablecerPasswordUsuarioUseCase;
     asignarSucursalesUsuario: AsignarSucursalesUsuarioUseCase;
     obtenerSucursalesUsuario: ObtenerSucursalesUsuarioUseCase;
+    consultarAlertasStock: ConsultarAlertasStockUseCase;
 
   };
   inventario: {
@@ -171,6 +177,8 @@ export function createContainer(_env?: Record<string, string>): AppContainer {
   const productoRepository = new DrizzleProductoRepository(db);
   const usuarioSucursalRepository = new DrizzleUsuarioSucursalRepository(db);
   const auditoriaRepository = new DrizzleAuditoriaRepository(db);
+  const sucursalesAutorizadasRepository = new DrizzleSucursalesAutorizadasRepository(db);
+  const alertaStockRepository = new DrizzleAlertaStockRepository(db);
   const turnoCajaRepository = new DrizzleTurnoCajaRepository(db);
   const sucursalOperadorRepository = new DrizzleSucursalOperadorRepository(db);
   // 2. Instanciar Servicios Técnicos
@@ -194,6 +202,12 @@ export function createContainer(_env?: Record<string, string>): AppContainer {
     auditoriaRepository,
   );
   const renovarTokenUseCase = new RenovarTokenUseCase(tokenService, usuarioRepository);
+
+  const resolverAlcanceSucursalUseCase = new ResolverAlcanceSucursalUseCase(
+    usuarioRepository,
+    rolRepository,
+    sucursalesAutorizadasRepository,
+  );
 
   const listarSucursalesUseCase = new ListarSucursalesUseCase(sucursalRepository);
   const crearSucursalUseCase = new CrearSucursalUseCase(sucursalRepository, auditoriaRepository);
@@ -234,6 +248,10 @@ export function createContainer(_env?: Record<string, string>): AppContainer {
     gestionUsuarioRepository,
     sucursalRepository,
     usuarioSucursalRepository,  
+  );
+  const consultarAlertasStockUseCase = new ConsultarAlertasStockUseCase(
+    resolverAlcanceSucursalUseCase,
+    alertaStockRepository,
   );
   const obtenerTurnoActualUseCase = new ObtenerTurnoActualUseCase(turnoCajaRepository);
   const consultarAuditoriaUseCase = new ConsultarAuditoriaUseCase(auditoriaRepository);
@@ -294,6 +312,7 @@ export function createContainer(_env?: Record<string, string>): AppContainer {
       logout: logoutUseCase,
       validarPermiso: validarPermisoUseCase,
       renovarToken: renovarTokenUseCase,
+      resolverAlcanceSucursal: resolverAlcanceSucursalUseCase,
     },
     administracion: {
       listarSucursales: listarSucursalesUseCase,
@@ -305,6 +324,7 @@ export function createContainer(_env?: Record<string, string>): AppContainer {
       cambiarEstadoUsuario: cambiarEstadoUsuarioUseCase,
       consultarAuditoria: consultarAuditoriaUseCase,
       restablecerPasswordUsuario: restablecerPasswordUsuarioUseCase,
+      consultarAlertasStock: consultarAlertasStockUseCase,
       asignarSucursalesUsuario: asignarSucursalesUsuarioUseCase,
       obtenerSucursalesUsuario: obtenerSucursalesUsuarioUseCase,
     },

@@ -16,6 +16,7 @@ import {
 } from '../controllers/administracion/usuario.controller.ts';
 
 import { consultarAuditoriaController } from '../controllers/administracion/auditoria.controller.ts';
+import { consultarAlertasStockController } from '../controllers/administracion/alerta-stock.controller.ts';
   // Usuarios (RF-ADM-C5, C6, C7, C8, C9, C10)
 import {
   asignarSucursalesUsuarioController,
@@ -27,6 +28,7 @@ const PERMISO_SUCURSALES = 'administracion:gestionar-sucursales';
 const PERMISO_USUARIOS = 'autenticacion:gestionar-usuarios';
 const PERMISO_ROLES = 'autenticacion:asignar-roles';
 const PERMISO_AUDITORIA = 'autenticacion:ver-auditoria';
+const PERMISO_ALERTAS = 'administracion:gestionar-alertas';
 
 export function createAdministracionRoutes(container: AppContainer): Hono {
   const api = new Hono();
@@ -44,9 +46,10 @@ export function createAdministracionRoutes(container: AppContainer): Hono {
   api.put('/usuarios/:id/rol', authMiddleware(container, PERMISO_ROLES), cambiarRolUsuarioController(container));
   api.put('/usuarios/:id/estado', authMiddleware(container, PERMISO_USUARIOS), cambiarEstadoUsuarioController(container));
   api.put('/usuarios/:id/password', authMiddleware(container, PERMISO_USUARIOS), restablecerPasswordUsuarioController(container));
-   api.get('/usuarios/:id/sucursales', authMiddleware(container, PERMISO_USUARIOS), obtenerSucursalesUsuarioController(container));
+  api.get('/usuarios/:id/sucursales', authMiddleware(container, PERMISO_USUARIOS), obtenerSucursalesUsuarioController(container));
   api.put('/usuarios/:id/sucursales', authMiddleware(container, PERMISO_USUARIOS), asignarSucursalesUsuarioController(container));
   // Auditoría
   api.get('/auditoria', authMiddleware(container, PERMISO_AUDITORIA), consultarAuditoriaController(container));
+  api.get('/alertas-stock', authMiddleware(container, PERMISO_ALERTAS), consultarAlertasStockController(container));
   return api;
 }
