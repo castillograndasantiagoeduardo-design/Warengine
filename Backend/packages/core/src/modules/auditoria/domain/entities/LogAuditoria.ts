@@ -28,6 +28,7 @@ export const ENTIDADES_AUDITORIA = {
   ACCESO: 'acceso',
   AREAS: 'areas',
   EMPLEADOS: 'empleados',
+  HISTORIAL_SALARIOS: 'historial_salarios',
 } as const;
 
 /** Quién ejecuta la operación y desde dónde. Lo arma la capa HTTP a partir del token. */

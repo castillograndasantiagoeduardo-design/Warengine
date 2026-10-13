@@ -71,4 +71,10 @@ export class EmpleadoNoEncontradoError extends DomainError {
 export class AreaNoPerteneceASucursalError extends DomainError {
   public readonly code = 'AREA_NO_PERTENECE_A_SUCURSAL';
   constructor() { super('El área indicada no pertenece a la sucursal asignada al empleado.'); }
-}
+}
+
+export class EmpleadoInactivoError extends DomainError {
+  public readonly code = 'EMPLEADO_INACTIVO';
+  constructor() { super('No se puede registrar o modificar el salario de un empleado inactivo.'); }
+}
+

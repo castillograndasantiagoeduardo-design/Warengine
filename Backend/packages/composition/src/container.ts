@@ -28,6 +28,7 @@ import { DrizzleSucursalesAutorizadasRepository } from '../../database/src/repos
 import { DrizzleAlertaStockRepository } from '../../database/src/repositories/administracion/drizzle-alerta-stock.repository.ts';
 import { DrizzleAreaRepository } from '../../database/src/repositories/administracion/drizzle-area.repository.ts';
 import { DrizzleEmpleadoRepository } from '../../database/src/repositories/administracion/drizzle-empleado.repository.ts';
+import { DrizzleHistorialSalarioRepository } from '../../database/src/repositories/administracion/drizzle-historial-salario.repository.ts';
 
 import { DrizzleSucursalOperadorRepository } from '../../database/src/repositories/facturacion/drizzle-sucursal-operador.repository.ts';
 
@@ -86,6 +87,8 @@ import {
   ObtenerSucursalesUsuarioUseCase,
   ResolverAlcanceSucursalUseCase,
   ConsultarAlertasStockUseCase,
+  RegistrarAumentoSalarioUseCase,
+  ConsultarHistorialSalariosUseCase,
 } from '@warengine/core';
 
 export interface AppContainer {
@@ -116,6 +119,8 @@ export interface AppContainer {
     asignarSucursalesUsuario: AsignarSucursalesUsuarioUseCase;
     obtenerSucursalesUsuario: ObtenerSucursalesUsuarioUseCase;
     consultarAlertasStock: ConsultarAlertasStockUseCase;
+    registrarAumentoSalario: RegistrarAumentoSalarioUseCase;
+    consultarHistorialSalarios: ConsultarHistorialSalariosUseCase;
   };
   inventario: {
     listarCategorias: ListarCategoriasUseCase;
@@ -187,6 +192,7 @@ export function createContainer(_env?: Record<string, string>): AppContainer {
   const sucursalRepository = new DrizzleSucursalRepository(db);
   const areaRepository = new DrizzleAreaRepository(db);
   const empleadoRepository = new DrizzleEmpleadoRepository(db);
+  const historialSalarioRepository = new DrizzleHistorialSalarioRepository(db);
   const gestionUsuarioRepository = new DrizzleGestionUsuarioRepository(db);
   const clienteRepository = new DrizzleClienteRepository(db);
   const categoriaRepository = new DrizzleCategoriaRepository(db);
@@ -248,6 +254,15 @@ export function createContainer(_env?: Record<string, string>): AppContainer {
     empleadoRepository,
     areaRepository,
     auditoriaRepository,
+  );
+  const registrarAumentoSalarioUseCase = new RegistrarAumentoSalarioUseCase(
+    empleadoRepository,
+    historialSalarioRepository,
+    auditoriaRepository,
+  );
+  const consultarHistorialSalariosUseCase = new ConsultarHistorialSalariosUseCase(
+    empleadoRepository,
+    historialSalarioRepository,
   );
 
   const listarUsuariosUseCase = new ListarUsuariosUseCase(gestionUsuarioRepository);
@@ -371,6 +386,8 @@ export function createContainer(_env?: Record<string, string>): AppContainer {
       consultarAlertasStock: consultarAlertasStockUseCase,
       asignarSucursalesUsuario: asignarSucursalesUsuarioUseCase,
       obtenerSucursalesUsuario: obtenerSucursalesUsuarioUseCase,
+      registrarAumentoSalario: registrarAumentoSalarioUseCase,
+      consultarHistorialSalarios: consultarHistorialSalariosUseCase,
     },
     inventario: {
       listarCategorias: listarCategoriasUseCase,

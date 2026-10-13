@@ -1,7 +1,9 @@
 import { sql } from 'drizzle-orm';
 import {
   char,
+  date,
   datetime,
+  decimal,
   index,
   int,
   mysqlTable,
@@ -100,6 +102,36 @@ export const usuario_sucursales = mysqlTable('usuario_sucursales', {
 ]);
 
 /**
+ * Tabla: historial_salarios
+ * Registro de cambios y trayectoria salarial de los empleados (RF-ADM-C14).
+ * Al insertar una fila, el trigger `trg_historial_salarios_sync` actualiza
+ * automáticamente `empleados.sueldo_actual`.
+ */
+export const historial_salarios = mysqlTable('historial_salarios', {
+  id_historial_salario: char('id_historial_salario', { length: 36 })
+    .notNull()
+    .default(sql.raw('(UUID())'))
+    .primaryKey(),
+  empleado_id: char('empleado_id', { length: 36 })
+    .notNull()
+    .references(() => empleados.id_empleado, { onDelete: 'cascade' }),
+  sueldo: decimal('sueldo', { precision: 14, scale: 2 }).notNull(),
+  fecha_efectiva: date('fecha_efectiva', { mode: 'string' })
+    .notNull()
+    .default(sql.raw('(CURDATE())')),
+  motivo: varchar('motivo', { length: 255 }),
+  registrado_por: char('registrado_por', { length: 36 })
+    .notNull()
+    .references(() => usuarios.id_usuario, { onDelete: 'restrict' }),
+  created_at: datetime('created_at', { mode: 'date' })
+    .notNull()
+    .default(sql.raw('CURRENT_TIMESTAMP')),
+  deleted_at: datetime('deleted_at', { mode: 'date' }),
+}, (table) => [
+  index('idx_historial_salarios_empleado_id').on(table.empleado_id),
+]);
+
+/**
  * Tabla: refresh_tokens
  * Tokens criptográficos para renovación de sesión.
  */
@@ -172,3 +204,6 @@ export type PasswordResetTokenRecord = typeof password_reset_tokens.$inferSelect
 export type NuevoPasswordResetTokenRecord = typeof password_reset_tokens.$inferInsert;
 export type IntentoLoginRecord = typeof intentos_login.$inferSelect;
 export type NuevoIntentoLoginRecord = typeof intentos_login.$inferInsert;
+export type HistorialSalarioRecord = typeof historial_salarios.$inferSelect;
+export type NuevoHistorialSalarioRecord = typeof historial_salarios.$inferInsert;
+
