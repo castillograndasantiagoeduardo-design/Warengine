@@ -42,4 +42,33 @@ export class UltimoSuperAdminError extends DomainError {
   constructor() {
     super('No puedes quitar el rol ni desactivar al único Super Admin activo.');
   }
+}
+
+export class AreaNoEncontradaError extends DomainError {
+  public readonly code = 'AREA_NO_ENCONTRADA';
+  constructor() { super('El área no existe.'); }
+}
+
+export class AreaDuplicadaError extends DomainError {
+  public readonly code = 'AREA_DUPLICADA';
+  constructor(nombre: string) {
+    super(`Ya existe un área con el nombre "${nombre}" en esta sucursal.`);
+  }
+}
+
+export class AreaTieneEmpleadosError extends DomainError {
+  public readonly code = 'AREA_TIENE_EMPLEADOS';
+  constructor(total: number) {
+    super(`No se puede eliminar el área porque tiene ${total} empleado(s) asignado(s).`);
+  }
+}
+
+export class EmpleadoNoEncontradoError extends DomainError {
+  public readonly code = 'EMPLEADO_NO_ENCONTRADO';
+  constructor() { super('El empleado no existe.'); }
+}
+
+export class AreaNoPerteneceASucursalError extends DomainError {
+  public readonly code = 'AREA_NO_PERTENECE_A_SUCURSAL';
+  constructor() { super('El área indicada no pertenece a la sucursal asignada al empleado.'); }
 }

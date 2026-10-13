@@ -10,6 +10,7 @@ export const ACCIONES_AUDITORIA = {
   CAMBIAR_ROL: 'cambiar_rol',
   ACCESO_DENEGADO: 'acceso_denegado',
   RESTABLECER_PASSWORD: 'restablecer_password',
+  ELIMINAR: 'eliminar',
 } as const;
 
 /**
@@ -25,6 +26,8 @@ export const ENTIDADES_AUDITORIA = {
   PRODUCTOS: 'productos',
   TURNOS_CAJA: 'turnos_caja',
   ACCESO: 'acceso',
+  AREAS: 'areas',
+  EMPLEADOS: 'empleados',
 } as const;
 
 /** Quién ejecuta la operación y desde dónde. Lo arma la capa HTTP a partir del token. */

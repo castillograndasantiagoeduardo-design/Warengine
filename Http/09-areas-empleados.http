@@ -1,0 +1,313 @@
+# ==============================================================================
+# MÓDULO: ADMINISTRACIÓN - GESTIÓN DE ÁREAS Y EMPLEADOS
+# Requisitos SRS:
+#   - RF-ADM-C4: Gestión de Áreas por Sucursal (crear, listar, editar, eliminar)
+#   - RF-ADM-C5: Consulta y filtrado de Empleados
+#   - RF-ADM-C12: Edición de datos laborales y asignación de área/contacto
+#   - RNF-ADM-02: Auditoría de eventos administrativos
+#
+# Requiere: REST Client (extensión VS Code)
+# Base URL: http://localhost:8017
+# Roles requeridos: super-admin o admin-sucursal
+#   - Permiso áreas: administracion:gestionar-sucursales
+#   - Permiso empleados: administracion:gestionar-personal
+# ==============================================================================
+#
+# FLUJO DE PRUEBA RECOMENDADO:
+#   1. Login (Setup)
+#   2. Listar áreas existentes de la sucursal 1
+#   3. Crear área nueva ("Bodega y Almacén") en sucursal 1
+#   4. Crear segunda área ("Caja y Facturación")
+#   5. Validar unicidad (intentar crear área duplicada -> 409 Conflict)
+#   6. Editar área creada (cambiar nombre)
+#   7. Listar empleados (sin filtros y con filtros por sucursal / área / activo)
+#   8. Obtener empleado por ID
+#   9. Editar empleado: actualizar datos de contacto, cargo y asignarle el área
+#  10. Probar integridad: intentar eliminar área que tiene empleados asignados (falla)
+#  11. Desvincular área del empleado y proceder a eliminar el área
+#  12. Consultar logs de auditoría para verificar eventos registrados
+# ==============================================================================
+
+@baseUrl = http://localhost:8017
+@sucursalId = 1
+@areaId = 1
+@empleadoId = EMPLEADO_UUID
+
+# ------------------------------------------------------------------------------
+# SETUP: Login como Super Admin
+# Ejecutar PRIMERO para autenticarse y guardar el Bearer Token en memoria
+# ------------------------------------------------------------------------------
+
+### Login como Super Admin
+# @name login
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "superadmin@warengine.local",
+  "password": "Warengine.Admin.2026!"
+}
+
+###
+
+# ==============================================================================
+# SECCIÓN 1: RF-ADM-C4 — GESTIÓN DE ÁREAS POR SUCURSAL
+# ==============================================================================
+
+### UC-ARE-01: Listar áreas de la sucursal
+# Resultado esperado: 200 OK con array de áreas [{ id, nombre, sucursalId, createdAt }]
+GET {{baseUrl}}/administracion/sucursales/{{sucursalId}}/areas
+Authorization: Bearer {{login.response.body.accessToken}}
+
+###
+
+### UC-ARE-02: Crear nueva área en la sucursal (ej: "Bodega y Almacén")
+# Resultado esperado: 201 Created con el área generada (guarda el id retornado)
+# @name crearAreaBodega
+POST {{baseUrl}}/administracion/sucursales/{{sucursalId}}/areas
+Authorization: Bearer {{login.response.body.accessToken}}
+Content-Type: application/json
+
+{
+  "nombre": "Bodega y Almacén"
+}
+
+###
+
+### UC-ARE-03: Crear segunda área en la sucursal (ej: "Caja y Atención al Cliente")
+# Resultado esperado: 201 Created
+# @name crearAreaCaja
+POST {{baseUrl}}/administracion/sucursales/{{sucursalId}}/areas
+Authorization: Bearer {{login.response.body.accessToken}}
+Content-Type: application/json
+
+{
+  "nombre": "Caja y Atención al Cliente"
+}
+
+###
+
+### UC-ARE-04: Error de validación Zod al crear área con nombre inválido (vacío o < 2 letras)
+# Resultado esperado: 400 Bad Request con issues de validación
+POST {{baseUrl}}/administracion/sucursales/{{sucursalId}}/areas
+Authorization: Bearer {{login.response.body.accessToken}}
+Content-Type: application/json
+
+{
+  "nombre": "A"
+}
+
+###
+
+### UC-ARE-05: Error de unicidad (intentar crear un área duplicada en la misma sucursal)
+# Resultado esperado: 409 Conflict con code "AREA_DUPLICADA"
+POST {{baseUrl}}/administracion/sucursales/{{sucursalId}}/areas
+Authorization: Bearer {{login.response.body.accessToken}}
+Content-Type: application/json
+
+{
+  "nombre": "Bodega y Almacén"
+}
+
+###
+
+### UC-ARE-06: Error si la sucursal especificada no existe
+# Resultado esperado: 404 Not Found con code "SUCURSAL_NO_ENCONTRADA"
+POST {{baseUrl}}/administracion/sucursales/9999/areas
+Authorization: Bearer {{login.response.body.accessToken}}
+Content-Type: application/json
+
+{
+  "nombre": "Área Fantasma"
+}
+
+###
+
+### UC-ARE-07: Editar nombre de un área existente
+# Resultado esperado: 200 OK con el área actualizada
+# Tip: reemplaza {{areaId}} o usa el ID creado en UC-ARE-02
+PUT {{baseUrl}}/administracion/areas/{{areaId}}
+Authorization: Bearer {{login.response.body.accessToken}}
+Content-Type: application/json
+
+{
+  "nombre": "Bodega General y Despachos"
+}
+
+###
+
+### UC-ARE-08: Error al intentar renombrar área con nombre ya ocupado en su misma sucursal
+# Resultado esperado: 409 Conflict con code "AREA_DUPLICADA"
+PUT {{baseUrl}}/administracion/areas/{{areaId}}
+Authorization: Bearer {{login.response.body.accessToken}}
+Content-Type: application/json
+
+{
+  "nombre": "Caja y Atención al Cliente"
+}
+
+###
+
+# ==============================================================================
+# SECCIÓN 2: RF-ADM-C5 Y RF-ADM-C12 — CONSULTA Y EDICIÓN DE EMPLEADOS
+# ==============================================================================
+
+### UC-EMP-01: Listar todos los empleados sin filtros
+# Resultado esperado: 200 OK con array de empleados
+# Copia un id_empleado de esta respuesta y colócalo en la variable @empleadoId arriba
+# @name listarEmpleados
+GET {{baseUrl}}/administracion/empleados
+Authorization: Bearer {{login.response.body.accessToken}}
+
+###
+
+### UC-EMP-02: Listar empleados filtrados por sucursal
+# Resultado esperado: 200 OK solo con empleados de la sucursal 1
+GET {{baseUrl}}/administracion/empleados?sucursalId={{sucursalId}}
+Authorization: Bearer {{login.response.body.accessToken}}
+
+###
+
+### UC-EMP-03: Listar empleados filtrados por área
+# Resultado esperado: 200 OK solo con empleados asignados al área
+GET {{baseUrl}}/administracion/empleados?areaId={{areaId}}
+Authorization: Bearer {{login.response.body.accessToken}}
+
+###
+
+### UC-EMP-04: Listar empleados filtrados por estado laboral activo
+# Resultado esperado: 200 OK con empleados que tienen isActive = true
+GET {{baseUrl}}/administracion/empleados?isActive=true
+Authorization: Bearer {{login.response.body.accessToken}}
+
+###
+
+### UC-EMP-05: Obtener detalle completo de un empleado por su ID
+# Resultado esperado: 200 OK con datos personales, laborales, sucursal y área
+# Nota: Configura @empleadoId con un ID real retornado en UC-EMP-01
+GET {{baseUrl}}/administracion/empleados/{{empleadoId}}
+Authorization: Bearer {{login.response.body.accessToken}}
+
+###
+
+### UC-EMP-06: Error al consultar un empleado con ID inexistente
+# Resultado esperado: 404 Not Found con code "EMPLEADO_NO_ENCONTRADO"
+GET {{baseUrl}}/administracion/empleados/00000000-0000-0000-0000-000000000000
+Authorization: Bearer {{login.response.body.accessToken}}
+
+###
+
+### UC-EMP-07: Editar datos laborales, de contacto y asignar área al empleado (RF-ADM-C12)
+# Resultado esperado: 200 OK con el objeto empleado actualizado
+PUT {{baseUrl}}/administracion/empleados/{{empleadoId}}
+Authorization: Bearer {{login.response.body.accessToken}}
+Content-Type: application/json
+
+{
+  "nombre": "Carlos Alberto Gómez Ruiz",
+  "telefono": "+57 312 4567890",
+  "direccion": "Carrera 15 # 45-20, Apto 302",
+  "cargo": "Jefe de Almacén y Control de Stock",
+  "areaId": {{areaId}},
+  "isActive": true
+}
+
+###
+
+### UC-EMP-08: Error al intentar asignar un área inexistente
+# Resultado esperado: 404 Not Found con code "AREA_NO_ENCONTRADA"
+PUT {{baseUrl}}/administracion/empleados/{{empleadoId}}
+Authorization: Bearer {{login.response.body.accessToken}}
+Content-Type: application/json
+
+{
+  "areaId": 9999
+}
+
+###
+
+### UC-EMP-09: Desvincular área del empleado (pasar areaId como null)
+# Resultado esperado: 200 OK con areaId: null y areaNombre: null
+PUT {{baseUrl}}/administracion/empleados/{{empleadoId}}
+Authorization: Bearer {{login.response.body.accessToken}}
+Content-Type: application/json
+
+{
+  "areaId": null
+}
+
+###
+
+### UC-EMP-10: Error de validación al enviar payload vacío
+# Resultado esperado: 400 Bad Request ("Debes enviar al menos un campo para actualizar.")
+PUT {{baseUrl}}/administracion/empleados/{{empleadoId}}
+Authorization: Bearer {{login.response.body.accessToken}}
+Content-Type: application/json
+
+{}
+
+###
+
+# ==============================================================================
+# SECCIÓN 3: REGLAS DE INTEGRIDAD Y ELIMINACIÓN DE ÁREAS (RF-ADM-C4)
+# ==============================================================================
+
+### Paso previo: Volver a asignar el empleado al área para probar la regla de bloqueo
+PUT {{baseUrl}}/administracion/empleados/{{empleadoId}}
+Authorization: Bearer {{login.response.body.accessToken}}
+Content-Type: application/json
+
+{
+  "areaId": {{areaId}}
+}
+
+###
+
+### UC-ARE-09: Intentar eliminar un área que TIENE empleados asignados (debe bloquearse)
+# Resultado esperado: 409 Conflict con code "AREA_TIENE_EMPLEADOS"
+# Mensaje: "No se puede eliminar el área porque tiene 1 empleado(s) asignado(s)."
+DELETE {{baseUrl}}/administracion/areas/{{areaId}}
+Authorization: Bearer {{login.response.body.accessToken}}
+
+###
+
+### Paso de liberación: Desvincular el empleado para permitir la eliminación
+PUT {{baseUrl}}/administracion/empleados/{{empleadoId}}
+Authorization: Bearer {{login.response.body.accessToken}}
+Content-Type: application/json
+
+{
+  "areaId": null
+}
+
+###
+
+### UC-ARE-10: Eliminar área libre de empleados (éxito)
+# Resultado esperado: 200 OK confirmando la eliminación del área
+DELETE {{baseUrl}}/administracion/areas/{{areaId}}
+Authorization: Bearer {{login.response.body.accessToken}}
+
+###
+
+### UC-ARE-11: Error al intentar eliminar un área que ya no existe
+# Resultado esperado: 404 Not Found con code "AREA_NO_ENCONTRADA"
+DELETE {{baseUrl}}/administracion/areas/{{areaId}}
+Authorization: Bearer {{login.response.body.accessToken}}
+
+###
+
+# ==============================================================================
+# SECCIÓN 4: AUDITORÍA DE OPERACIONES (RNF-ADM-02)
+# ==============================================================================
+
+### UC-AUD-01: Verificar registro de auditoría para entidad 'areas'
+# Resultado esperado: 200 OK con eventos 'crear', 'editar', 'eliminar' de áreas
+GET {{baseUrl}}/administracion/auditoria?entidad=areas
+Authorization: Bearer {{login.response.body.accessToken}}
+
+###
+
+### UC-AUD-02: Verificar registro de auditoría para entidad 'empleados'
+# Resultado esperado: 200 OK con eventos 'editar' de empleados
+GET {{baseUrl}}/administracion/auditoria?entidad=empleados
+Authorization: Bearer {{login.response.body.accessToken}}

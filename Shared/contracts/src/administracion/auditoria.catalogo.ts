@@ -5,7 +5,8 @@ export const ACCIONES_AUDITORIA = {
   INACTIVAR: 'inactivar',
   CAMBIAR_ROL: 'cambiar_rol',
   ACCESO_DENEGADO: 'acceso_denegado',
-   RESTABLECER_PASSWORD: 'restablecer_password',
+  RESTABLECER_PASSWORD: 'restablecer_password',
+  ELIMINAR: 'eliminar',
 } as const;
 
 export type AccionAuditoria = (typeof ACCIONES_AUDITORIA)[keyof typeof ACCIONES_AUDITORIA];
@@ -18,7 +19,7 @@ export const ACCIONES_AUDITORIA_VALORES = [
   ACCIONES_AUDITORIA.CAMBIAR_ROL,
   ACCIONES_AUDITORIA.ACCESO_DENEGADO,
   ACCIONES_AUDITORIA.RESTABLECER_PASSWORD,
-  
+  ACCIONES_AUDITORIA.ELIMINAR,
 ] as const;
 
 export const ENTIDADES_AUDITORIA = {
@@ -29,7 +30,9 @@ export const ENTIDADES_AUDITORIA = {
   CLIENTES: 'clientes',
   PRODUCTOS: 'productos',
   ACCESO: 'acceso',
-  TURNOS_CAJA: 'turnos_caja', 
+  TURNOS_CAJA: 'turnos_caja',
+  AREAS: 'areas',
+  EMPLEADOS: 'empleados',
 } as const;
 
 export type EntidadAuditoria = (typeof ENTIDADES_AUDITORIA)[keyof typeof ENTIDADES_AUDITORIA];
@@ -42,5 +45,7 @@ export const ENTIDADES_AUDITORIA_VALORES = [
   ENTIDADES_AUDITORIA.CLIENTES,
   ENTIDADES_AUDITORIA.PRODUCTOS,
   ENTIDADES_AUDITORIA.ACCESO,
-  ENTIDADES_AUDITORIA.TURNOS_CAJA, 
+  ENTIDADES_AUDITORIA.TURNOS_CAJA,
+  ENTIDADES_AUDITORIA.AREAS,
+  ENTIDADES_AUDITORIA.EMPLEADOS,
 ] as const;
