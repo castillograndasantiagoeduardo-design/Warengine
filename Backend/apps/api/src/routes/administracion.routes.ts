@@ -44,6 +44,14 @@ import {
   listarAlertasAdminController,
 } from '../controllers/administracion/alerta-admin.controller.ts';
 
+import {
+  consultarComparativoInventarioController,
+  consultarMetricasGananciasController,
+  consultarRankingProductosController,
+  consultarRendimientoSucursalesController,
+  consultarTendenciasVentasController,
+} from '../controllers/administracion/dashboard.controller.ts';
+
 // Códigos tal como están en la tabla `permisos` (seed).
 const PERMISO_SUCURSALES = 'administracion:gestionar-sucursales';
 const PERMISO_PERSONAL = 'administracion:gestionar-personal';
@@ -52,6 +60,7 @@ const PERMISO_ROLES = 'autenticacion:asignar-roles';
 const PERMISO_AUDITORIA = 'autenticacion:ver-auditoria';
 const PERMISO_ALERTAS = 'administracion:gestionar-alertas';
 const PERMISO_SALARIOS = 'administracion:gestionar-salarios';
+const PERMISO_METRICAS = 'administracion:ver-metricas-sucursal';
 
 export function createAdministracionRoutes(container: AppContainer): Hono {
   const api = new Hono();
@@ -89,6 +98,13 @@ export function createAdministracionRoutes(container: AppContainer): Hono {
   api.get('/alertas', authMiddleware(container, PERMISO_ALERTAS), listarAlertasAdminController(container));
   api.post('/alertas', authMiddleware(container, PERMISO_ALERTAS), crearAlertaAdminController(container));
   api.put('/alertas/:id/estado', authMiddleware(container, PERMISO_ALERTAS), cambiarEstadoAlertaAdminController(container));
+
+  // Dashboard y Analítica (RF-ADM-A1, RF-ADM-A2, RF-ADM-A3, RF-ADM-A4, RF-ADM-C4, RNF-ADM-01, RNF-ADM-03, RNF-ADM-04)
+  api.get('/dashboard/metricas', authMiddleware(container, PERMISO_METRICAS), consultarMetricasGananciasController(container));
+  api.get('/dashboard/tendencias', authMiddleware(container, PERMISO_METRICAS), consultarTendenciasVentasController(container));
+  api.get('/dashboard/rendimiento', authMiddleware(container, PERMISO_METRICAS), consultarRendimientoSucursalesController(container));
+  api.get('/dashboard/ranking', authMiddleware(container, PERMISO_METRICAS), consultarRankingProductosController(container));
+  api.get('/dashboard/inventario', authMiddleware(container, PERMISO_METRICAS), consultarComparativoInventarioController(container));
 
   return api;
 }
