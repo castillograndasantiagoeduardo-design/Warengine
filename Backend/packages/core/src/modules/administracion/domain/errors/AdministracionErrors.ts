@@ -83,4 +83,10 @@ export class AlertaAdminNoEncontradaError extends DomainError {
   constructor() { super('La alerta administrativa no existe.'); }
 }
 
+export class RangoFechasInvalidoError extends DomainError {
+  public readonly code = 'RANGO_FECHAS_INVALIDO';
+  constructor() { super('La fecha inicial no puede ser posterior a la fecha final.'); }
+}
+
+
 
