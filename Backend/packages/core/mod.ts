@@ -67,6 +67,8 @@ export * from './src/modules/administracion/application/use-cases/AtenderAlertaA
 export * from './src/modules/administracion/application/use-cases/ConsultarMetricasGananciasUseCase.ts';
 export * from './src/modules/administracion/application/use-cases/ConsultarTendenciasVentasUseCase.ts';
 export * from './src/modules/administracion/application/use-cases/ConsultarRendimientoSucursalesUseCase.ts';
+export * from './src/modules/administracion/application/use-cases/ConsultarRankingProductosUseCase.ts';
+export * from './src/modules/administracion/application/use-cases/ConsultarComparativoInventarioUseCase.ts';
 
 
 
