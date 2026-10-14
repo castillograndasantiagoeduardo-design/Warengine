@@ -40,6 +40,7 @@ export * from './src/modules/administracion/domain/repositories/IAlertaAdminRepo
 export * from './src/modules/administracion/domain/repositories/IGestionUsuarioRepository.ts';
 export * from './src/modules/administracion/domain/repositories/IUsuarioSucursalRepository.ts';
 export * from './src/modules/administracion/domain/repositories/IAlertaStockRepository.ts';
+export * from './src/modules/administracion/domain/repositories/IMetricasAdminRepository.ts';
 export * from './src/modules/administracion/application/use-cases/CrearSucursalUseCase.ts';
 export * from './src/modules/administracion/application/use-cases/EditarSucursalUseCase.ts';
 export * from './src/modules/administracion/application/use-cases/ListarSucursalesUseCase.ts';
