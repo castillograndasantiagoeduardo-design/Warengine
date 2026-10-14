@@ -1,0 +1,153 @@
+# ==============================================================================
+# MÓDULO: ADMINISTRACIÓN - DASHBOARD Y ANALÍTICA DE VENTAS / GANANCIAS
+# Requisitos SRS:
+#   - RF-ADM-A1: Panel de métricas globales de ganancias (ingresos, costos, ganancia bruta, margen)
+#   - RF-ADM-A2: Gráfico de tendencias de ventas (diaria, semanal, mensual)
+#   - RF-ADM-A3: Comparativo de rendimiento entre sucursales
+#   - RF-ADM-A4: Indicador de producto más y menos vendido global (ranking rotación)
+#   - RF-ADM-C4: Vista comparativa de inventario entre sucursales
+#   - RNF-ADM-01: Carga de métricas en menos de 3 segundos (< 3s)
+#   - RNF-ADM-03: Exigir autorización RBAC (administracion:ver-metricas-sucursal)
+#   - RNF-ADM-04: Alcance por sucursal (Super Admin global; Admin local acotado a su sede)
+#
+# Requiere: REST Client (extensión VS Code)
+# Base URL: http://localhost:8017
+# ==============================================================================
+
+@baseUrl = http://localhost:8017
+
+# ------------------------------------------------------------------------------
+# SETUP: Autenticación
+# ------------------------------------------------------------------------------
+
+### Login como Super Admin (Alcance Global)
+# @name loginSuperAdmin
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "superadmin@warengine.local",
+  "password": "Warengine.Admin.2026!"
+}
+
+###
+
+### Login como Administrador de Sucursal (Alcance Local Sede 1)
+# @name loginAdminSucursal
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "admin.norte@warengine.local",
+  "password": "Warengine.Admin.2026!"
+}
+
+###
+
+# ==============================================================================
+# RF-ADM-A1: MÉTRICAS FINANCIERAS Y GANANCIAS
+# ==============================================================================
+
+### UC-DASH-01: Métricas globales consolidadas (Super Admin sin filtro de sucursal)
+# Retorna: ingresosTotales, costosTotales, gananciaBruta, margenPromedio, cantidadVentas, ticketPromedio
+GET {{baseUrl}}/administracion/dashboard/metricas
+Authorization: Bearer {{loginSuperAdmin.response.body.accessToken}}
+
+###
+
+### UC-DASH-02: Métricas filtradas por rango de fechas (último mes)
+GET {{baseUrl}}/administracion/dashboard/metricas?fechaInicio=2026-01-01T00:00:00.000Z&fechaFin=2026-12-31T23:59:59.999Z
+Authorization: Bearer {{loginSuperAdmin.response.body.accessToken}}
+
+###
+
+### UC-DASH-03: Métricas acotadas a Sucursal 1 (Consultadas por Admin Sucursal)
+GET {{baseUrl}}/administracion/dashboard/metricas?sucursalId=1
+Authorization: Bearer {{loginAdminSucursal.response.body.accessToken}}
+
+###
+
+# ==============================================================================
+# RF-ADM-A2: TENDENCIAS Y EVOLUCIÓN TEMPORAL DE VENTAS
+# ==============================================================================
+
+### UC-DASH-04: Tendencias agrupadas por día
+# Retorna serie temporal de: periodo, totalVentas, totalIngresos, ticketPromedio
+GET {{baseUrl}}/administracion/dashboard/tendencias?agrupacion=dia
+Authorization: Bearer {{loginSuperAdmin.response.body.accessToken}}
+
+###
+
+### UC-DASH-05: Tendencias agrupadas por semana
+GET {{baseUrl}}/administracion/dashboard/tendencias?agrupacion=semana
+Authorization: Bearer {{loginSuperAdmin.response.body.accessToken}}
+
+###
+
+### UC-DASH-06: Tendencias agrupadas por mes
+GET {{baseUrl}}/administracion/dashboard/tendencias?agrupacion=mes
+Authorization: Bearer {{loginSuperAdmin.response.body.accessToken}}
+
+###
+
+# ==============================================================================
+# RF-ADM-A3: COMPARATIVO DE RENDIMIENTO ENTRE SUCURSALES
+# ==============================================================================
+
+### UC-DASH-07: Rendimiento multisede (Super Admin)
+# Retorna lista de sedes con: sucursalId, nombreSucursal, totalVentas, totalIngresos, gananciaBruta, ticketPromedio
+GET {{baseUrl}}/administracion/dashboard/rendimiento
+Authorization: Bearer {{loginSuperAdmin.response.body.accessToken}}
+
+###
+
+# ==============================================================================
+# RF-ADM-A4: RANKING DE PRODUCTOS (MÁS Y MENOS VENDIDOS)
+# ==============================================================================
+
+### UC-DASH-08: Top 10 productos más vendidos (orden descendente)
+# Retorna: productoId, sku, nombreProducto, unidadesVendidas, totalRecaudado, gananciaGenerada
+GET {{baseUrl}}/administracion/dashboard/ranking?limite=10&orden=desc
+Authorization: Bearer {{loginSuperAdmin.response.body.accessToken}}
+
+###
+
+### UC-DASH-09: Top 5 productos de menor rotación (orden ascendente)
+GET {{baseUrl}}/administracion/dashboard/ranking?limite=5&orden=asc
+Authorization: Bearer {{loginSuperAdmin.response.body.accessToken}}
+
+###
+
+# ==============================================================================
+# RF-ADM-C4: COMPARATIVO MULTI-SEDE DE INVENTARIO
+# ==============================================================================
+
+### UC-DASH-10: Comparativo de stock entre sucursales para todos los productos
+# Retorna matriz de existencias por producto y sucursal, stock consolidado y estado de alerta
+GET {{baseUrl}}/administracion/dashboard/inventario
+Authorization: Bearer {{loginSuperAdmin.response.body.accessToken}}
+
+###
+
+### UC-DASH-11: Comparativo de existencias de un producto específico (productoId = 1)
+GET {{baseUrl}}/administracion/dashboard/inventario?productoId=1
+Authorization: Bearer {{loginSuperAdmin.response.body.accessToken}}
+
+###
+
+# ==============================================================================
+# VALIDACIONES Y CONTROL DE ACCESO (RNF-ADM-03, RNF-ADM-04)
+# ==============================================================================
+
+### UC-DASH-12: Error por rango de fechas invertido (fechaInicio > fechaFin)
+# Resultado esperado: 400 Bad Request con código RANGO_FECHAS_INVALIDO
+GET {{baseUrl}}/administracion/dashboard/metricas?fechaInicio=2026-12-31T00:00:00.000Z&fechaFin=2026-01-01T00:00:00.000Z
+Authorization: Bearer {{loginSuperAdmin.response.body.accessToken}}
+
+###
+
+### UC-DASH-13: Error de acceso por falta de autenticación
+# Resultado esperado: 401 Unauthorized
+GET {{baseUrl}}/administracion/dashboard/metricas
+
+###

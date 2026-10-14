@@ -30,6 +30,7 @@ import { DrizzleAreaRepository } from '../../database/src/repositories/administr
 import { DrizzleEmpleadoRepository } from '../../database/src/repositories/administracion/drizzle-empleado.repository.ts';
 import { DrizzleHistorialSalarioRepository } from '../../database/src/repositories/administracion/drizzle-historial-salario.repository.ts';
 import { DrizzleAlertaAdminRepository } from '../../database/src/repositories/administracion/drizzle-alerta-admin.repository.ts';
+import { DrizzleMetricasAdminRepository } from '../../database/src/repositories/administracion/drizzle-metricas-admin.repository.ts';
 
 import { DrizzleSucursalOperadorRepository } from '../../database/src/repositories/facturacion/drizzle-sucursal-operador.repository.ts';
 
@@ -93,6 +94,11 @@ import {
   CrearAlertaAdminUseCase,
   ListarAlertasAdminUseCase,
   AtenderAlertaAdminUseCase,
+  ConsultarMetricasGananciasUseCase,
+  ConsultarTendenciasVentasUseCase,
+  ConsultarRendimientoSucursalesUseCase,
+  ConsultarRankingProductosUseCase,
+  ConsultarComparativoInventarioUseCase,
 } from '@warengine/core';
 
 export interface AppContainer {
@@ -128,6 +134,11 @@ export interface AppContainer {
     crearAlertaAdmin: CrearAlertaAdminUseCase;
     listarAlertasAdmin: ListarAlertasAdminUseCase;
     atenderAlertaAdmin: AtenderAlertaAdminUseCase;
+    consultarMetricasGanancias: ConsultarMetricasGananciasUseCase;
+    consultarTendenciasVentas: ConsultarTendenciasVentasUseCase;
+    consultarRendimientoSucursales: ConsultarRendimientoSucursalesUseCase;
+    consultarRankingProductos: ConsultarRankingProductosUseCase;
+    consultarComparativoInventario: ConsultarComparativoInventarioUseCase;
   };
   inventario: {
     listarCategorias: ListarCategoriasUseCase;
@@ -210,6 +221,7 @@ export function createContainer(_env?: Record<string, string>): AppContainer {
   const sucursalesAutorizadasRepository = new DrizzleSucursalesAutorizadasRepository(db);
   const alertaStockRepository = new DrizzleAlertaStockRepository(db);
   const alertaAdminRepository = new DrizzleAlertaAdminRepository(db);
+  const metricasAdminRepository = new DrizzleMetricasAdminRepository(db);
   const turnoCajaRepository = new DrizzleTurnoCajaRepository(db);
   const sucursalOperadorRepository = new DrizzleSucursalOperadorRepository(db);
   // 2. Instanciar Servicios Técnicos
@@ -412,6 +424,26 @@ export function createContainer(_env?: Record<string, string>): AppContainer {
       crearAlertaAdmin: crearAlertaAdminUseCase,
       listarAlertasAdmin: listarAlertasAdminUseCase,
       atenderAlertaAdmin: atenderAlertaAdminUseCase,
+      consultarMetricasGanancias: new ConsultarMetricasGananciasUseCase(
+        resolverAlcanceSucursalUseCase,
+        metricasAdminRepository,
+      ),
+      consultarTendenciasVentas: new ConsultarTendenciasVentasUseCase(
+        resolverAlcanceSucursalUseCase,
+        metricasAdminRepository,
+      ),
+      consultarRendimientoSucursales: new ConsultarRendimientoSucursalesUseCase(
+        resolverAlcanceSucursalUseCase,
+        metricasAdminRepository,
+      ),
+      consultarRankingProductos: new ConsultarRankingProductosUseCase(
+        resolverAlcanceSucursalUseCase,
+        metricasAdminRepository,
+      ),
+      consultarComparativoInventario: new ConsultarComparativoInventarioUseCase(
+        resolverAlcanceSucursalUseCase,
+        metricasAdminRepository,
+      ),
     },
     inventario: {
       listarCategorias: listarCategoriasUseCase,
