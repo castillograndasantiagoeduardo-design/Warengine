@@ -64,6 +64,9 @@ export * from './src/modules/administracion/application/use-cases/ConsultarHisto
 export * from './src/modules/administracion/application/use-cases/CrearAlertaAdminUseCase.ts';
 export * from './src/modules/administracion/application/use-cases/ListarAlertasAdminUseCase.ts';
 export * from './src/modules/administracion/application/use-cases/AtenderAlertaAdminUseCase.ts';
+export * from './src/modules/administracion/application/use-cases/ConsultarMetricasGananciasUseCase.ts';
+export * from './src/modules/administracion/application/use-cases/ConsultarTendenciasVentasUseCase.ts';
+export * from './src/modules/administracion/application/use-cases/ConsultarRendimientoSucursalesUseCase.ts';
 
 
 
