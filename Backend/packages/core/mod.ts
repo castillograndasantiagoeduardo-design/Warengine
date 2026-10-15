@@ -85,6 +85,8 @@ export * from './src/modules/facturacion/domain/errors/FacturacionErrors.ts';
 export * from './src/modules/facturacion/domain/repositories/IClienteRepository.ts';
 export * from './src/modules/facturacion/application/use-cases/RegistrarClienteUseCase.ts';
 export * from './src/modules/facturacion/application/use-cases/BuscarClientesUseCase.ts';
+export * from './src/modules/facturacion/application/use-cases/ActualizarClienteUseCase.ts';
+export * from './src/modules/facturacion/application/use-cases/ObtenerClientePorIdUseCase.ts';
 
 // ─── Módulo: Inventario ─────────────────────────────────────────────────────
 export * from './src/modules/inventario/domain/entities/Categoria.ts';

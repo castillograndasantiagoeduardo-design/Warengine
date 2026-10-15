@@ -59,6 +59,8 @@ import {
   CambiarRolUsuarioUseCase,
   CambiarEstadoUsuarioUseCase,
   RegistrarClienteUseCase,
+  ActualizarClienteUseCase,
+  ObtenerClientePorIdUseCase,
   BuscarClientesUseCase,
   ListarCategoriasUseCase,
   ObtenerCategoriaPorIdUseCase,
@@ -166,6 +168,8 @@ export interface AppContainer {
   };
   facturacion: {
     registrarCliente: RegistrarClienteUseCase;
+    actualizarCliente: ActualizarClienteUseCase;
+    obtenerClientePorId: ObtenerClientePorIdUseCase;
     buscarClientes: BuscarClientesUseCase;
     abrirTurnoCaja: AbrirTurnoCajaUseCase;
     cerrarTurnoCaja: CerrarTurnoCajaUseCase;
@@ -392,6 +396,8 @@ export function createContainer(_env?: Record<string, string>): AppContainer {
   );
 
   const registrarClienteUseCase = new RegistrarClienteUseCase(clienteRepository, auditoriaRepository);
+  const actualizarClienteUseCase = new ActualizarClienteUseCase(clienteRepository, auditoriaRepository);
+  const obtenerClientePorIdUseCase = new ObtenerClientePorIdUseCase(clienteRepository);
   const buscarClientesUseCase = new BuscarClientesUseCase(clienteRepository);
 
   return {
@@ -473,11 +479,12 @@ export function createContainer(_env?: Record<string, string>): AppContainer {
     },
     facturacion: {
       registrarCliente: registrarClienteUseCase,
+      actualizarCliente: actualizarClienteUseCase,
+      obtenerClientePorId: obtenerClientePorIdUseCase,
       buscarClientes: buscarClientesUseCase,
       abrirTurnoCaja: abrirTurnoCajaUseCase,
       cerrarTurnoCaja: cerrarTurnoCajaUseCase,
       obtenerTurnoActual: obtenerTurnoActualUseCase,
-      
     },
   };
 }
