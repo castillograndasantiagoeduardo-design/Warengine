@@ -66,8 +66,14 @@ export class SkuModificacionNoPermitidaError extends DomainError {
 
 export class StockInsuficienteError extends DomainError {
   public readonly code = 'STOCK_INSUFICIENTE';
-  constructor(disponible: number, solicitado: number) {
-    super(`Stock insuficiente. Disponible: ${disponible}, solicitado: ${solicitado}.`);
+  constructor(disponibleOMensaje?: number | string, solicitado?: number) {
+    if (typeof disponibleOMensaje === 'number' && typeof solicitado === 'number') {
+      super(`Stock insuficiente. Disponible: ${disponibleOMensaje}, solicitado: ${solicitado}.`);
+    } else if (typeof disponibleOMensaje === 'string') {
+      super(disponibleOMensaje);
+    } else {
+      super('Stock insuficiente para completar la venta de este producto.');
+    }
   }
 }
 

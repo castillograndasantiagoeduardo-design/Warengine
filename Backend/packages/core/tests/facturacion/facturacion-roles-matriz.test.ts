@@ -1,4 +1,4 @@
-import { assertEquals } from '@std/assert';
+import { assertEquals } from 'jsr:@std/assert';
 import { createFacturacionRoutes } from '../../../../apps/api/src/routes/facturacion.routes.ts';
 import { AppContainer } from '@warengine/composition';
 import { Result } from '@warengine/shared-kernel';

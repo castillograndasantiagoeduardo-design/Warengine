@@ -1,4 +1,4 @@
-import { assertEquals, assertNotEquals } from '@std/assert';
+import { assertEquals, assertNotEquals } from 'jsr:@std/assert';
 import { getDatabase, closeDatabase } from '../src/client.ts';
 import { seedAutenticacion, ROLES, PERMISOS, ASIGNACIONES } from '../src/seeds/autenticacion.seed.ts';
 import { roles, permisos, rol_permisos } from '../src/schema/autenticacion.schema.ts';

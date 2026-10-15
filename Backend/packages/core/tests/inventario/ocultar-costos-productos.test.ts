@@ -1,4 +1,4 @@
-import { assertEquals } from '@std/assert';
+import { assertEquals } from 'jsr:@std/assert';
 import { ObtenerProductoPorIdUseCase } from '../../src/modules/inventario/application/use-cases/ObtenerProductoPorIdUseCase.ts';
 import { ListarProductosUseCase } from '../../src/modules/inventario/application/use-cases/ListarProductosUseCase.ts';
 import { Producto } from '../../src/modules/inventario/domain/entities/Producto.ts';
