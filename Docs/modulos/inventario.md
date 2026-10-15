@@ -50,6 +50,7 @@ El módulo de **Inventario** administra el catálogo maestro de artículos, cate
 | **RF-ADM-B9** | Validación de stock no negativo (control estricto de existencias) | IMPLEMENTADO | Trigger `trg_movimientos_check_stock`, `chk_inventario_stock_actual`, [RegistrarSalidaInventarioUseCase.ts](../../Backend/packages/core/src/modules/inventario/application/use-cases/RegistrarSalidaInventarioUseCase.ts) |
 | **RF-ADM-B10** | Historial de movimientos (Kardex) por producto y sucursal | IMPLEMENTADO | [ConsultarKardexUseCase.ts](../../Backend/packages/core/src/modules/inventario/application/use-cases/ConsultarKardexUseCase.ts), [movimiento-inventario.controller.ts](../../Backend/apps/api/src/controllers/inventario/movimiento-inventario.controller.ts) |
 | **RF-ADM-B11** | Configuración de stock mínimo por producto y alertas de abastecimiento | IMPLEMENTADO | [ConfigurarStockMinimoUseCase.ts](../../Backend/packages/core/src/modules/inventario/application/use-cases/ConfigurarStockMinimoUseCase.ts), [stock-minimo.controller.ts](../../Backend/apps/api/src/controllers/inventario/stock-minimo.controller.ts) |
+| **RF-ADM-B12** | Validación estricta de unicidad del SKU en catálogo e histórico | IMPLEMENTADO | [CrearProductoUseCase.ts](../../Backend/packages/core/src/modules/inventario/application/use-cases/CrearProductoUseCase.ts), [EditarProductoUseCase.ts](../../Backend/packages/core/src/modules/inventario/application/use-cases/EditarProductoUseCase.ts), `uq_productos_sku` |
 
 ---
 
