@@ -514,6 +514,28 @@ Deno.test('EditarProductoUseCase: no permite cambiar SKU si el producto tiene mo
   assertEquals(audit.eventos.length, 0);
 });
 
+Deno.test('EditarProductoUseCase (RF-ADM-B12): permite actualizar producto enviando su propio SKU sin considerarlo duplicado', async () => {
+  const prodRepo = new FakeProductoRepository();
+  const p1 = await prodRepo.crear({ sku: 'SKU-PROPIO', nombre: 'Nombre Original', precioCompra: 10, precioVenta: 20 });
+
+  const catRepo = new FakeCategoriaRepository();
+  const provRepo = new FakeProveedorRepository();
+  const audit = new FakeAuditor();
+  const useCase = new EditarProductoUseCase(prodRepo, catRepo, provRepo, audit);
+
+  const res = await useCase.execute({
+    id: p1.id,
+    sku: 'SKU-PROPIO',
+    nombre: 'Nombre Actualizado',
+    actor,
+  });
+
+  assertEquals(res.isSuccess, true);
+  assertEquals(res.value.sku, 'SKU-PROPIO');
+  assertEquals(res.value.nombre, 'Nombre Actualizado');
+  assertEquals(audit.eventos.length, 1);
+});
+
 Deno.test('InactivarProductoUseCase: cambia isActive a false y audita antes y despues', async () => {
   const prodRepo = new FakeProductoRepository();
   const creado = await prodRepo.crear({ sku: 'SKU-001', nombre: 'Jabón', precioCompra: 1000, precioVenta: 2000 });

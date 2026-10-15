@@ -1,0 +1,135 @@
+### ==============================================================================
+### WARENGINE - REQUERIMIENTO RF-ADM-B12: UNICIDAD DEL SKU
+### ==============================================================================
+### Descripción de negocio:
+### El sistema debe validar que el SKU de cada producto sea único en el catálogo,
+### rechazando el registro o la edición de un producto cuyo SKU ya exista en el sistema.
+### Si el producto ya registra movimientos de inventario, se bloquea cualquier alteración
+### de su SKU para garantizar la integridad histórica del Kardex.
+### ==============================================================================
+
+@baseUrl = http://localhost:8017
+@contentType = application/json
+
+### ------------------------------------------------------------------------------
+### PASO 0: Autenticación como Super Admin
+### ------------------------------------------------------------------------------
+# @name loginAdmin
+POST {{baseUrl}}/auth/login
+Content-Type: {{contentType}}
+
+{
+  "email": "admin@warengine.com",
+  "password": "Password123*"
+}
+
+### Guardar Token
+@tokenAdmin = {{loginAdmin.response.body.accessToken}}
+
+### ------------------------------------------------------------------------------
+### PASO 1: Crear Producto Original con SKU único
+### Esperado: 201 Created
+### ------------------------------------------------------------------------------
+# @name crearProductoOriginal
+POST {{baseUrl}}/inventario/productos
+Authorization: Bearer {{tokenAdmin}}
+Content-Type: {{contentType}}
+
+{
+  "sku": "SKU-B12-ORIGINAL",
+  "nombre": "Producto Base Unicidad SKU",
+  "precioCompra": 12000.00,
+  "precioVenta": 18500.00
+}
+
+@productoOriginalId = {{crearProductoOriginal.response.body.id}}
+
+### ------------------------------------------------------------------------------
+### PASO 2: Intentar crear OTRO producto con el MISMO SKU
+### Esperado: 409 Conflict con código "SKU_DUPLICADO"
+### ------------------------------------------------------------------------------
+# @name rechazarCreacionSkuDuplicado
+POST {{baseUrl}}/inventario/productos
+Authorization: Bearer {{tokenAdmin}}
+Content-Type: {{contentType}}
+
+{
+  "sku": "SKU-B12-ORIGINAL",
+  "nombre": "Producto Clon Duplicado",
+  "precioCompra": 10000.00,
+  "precioVenta": 15000.00
+}
+
+### ------------------------------------------------------------------------------
+### PASO 3: Crear Producto Secundario con SKU diferente
+### Esperado: 201 Created
+### ------------------------------------------------------------------------------
+# @name crearProductoSecundario
+POST {{baseUrl}}/inventario/productos
+Authorization: Bearer {{tokenAdmin}}
+Content-Type: {{contentType}}
+
+{
+  "sku": "SKU-B12-SECUNDARIO",
+  "nombre": "Producto Secundario Diferente",
+  "precioCompra": 5000.00,
+  "precioVenta": 7500.00
+}
+
+@productoSecundarioId = {{crearProductoSecundario.response.body.id}}
+
+### ------------------------------------------------------------------------------
+### PASO 4: Intentar editar el Producto Secundario asignándole el SKU del Original
+### Esperado: 409 Conflict con código "SKU_DUPLICADO"
+### ------------------------------------------------------------------------------
+# @name rechazarEdicionSkuDuplicado
+PUT {{baseUrl}}/inventario/productos/{{productoSecundarioId}}
+Authorization: Bearer {{tokenAdmin}}
+Content-Type: {{contentType}}
+
+{
+  "sku": "SKU-B12-ORIGINAL",
+  "nombre": "Intento de usurpación de SKU"
+}
+
+### ------------------------------------------------------------------------------
+### PASO 5: Editar Producto Original manteniendo su propio SKU
+### Esperado: 200 OK (idempotencia de SKU propio)
+### ------------------------------------------------------------------------------
+# @name editarProductoMismoSku
+PUT {{baseUrl}}/inventario/productos/{{productoOriginalId}}
+Authorization: Bearer {{tokenAdmin}}
+Content-Type: {{contentType}}
+
+{
+  "sku": "SKU-B12-ORIGINAL",
+  "nombre": "Producto Base con Nombre Actualizado"
+}
+
+### ------------------------------------------------------------------------------
+### PASO 6: Protección histórica: Si el producto tiene movimientos, se bloquea cambio de SKU
+### 6.1 Registramos una entrada para generar trazabilidad
+### Esperado: 201 Created
+### ------------------------------------------------------------------------------
+# @name registrarEntrada
+POST {{baseUrl}}/inventario/entradas
+Authorization: Bearer {{tokenAdmin}}
+Content-Type: {{contentType}}
+
+{
+  "productoId": "{{productoOriginalId}}",
+  "sucursalId": 1,
+  "cantidad": 10,
+  "motivo": "Ingreso para generar histórico y blindar SKU"
+}
+
+### 6.2 Intentamos cambiar el SKU a uno nuevo
+### Esperado: 400 Bad Request con código "SKU_MODIFICACION_NO_PERMITIDA"
+# @name rechazarCambioSkuConMovimientos
+PUT {{baseUrl}}/inventario/productos/{{productoOriginalId}}
+Authorization: Bearer {{tokenAdmin}}
+Content-Type: {{contentType}}
+
+{
+  "sku": "SKU-B12-NUEVO-ALTERADO"
+}
