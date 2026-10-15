@@ -73,5 +73,22 @@ export interface ClienteDto {
   creditoHabilitado: boolean;
 }
 
+export const actualizarClienteSchema = z.object({
+  nombreRazonSocial: z
+    .string()
+    .trim()
+    .min(3, { message: 'El nombre debe tener al menos 3 caracteres.' })
+    .max(200)
+    .optional(),
+  email: z.preprocess(
+    vacioAUndefined,
+    z.string().trim().email({ message: 'Ingresa un correo válido.' }).max(150).optional(),
+  ),
+  telefono: z.preprocess(vacioAUndefined, z.string().trim().min(7).max(30).optional()),
+  direccion: z.preprocess(vacioAUndefined, z.string().trim().min(5).max(255).optional()),
+  creditoHabilitado: z.boolean().optional(),
+});
+
 export type CrearClienteInput = z.infer<typeof crearClienteSchema>;
+export type ActualizarClienteInput = z.infer<typeof actualizarClienteSchema>;
 export type FiltrosClientesInput = z.infer<typeof filtrosClientesSchema>;
