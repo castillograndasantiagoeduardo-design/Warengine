@@ -2,7 +2,7 @@ import { type Database } from '../client.ts';
 import { permisos, rol_permisos, roles, usuarios } from '../schema/autenticacion.schema.ts';
 import { and, eq, notInArray, sql } from 'drizzle-orm';
 
-const ROLES = [
+export const ROLES = [
   {
     id_rol: 1,
     nombre: 'super-admin',
@@ -13,7 +13,7 @@ const ROLES = [
   { id_rol: 4, nombre: 'vendedor-b2b', descripcion: 'Vendedor B2B' },
 ];
 
-const PERMISOS = [
+export const PERMISOS = [
   // Módulo: Autenticación
   {
     id_permiso: 1,
@@ -208,7 +208,7 @@ const PERMISOS_LOGISTICA = [
   'logistica:mantenimiento',
 ];
 
-const ASIGNACIONES: Record<string, string[]> = {
+export const ASIGNACIONES: Record<string, string[]> = {
   'cajero': [
     'inventario:leer',
     'facturacion:consultar',
