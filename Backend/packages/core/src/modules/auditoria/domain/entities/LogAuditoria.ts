@@ -36,6 +36,7 @@ export const ENTIDADES_AUDITORIA = {
 export interface ActorAuditoria {
   usuarioId: string;
   ip: string | null;
+  permisos?: string[];
 }
 
 /** Modelo de lectura de un registro de auditoría. */
