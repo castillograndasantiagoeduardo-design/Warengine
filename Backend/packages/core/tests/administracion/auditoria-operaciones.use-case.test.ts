@@ -51,7 +51,7 @@ function sucursalesFalsas(inicial: Sucursal[] = []): ISucursalRepository {
   };
 }
 
-function usuario(rolId = 3, rolNombre = 'cajero-vendedor', isActive = true) {
+function usuario(rolId = 3, rolNombre = 'cajero', isActive = true) {
   return new UsuarioGestionado('u-9', 'Luis', 'luis@warengine.local', rolId, rolNombre, 1, 'Centro', isActive);
 }
 
@@ -64,7 +64,7 @@ function usuariosFalsos(existente: UsuarioGestionado | null): IGestionUsuarioRep
     rolExiste: () => Promise.resolve(true),
     contarSuperAdminsActivos: () => Promise.resolve(2),
     crear: (d: NuevoUsuarioData) =>
-    Promise.resolve(new UsuarioGestionado('u-new', d.nombre, d.email, d.rolId, 'cajero-vendedor', d.sucursalId, 'Centro', true)),
+    Promise.resolve(new UsuarioGestionado('u-new', d.nombre, d.email, d.rolId, 'cajero', d.sucursalId, 'Centro', true)),
     actualizarRol: () => Promise.resolve(),
     actualizarEstado: () => Promise.resolve(),
     actualizarPassword: () => Promise.resolve(),
@@ -158,9 +158,9 @@ Deno.test('CambiarRol: NO registra si el rol es el mismo (sin cambios)', async (
 
 Deno.test('CambiarEstado: registra inactivar y activar según corresponda', async () => {
   const { auditor, eventos } = auditorFalso();
-  await new CambiarEstadoUsuarioUseCase(usuariosFalsos(usuario(3, 'cajero-vendedor', true)), auditor)
+  await new CambiarEstadoUsuarioUseCase(usuariosFalsos(usuario(3, 'cajero', true)), auditor)
     .execute({ usuarioId: 'u-9', isActive: false, actor });
-  await new CambiarEstadoUsuarioUseCase(usuariosFalsos(usuario(3, 'cajero-vendedor', false)), auditor)
+  await new CambiarEstadoUsuarioUseCase(usuariosFalsos(usuario(3, 'cajero', false)), auditor)
     .execute({ usuarioId: 'u-9', isActive: true, actor });
 
   assertEquals(eventos.map((e) => e.accion), ['inactivar', 'activar']);

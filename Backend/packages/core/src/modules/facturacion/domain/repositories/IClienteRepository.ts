@@ -16,8 +16,18 @@ export interface FiltrosClientes {
     limite: number;
 }
 
+export interface DatosActualizarCliente {
+    nombreRazonSocial?: string;
+    email?: string | null;
+    telefono?: string | null;
+    direccion?: string | null;
+    creditoHabilitado?: boolean;
+}
+
 export interface IClienteRepository {
     buscar(filtros: FiltrosClientes): Promise<Cliente[]>;
     findByDocumento(tipo: TipoDocumentoCliente, numero: string): Promise<Cliente | null>;
+    findById(id: string): Promise<Cliente | null>;
     crear(datos: DatosCliente): Promise<Cliente>;
+    actualizar(id: string, datos: DatosActualizarCliente): Promise<Cliente>;
 }

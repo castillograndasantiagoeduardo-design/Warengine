@@ -1,4 +1,4 @@
-import { abrirTurnoCajaSchema } from '@warengine/contracts';
+import { abrirTurnoCajaSchema, cerrarTurnoCajaSchema } from '@warengine/contracts';
 import { AppContainer } from '@warengine/composition';
 import { presentResult } from '../../presenters/result.presenter.ts';
 import { leerJson, safeHandler } from '../../utils/handler.ts';
@@ -23,6 +23,25 @@ export function obtenerTurnoActualController(container: AppContainer) {
     return safeHandler(async (c) => {
         const result = await container.facturacion.obtenerTurnoActual.execute({
             usuarioId: obtenerIdentidad(c).usuarioId,
+        });
+        return presentResult(c, result);
+    });
+}
+
+export function cerrarTurnoCajaController(container: AppContainer) {
+    return safeHandler(async (c) => {
+        const id = c.req.param('id');
+        if (!id || id.trim() === '') {
+            return c.json({ error: 'VALIDATION_ERROR', message: 'ID del turno requerido.' }, 400);
+        }
+        const parsed = cerrarTurnoCajaSchema.safeParse(await leerJson(c));
+        if (!parsed.success) {
+            return c.json({ error: 'VALIDATION_ERROR', issues: parsed.error.errors }, 400);
+        }
+        const result = await container.facturacion.cerrarTurnoCaja.execute({
+            turnoId: id,
+            fondoFinal: parsed.data.fondoFinal,
+            actor: obtenerActor(c),
         });
         return presentResult(c, result);
     });

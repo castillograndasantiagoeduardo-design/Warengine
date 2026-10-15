@@ -85,6 +85,8 @@ export * from './src/modules/facturacion/domain/errors/FacturacionErrors.ts';
 export * from './src/modules/facturacion/domain/repositories/IClienteRepository.ts';
 export * from './src/modules/facturacion/application/use-cases/RegistrarClienteUseCase.ts';
 export * from './src/modules/facturacion/application/use-cases/BuscarClientesUseCase.ts';
+export * from './src/modules/facturacion/application/use-cases/ActualizarClienteUseCase.ts';
+export * from './src/modules/facturacion/application/use-cases/ObtenerClientePorIdUseCase.ts';
 
 // ─── Módulo: Inventario ─────────────────────────────────────────────────────
 export * from './src/modules/inventario/domain/entities/Categoria.ts';
@@ -133,3 +135,20 @@ export * from './src/modules/facturacion/domain/repositories/ITurnoCajaRepositor
 export * from './src/modules/facturacion/domain/repositories/ISucursalOperadorRepository.ts';
 export * from './src/modules/facturacion/application/use-cases/AbrirTurnoCajaUseCase.ts';
 export * from './src/modules/facturacion/application/use-cases/ObtenerTurnoActualUseCase.ts';
+export * from './src/modules/facturacion/application/use-cases/CerrarTurnoCajaUseCase.ts';
+export * from './src/modules/facturacion/domain/entities/Cliente.ts';
+export * from './src/modules/facturacion/domain/entities/Factura.ts';
+export * from './src/modules/facturacion/domain/entities/FacturaItem.ts';
+export * from './src/modules/facturacion/domain/entities/FacturaPago.ts';
+export * from './src/modules/facturacion/domain/errors/FacturacionErrors.ts';
+export * from './src/modules/facturacion/domain/repositories/IClienteRepository.ts';
+export * from './src/modules/facturacion/domain/repositories/IFacturaRepository.ts';
+export * from './src/modules/facturacion/application/ports/IUnitOfWork.ts';
+export * from './src/modules/facturacion/application/use-cases/RegistrarClienteUseCase.ts';
+export * from './src/modules/facturacion/application/use-cases/ActualizarClienteUseCase.ts';
+export * from './src/modules/facturacion/application/use-cases/ObtenerClientePorIdUseCase.ts';
+export * from './src/modules/facturacion/application/use-cases/BuscarClientesUseCase.ts';
+export * from './src/modules/facturacion/application/use-cases/CrearFacturaUseCase.ts';
+export * from './src/modules/facturacion/application/use-cases/ListarFacturasUseCase.ts';
+export * from './src/modules/facturacion/application/use-cases/ObtenerFacturaPorIdUseCase.ts';
+export * from './src/modules/facturacion/application/use-cases/EmitirAlertaFacturacionUseCase.ts';

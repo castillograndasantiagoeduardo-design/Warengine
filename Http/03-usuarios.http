@@ -19,7 +19,8 @@
 # Roles disponibles en la BD:
 #   1 = super-admin
 #   2 = admin-sucursal
-#   3 = cajero-vendedor
+#   3 = cajero
+#   4 = vendedor-b2b
 #
 # Tipos de documento válidos: CC, CE
 # ==============================================================================
@@ -124,11 +125,11 @@ Content-Type: application/json
 ###
 
 # ------------------------------------------------------------------------------
-# UC-USR-06: Crear usuario Cajero-Vendedor sin cargo (campo opcional)
+# UC-USR-06: Crear usuario Cajero sin cargo (campo opcional)
 # Resultado esperado: 201 Created
 # ------------------------------------------------------------------------------
 
-### Crear usuario Cajero-Vendedor (sin campo cargo)
+### Crear usuario Cajero (sin campo cargo)
 # @name crearCajero
 POST {{baseUrl}}/administracion/usuarios
 Authorization: Bearer {{login.response.body.accessToken}}
@@ -151,13 +152,13 @@ Content-Type: application/json
 # ==============================================================================
 
 # ------------------------------------------------------------------------------
-# UC-USR-07: Cambiar rol de un usuario (admin-sucursal → cajero-vendedor)
+# UC-USR-07: Cambiar rol de un usuario (admin-sucursal → cajero)
 # Invalida automáticamente tokens activos del usuario afectado
 # Resultado esperado: 200 OK con el usuario actualizado (rolNombre nuevo)
-# Verificado: {"rolId":3, "rolNombre":"cajero-vendedor"}
+# Verificado: {"rolId":3, "rolNombre":"cajero"}
 # ------------------------------------------------------------------------------
 
-### Cambiar rol a cajero-vendedor (rolId: 3)
+### Cambiar rol a cajero (rolId: 3)
 PUT {{baseUrl}}/administracion/usuarios/{{crearUsuario.response.body.id}}/rol
 Authorization: Bearer {{login.response.body.accessToken}}
 Content-Type: application/json

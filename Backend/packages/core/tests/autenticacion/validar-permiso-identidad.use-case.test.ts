@@ -59,7 +59,11 @@ Deno.test('ValidarPermisoUseCase: devuelve usuarioId y rolId tomados de la BD, n
   });
 
   assertEquals(result.isSuccess, true);
-  assertEquals(result.value, { usuarioId: 'uuid-007', rolId: 1 });
+  assertEquals(result.value, {
+    usuarioId: 'uuid-007',
+    rolId: 1,
+    permisos: ['administracion:gestionar-sucursales'],
+  });
 });
 
 Deno.test('ValidarPermisoUseCase: devuelve la identidad aunque no se exija un permiso', async () => {

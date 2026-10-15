@@ -118,4 +118,31 @@ export const factura_items = mysqlTable('factura_items', {
 ]);
 
 export type FacturaItemRecord = typeof factura_items.$inferSelect;
-export type NuevoFacturaItemRecord = typeof factura_items.$inferInsert;
+export type NuevoFacturaItemRecord = typeof factura_items.$inferInsert;
+
+/**
+ * Tabla: factura_pagos
+ * Medios de pago aplicados a cada factura emitida.
+ */
+export const factura_pagos = mysqlTable('factura_pagos', {
+    id_factura_pago: char('id_factura_pago', { length: 36 })
+        .notNull()
+        .default(sql.raw('(UUID())'))
+        .primaryKey(),
+    factura_id: char('factura_id', { length: 36 })
+        .notNull()
+        .references(() => facturas.id_factura, { onDelete: 'restrict' }),
+    medio_pago: varchar('medio_pago', { length: 30 }).notNull(),
+    monto: decimal('monto', { precision: 14, scale: 2 }).notNull(),
+    referencia_transaccion: varchar('referencia_transaccion', { length: 100 }),
+    fecha: datetime('fecha', { mode: 'date' })
+        .notNull()
+        .default(sql.raw('CURRENT_TIMESTAMP')),
+}, (table) => [
+    index('idx_factura_pagos_factura_id').on(table.factura_id),
+    check('chk_facturapagos_medio', sql`${table.medio_pago} IN ('efectivo','tarjeta','transferencia','credito_corporativo')`),
+    check('chk_facturapagos_monto', sql`${table.monto} > 0`),
+]);
+
+export type FacturaPagoRecord = typeof factura_pagos.$inferSelect;
+export type NuevoFacturaPagoRecord = typeof factura_pagos.$inferInsert;

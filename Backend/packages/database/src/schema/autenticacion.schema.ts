@@ -18,7 +18,7 @@ import { empleados, sucursales } from './administracion.schema.ts';
 
 /**
  * Tabla: roles
- * Define los roles del sistema (super-admin, admin-sucursal, cajero-vendedor).
+ * Define los roles del sistema (super-admin, admin-sucursal, cajero, vendedor-b2b).
  */
 export const roles = mysqlTable('roles', {
   id_rol: int('id_rol').autoincrement().primaryKey(),
