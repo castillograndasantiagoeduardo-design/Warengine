@@ -23,11 +23,13 @@ import {
   obtenerProductoPorIdController,
 } from '../controllers/inventario/producto.controller.ts';
 
+import { PERMISSIONS } from '@warengine/contracts';
+
 // Códigos según la tabla `permisos` (seed).
 // `inventario:leer`: super-admin, admin-sucursal, cajero, vendedor-b2b
 // `inventario:escribir`: super-admin, admin-sucursal (cajero y vendedor-b2b reciben 403)
-const PERMISO_INVENTARIO_LEER = 'inventario:leer';
-const PERMISO_INVENTARIO_ESCRIBIR = 'inventario:escribir';
+const PERMISO_INVENTARIO_LEER = PERMISSIONS.INVENTARIO_LEER;
+const PERMISO_INVENTARIO_ESCRIBIR = PERMISSIONS.INVENTARIO_ESCRIBIR;
 
 export function createInventarioRoutes(container: AppContainer): Hono {
   const api = new Hono();
