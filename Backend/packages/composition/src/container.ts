@@ -115,6 +115,8 @@ import {
   ConfigurarStockMinimoUseCase,
   ConsultarStockSucursalUseCase,
   ConsultarHistorialPreciosUseCase,
+  ListarEntradasInventarioUseCase,
+  ObtenerEntradaInventarioPorIdUseCase,
 } from '@warengine/core';
 
 export interface AppContainer {
@@ -184,6 +186,8 @@ export interface AppContainer {
     configurarStockMinimo: ConfigurarStockMinimoUseCase;
     consultarStockSucursal: ConsultarStockSucursalUseCase;
     consultarHistorialPrecios: ConsultarHistorialPreciosUseCase;
+    listarEntradas: ListarEntradasInventarioUseCase;
+    obtenerEntradaPorId: ObtenerEntradaInventarioPorIdUseCase;
   };
   facturacion: {
     registrarCliente: RegistrarClienteUseCase;
@@ -464,6 +468,14 @@ export function createContainer(_env?: Record<string, string>): AppContainer {
     movimientoInventarioRepository,
     resolverAlcanceSucursalUseCase,
   );
+  const listarEntradasUseCase = new ListarEntradasInventarioUseCase(
+    movimientoInventarioRepository,
+    resolverAlcanceSucursalUseCase,
+  );
+  const obtenerEntradaPorIdUseCase = new ObtenerEntradaInventarioPorIdUseCase(
+    movimientoInventarioRepository,
+    resolverAlcanceSucursalUseCase,
+  );
   const configurarStockMinimoUseCase = new ConfigurarStockMinimoUseCase(
     inventarioSucursalRepository,
     productoRepository,
@@ -565,6 +577,8 @@ export function createContainer(_env?: Record<string, string>): AppContainer {
       configurarStockMinimo: configurarStockMinimoUseCase,
       consultarStockSucursal: consultarStockSucursalUseCase,
       consultarHistorialPrecios: consultarHistorialPreciosUseCase,
+      listarEntradas: listarEntradasUseCase,
+      obtenerEntradaPorId: obtenerEntradaPorIdUseCase,
     },
     facturacion: {
       registrarCliente: registrarClienteUseCase,
