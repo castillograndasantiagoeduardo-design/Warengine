@@ -119,6 +119,7 @@ export * from './src/modules/inventario/application/use-cases/ObtenerProductoPor
 export * from './src/modules/inventario/domain/repositories/IMovimientoInventarioRepository.ts';
 export * from './src/modules/inventario/application/use-cases/RegistrarEntradaInventarioUseCase.ts';
 export * from './src/modules/inventario/application/use-cases/RegistrarSalidaInventarioUseCase.ts';
+export * from './src/modules/inventario/application/use-cases/ConsultarKardexUseCase.ts';
 
 
 // ─── Módulo: Facturacion ─────────────────────────────────────────────────────

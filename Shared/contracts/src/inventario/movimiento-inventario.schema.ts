@@ -48,3 +48,31 @@ export const registrarSalidaSchema = z.object({
 });
 
 export type RegistrarSalidaDTO = z.infer<typeof registrarSalidaSchema>;
+
+/**
+ * Esquema de validación para filtros de consulta del Kardex (RF-ADM-B10).
+ * Soportado en query parameters con coerción de tipos numéricos y fechas.
+ */
+export const filtrosKardexSchema = z.object({
+  productoId: z
+    .string()
+    .uuid({ message: 'El id de producto debe ser un UUID válido.' })
+    .optional(),
+  sucursalId: z.coerce
+    .number()
+    .int({ message: 'El id de sucursal debe ser un entero.' })
+    .positive({ message: 'El id de sucursal debe ser positivo.' })
+    .optional(),
+  tipo: z
+    .enum(['entrada', 'salida', 'ajuste_entrada', 'ajuste_salida'], {
+      errorMap: () => ({ message: "El tipo debe ser 'entrada', 'salida', 'ajuste_entrada' o 'ajuste_salida'." }),
+    })
+    .optional(),
+  desde: z.coerce.date().optional(),
+  hasta: z.coerce.date().optional(),
+  limit: z.coerce.number().int().min(1).max(100).default(20),
+  offset: z.coerce.number().int().min(0).default(0),
+});
+
+export type FiltrosKardexDTO = z.infer<typeof filtrosKardexSchema>;
+

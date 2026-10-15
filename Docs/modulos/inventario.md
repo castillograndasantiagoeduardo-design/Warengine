@@ -46,10 +46,10 @@ El módulo de **Inventario** administra el catálogo maestro de artículos, cate
 | **RF-ADM-B4** | Consulta paginada y búsqueda de productos con filtros | IMPLEMENTADO | [ListarProductosUseCase.ts](../../Backend/packages/core/src/modules/inventario/application/use-cases/ListarProductosUseCase.ts) |
 | **RF-FMC-C6** | Registro de fecha de actualización de precio corporativo | IMPLEMENTADO | Trigger `trg_productos_precio_corporativo_fecha` en BD |
 | **RF-ADM-B7** | Registro de compras a proveedores (entradas de stock) | IMPLEMENTADO | [RegistrarEntradaInventarioUseCase.ts](../../Backend/packages/core/src/modules/inventario/application/use-cases/RegistrarEntradaInventarioUseCase.ts), [movimiento-inventario.controller.ts](../../Backend/apps/api/src/controllers/inventario/movimiento-inventario.controller.ts) |
-| **RF-ADM-B8** | Salidas manuales de stock por merma o daño con motivo | PENDIENTE | Caso de uso `registrar-salida` pendiente de implementar. |
-| **RF-ADM-B9** | Ajustes de inventario (auditoría física) | PENDIENTE | Caso de uso `ajustar-stock` pendiente de implementar. |
-| **RF-ADM-B10** | Consulta de alertas de stock bajo el mínimo | PENDIENTE | Caso de uso `listar-stock-bajo` pendiente de implementar. |
-| **RF-ADM-B11** | Consulta histórica del Kardex por producto y sucursal | PENDIENTE | Caso de uso `consultar-kardex` pendiente de implementar. |
+| **RF-ADM-B8** | Salidas manuales de stock por merma o daño con motivo | IMPLEMENTADO | [RegistrarSalidaInventarioUseCase.ts](../../Backend/packages/core/src/modules/inventario/application/use-cases/RegistrarSalidaInventarioUseCase.ts), [movimiento-inventario.controller.ts](../../Backend/apps/api/src/controllers/inventario/movimiento-inventario.controller.ts) |
+| **RF-ADM-B9** | Validación de stock no negativo (control estricto de existencias) | IMPLEMENTADO | Trigger `trg_movimientos_check_stock`, `chk_inventario_stock_actual`, [RegistrarSalidaInventarioUseCase.ts](../../Backend/packages/core/src/modules/inventario/application/use-cases/RegistrarSalidaInventarioUseCase.ts) |
+| **RF-ADM-B10** | Historial de movimientos (Kardex) por producto y sucursal | IMPLEMENTADO | [ConsultarKardexUseCase.ts](../../Backend/packages/core/src/modules/inventario/application/use-cases/ConsultarKardexUseCase.ts), [movimiento-inventario.controller.ts](../../Backend/apps/api/src/controllers/inventario/movimiento-inventario.controller.ts) |
+| **RF-ADM-B11** | Configuración de stock mínimo por producto y alertas de abastecimiento | PENDIENTE | Caso de uso de configuración de umbrales por sucursal. |
 
 ---
 
@@ -276,6 +276,7 @@ Prefijo general de montaje en `main.ts`: `/inventario`.
 | `PUT` | `/inventario/productos/:id/estado` | `inventario:escribir` | `cambiarEstadoProductoController` | `CambiarEstadoProductoUseCase` | `cambiarEstadoProductoSchema` | 200, 400, 401, 403, 404 |
 | `POST` | `/inventario/entradas` | `inventario:registrar-movimiento` | `registrarEntradaController` | `RegistrarEntradaInventarioUseCase` | `registrarEntradaSchema` | 201, 400, 401, 403, 404, 422 |
 | `POST` | `/inventario/salidas` | `inventario:registrar-movimiento` | `registrarSalidaController` | `RegistrarSalidaInventarioUseCase` | `registrarSalidaSchema` | 201, 400, 401, 403, 404, 409, 422 |
+| `GET` | `/inventario/kardex` | `inventario:ver-kardex` | `consultarKardexController` | `ConsultarKardexUseCase` | `filtrosKardexSchema` | 200, 400, 401, 403 |
 
 ---
 
