@@ -14,6 +14,7 @@ import {
 import {
   CantidadInvalidaError,
   MotivoSalidaRequeridoError,
+  ProductoInactivoError,
   ProductoNoEncontradoError,
   StockInsuficienteError,
 } from '../../domain/errors/InventarioErrors.ts';
@@ -21,6 +22,8 @@ import {
   SucursalInactivaError,
   SucursalNoEncontradaError,
 } from '../../../administracion/domain/errors/AdministracionErrors.ts';
+import { SucursalFueraDeAlcanceError } from '../../../autenticacion/domain/errors/AlcanceErrors.ts';
+import { ResolverAlcanceSucursalUseCase } from '../../../autenticacion/application/use-cases/ResolverAlcanceSucursalUseCase.ts';
 
 export interface RegistrarSalidaRequest {
   productoId: string;
@@ -32,12 +35,19 @@ export interface RegistrarSalidaRequest {
 
 export type RegistrarSalidaResponse = Result<MovimientoInventario, DomainError>;
 
+/**
+ * RF-ADM-B8: Registro de salidas manuales con motivo obligatorio
+ * RF-ADM-B9: Validación de stock no negativo
+ * RNF-ADM-02: Auditoría inmutable de mutaciones
+ * RNF-ADM-04: Aislamiento de sede mediante ResolverAlcanceSucursalUseCase
+ */
 export class RegistrarSalidaInventarioUseCase {
   constructor(
     private readonly movimientoRepository: IMovimientoInventarioRepository,
     private readonly productoRepository: IProductoRepository,
     private readonly sucursalRepository: ISucursalRepository,
     private readonly auditor: IAuditor,
+    private readonly resolverAlcance?: ResolverAlcanceSucursalUseCase,
   ) {}
 
   public async execute(request: RegistrarSalidaRequest): Promise<RegistrarSalidaResponse> {
@@ -51,13 +61,27 @@ export class RegistrarSalidaInventarioUseCase {
       return Result.fail(new MotivoSalidaRequeridoError());
     }
 
-    // 3. Validar producto
+    // 3. Validar alcance de sucursal del actor (RNF-ADM-04)
+    if (this.resolverAlcance) {
+      const alcance = await this.resolverAlcance.execute({ usuarioId: request.actor.usuarioId });
+      if (alcance.isFailure) {
+        return Result.fail(alcance.error);
+      }
+      if (!alcance.value.permite(request.sucursalId)) {
+        return Result.fail(new SucursalFueraDeAlcanceError());
+      }
+    }
+
+    // 4. Validar producto existente y activo
     const producto = await this.productoRepository.findById(request.productoId);
     if (!producto) {
       return Result.fail(new ProductoNoEncontradoError());
     }
+    if (!producto.isActive) {
+      return Result.fail(new ProductoInactivoError());
+    }
 
-    // 4. Validar sucursal
+    // 5. Validar sucursal
     const sucursal = await this.sucursalRepository.findById(request.sucursalId);
     if (!sucursal) {
       return Result.fail(new SucursalNoEncontradaError());

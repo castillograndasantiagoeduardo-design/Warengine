@@ -30,8 +30,10 @@ import {
 // Códigos según la tabla `permisos` (seed).
 // `inventario:leer`: super-admin, admin-sucursal, cajero-vendedor
 // `inventario:escribir`: super-admin, admin-sucursal (cajero-vendedor recibe 403)
+// `inventario:registrar-movimiento`: super-admin, admin-sucursal (registro de entradas/salidas)
 const PERMISO_INVENTARIO_LEER = 'inventario:leer';
 const PERMISO_INVENTARIO_ESCRIBIR = 'inventario:escribir';
+const PERMISO_INVENTARIO_REGISTRAR_MOVIMIENTO = 'inventario:registrar-movimiento';
 
 export function createInventarioRoutes(container: AppContainer): Hono {
   const api = new Hono();
@@ -120,12 +122,12 @@ export function createInventarioRoutes(container: AppContainer): Hono {
   // ─── Movimientos de Inventario (RF-ADM-B7, RF-ADM-B8, RF-ADM-B9) ──────────
   api.post(
     '/entradas',
-    authMiddleware(container, PERMISO_INVENTARIO_ESCRIBIR),
+    authMiddleware(container, PERMISO_INVENTARIO_REGISTRAR_MOVIMIENTO),
     registrarEntradaController(container),
   );
   api.post(
     '/salidas',
-    authMiddleware(container, PERMISO_INVENTARIO_ESCRIBIR),
+    authMiddleware(container, PERMISO_INVENTARIO_REGISTRAR_MOVIMIENTO),
     registrarSalidaController(container),
   );
 

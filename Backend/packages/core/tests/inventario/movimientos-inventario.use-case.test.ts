@@ -11,6 +11,7 @@ import {
   MotivoSalidaRequeridoError,
   MovimientoInventario,
   Producto,
+  ProductoInactivoError,
   ProductoNoEncontradoError,
   Proveedor,
   ProveedorInactivoError,
@@ -19,6 +20,7 @@ import {
   RegistrarSalidaInventarioUseCase,
   StockInsuficienteError,
   Sucursal,
+  SucursalFueraDeAlcanceError,
   SucursalInactivaError,
   SucursalNoEncontradaError,
 } from '../../mod.ts';
@@ -139,6 +141,20 @@ function crearEscenario() {
     true,
   );
   prodRepo.productos.set('prod-1', productoActivo);
+
+  const productoInactivo = new Producto(
+    'prod-inactivo',
+    'SKU-INACTIVO',
+    'Taladro Descontinuado',
+    null,
+    1,
+    80,
+    120,
+    null,
+    null,
+    false,
+  );
+  prodRepo.productos.set('prod-inactivo', productoInactivo);
 
   const sucursalActiva = new Sucursal(1, 'Sede Norte', 'Calle 100', '1234567', true);
   const sucursalInactiva = new Sucursal(2, 'Sede Clausurada', 'Carrera 7', '7654321', false);
@@ -293,6 +309,55 @@ Deno.test('Entrada: rechaza si el proveedor no existe o está inactivo', async (
   assertEquals(resProvInactivo.error instanceof ProveedorInactivoError, true);
 });
 
+Deno.test('Entrada (RF-ADM-B7): rechaza si el producto está inactivo en catálogo maestro', async () => {
+  const { entradaUseCase, actor } = crearEscenario();
+
+  const res = await entradaUseCase.execute({
+    productoId: 'prod-inactivo',
+    sucursalId: 1,
+    cantidad: 10,
+    actor,
+  });
+
+  assertEquals(res.isSuccess, false);
+  assertEquals(res.error instanceof ProductoInactivoError, true);
+});
+
+Deno.test('Entrada (RF-ADM-B7 / RNF-ADM-04): rechaza si la sucursal está fuera del alcance del usuario', async () => {
+  const { movRepo, prodRepo, sucRepo, provRepo, auditor } = crearEscenario();
+
+  // Mock de ResolverAlcanceSucursal que solo autoriza la sucursal 1
+  const mockResolverAlcance = {
+    execute: async () => ({
+      isSuccess: true,
+      isFailure: false,
+      value: {
+        permite: (sucursalId: number) => sucursalId === 1,
+      },
+    }),
+  } as any;
+
+  const entradaConAlcance = new RegistrarEntradaInventarioUseCase(
+    movRepo,
+    prodRepo as any,
+    sucRepo as any,
+    provRepo as any,
+    auditor,
+    mockResolverAlcance,
+  );
+
+  // Intento de entrada en sucursal 2 (fuera de alcance del usuario)
+  const res = await entradaConAlcance.execute({
+    productoId: 'prod-1',
+    sucursalId: 2,
+    cantidad: 10,
+    actor: { usuarioId: 'user-admin-sucursal-1', ip: '127.0.0.1' },
+  });
+
+  assertEquals(res.isSuccess, false);
+  assertEquals(res.error instanceof SucursalFueraDeAlcanceError, true);
+});
+
 // ─── Tests: Salidas de Inventario y Stock No Negativo (RF-ADM-B8, B9) ────────
 
 Deno.test('Salida: descuenta unidades cuando hay existencias suficientes', async () => {
@@ -385,3 +450,52 @@ Deno.test('Salida: rechaza cantidad menor o igual a cero', async () => {
   assertEquals(res.isSuccess, false);
   assertEquals(res.error instanceof CantidadInvalidaError, true);
 });
+
+Deno.test('Salida (RF-ADM-B8): rechaza si el producto está inactivo en catálogo', async () => {
+  const { salidaUseCase, actor } = crearEscenario();
+
+  const res = await salidaUseCase.execute({
+    productoId: 'prod-inactivo',
+    sucursalId: 1,
+    cantidad: 2,
+    motivo: 'Descarte por daño',
+    actor,
+  });
+
+  assertEquals(res.isSuccess, false);
+  assertEquals(res.error instanceof ProductoInactivoError, true);
+});
+
+Deno.test('Salida (RF-ADM-B8 / RNF-ADM-04): rechaza si la sucursal está fuera del alcance del usuario', async () => {
+  const { movRepo, prodRepo, sucRepo, auditor } = crearEscenario();
+
+  const mockResolverAlcance = {
+    execute: async () => ({
+      isSuccess: true,
+      isFailure: false,
+      value: {
+        permite: (sucursalId: number) => sucursalId === 1,
+      },
+    }),
+  } as any;
+
+  const salidaConAlcance = new RegistrarSalidaInventarioUseCase(
+    movRepo,
+    prodRepo as any,
+    sucRepo as any,
+    auditor,
+    mockResolverAlcance,
+  );
+
+  const res = await salidaConAlcance.execute({
+    productoId: 'prod-1',
+    sucursalId: 2,
+    cantidad: 2,
+    motivo: 'Merma en bodega ajena',
+    actor: { usuarioId: 'user-admin-sucursal-1', ip: '127.0.0.1' },
+  });
+
+  assertEquals(res.isSuccess, false);
+  assertEquals(res.error instanceof SucursalFueraDeAlcanceError, true);
+});
+
