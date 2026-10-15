@@ -14,4 +14,9 @@ export class TurnoCaja {
     public get estaAbierto(): boolean {
         return this.fechaCierre === null;
     }
-}
+
+    /** Un turno está cerrado cuando tiene fecha de cierre. */
+    public get estaCerrado(): boolean {
+        return this.fechaCierre !== null;
+    }
+}
