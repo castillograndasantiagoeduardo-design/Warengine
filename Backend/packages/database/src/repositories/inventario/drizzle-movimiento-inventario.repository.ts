@@ -9,8 +9,11 @@ import {
 import { empleados, sucursales } from '../../schema/administracion.schema.ts';
 import { usuarios } from '../../schema/autenticacion.schema.ts';
 import {
+  DatosAnulacionEntrada,
   DatosRegistroEntrada,
   DatosRegistroSalida,
+  EntradaNoEncontradaError,
+  EntradaYaAnuladaError,
   FiltrosKardex,
   IMovimientoInventarioRepository,
   ItemKardex,
@@ -301,5 +304,111 @@ export class DrizzleMovimientoInventarioRepository implements IMovimientoInventa
       usuarioNombre: row.usuarioNombre,
       fecha: row.fecha,
     };
+  }
+
+  /**
+   * RF-ADM-B16: Verifica si ya existe un movimiento compensatorio de anulación para esta entrada.
+   */
+  public async estaEntradaAnulada(entradaId: string): Promise<boolean> {
+    const patronMotivo = `Anulación de entrada ${entradaId}%`;
+    const [row] = await this.db
+      .select({ id: movimientos_inventario.id_movimiento_inventario })
+      .from(movimientos_inventario)
+      .where(sql`${movimientos_inventario.motivo} LIKE ${patronMotivo}`)
+      .limit(1);
+    return row !== undefined;
+  }
+
+  /**
+   * RF-ADM-B16: Anula una entrada de mercancía de forma transaccional y compensatoria.
+   */
+  public async anularEntrada(
+    entradaId: string,
+    datos: DatosAnulacionEntrada,
+  ): Promise<MovimientoInventario> {
+    return await this.db.transaction(async (tx) => {
+      // 1. Obtener la entrada
+      const [entrada] = await tx
+        .select()
+        .from(movimientos_inventario)
+        .where(eq(movimientos_inventario.id_movimiento_inventario, entradaId));
+
+      if (!entrada || entrada.tipo !== 'entrada') {
+        throw new EntradaNoEncontradaError();
+      }
+
+      // 2. Verificar que no esté ya anulada
+      const patronMotivo = `Anulación de entrada ${entradaId}%`;
+      const [yaAnulada] = await tx
+        .select({ id: movimientos_inventario.id_movimiento_inventario })
+        .from(movimientos_inventario)
+        .where(sql`${movimientos_inventario.motivo} LIKE ${patronMotivo}`)
+        .limit(1);
+
+      if (yaAnulada) {
+        throw new EntradaYaAnuladaError();
+      }
+
+      // 3. Verificar stock actual en la sucursal
+      const [inv] = await tx
+        .select({ stockActual: inventario_sucursal.stock_actual })
+        .from(inventario_sucursal)
+        .where(
+          and(
+            eq(inventario_sucursal.producto_id, entrada.producto_id),
+            eq(inventario_sucursal.sucursal_id, entrada.sucursal_id),
+          ),
+        );
+
+      const stockActual = inv?.stockActual ?? 0;
+      if (stockActual < entrada.cantidad) {
+        throw new StockInsuficienteError(
+          `No se puede anular la entrada: el stock actual (${stockActual}) es menor a la cantidad a revertir (${entrada.cantidad}).`,
+        );
+      }
+
+      // 4. Descontar stock
+      await tx
+        .update(inventario_sucursal)
+        .set({
+          stock_actual: sql`${inventario_sucursal.stock_actual} - ${entrada.cantidad}`,
+        })
+        .where(
+          and(
+            eq(inventario_sucursal.producto_id, entrada.producto_id),
+            eq(inventario_sucursal.sucursal_id, entrada.sucursal_id),
+          ),
+        );
+
+      // 5. Insertar movimiento compensatorio inmutable
+      const idCompensatorio = crypto.randomUUID();
+      const fecha = new Date();
+      const motivoCompensatorio = `Anulación de entrada ${entradaId}: ${datos.motivo}`;
+
+      await tx.insert(movimientos_inventario).values({
+        id_movimiento_inventario: idCompensatorio,
+        producto_id: entrada.producto_id,
+        sucursal_id: entrada.sucursal_id,
+        tipo: 'salida',
+        cantidad: entrada.cantidad,
+        motivo: motivoCompensatorio,
+        proveedor_id: entrada.proveedor_id,
+        usuario_id: datos.usuarioId,
+        fecha,
+      });
+
+      return {
+        id: idCompensatorio,
+        productoId: entrada.producto_id,
+        sucursalId: entrada.sucursal_id,
+        tipo: 'salida',
+        cantidad: entrada.cantidad,
+        motivo: motivoCompensatorio,
+        proveedorId: entrada.proveedor_id,
+        usuarioId: datos.usuarioId,
+        fecha,
+        stockResultante: stockActual - entrada.cantidad,
+      };
+    });
   }
 }

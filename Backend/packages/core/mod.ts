@@ -125,6 +125,7 @@ export * from './src/modules/inventario/application/use-cases/RegistrarSalidaInv
 export * from './src/modules/inventario/application/use-cases/ConsultarKardexUseCase.ts';
 export * from './src/modules/inventario/application/use-cases/ListarEntradasInventarioUseCase.ts';
 export * from './src/modules/inventario/application/use-cases/ObtenerEntradaInventarioPorIdUseCase.ts';
+export * from './src/modules/inventario/application/use-cases/AnularEntradaInventarioUseCase.ts';
 export * from './src/modules/inventario/domain/entities/InventarioSucursal.ts';
 export * from './src/modules/inventario/domain/repositories/IInventarioSucursalRepository.ts';
 export * from './src/modules/inventario/application/use-cases/ConfigurarStockMinimoUseCase.ts';

@@ -2,6 +2,7 @@ import { assertEquals } from 'jsr:@std/assert';
 import {
   CantidadInvalidaError,
   ConsultarKardexUseCase,
+  DatosAnulacionEntrada,
   DatosRegistroEntrada,
   DatosRegistroSalida,
   FiltrosKardex,
@@ -152,6 +153,38 @@ class InMemoryMovimientoRepository implements IMovimientoInventarioRepository {
       usuarioId: m.usuarioId,
       fecha: m.fecha,
     };
+  }
+
+  public async estaEntradaAnulada(entradaId: string): Promise<boolean> {
+    return this.movimientos.some(
+      (m) => m.tipo === 'salida' && m.motivo?.startsWith(`Anulación de entrada ${entradaId}`),
+    );
+  }
+
+  public async anularEntrada(
+    entradaId: string,
+    datos: DatosAnulacionEntrada,
+  ): Promise<MovimientoInventario> {
+    const entrada = this.movimientos.find((m) => m.id === entradaId)!;
+    const k = this.key(entrada.productoId, entrada.sucursalId);
+    const stockActual = this.stock.get(k) ?? 0;
+    const nuevoStock = stockActual - entrada.cantidad;
+    this.stock.set(k, nuevoStock);
+
+    const compensatorio: MovimientoInventario = {
+      id: `mov-anulacion-${entradaId}`,
+      productoId: entrada.productoId,
+      sucursalId: entrada.sucursalId,
+      tipo: 'salida',
+      cantidad: entrada.cantidad,
+      motivo: `Anulación de entrada ${entradaId}: ${datos.motivo}`,
+      proveedorId: entrada.proveedorId,
+      usuarioId: datos.usuarioId,
+      fecha: new Date(),
+      stockResultante: nuevoStock,
+    };
+    this.movimientos.push(compensatorio);
+    return compensatorio;
   }
 }
 

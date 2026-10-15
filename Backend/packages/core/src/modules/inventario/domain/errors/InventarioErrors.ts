@@ -105,3 +105,18 @@ export class EntradaNoEncontradaError extends DomainError {
   }
 }
 
+export class EntradaYaAnuladaError extends DomainError {
+  public readonly code = 'ENTRADA_YA_ANULADA';
+  constructor() {
+    super('Esta entrada de mercancía ya ha sido anulada previamente.');
+  }
+}
+
+export class MotivoAnulacionRequeridoError extends DomainError {
+  public readonly code = 'MOTIVO_ANULACION_REQUERIDO';
+  constructor() {
+    super('El motivo de anulación es obligatorio (mínimo 5 caracteres).');
+  }
+}
+
+
