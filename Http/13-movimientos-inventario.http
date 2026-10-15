@@ -54,7 +54,7 @@ Authorization: Bearer {{login.response.body.accessToken}}
 Content-Type: application/json
 
 {
-  "productoId": "{{productoId}}",
+  "productoId": "1a700b47-edbe-42c9-b30a-936d03250a9b",
   "sucursalId": {{sucursalId}},
   "cantidad": 25,
   "proveedorId": 1,
@@ -93,7 +93,7 @@ Authorization: Bearer {{login.response.body.accessToken}}
 Content-Type: application/json
 
 {
-  "productoId": "{{productoId}}",
+  "productoId": "1a700b47-edbe-42c9-b30a-936d03250a9b",
   "sucursalId": {{sucursalId}},
   "cantidad": 999999,
   "motivo": "Intento de salida masiva no soportada por inventario"
@@ -112,7 +112,7 @@ Authorization: Bearer {{login.response.body.accessToken}}
 Content-Type: application/json
 
 {
-  "productoId": "{{productoId}}",
+  "productoId": "1a700b47-edbe-42c9-b30a-936d03250a9b",
   "sucursalId": {{sucursalId}},
   "cantidad": 2,
   "motivo": ""
@@ -127,7 +127,7 @@ Authorization: Bearer {{login.response.body.accessToken}}
 Content-Type: application/json
 
 {
-  "productoId": "{{productoId}}",
+  "productoId": "1a700b47-edbe-42c9-b30a-936d03250a9b",
   "sucursalId": {{sucursalId}},
   "cantidad": 0
 }
