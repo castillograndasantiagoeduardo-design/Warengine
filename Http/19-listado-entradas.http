@@ -22,8 +22,8 @@ POST {{baseUrl}}/auth/login
 Content-Type: {{contentType}}
 
 {
-  "email": "admin@warengine.com",
-  "password": "Password123*"
+  "email": "superadmin@warengine.local",
+  "password": "Warengine.Admin.2026!"
 }
 
 @tokenAdmin = {{loginAdmin.response.body.accessToken}}
@@ -38,7 +38,7 @@ Authorization: Bearer {{tokenAdmin}}
 Content-Type: {{contentType}}
 
 {
-  "sku": "SKU-B15-PROD-01",
+  "sku": "SKU-B15-{{$timestamp}}",
   "nombre": "Café Colombiano Excelso 1kg",
   "precioCompra": 18000.00,
   "precioVenta": 26000.00

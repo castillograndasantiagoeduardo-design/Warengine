@@ -28,7 +28,8 @@ export function loginController(container: AppContainer) {
       }
 
       return presentResult(c, useCaseResult);
-    } catch (_e) {
+    } catch (e) {
+      console.error('[loginController] Error interno:', e);
       return c.json({ error: 'INTERNAL_ERROR', message: 'Error procesando la solicitud' }, 500);
     }
   };

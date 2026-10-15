@@ -20,8 +20,8 @@ POST {{baseUrl}}/auth/login
 Content-Type: {{contentType}}
 
 {
-  "email": "admin@warengine.com",
-  "password": "Password123*"
+  "email": "superadmin@warengine.local",
+  "password": "Warengine.Admin.2026!"
 }
 
 @tokenAdmin = {{loginAdmin.response.body.accessToken}}
@@ -36,7 +36,7 @@ Authorization: Bearer {{tokenAdmin}}
 Content-Type: {{contentType}}
 
 {
-  "sku": "SKU-B16-TEST-01",
+  "sku": "SKU-B16-{{$timestamp}}",
   "nombre": "Producto Prueba Anulación Entradas",
   "precioCompra": 25000.00,
   "precioVenta": 40000.00
