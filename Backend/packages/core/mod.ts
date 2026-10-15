@@ -125,3 +125,4 @@ export * from './src/modules/facturacion/domain/repositories/ITurnoCajaRepositor
 export * from './src/modules/facturacion/domain/repositories/ISucursalOperadorRepository.ts';
 export * from './src/modules/facturacion/application/use-cases/AbrirTurnoCajaUseCase.ts';
 export * from './src/modules/facturacion/application/use-cases/ObtenerTurnoActualUseCase.ts';
+export * from './src/modules/facturacion/application/use-cases/CerrarTurnoCajaUseCase.ts';

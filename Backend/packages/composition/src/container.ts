@@ -84,6 +84,7 @@ import {
   CambiarEstadoProductoUseCase,
   RestablecerPasswordUsuarioUseCase,
   AbrirTurnoCajaUseCase,
+  CerrarTurnoCajaUseCase,
   ObtenerTurnoActualUseCase,
   AsignarSucursalesUsuarioUseCase,
   ObtenerSucursalesUsuarioUseCase,
@@ -167,6 +168,7 @@ export interface AppContainer {
     registrarCliente: RegistrarClienteUseCase;
     buscarClientes: BuscarClientesUseCase;
     abrirTurnoCaja: AbrirTurnoCajaUseCase;
+    cerrarTurnoCaja: CerrarTurnoCajaUseCase;
     obtenerTurnoActual: ObtenerTurnoActualUseCase;
   };
 }
@@ -339,6 +341,7 @@ export function createContainer(_env?: Record<string, string>): AppContainer {
     alertaStockRepository,
   );
   const obtenerTurnoActualUseCase = new ObtenerTurnoActualUseCase(turnoCajaRepository);
+  const cerrarTurnoCajaUseCase = new CerrarTurnoCajaUseCase(turnoCajaRepository, auditoriaRepository);
   const consultarAuditoriaUseCase = new ConsultarAuditoriaUseCase(auditoriaRepository);
   
 
@@ -472,6 +475,7 @@ export function createContainer(_env?: Record<string, string>): AppContainer {
       registrarCliente: registrarClienteUseCase,
       buscarClientes: buscarClientesUseCase,
       abrirTurnoCaja: abrirTurnoCajaUseCase,
+      cerrarTurnoCaja: cerrarTurnoCajaUseCase,
       obtenerTurnoActual: obtenerTurnoActualUseCase,
       
     },

@@ -6,6 +6,8 @@ export class TurnoCaja {
         public readonly fondoInicial: number,
         public readonly fechaApertura: Date,
         public readonly fechaCierre: Date | null,
+        public readonly fondoFinal: number | null = null,
+        public readonly diferencia: number | null = null,
     ) { }
 
     /** Un turno está abierto mientras no tenga fecha de cierre. */

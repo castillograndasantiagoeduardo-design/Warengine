@@ -10,4 +10,6 @@ export interface ITurnoCajaRepository {
     buscarAbiertoDeUsuario(usuarioId: string): Promise<TurnoCaja | null>;
     /** Devuelve null si la BD rechazó la apertura porque ya había un turno abierto (carrera). */
     abrir(datos: DatosAperturaTurno): Promise<TurnoCaja | null>;
+    findById(id: string): Promise<TurnoCaja | null>;
+    cerrar(id: string, fondoFinal: number): Promise<TurnoCaja>;
 }
