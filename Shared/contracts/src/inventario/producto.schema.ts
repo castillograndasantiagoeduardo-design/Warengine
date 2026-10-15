@@ -121,6 +121,7 @@ export const productoResponseSchema = z.object({
   precioCorporativo: z.number().nullable(),
   precioCorporativoActualizadoEn: z.string().nullable(),
   isActive: z.boolean(),
+  advertencia: z.string().nullable().optional(),
 });
 
 export const productosPaginadosSchema = z.object({

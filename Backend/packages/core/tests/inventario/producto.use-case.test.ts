@@ -655,3 +655,54 @@ Deno.test('ListarProductosUseCase: paginación y filtros de búsqueda', async ()
   assertEquals(resStockBajo.value.items.length, 1);
   assertEquals(resStockBajo.value.items[0].id, p1.id);
 });
+
+Deno.test('CrearProductoUseCase (RF-ADM-B13): permite crear producto con precioVenta < precioCompra advirtiendo margen negativo', async () => {
+  const prodRepo = new FakeProductoRepository();
+  const catRepo = new FakeCategoriaRepository();
+  const provRepo = new FakeProveedorRepository();
+  const audit = new FakeAuditor();
+  const useCase = new CrearProductoUseCase(prodRepo, catRepo, provRepo, audit);
+
+  const res = await useCase.execute({
+    sku: 'SKU-MARGEN-NEG',
+    nombre: 'Producto en Liquidación',
+    precioCompra: 10000,
+    precioVenta: 7500, // Menor que precio de compra
+    actor,
+  });
+
+  assertEquals(res.isSuccess, true);
+  assertEquals(res.value.precioCompra, 10000);
+  assertEquals(res.value.precioVenta, 7500);
+  assertEquals(res.value.tieneMargenNegativo, true);
+  assertEquals(res.value.advertencia !== null && res.value.advertencia !== undefined, true);
+  assertEquals(res.value.advertencia?.includes('Margen negativo'), true);
+});
+
+Deno.test('EditarProductoUseCase (RF-ADM-B13): permite editar producto con precioVenta < precioCompra advirtiendo margen negativo', async () => {
+  const prodRepo = new FakeProductoRepository();
+  const creado = await prodRepo.crear({
+    sku: 'SKU-EDIT-MARGEN',
+    nombre: 'Producto Original',
+    precioCompra: 8000,
+    precioVenta: 12000,
+  });
+
+  const catRepo = new FakeCategoriaRepository();
+  const provRepo = new FakeProveedorRepository();
+  const audit = new FakeAuditor();
+  const useCase = new EditarProductoUseCase(prodRepo, catRepo, provRepo, audit);
+
+  // Editamos para rebajar el precio de venta por debajo del costo
+  const res = await useCase.execute({
+    id: creado.id,
+    precioVenta: 6000, // 6000 < 8000
+    actor,
+  });
+
+  assertEquals(res.isSuccess, true);
+  assertEquals(res.value.precioVenta, 6000);
+  assertEquals(res.value.tieneMargenNegativo, true);
+  assertEquals(res.value.advertencia !== null && res.value.advertencia !== undefined, true);
+  assertEquals(res.value.advertencia?.includes('Margen negativo'), true);
+});
