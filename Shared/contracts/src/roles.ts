@@ -4,7 +4,9 @@
 export const ROLES = {
   SUPER_ADMIN: 'super-admin',
   ADMIN_SUCURSAL: 'admin-sucursal',
-  CAJERO_VENDEDOR: 'cajero-vendedor',
+  CAJERO: 'cajero',
+  VENDEDOR_B2B: 'vendedor-b2b',
 } as const;
 
 export type Role = (typeof ROLES)[keyof typeof ROLES];
+

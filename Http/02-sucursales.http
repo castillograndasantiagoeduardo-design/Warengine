@@ -11,7 +11,8 @@
 # Roles en la BD:
 #   1 = super-admin
 #   2 = admin-sucursal
-#   3 = cajero-vendedor
+#   3 = cajero
+#   4 = vendedor-b2b
 # ==============================================================================
 
 @baseUrl = http://localhost:8017

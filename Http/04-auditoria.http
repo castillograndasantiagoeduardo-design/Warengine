@@ -61,7 +61,7 @@ Content-Type: application/json
 
 ###
 
-### Crear usuario operador sin permiso de ver auditoría (rolId 3: cajero-vendedor)
+### Crear usuario operador sin permiso de ver auditoría (rolId 3: cajero)
 # @name crearUsuarioOperador
 POST {{baseUrl}}/administracion/usuarios
 Authorization: Bearer {{login.response.body.accessToken}}

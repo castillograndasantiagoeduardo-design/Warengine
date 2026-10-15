@@ -24,8 +24,8 @@ import {
 } from '../controllers/inventario/producto.controller.ts';
 
 // Códigos según la tabla `permisos` (seed).
-// `inventario:leer`: super-admin, admin-sucursal, cajero-vendedor
-// `inventario:escribir`: super-admin, admin-sucursal (cajero-vendedor recibe 403)
+// `inventario:leer`: super-admin, admin-sucursal, cajero, vendedor-b2b
+// `inventario:escribir`: super-admin, admin-sucursal (cajero y vendedor-b2b reciben 403)
 const PERMISO_INVENTARIO_LEER = 'inventario:leer';
 const PERMISO_INVENTARIO_ESCRIBIR = 'inventario:escribir';
 
