@@ -99,3 +99,17 @@ export function cambiarEstadoProductoController(container: AppContainer) {
     return presentResult(c, result);
   });
 }
+
+export function consultarHistorialPreciosController(container: AppContainer) {
+  return safeHandler(async (c) => {
+    const id = c.req.param('id');
+    if (!esUuidValido(id)) {
+      return c.json({ error: 'VALIDATION_ERROR', message: 'Id de producto inválido: debe ser un UUID.' }, 400);
+    }
+    const result = await container.inventario.consultarHistorialPrecios.execute({
+      productoId: id,
+      actor: obtenerActor(c),
+    });
+    return presentResult(c, result);
+  });
+}

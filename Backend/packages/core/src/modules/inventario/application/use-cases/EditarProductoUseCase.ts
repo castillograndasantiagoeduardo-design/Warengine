@@ -112,6 +112,12 @@ export class EditarProductoUseCase {
 
     // Historial de precios identificado explícitamente en los detalles de auditoría
     const cambioPrecio: Record<string, { antes: number | null; despues: number | null }> = {};
+    if ('precioCompra' in despues) {
+      cambioPrecio.precioCompra = {
+        antes: existente.precioCompra,
+        despues: actualizada.precioCompra,
+      };
+    }
     if ('precioVenta' in despues) {
       cambioPrecio.precioVenta = {
         antes: existente.precioVenta,

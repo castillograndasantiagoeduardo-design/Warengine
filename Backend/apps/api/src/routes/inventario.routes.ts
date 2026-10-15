@@ -21,6 +21,7 @@ import {
   editarProductoController,
   listarProductosController,
   obtenerProductoPorIdController,
+  consultarHistorialPreciosController,
 } from '../controllers/inventario/producto.controller.ts';
 import {
   consultarKardexController,
@@ -108,6 +109,11 @@ export function createInventarioRoutes(container: AppContainer): Hono {
     '/productos/:id',
     authMiddleware(container, PERMISO_INVENTARIO_LEER),
     obtenerProductoPorIdController(container),
+  );
+  api.get(
+    '/productos/:id/historial-precios',
+    authMiddleware(container, PERMISO_INVENTARIO_LEER),
+    consultarHistorialPreciosController(container),
   );
   api.post(
     '/productos',

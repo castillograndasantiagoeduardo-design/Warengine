@@ -1,0 +1,142 @@
+### ==============================================================================
+### WARENGINE - REQUERIMIENTO RF-ADM-B14: HISTORIAL DE PRECIOS DEL PRODUCTO
+### ==============================================================================
+### Descripción de negocio:
+### El sistema debe permitir consultar el historial de cambios de precios
+### (compra, venta y corporativo) de un producto, indicando la fecha del cambio,
+### el usuario responsable y los valores anteriores y nuevos.
+###
+### Regla de protección de margen y costos (RF-ADM-B4 / RNF):
+### Los usuarios con roles operativos (ej. cajero, vendedor B2B) que no tengan
+### permiso de escritura de inventario, reciben los precios de compra en null
+### para proteger los costos de adquisición confidenciales de la empresa.
+### ==============================================================================
+
+@baseUrl = http://localhost:8017
+@contentType = application/json
+
+### ------------------------------------------------------------------------------
+### PASO 0A: Autenticación como Administrador
+### ------------------------------------------------------------------------------
+# @name loginAdmin
+POST {{baseUrl}}/auth/login
+Content-Type: {{contentType}}
+
+{
+  "email": "admin@warengine.com",
+  "password": "Password123*"
+}
+
+@tokenAdmin = {{loginAdmin.response.body.accessToken}}
+
+### ------------------------------------------------------------------------------
+### PASO 0B: Autenticación como Cajero (Usuario Operativo)
+### ------------------------------------------------------------------------------
+# @name loginCajero
+POST {{baseUrl}}/auth/login
+Content-Type: {{contentType}}
+
+{
+  "email": "cajero.norte@warengine.com",
+  "password": "Password123*"
+}
+
+@tokenCajero = {{loginCajero.response.body.accessToken}}
+
+### ------------------------------------------------------------------------------
+### PASO 1: Crear Producto Base con Precios Iniciales (Admin)
+### Esperado: 201 Created
+### ------------------------------------------------------------------------------
+# @name crearProducto
+POST {{baseUrl}}/inventario/productos
+Authorization: Bearer {{tokenAdmin}}
+Content-Type: {{contentType}}
+
+{
+  "sku": "SKU-B14-LAPTOP-01",
+  "nombre": "Laptop Ultrabook 14 Pulgadas",
+  "precioCompra": 2500000.00,
+  "precioVenta": 3400000.00,
+  "precioCorporativo": 3200000.00
+}
+
+@productoId = {{crearProducto.response.body.id}}
+
+### ------------------------------------------------------------------------------
+### PASO 2: Modificar Precios de Compra y Venta (Admin)
+### Esperado: 200 OK
+### ------------------------------------------------------------------------------
+# @name actualizarPrecios1
+PUT {{baseUrl}}/inventario/productos/{{productoId}}
+Authorization: Bearer {{tokenAdmin}}
+Content-Type: {{contentType}}
+
+{
+  "precioCompra": 2650000.00,
+  "precioVenta": 3650000.00,
+  "precioCorporativo": 3400000.00
+}
+
+### ------------------------------------------------------------------------------
+### PASO 3: Editar solo el Nombre del Producto (Sin cambiar precios)
+### Esperado: 200 OK (Este evento NO debe aparecer en el historial de precios)
+### ------------------------------------------------------------------------------
+# @name actualizarSoloNombre
+PUT {{baseUrl}}/inventario/productos/{{productoId}}
+Authorization: Bearer {{tokenAdmin}}
+Content-Type: {{contentType}}
+
+{
+  "nombre": "Laptop Ultrabook 14 Pulgadas Edición Especial"
+}
+
+### ------------------------------------------------------------------------------
+### PASO 4: Segunda Modificación - Ajuste de Precio de Venta (Admin)
+### Esperado: 200 OK
+### ------------------------------------------------------------------------------
+# @name actualizarPrecios2
+PUT {{baseUrl}}/inventario/productos/{{productoId}}
+Authorization: Bearer {{tokenAdmin}}
+Content-Type: {{contentType}}
+
+{
+  "precioVenta": 3800000.00
+}
+
+### ------------------------------------------------------------------------------
+### PASO 5: Consultar Historial de Precios como Administrador
+### Esperado: 200 OK con items ordenados cronológicamente, mostrando:
+### - fecha, usuarioId, usuarioNombre
+### - precioCompraAnterior y precioCompraNuevo visibles
+### - precioVentaAnterior y precioVentaNuevo visibles
+### ------------------------------------------------------------------------------
+# @name consultarHistorialAdmin
+GET {{baseUrl}}/inventario/productos/{{productoId}}/historial-precios
+Authorization: Bearer {{tokenAdmin}}
+
+### ------------------------------------------------------------------------------
+### PASO 6: Consultar Historial de Precios como Cajero (Protección de Costos)
+### Esperado: 200 OK
+### - precioCompraAnterior: null (Oculto)
+### - precioCompraNuevo: null (Oculto)
+### - precioVenta visible para fines de atención y facturación
+### ------------------------------------------------------------------------------
+# @name consultarHistorialCajero
+GET {{baseUrl}}/inventario/productos/{{productoId}}/historial-precios
+Authorization: Bearer {{tokenCajero}}
+
+### ------------------------------------------------------------------------------
+### PASO 7: Error 404 - Consultar Historial de Producto Inexistente
+### Esperado: 404 Not Found con código PRODUCTO_NO_ENCONTRADO
+### ------------------------------------------------------------------------------
+# @name historialProductoInexistente
+GET {{baseUrl}}/inventario/productos/00000000-0000-0000-0000-000000000000/historial-precios
+Authorization: Bearer {{tokenAdmin}}
+
+### ------------------------------------------------------------------------------
+### PASO 8: Error 400 - ID con formato inválido (No UUID)
+### Esperado: 400 Bad Request
+### ------------------------------------------------------------------------------
+# @name historialIdInvalido
+GET {{baseUrl}}/inventario/productos/id-invalido-123/historial-precios
+Authorization: Bearer {{tokenAdmin}}

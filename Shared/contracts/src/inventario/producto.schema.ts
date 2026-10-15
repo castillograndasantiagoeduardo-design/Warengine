@@ -132,9 +132,31 @@ export const productosPaginadosSchema = z.object({
   totalPages: z.number().int(),
 });
 
+export const itemHistorialPrecioSchema = z.object({
+  id: z.string(),
+  fecha: z.string(),
+  usuarioId: z.string().nullable(),
+  usuarioNombre: z.string().nullable(),
+  accion: z.string(),
+  precioCompraAnterior: z.number().nullable(),
+  precioCompraNuevo: z.number().nullable(),
+  precioVentaAnterior: z.number().nullable(),
+  precioVentaNuevo: z.number().nullable(),
+  precioCorporativoAnterior: z.number().nullable().optional(),
+  precioCorporativoNuevo: z.number().nullable().optional(),
+});
+
+export const historialPreciosResponseSchema = z.object({
+  productoId: z.string(),
+  items: z.array(itemHistorialPrecioSchema),
+  total: z.number().int(),
+});
+
 export type CrearProductoInput = z.infer<typeof crearProductoSchema>;
 export type EditarProductoInput = z.infer<typeof editarProductoSchema>;
 export type CambiarEstadoProductoInput = z.infer<typeof cambiarEstadoProductoSchema>;
 export type FiltrosProductosInput = z.infer<typeof filtrosProductosSchema>;
 export type ProductoResponse = z.infer<typeof productoResponseSchema>;
 export type ProductosPaginadosResponse = z.infer<typeof productosPaginadosSchema>;
+export type ItemHistorialPrecio = z.infer<typeof itemHistorialPrecioSchema>;
+export type HistorialPreciosResponse = z.infer<typeof historialPreciosResponseSchema>;

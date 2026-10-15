@@ -18,6 +18,7 @@ export interface FiltrosAuditoria {
   usuarioId?: string;
   accion?: string;
   entidad?: string;
+  entidadId?: string;
   desde?: Date;
   hasta?: Date;
   limite: number;

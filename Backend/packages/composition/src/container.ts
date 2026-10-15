@@ -114,6 +114,7 @@ import {
   ConsultarKardexUseCase,
   ConfigurarStockMinimoUseCase,
   ConsultarStockSucursalUseCase,
+  ConsultarHistorialPreciosUseCase,
 } from '@warengine/core';
 
 export interface AppContainer {
@@ -182,6 +183,7 @@ export interface AppContainer {
     consultarKardex: ConsultarKardexUseCase;
     configurarStockMinimo: ConfigurarStockMinimoUseCase;
     consultarStockSucursal: ConsultarStockSucursalUseCase;
+    consultarHistorialPrecios: ConsultarHistorialPreciosUseCase;
   };
   facturacion: {
     registrarCliente: RegistrarClienteUseCase;
@@ -438,6 +440,10 @@ export function createContainer(_env?: Record<string, string>): AppContainer {
     inactivarProductoUseCase,
     reactivarProductoUseCase,
   );
+  const consultarHistorialPreciosUseCase = new ConsultarHistorialPreciosUseCase(
+    productoRepository,
+    auditoriaRepository,
+  );
 
   const registrarEntradaInventarioUseCase = new RegistrarEntradaInventarioUseCase(
     movimientoInventarioRepository,
@@ -558,6 +564,7 @@ export function createContainer(_env?: Record<string, string>): AppContainer {
       consultarKardex: consultarKardexUseCase,
       configurarStockMinimo: configurarStockMinimoUseCase,
       consultarStockSucursal: consultarStockSucursalUseCase,
+      consultarHistorialPrecios: consultarHistorialPreciosUseCase,
     },
     facturacion: {
       registrarCliente: registrarClienteUseCase,
