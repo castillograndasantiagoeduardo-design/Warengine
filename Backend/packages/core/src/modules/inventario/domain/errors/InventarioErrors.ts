@@ -84,3 +84,10 @@ export class MotivoSalidaRequeridoError extends DomainError {
     super('El motivo de la salida manual es obligatorio (avería, merma, vencimiento, etc.).');
   }
 }
+
+export class StockMinimoInvalidoError extends DomainError {
+  public readonly code = 'STOCK_MINIMO_INVALIDO';
+  constructor(mensaje: string = 'El stock mínimo debe ser un número entero mayor o igual a cero.') {
+    super(mensaje);
+  }
+}

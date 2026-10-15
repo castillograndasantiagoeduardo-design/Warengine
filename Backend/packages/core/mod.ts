@@ -120,6 +120,10 @@ export * from './src/modules/inventario/domain/repositories/IMovimientoInventari
 export * from './src/modules/inventario/application/use-cases/RegistrarEntradaInventarioUseCase.ts';
 export * from './src/modules/inventario/application/use-cases/RegistrarSalidaInventarioUseCase.ts';
 export * from './src/modules/inventario/application/use-cases/ConsultarKardexUseCase.ts';
+export * from './src/modules/inventario/domain/entities/InventarioSucursal.ts';
+export * from './src/modules/inventario/domain/repositories/IInventarioSucursalRepository.ts';
+export * from './src/modules/inventario/application/use-cases/ConfigurarStockMinimoUseCase.ts';
+export * from './src/modules/inventario/application/use-cases/ConsultarStockSucursalUseCase.ts';
 
 
 // ─── Módulo: Facturacion ─────────────────────────────────────────────────────
