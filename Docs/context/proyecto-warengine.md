@@ -5,7 +5,7 @@
 > escribir cualquier línea de código. Si no entiendes algo de aquí, pregunta
 > antes de improvisar.
 >
-> **Última actualización:** 14 de octubre de 2026 · **Script SQL de
+> **Última actualización:** 15 de octubre de 2026 · **Script SQL de
 > referencia:** `Docs/database/WARENGINE_FULL_BD.sql` (versión 2: 25 triggers,
 > 18 CHECK). Si este documento y el script SQL se contradicen, **gana el
 > script**: corrige este archivo y avisa al equipo. Actualiza la fecha de arriba

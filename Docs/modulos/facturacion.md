@@ -28,9 +28,9 @@
 
 El módulo de **Facturación y Punto de Venta (POS)** de Warengine gestiona la interacción comercial con clientes finales y corporativos, el control operativo de turnos de caja y el ciclo de vida de emisión, cobro, anulación y devolución de comprobantes de venta.
 
-**Estado actual:** **PARCIAL**  
-- **Implementado en código:** Directorio de clientes con validación estricta de régimen B2B (dirección y teléfono obligatorios), prevención de duplicación silenciosa y reutilización de clientes existentes, así como apertura y consulta del turno actual de caja con control de concurrencia y fondo inicial.
-- **Pendiente:** Cierre de turno con arqueo, emisión transaccional de facturas con ítems y pagos divididos, crédito corporativo, anulación con reversión de stock y devoluciones de venta.
+**Estado actual:** **FASE 1 COMPLETADA**  
+- **Implementado en código:** Directorio y actualización de clientes con validación estricta de régimen B2B y protección de `creditoHabilitado`, apertura y cierre de turnos de caja con arqueo y control de concurrencia, facturación transaccional de mostrador (requiere turno de caja) y B2B (con validación de crédito corporativo sin exigir turno), consulta de facturas con alcance de sucursal y ocultamiento de costos, y emisión de alertas operativas al administrador.
+- **Pendiente (Fase 2):** Anulación de facturas con reversión de stock y devoluciones de ventas.
 
 ---
 
@@ -39,18 +39,18 @@ El módulo de **Facturación y Punto de Venta (POS)** de Warengine gestiona la i
 | Requisito | Descripción corta | Estado | Dónde está en el código |
 |---|---|---|---|
 | **RF-FMC-B4** | Identificación de cliente en ventas (B2C o B2B) | IMPLEMENTADO | [cliente.controller.ts](../../Backend/apps/api/src/controllers/facturacion/cliente.controller.ts), [RegistrarClienteUseCase.ts](../../Backend/packages/core/src/modules/facturacion/application/use-cases/RegistrarClienteUseCase.ts) |
-| **RF-FMC-B5** | Validación estricta de clientes corporativos B2B (NIT/RUT, dirección, teléfono) | IMPLEMENTADO | [Cliente.ts](../../Backend/packages/core/src/modules/facturacion/domain/entities/Cliente.ts), [RegistrarClienteUseCase.ts](../../Backend/packages/core/src/modules/facturacion/application/use-cases/RegistrarClienteUseCase.ts) |
+| **RF-FMC-B5** | Validación estricta de clientes corporativos B2B (NIT/RUT, dirección, teléfono) | IMPLEMENTADO | [Cliente.ts](../../Backend/packages/core/src/modules/facturacion/domain/entities/Cliente.ts), [RegistrarClienteUseCase.ts](../../Backend/packages/core/src/modules/facturacion/application/use-cases/RegistrarClienteUseCase.ts), [ActualizarClienteUseCase.ts](../../Backend/packages/core/src/modules/facturacion/application/use-cases/ActualizarClienteUseCase.ts) |
 | **RF-FMC-B7** | Reutilización de clientes existentes por documento | IMPLEMENTADO | [RegistrarClienteUseCase.ts](../../Backend/packages/core/src/modules/facturacion/application/use-cases/RegistrarClienteUseCase.ts) |
 | **RF-FMC-D1** | Búsqueda y filtrado de clientes en tiempo real | IMPLEMENTADO | [BuscarClientesUseCase.ts](../../Backend/packages/core/src/modules/facturacion/application/use-cases/BuscarClientesUseCase.ts) |
 | **RF-FMC-A1** | Apertura de turno de caja con fondo inicial y sucursal | IMPLEMENTADO | [AbrirTurnoCajaUseCase.ts](../../Backend/packages/core/src/modules/facturacion/application/use-cases/AbrirTurnoCajaUseCase.ts) |
 | **RF-FMC-A2** | Un solo turno abierto por operador simultáneamente | IMPLEMENTADO | [AbrirTurnoCajaUseCase.ts](../../Backend/packages/core/src/modules/facturacion/application/use-cases/AbrirTurnoCajaUseCase.ts), Trigger SQL `002-turnos-un-abierto-por-usuario.sql` |
 | **RF-FMC-A3** | Consulta del turno de caja activo del operador | IMPLEMENTADO | [ObtenerTurnoActualUseCase.ts](../../Backend/packages/core/src/modules/facturacion/application/use-cases/ObtenerTurnoActualUseCase.ts) |
-| **RF-FMC-A4** | Cierre de turno de caja con arqueo y cálculo de diferencia | PENDIENTE | Trigger `trg_turnos_caja_calcula_diferencia` existe en BD; caso de uso `CerrarTurnoCajaUseCase` pendiente. |
-| **RF-FMC-B1..B3** | Emisión de factura con ítems y verificación de stock | PENDIENTE | Triggers de stock existen en BD; caso de uso `EmitirFacturaUseCase` pendiente. |
-| **RF-FMC-C1..C5** | Pagos divididos y medios de pago (efectivo, tarjeta, transferencia) | PENDIENTE | Tablas y triggers de pagos existen; lógica de aplicación pendiente. |
-| **RF-FMC-E1..E2** | Crédito corporativo para clientes B2B habilitados | PENDIENTE | `trg_factura_pagos_check_credito` en BD; lógica de cobro pendiente. |
-| **RF-FMC-F1** | Anulación de facturas con reingreso automático al kardex | PENDIENTE | `trg_facturas_anula_reingresa_stock` en BD; caso de uso pendiente. |
-| **RF-FMC-G1** | Devolución de ventas y reingreso opcional de existencias | PENDIENTE | `trg_devoluciones_genera_entrada` en BD; caso de uso pendiente. |
+| **RF-FMC-A4** | Cierre de turno de caja con arqueo y cálculo de diferencia | IMPLEMENTADO | [CerrarTurnoCajaUseCase.ts](../../Backend/packages/core/src/modules/facturacion/application/use-cases/CerrarTurnoCajaUseCase.ts), [turno-caja.controller.ts](../../Backend/apps/api/src/controllers/facturacion/turno-caja.controller.ts) |
+| **RF-FMC-B1..B3** | Emisión de factura con ítems y verificación de stock | IMPLEMENTADO | [CrearFacturaUseCase.ts](../../Backend/packages/core/src/modules/facturacion/application/use-cases/CrearFacturaUseCase.ts), [factura.controller.ts](../../Backend/apps/api/src/controllers/facturacion/factura.controller.ts) |
+| **RF-FMC-C1..C5** | Pagos divididos y medios de pago (efectivo, tarjeta, transferencia) | IMPLEMENTADO | [FacturaPago.ts](../../Backend/packages/core/src/modules/facturacion/domain/entities/FacturaPago.ts), [drizzle-factura.repository.ts](../../Backend/packages/database/src/repositories/facturacion/drizzle-factura.repository.ts) |
+| **RF-FMC-E1..E2** | Crédito corporativo para clientes B2B habilitados | IMPLEMENTADO | [CrearFacturaUseCase.ts](../../Backend/packages/core/src/modules/facturacion/application/use-cases/CrearFacturaUseCase.ts) |
+| **RF-FMC-F1** | Anulación de facturas con reingreso automático al kardex | PENDIENTE | `trg_facturas_anula_reingresa_stock` en BD; reservado para Fase 2. |
+| **RF-FMC-G1** | Devolución de ventas y reingreso opcional de existencias | PENDIENTE | `trg_devoluciones_genera_entrada` en BD; reservado para Fase 2. |
 
 ---
 
@@ -252,10 +252,18 @@ Prefijo general de montaje en `main.ts`: `/ventas`.
 
 | Método | Ruta completa | Permiso requerido | Controlador | Caso de uso | Schema Zod | Códigos HTTP |
 |---|---|---|---|---|---|---|
-| `GET` | `/ventas/clientes` | `facturacion:consultar` | `buscarClientesController` | `BuscarClientesUseCase` | `buscarClientesQuerySchema` | 200, 401, 403 |
-| `POST` | `/ventas/clientes` | `facturacion:gestionar-clientes` | `registrarClienteController` | `RegistrarClienteUseCase` | `registrarClienteSchema` | 200, 201, 400, 401, 403, 422 |
+| `GET` | `/ventas/clientes` | `facturacion:consultar` | `buscarClientesController` | `BuscarClientesUseCase` | `filtrosClientesSchema` | 200, 401, 403 |
+| `GET` | `/ventas/clientes/:id` | `facturacion:consultar` | `obtenerClientePorIdController` | `ObtenerClientePorIdUseCase` | Ninguno (param :id) | 200, 400, 401, 403, 404 |
+| `POST` | `/ventas/clientes` | `facturacion:gestionar-clientes` | `registrarClienteController` | `RegistrarClienteUseCase` | `crearClienteSchema` | 200, 201, 400, 401, 403, 422 |
+| `PUT` | `/ventas/clientes/:id` | `facturacion:gestionar-clientes` | `actualizarClienteController` | `ActualizarClienteUseCase` | `actualizarClienteSchema` | 200, 400, 401, 403, 404, 422 |
 | `POST` | `/ventas/turnos` | `facturacion:abrir-turno` | `abrirTurnoCajaController` | `AbrirTurnoCajaUseCase` | `abrirTurnoCajaSchema` | 201, 400, 401, 403, 409, 422 |
+| `POST` | `/ventas/turnos/:id/cerrar` | `facturacion:abrir-turno` | `cerrarTurnoCajaController` | `CerrarTurnoCajaUseCase` | `cerrarTurnoCajaSchema` | 200, 400, 401, 403, 404 |
 | `GET` | `/ventas/turnos/actual` | `facturacion:facturar` | `obtenerTurnoActualController` | `ObtenerTurnoActualUseCase` | Ninguno | 200, 401, 403 |
+| `POST` | `/ventas/facturas` | `facturacion:facturar` | `crearFacturaController` | `CrearFacturaUseCase` | `crearFacturaSchema` | 201, 400, 401, 403, 409, 422 |
+| `POST` | `/ventas/facturas/b2b` | `facturacion:vender-b2b` | `crearFacturaController` | `CrearFacturaUseCase` | `crearFacturaSchema` | 201, 400, 401, 403, 409, 422 |
+| `GET` | `/ventas/facturas` | `facturacion:consultar` | `listarFacturasController` | `ListarFacturasUseCase` | `listarFacturasQuerySchema` | 200, 400, 401, 403 |
+| `GET` | `/ventas/facturas/:id` | `facturacion:consultar` | `obtenerFacturaPorIdController` | `ObtenerFacturaPorIdUseCase` | Ninguno (param :id) | 200, 400, 401, 403, 404 |
+| `POST` | `/ventas/alertas` | `facturacion:alertar-admin` | `emitirAlertaFacturacionController` | `EmitirAlertaFacturacionUseCase` | `alertarAdminFacturacionSchema` | 201, 400, 401, 403, 422 |
 
 *Nota sobre códigos de respuesta en clientes:*
 - Si el cliente es nuevo, responde `201 Created` con `{ cliente, yaExistia: false }`.
