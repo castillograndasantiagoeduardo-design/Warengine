@@ -45,7 +45,7 @@ El módulo de **Inventario** administra el catálogo maestro de artículos, cate
 | **RF-ADM-B3** | Activación y desactivación de productos | IMPLEMENTADO | [CambiarEstadoProductoUseCase.ts](../../Backend/packages/core/src/modules/inventario/application/use-cases/CambiarEstadoProductoUseCase.ts) |
 | **RF-ADM-B4** | Consulta paginada y búsqueda de productos con filtros | IMPLEMENTADO | [ListarProductosUseCase.ts](../../Backend/packages/core/src/modules/inventario/application/use-cases/ListarProductosUseCase.ts) |
 | **RF-FMC-C6** | Registro de fecha de actualización de precio corporativo | IMPLEMENTADO | Trigger `trg_productos_precio_corporativo_fecha` en BD |
-| **RF-ADM-B7** | Registro de compras a proveedores (entradas de stock) | PENDIENTE | Caso de uso `registrar-entrada` pendiente de implementar. |
+| **RF-ADM-B7** | Registro de compras a proveedores (entradas de stock) | IMPLEMENTADO | [RegistrarEntradaInventarioUseCase.ts](../../Backend/packages/core/src/modules/inventario/application/use-cases/RegistrarEntradaInventarioUseCase.ts), [movimiento-inventario.controller.ts](../../Backend/apps/api/src/controllers/inventario/movimiento-inventario.controller.ts) |
 | **RF-ADM-B8** | Salidas manuales de stock por merma o daño con motivo | PENDIENTE | Caso de uso `registrar-salida` pendiente de implementar. |
 | **RF-ADM-B9** | Ajustes de inventario (auditoría física) | PENDIENTE | Caso de uso `ajustar-stock` pendiente de implementar. |
 | **RF-ADM-B10** | Consulta de alertas de stock bajo el mínimo | PENDIENTE | Caso de uso `listar-stock-bajo` pendiente de implementar. |
@@ -274,6 +274,8 @@ Prefijo general de montaje en `main.ts`: `/inventario`.
 | `POST` | `/inventario/productos` | `inventario:escribir` | `crearProductoController` | `CrearProductoUseCase` | `crearProductoSchema` | 201, 400, 401, 403, 409, 422 |
 | `PUT` | `/inventario/productos/:id` | `inventario:escribir` | `editarProductoController` | `EditarProductoUseCase` | `editarProductoSchema` | 200, 400, 401, 403, 404, 409, 422 |
 | `PUT` | `/inventario/productos/:id/estado` | `inventario:escribir` | `cambiarEstadoProductoController` | `CambiarEstadoProductoUseCase` | `cambiarEstadoProductoSchema` | 200, 400, 401, 403, 404 |
+| `POST` | `/inventario/entradas` | `inventario:registrar-movimiento` | `registrarEntradaController` | `RegistrarEntradaInventarioUseCase` | `registrarEntradaSchema` | 201, 400, 401, 403, 404, 422 |
+| `POST` | `/inventario/salidas` | `inventario:registrar-movimiento` | `registrarSalidaController` | `RegistrarSalidaInventarioUseCase` | `registrarSalidaSchema` | 201, 400, 401, 403, 404, 409, 422 |
 
 ---
 
@@ -380,10 +382,9 @@ sequenceDiagram
 ## 12. Pendientes y Deuda Técnica
 
 1. **Gestión de Stock por Sucursal (`inventario_sucursal`):** Faltan casos de uso para consultar el stock disponible en una sucursal específica.
-2. **Entradas por Compras (`registrar-entrada`):** Falta caso de uso que inserte en `movimientos_inventario` con tipo `entrada` y `proveedor_id`.
-3. **Salidas Manuales (`registrar-salida`):** Falta caso de uso para registrar bajas por merma o deterioro con motivo obligatorio.
-4. **Ajustes de Inventario (`ajustar-stock`):** Falta caso de uso de auditoría física (`ajuste_entrada` o `ajuste_salida`).
-5. **Kardex y Reporte de Stock Bajo (`kardex`, `stock-bajo`):** Falta endpoints de consulta histórica de movimientos e informe de alertas de stock mínimo.
+2. **Salidas Manuales (`registrar-salida`):** En proceso de finalización formal con sus pruebas y contratos (RF-ADM-B8).
+3. **Ajustes de Inventario (`ajustar-stock`):** Falta caso de uso de auditoría física (`ajuste_entrada` o `ajuste_salida`) (RF-ADM-B9).
+4. **Kardex y Reporte de Stock Bajo (`kardex`, `stock-bajo`):** Falta endpoints de consulta histórica de movimientos e informe de alertas de stock mínimo (RF-ADM-B10, RF-ADM-B11).
 
 ---
 

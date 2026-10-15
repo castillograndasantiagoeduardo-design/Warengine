@@ -400,12 +400,14 @@ export function createContainer(_env?: Record<string, string>): AppContainer {
     sucursalRepository,
     proveedorRepository,
     auditoriaRepository,
+    resolverAlcanceSucursalUseCase,
   );
   const registrarSalidaInventarioUseCase = new RegistrarSalidaInventarioUseCase(
     movimientoInventarioRepository,
     productoRepository,
     sucursalRepository,
     auditoriaRepository,
+    resolverAlcanceSucursalUseCase,
   );
 
   const registrarClienteUseCase = new RegistrarClienteUseCase(clienteRepository, auditoriaRepository);
