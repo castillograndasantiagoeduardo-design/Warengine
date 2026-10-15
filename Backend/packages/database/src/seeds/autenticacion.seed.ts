@@ -1,6 +1,6 @@
 import { type Database } from '../client.ts';
 import { permisos, rol_permisos, roles, usuarios } from '../schema/autenticacion.schema.ts';
-import { eq, sql } from 'drizzle-orm';
+import { and, eq, notInArray, sql } from 'drizzle-orm';
 
 const ROLES = [
   {
@@ -9,7 +9,8 @@ const ROLES = [
     descripcion: 'Propietario / SuperAdmin del sistema con visión global',
   },
   { id_rol: 2, nombre: 'admin-sucursal', descripcion: 'Administrador de Almacén y de Sucursal' },
-  { id_rol: 3, nombre: 'cajero-vendedor', descripcion: 'Cajero y Vendedor B2B' },
+  { id_rol: 3, nombre: 'cajero', descripcion: 'Cajero' },
+  { id_rol: 4, nombre: 'vendedor-b2b', descripcion: 'Vendedor B2B' },
 ];
 
 const PERMISOS = [
@@ -70,7 +71,7 @@ const PERMISOS = [
     id_permiso: 9,
     codigo: 'facturacion:facturar',
     modulo: 'facturacion',
-    descripcion: 'Abrir/cerrar turnos, emitir facturas y cobrar',
+    descripcion: 'Emitir facturas y cobrar',
   },
   {
     id_permiso: 10,
@@ -95,6 +96,24 @@ const PERMISOS = [
     codigo: 'facturacion:gestionar-clientes',
     modulo: 'facturacion',
     descripcion: 'Crear y editar información de clientes',
+  },
+  {
+    id_permiso: 27,
+    codigo: 'facturacion:abrir-turno',
+    modulo: 'facturacion',
+    descripcion: 'Abrir y operar turno de caja chica',
+  },
+  {
+    id_permiso: 28,
+    codigo: 'facturacion:vender-b2b',
+    modulo: 'facturacion',
+    descripcion: 'Emitir facturas corporativas a clientes B2B',
+  },
+  {
+    id_permiso: 29,
+    codigo: 'facturacion:alertar-admin',
+    modulo: 'facturacion',
+    descripcion: 'Emitir alertas directas al administrador de sucursal',
   },
 
   // Módulo: Administración
@@ -190,12 +209,23 @@ const PERMISOS_LOGISTICA = [
 ];
 
 const ASIGNACIONES: Record<string, string[]> = {
-  'cajero-vendedor': [
+  'cajero': [
     'inventario:leer',
-    'facturacion:facturar',
     'facturacion:consultar',
+    'facturacion:facturar',
     'facturacion:gestionar-clientes',
-    'logistica:leer',
+    'facturacion:abrir-turno',
+    'facturacion:vender-b2b',
+    'facturacion:alertar-admin',
+    'mcp:consultar',
+  ],
+  'vendedor-b2b': [
+    'inventario:leer',
+    'facturacion:consultar',
+    'facturacion:facturar',
+    'facturacion:gestionar-clientes',
+    'facturacion:vender-b2b',
+    'facturacion:alertar-admin',
     'mcp:consultar',
   ],
   'admin-sucursal': [
@@ -205,6 +235,8 @@ const ASIGNACIONES: Record<string, string[]> = {
     'inventario:ajustar-stock',
     'inventario:ver-kardex',
     'facturacion:facturar',
+    'facturacion:abrir-turno',
+    'facturacion:vender-b2b',
     'facturacion:consultar',
     'facturacion:gestionar-clientes',
     'facturacion:anular',
@@ -243,6 +275,16 @@ export async function seedAutenticacion(db: Database) {
     console.log('🧹 Rol obsoleto "admin-logistica" eliminado y dependencias depuradas.');
   }
 
+  // 1b. Renombrar 'cajero-vendedor' a 'cajero' conservando su id_rol (evitar usuarios huérfanos)
+  const rolCajeroVendedor = rolesExistentes.find((r) => r.nombre === 'cajero-vendedor');
+  if (rolCajeroVendedor) {
+    await db
+      .update(roles)
+      .set({ nombre: 'cajero', descripcion: 'Cajero' })
+      .where(eq(roles.id_rol, rolCajeroVendedor.id_rol));
+    console.log('🔄 Rol "cajero-vendedor" renombrado a "cajero" conservando id_rol.');
+  }
+
   // 2. Roles vigentes
   await db.insert(roles).values(ROLES).onDuplicateKeyUpdate({
     set: {
@@ -267,17 +309,30 @@ export async function seedAutenticacion(db: Database) {
   const rolesMap = new Map(rolesDb.map((r) => [r.nombre, r.id_rol]));
   const permisosMap = new Map(permisosDb.map((p) => [p.codigo, p.id_permiso]));
 
-  // 5. Asignaciones de permisos (idempotente)
+  // 5. Asignaciones de permisos (sincronización estricta e idempotente)
   const relaciones = [];
   for (const [nombreRol, codigosPermisos] of Object.entries(ASIGNACIONES)) {
     const rolId = rolesMap.get(nombreRol);
     if (!rolId) continue;
 
-    for (const codigo of codigosPermisos) {
-      const permisoId = permisosMap.get(codigo);
-      if (permisoId) {
-        relaciones.push({ rol_id: rolId, permiso_id: permisoId });
-      }
+    const idsPermisosPermitidos = codigosPermisos
+      .map((codigo) => permisosMap.get(codigo))
+      .filter((id): id is number => id !== undefined);
+
+    // Limpieza de permisos desasignados (ej. logistica:leer de cajero)
+    if (idsPermisosPermitidos.length > 0) {
+      await db
+        .delete(rol_permisos)
+        .where(
+          and(
+            eq(rol_permisos.rol_id, rolId),
+            notInArray(rol_permisos.permiso_id, idsPermisosPermitidos)
+          )
+        );
+    }
+
+    for (const permisoId of idsPermisosPermitidos) {
+      relaciones.push({ rol_id: rolId, permiso_id: permisoId });
     }
   }
 
