@@ -22,6 +22,7 @@ import { DrizzleClienteRepository } from '../../database/src/repositories/factur
 import { DrizzleCategoriaRepository } from '../../database/src/repositories/inventario/drizzle-categoria.repository.ts';
 import { DrizzleProveedorRepository } from '../../database/src/repositories/inventario/drizzle-proveedor.repository.ts';
 import { DrizzleProductoRepository } from '../../database/src/repositories/inventario/drizzle-producto.repository.ts';
+import { DrizzleMovimientoInventarioRepository } from '../../database/src/repositories/inventario/drizzle-movimiento-inventario.repository.ts';
 import { DrizzleTurnoCajaRepository } from '../../database/src/repositories/facturacion/drizzle-turno-caja.repository.ts';
 import { DrizzleUsuarioSucursalRepository } from '../../database/src/repositories/administracion/drizzle-usuario-sucursal.repository.ts';
 import { DrizzleSucursalesAutorizadasRepository } from '../../database/src/repositories/autenticacion/drizzle-sucursales-autorizadas.repository.ts';
@@ -99,6 +100,8 @@ import {
   ConsultarRendimientoSucursalesUseCase,
   ConsultarRankingProductosUseCase,
   ConsultarComparativoInventarioUseCase,
+  RegistrarEntradaInventarioUseCase,
+  RegistrarSalidaInventarioUseCase,
 } from '@warengine/core';
 
 export interface AppContainer {
@@ -162,6 +165,8 @@ export interface AppContainer {
     inactivarProducto: InactivarProductoUseCase;
     reactivarProducto: ReactivarProductoUseCase;
     cambiarEstadoProducto: CambiarEstadoProductoUseCase;
+    registrarEntrada: RegistrarEntradaInventarioUseCase;
+    registrarSalida: RegistrarSalidaInventarioUseCase;
   };
   facturacion: {
     registrarCliente: RegistrarClienteUseCase;
@@ -216,6 +221,7 @@ export function createContainer(_env?: Record<string, string>): AppContainer {
   const categoriaRepository = new DrizzleCategoriaRepository(db);
   const proveedorRepository = new DrizzleProveedorRepository(db);
   const productoRepository = new DrizzleProductoRepository(db);
+  const movimientoInventarioRepository = new DrizzleMovimientoInventarioRepository(db);
   const usuarioSucursalRepository = new DrizzleUsuarioSucursalRepository(db);
   const auditoriaRepository = new DrizzleAuditoriaRepository(db);
   const sucursalesAutorizadasRepository = new DrizzleSucursalesAutorizadasRepository(db);
@@ -388,6 +394,20 @@ export function createContainer(_env?: Record<string, string>): AppContainer {
     reactivarProductoUseCase,
   );
 
+  const registrarEntradaInventarioUseCase = new RegistrarEntradaInventarioUseCase(
+    movimientoInventarioRepository,
+    productoRepository,
+    sucursalRepository,
+    proveedorRepository,
+    auditoriaRepository,
+  );
+  const registrarSalidaInventarioUseCase = new RegistrarSalidaInventarioUseCase(
+    movimientoInventarioRepository,
+    productoRepository,
+    sucursalRepository,
+    auditoriaRepository,
+  );
+
   const registrarClienteUseCase = new RegistrarClienteUseCase(clienteRepository, auditoriaRepository);
   const buscarClientesUseCase = new BuscarClientesUseCase(clienteRepository);
 
@@ -467,6 +487,8 @@ export function createContainer(_env?: Record<string, string>): AppContainer {
       inactivarProducto: inactivarProductoUseCase,
       reactivarProducto: reactivarProductoUseCase,
       cambiarEstadoProducto: cambiarEstadoProductoUseCase,
+      registrarEntrada: registrarEntradaInventarioUseCase,
+      registrarSalida: registrarSalidaInventarioUseCase,
     },
     facturacion: {
       registrarCliente: registrarClienteUseCase,

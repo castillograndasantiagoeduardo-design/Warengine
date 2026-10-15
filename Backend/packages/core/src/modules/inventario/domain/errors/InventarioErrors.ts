@@ -55,3 +55,24 @@ export class SkuModificacionNoPermitidaError extends DomainError {
     super('No se permite modificar el SKU de un producto que ya registra movimientos.');
   }
 }
+
+export class StockInsuficienteError extends DomainError {
+  public readonly code = 'STOCK_INSUFICIENTE';
+  constructor(disponible: number, solicitado: number) {
+    super(`Stock insuficiente. Disponible: ${disponible}, solicitado: ${solicitado}.`);
+  }
+}
+
+export class CantidadInvalidaError extends DomainError {
+  public readonly code = 'CANTIDAD_INVALIDA';
+  constructor(mensaje: string = 'La cantidad debe ser un entero positivo mayor a cero.') {
+    super(mensaje);
+  }
+}
+
+export class MotivoSalidaRequeridoError extends DomainError {
+  public readonly code = 'MOTIVO_SALIDA_REQUERIDO';
+  constructor() {
+    super('El motivo de la salida manual es obligatorio (avería, merma, vencimiento, etc.).');
+  }
+}

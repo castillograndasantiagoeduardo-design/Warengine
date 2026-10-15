@@ -288,8 +288,8 @@ Content-Type: application/json
 {
   "sku": "LAC-001",
   "nombre": "Leche Entera 1L",
-  "categoriaId": {{catParaProd.response.body.id}},
-  "proveedorId": {{provParaProd.response.body.id}},
+  "categoriaId": 52,
+  "proveedorId": 52,
   "precioCompra": 2500.00,
   "precioVenta": 3200.00,
   "precioCorporativo": 2900.00,
