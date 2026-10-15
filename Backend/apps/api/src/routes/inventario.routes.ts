@@ -28,15 +28,14 @@ import {
   registrarSalidaController,
 } from '../controllers/inventario/movimiento-inventario.controller.ts';
 
+import { PERMISSIONS } from '@warengine/contracts';
+
 // Códigos según la tabla `permisos` (seed).
-// `inventario:leer`: super-admin, admin-sucursal, cajero-vendedor
-// `inventario:escribir`: super-admin, admin-sucursal (cajero-vendedor recibe 403)
-// `inventario:registrar-movimiento`: super-admin, admin-sucursal (registro de entradas/salidas)
-// `inventario:ver-kardex`: super-admin, admin-sucursal (historial de movimientos)
-const PERMISO_INVENTARIO_LEER = 'inventario:leer';
-const PERMISO_INVENTARIO_ESCRIBIR = 'inventario:escribir';
-const PERMISO_INVENTARIO_REGISTRAR_MOVIMIENTO = 'inventario:registrar-movimiento';
-const PERMISO_INVENTARIO_VER_KARDEX = 'inventario:ver-kardex';
+// Si los nuevos permisos ya existen dentro del objeto PERMISOS de @warengine/contratos:
+const PERMISO_INVENTARIO_LEER = PERMISOS.INVENTARIO_LEER;
+const PERMISO_INVENTARIO_ESCRIBIR = PERMISOS.INVENTARIO_ESCRIBIR;
+const PERMISO_INVENTARIO_REGISTRAR_MOVIMIENTO = PERMISOS.INVENTARIO_REGISTRADOR_MOVIMIENTO ?? 'inventario:registrador-movimiento';
+const PERMISO_INVENTARIO_VER_KARDEX = PERMISOS.INVENTARIO_VER_KARDEX ?? 'inventario:ver-kardex';
 
 export function createInventarioRoutes(container: AppContainer): Hono {
   const api = new Hono();

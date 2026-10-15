@@ -49,7 +49,7 @@ const hasher: IPasswordService = {
 };
 
 const usuario = (isActive = true) =>
-  new UsuarioGestionado('u-9', 'Luis', 'luis@warengine.local', 3, 'cajero-vendedor', 1, 'Centro', isActive);
+  new UsuarioGestionado('u-9', 'Luis', 'luis@warengine.local', 3, 'cajero', 1, 'Centro', isActive);
 
 Deno.test('RestablecerPassword: guarda el HASH (no el texto plano) e invalida las sesiones', async () => {
   const { repo, llamadas } = usuariosFalsos(usuario());

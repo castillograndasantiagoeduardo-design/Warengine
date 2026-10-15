@@ -17,6 +17,9 @@ export const PERMISSIONS = {
 
   // Facturación
   FACTURACION_FACTURAR: 'facturacion:facturar',
+  FACTURACION_ABRIR_TURNO: 'facturacion:abrir-turno',
+  FACTURACION_VENDER_B2B: 'facturacion:vender-b2b',
+  FACTURACION_ALERTAR_ADMIN: 'facturacion:alertar-admin',
   FACTURACION_ANULAR: 'facturacion:anular',
   FACTURACION_DEVOLUCION: 'facturacion:devolucion',
   FACTURACION_CONSULTAR: 'facturacion:consultar',

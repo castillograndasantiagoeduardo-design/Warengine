@@ -35,6 +35,7 @@ export const ENTIDADES_AUDITORIA = {
   EMPLEADOS: 'empleados',
   HISTORIAL_SALARIOS: 'historial_salarios',
   ALERTAS_ADMIN: 'alertas_admin',
+  FACTURAS: 'facturas',
 } as const;
 
 export type EntidadAuditoria = (typeof ENTIDADES_AUDITORIA)[keyof typeof ENTIDADES_AUDITORIA];
@@ -52,4 +53,5 @@ export const ENTIDADES_AUDITORIA_VALORES = [
   ENTIDADES_AUDITORIA.EMPLEADOS,
   ENTIDADES_AUDITORIA.HISTORIAL_SALARIOS,
   ENTIDADES_AUDITORIA.ALERTAS_ADMIN,
+  ENTIDADES_AUDITORIA.FACTURAS,
 ] as const;

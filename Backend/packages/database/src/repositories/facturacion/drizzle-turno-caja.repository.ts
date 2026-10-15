@@ -51,4 +51,34 @@ export class DrizzleTurnoCajaRepository implements ITurnoCajaRepository {
             .limit(1);
         return turnoCajaFromRow(row);
     }
+
+    public async findById(id: string): Promise<TurnoCaja | null> {
+        const [row] = await this.db
+            .select()
+            .from(turnos_caja)
+            .where(
+                and(
+                    eq(turnos_caja.id_turno_caja, id),
+                    isNull(turnos_caja.deleted_at),
+                ),
+            )
+            .limit(1);
+        return row ? turnoCajaFromRow(row) : null;
+    }
+
+    public async cerrar(id: string, fondoFinal: number): Promise<TurnoCaja> {
+        await this.db
+            .update(turnos_caja)
+            .set({
+                fondo_final: fondoFinal.toFixed(2),
+                fecha_cierre: new Date(),
+            })
+            .where(eq(turnos_caja.id_turno_caja, id));
+
+        const turno = await this.findById(id);
+        if (!turno) {
+            throw new Error(`Turno no encontrado tras cierre: ${id}`);
+        }
+        return turno;
+    }
 }

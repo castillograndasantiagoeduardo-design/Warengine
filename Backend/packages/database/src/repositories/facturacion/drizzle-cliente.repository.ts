@@ -3,6 +3,7 @@ import { Database } from '../../client.ts';
 import { clientes } from '../../schema/facturacion.schema.ts';
 import {
     Cliente,
+    DatosActualizarCliente,
     DatosCliente,
     FiltrosClientes,
     IClienteRepository,
@@ -81,12 +82,44 @@ export class DrizzleClienteRepository implements IClienteRepository {
         return (await this.findById(id)) as Cliente;
     }
 
-    private async findById(id: string): Promise<Cliente | null> {
+    public async findById(id: string): Promise<Cliente | null> {
         const [row] = await this.db
             .select()
             .from(clientes)
-            .where(eq(clientes.id_cliente, id))
+            .where(and(eq(clientes.id_cliente, id), isNull(clientes.deleted_at)))
             .limit(1);
         return row ? clienteFromRow(row) : null;
+    }
+
+    public async actualizar(id: string, datos: DatosActualizarCliente): Promise<Cliente> {
+        const valores: Record<string, unknown> = {};
+        if (datos.nombreRazonSocial !== undefined) {
+            valores.nombre_razon_social = datos.nombreRazonSocial;
+        }
+        if (datos.email !== undefined) {
+            valores.email = datos.email;
+        }
+        if (datos.telefono !== undefined) {
+            valores.telefono = datos.telefono;
+        }
+        if (datos.direccion !== undefined) {
+            valores.direccion = datos.direccion;
+        }
+        if (datos.creditoHabilitado !== undefined) {
+            valores.credito_habilitado = datos.creditoHabilitado ? 1 : 0;
+        }
+
+        if (Object.keys(valores).length > 0) {
+            await this.db
+                .update(clientes)
+                .set(valores)
+                .where(eq(clientes.id_cliente, id));
+        }
+
+        const actualizado = await this.findById(id);
+        if (!actualizado) {
+            throw new Error(`Cliente no encontrado tras actualización: ${id}`);
+        }
+        return actualizado;
     }
 }

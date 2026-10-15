@@ -8,7 +8,8 @@
 #   POST /ventas/clientes         → registrar cliente (permiso: facturacion:gestionar-clientes)
 #
 # Roles con acceso:
-#   3 = cajero-vendedor   → tiene facturacion:consultar + facturacion:gestionar-clientes
+#   4 = vendedor-b2b      → tiene facturacion:consultar + facturacion:gestionar-clientes
+#   3 = cajero            → tiene facturacion:consultar + facturacion:gestionar-clientes
 #   2 = admin-sucursal    → ídem (más permisos extra)
 #   1 = super-admin       → todos los permisos
 #

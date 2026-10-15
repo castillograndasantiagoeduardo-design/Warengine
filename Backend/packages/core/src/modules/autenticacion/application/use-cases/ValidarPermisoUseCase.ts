@@ -28,6 +28,7 @@ export interface ValidarPermisoRequest {
 export interface IdentidadAutenticada {
   usuarioId: string;
   rolId: number;
+  permisos: string[];
 }
 
 export type ValidarPermisoResponse = Result<IdentidadAutenticada, DomainError>;
@@ -59,9 +60,9 @@ export class ValidarPermisoUseCase {
         return Result.fail(new TokenInvalidoError('Token revocado, inicie sesión de nuevo.'));
       }
 
-      if (request.permisoRequerido) {
-        const permisos = await this.rolRepository.obtenerPermisosDeRol(usuario.rolId);
+      const permisos = await this.rolRepository.obtenerPermisosDeRol(usuario.rolId);
 
+      if (request.permisoRequerido) {
         if (!permisos.includes(request.permisoRequerido)) {
           // RF-ADM-C11: Auditoría de acceso denegado cuando el usuario autenticado carece del permiso requerido
           await this.auditor.registrar({
@@ -83,7 +84,7 @@ export class ValidarPermisoUseCase {
         }
       }
 
-      return Result.ok({ usuarioId: usuario.id, rolId: usuario.rolId });
+      return Result.ok({ usuarioId: usuario.id, rolId: usuario.rolId, permisos });
     } catch (_e) {
       // Decisión consciente: Errores criptográficos de token (firma corrupta, expirado)
       // no generan logs_auditoria al carecer de usuario confiable.

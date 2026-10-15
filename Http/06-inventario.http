@@ -2,7 +2,7 @@
 # MÓDULO: INVENTARIO - CATEGORÍAS (RF-ADM-B5) Y PROVEEDORES (RF-ADM-B6)
 # Requiere: REST Client (extensión VS Code)
 # Roles requeridos:
-#   - Lectura: super-admin, admin-sucursal, cajero-vendedor (inventario:leer)
+#   - Lectura: super-admin, admin-sucursal, cajero, vendedor-b2b (inventario:leer)
 #   - Escritura: super-admin, admin-sucursal (inventario:escribir)
 # Base URL: http://localhost:8017
 # ==============================================================================

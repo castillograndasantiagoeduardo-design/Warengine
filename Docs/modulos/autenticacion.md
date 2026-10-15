@@ -264,7 +264,7 @@ Representa la cuenta de acceso de un empleado al sistema:
 - **Archivo:** [ValidarPermisoUseCase.ts](../../Backend/packages/core/src/modules/autenticacion/application/use-cases/ValidarPermisoUseCase.ts)
 - **Dependencias inyectadas:** `ITokenService`, `IUsuarioRepository`, `IRolRepository`, `IAuditor?`
 - **Entrada:** `{ token: string; permisoRequerido?: string; actor?: ActorAuditoria; metodo?: string; ruta?: string }`
-- **Salida:** `Result<ValidarPermisoOutput, DomainError>` (retorna `{ usuarioId, rolId }`)
+- **Salida:** `Result<ValidarPermisoOutput, DomainError>` (retorna `{ usuarioId, rolId, permisos }`)
 - **Reglas de negocio:**
   1. Valida la firma criptográfica y expiración del JWT (`ITokenService.validarAccessToken`).
   2. Carga al usuario de la BD en tiempo real.
@@ -282,17 +282,21 @@ Representa la cuenta de acceso de un empleado al sistema:
 
 ### 6.1 Tablas Drizzle ([autenticacion.schema.ts](../../Backend/packages/database/src/schema/autenticacion.schema.ts))
 
-- **`roles`**: `id_rol` (PK), `nombre` (varchar 50 unique), `descripcion`.
-- **`permisos`**: `id_permiso` (PK), `codigo` (`varcharBin(100)` unique con `COLLATE utf8mb4_bin`), `modulo`, `descripcion`.
-- **`rol_permisos`**: `rol_id` (FK roles), `permiso_id` (FK permisos), PK compuesta (`rol_id`, `permiso_id`).
-- **`usuarios`**: `id_usuario` (char 36 PK UUID), `empleado_id` (int unique FK empleados), `email` (varchar 150 unique), `password_hash` (`varcharBin(255)`), `rol_id` (int FK roles), `is_active` (boolean def 1), `requiere_2fa` (boolean def 0), `totp_secret` (varchar 64), `tokens_invalidados_en` (timestamp), `creado_en`, `actualizado_en`.
-- **`refresh_tokens`**: `id` (bigint PK), `usuario_id` (char 36 FK usuarios), `token_hash` (`varcharBin(64)` SHA-256), `expira_en` (timestamp), `revocado` (boolean def 0), `creado_en`.
-- **`intentos_login`**: `id` (bigint PK), `email` (varchar 150, con índice `idx_intentos_login_email`), `ip` (varchar 45, con índice `idx_intentos_login_ip`), `exitoso` (boolean), `fecha` (timestamp def current_timestamp).
+- **`roles`**: `id_rol` (int auto PK), `nombre` (varchar 50 unique), `descripcion` (varchar 255).
+- **`permisos`**: `id_permiso` (int auto PK), `codigo` (`varcharBin(100)` unique con `COLLATE utf8mb4_bin`), `modulo` (varchar 50), `descripcion` (varchar 255).
+- **`rol_permisos`**: `rol_id` (int FK roles), `permiso_id` (int FK permisos), PK compuesta (`rol_id`, `permiso_id`).
+- **`usuarios`**: `id_usuario` (char 36 PK UUID default UUID()), `empleado_id` (int unique FK empleados), `email` (varchar 150 unique), `password_hash` (`varcharBin(255)`), `rol_id` (int FK roles), `is_active` (tinyint def 1), `requiere_2fa` (tinyint def 0), `totp_secret` (varchar 64), `tokens_invalidados_en` (datetime), `creado_en`, `actualizado_en`.
+- **`refresh_tokens`**: `id` en Drizzle (`id_refresh_token` en BD, bigint PK auto), `usuario_id` (char 36 FK usuarios), `token_hash` (`varcharBin(64)` SHA-256), `expira_en` (datetime), `revocado` (tinyint def 0), `creado_en`.
+- **`intentos_login`**: `id` en Drizzle (`id_intento` en BD, bigint PK auto), `email` (varchar 150, con índice `idx_intentos_login_email`), `ip` (varchar 45, con índice `idx_intentos_login_ip`), `exitoso` (tinyint), `fecha` (datetime def current_timestamp).
 
 ### 6.2 Reglas de Base de Datos (Triggers y Constraints)
 - **`trg_usuarios_marca_invalidacion_token` (BEFORE UPDATE)**: Si se modifica `rol_id` o `is_active` en `usuarios`, MySQL automáticamente asigna `NEW.tokens_invalidados_en = CURRENT_TIMESTAMP`.
 - **`trg_usucursales_marca_invalidacion_insert` / `delete`**: Modificaciones sobre `usuario_sucursales` marcan automáticamente `tokens_invalidados_en = CURRENT_TIMESTAMP` en el usuario afectado.
 - **Collation Binaria (`varcharBin`)**: Las columnas `codigo` en `permisos`, `password_hash` y `token_hash` utilizan `COLLATE utf8mb4_bin` para impedir discrepancias por mayúsculas/minúsculas o acentos en comparaciones de seguridad.
+- **Carga dinámica de permisos vs. Invalidación de sesión (Sección 7.3 del documento de contexto):**
+  - Los permisos se resuelven en tiempo de ejecución en cada petición protegida mediante `ValidarPermisoUseCase` consultando la tabla `rol_permisos` fresca a través de `IRolRepository.obtenerPermisosDeRol(usuario.rolId)`.
+  - **Consecuencia directa:** Cualquier adición, revocación o cambio en `rol_permisos` surte efecto de forma inmediata sin necesidad de invalidar tokens ni requerir re-login del usuario.
+  - **En contraste:** Cuando se altera el rol asignado a un usuario (`rol_id`) o su estado (`is_active`), el trigger `trg_usuarios_marca_invalidacion_token` actualiza `tokens_invalidados_en = CURRENT_TIMESTAMP`, lo que rechaza de inmediato cualquier JWT emitido previamente con código `401 Unauthorized` (`TOKEN_INVALIDO`), obligando al usuario a iniciar sesión nuevamente.
 
 ---
 
@@ -340,9 +344,10 @@ Permisos del módulo en la tabla `permisos`:
 - `autenticacion:ver-auditoria` (SuperAdmin)
 
 Asignación por rol según el seed ([autenticacion.seed.ts](../../Backend/packages/database/src/seeds/autenticacion.seed.ts)):
-- `super-admin`: Posee todos los permisos de autenticación (y los 26 del sistema).
+- `super-admin`: Posee todos los permisos de autenticación (y los 29 del sistema).
 - `admin-sucursal`: No posee permisos directos sobre el catálogo de autenticación.
-- `cajero-vendedor`: No posee permisos sobre autenticación.
+- `cajero`: No posee permisos sobre autenticación.
+- `vendedor-b2b`: No posee permisos sobre autenticación.
 
 ---
 
@@ -461,7 +466,7 @@ sequenceDiagram
         UC-->>M: Result.fail(PermisoDenegadoError)
         M-->>C: 403 Forbidden
     end
-    UC-->>M: Result.ok({ usuarioId, rolId })
+    UC-->>M: Result.ok({ usuarioId, rolId, permisos })
     M->>C: next() hacia el controlador final
 ```
 

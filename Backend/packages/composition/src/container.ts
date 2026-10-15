@@ -34,6 +34,7 @@ import { DrizzleAlertaAdminRepository } from '../../database/src/repositories/ad
 import { DrizzleMetricasAdminRepository } from '../../database/src/repositories/administracion/drizzle-metricas-admin.repository.ts';
 
 import { DrizzleSucursalOperadorRepository } from '../../database/src/repositories/facturacion/drizzle-sucursal-operador.repository.ts';
+import { DrizzleFacturaRepository } from '../../database/src/repositories/facturacion/drizzle-factura.repository.ts';
 
 import { JwtTokenService } from '../../platform/src/jwt/jwt-token-service.ts';
 import { Argon2PasswordHasher } from '../../platform/src/hashing/argon2-password-hasher.ts';
@@ -60,6 +61,8 @@ import {
   CambiarRolUsuarioUseCase,
   CambiarEstadoUsuarioUseCase,
   RegistrarClienteUseCase,
+  ActualizarClienteUseCase,
+  ObtenerClientePorIdUseCase,
   BuscarClientesUseCase,
   ListarCategoriasUseCase,
   ObtenerCategoriaPorIdUseCase,
@@ -85,6 +88,7 @@ import {
   CambiarEstadoProductoUseCase,
   RestablecerPasswordUsuarioUseCase,
   AbrirTurnoCajaUseCase,
+  CerrarTurnoCajaUseCase,
   ObtenerTurnoActualUseCase,
   AsignarSucursalesUsuarioUseCase,
   ObtenerSucursalesUsuarioUseCase,
@@ -100,6 +104,10 @@ import {
   ConsultarRendimientoSucursalesUseCase,
   ConsultarRankingProductosUseCase,
   ConsultarComparativoInventarioUseCase,
+  CrearFacturaUseCase,
+  ListarFacturasUseCase,
+  ObtenerFacturaPorIdUseCase,
+  EmitirAlertaFacturacionUseCase,
   RegistrarEntradaInventarioUseCase,
   RegistrarSalidaInventarioUseCase,
   ConsultarKardexUseCase,
@@ -172,9 +180,16 @@ export interface AppContainer {
   };
   facturacion: {
     registrarCliente: RegistrarClienteUseCase;
+    actualizarCliente: ActualizarClienteUseCase;
+    obtenerClientePorId: ObtenerClientePorIdUseCase;
     buscarClientes: BuscarClientesUseCase;
     abrirTurnoCaja: AbrirTurnoCajaUseCase;
+    cerrarTurnoCaja: CerrarTurnoCajaUseCase;
     obtenerTurnoActual: ObtenerTurnoActualUseCase;
+    crearFactura: CrearFacturaUseCase;
+    listarFacturas: ListarFacturasUseCase;
+    obtenerFacturaPorId: ObtenerFacturaPorIdUseCase;
+    emitirAlertaFacturacion: EmitirAlertaFacturacionUseCase;
   };
 }
 
@@ -232,6 +247,7 @@ export function createContainer(_env?: Record<string, string>): AppContainer {
   const metricasAdminRepository = new DrizzleMetricasAdminRepository(db);
   const turnoCajaRepository = new DrizzleTurnoCajaRepository(db);
   const sucursalOperadorRepository = new DrizzleSucursalOperadorRepository(db);
+  const facturaRepository = new DrizzleFacturaRepository(db);
   // 2. Instanciar Servicios Técnicos
   const tokenService = new JwtTokenService(refreshTokenRepository, jwtSecret);
   const passwordHasher = new Argon2PasswordHasher();
@@ -347,6 +363,27 @@ export function createContainer(_env?: Record<string, string>): AppContainer {
     alertaStockRepository,
   );
   const obtenerTurnoActualUseCase = new ObtenerTurnoActualUseCase(turnoCajaRepository);
+  const cerrarTurnoCajaUseCase = new CerrarTurnoCajaUseCase(turnoCajaRepository, auditoriaRepository);
+  const crearFacturaUseCase = new CrearFacturaUseCase(
+    facturaRepository,
+    turnoCajaRepository,
+    clienteRepository,
+    sucursalOperadorRepository,
+    auditoriaRepository,
+  );
+  const listarFacturasUseCase = new ListarFacturasUseCase(
+    facturaRepository,
+    sucursalOperadorRepository,
+  );
+  const obtenerFacturaPorIdUseCase = new ObtenerFacturaPorIdUseCase(
+    facturaRepository,
+    sucursalOperadorRepository,
+  );
+  const emitirAlertaFacturacionUseCase = new EmitirAlertaFacturacionUseCase(
+    alertaAdminRepository,
+    sucursalOperadorRepository,
+    auditoriaRepository,
+  );
   const consultarAuditoriaUseCase = new ConsultarAuditoriaUseCase(auditoriaRepository);
   
 
@@ -417,6 +454,8 @@ export function createContainer(_env?: Record<string, string>): AppContainer {
   );
 
   const registrarClienteUseCase = new RegistrarClienteUseCase(clienteRepository, auditoriaRepository);
+  const actualizarClienteUseCase = new ActualizarClienteUseCase(clienteRepository, auditoriaRepository);
+  const obtenerClientePorIdUseCase = new ObtenerClientePorIdUseCase(clienteRepository);
   const buscarClientesUseCase = new BuscarClientesUseCase(clienteRepository);
 
   return {
@@ -501,10 +540,16 @@ export function createContainer(_env?: Record<string, string>): AppContainer {
     },
     facturacion: {
       registrarCliente: registrarClienteUseCase,
+      actualizarCliente: actualizarClienteUseCase,
+      obtenerClientePorId: obtenerClientePorIdUseCase,
       buscarClientes: buscarClientesUseCase,
       abrirTurnoCaja: abrirTurnoCajaUseCase,
+      cerrarTurnoCaja: cerrarTurnoCajaUseCase,
       obtenerTurnoActual: obtenerTurnoActualUseCase,
-      
+      crearFactura: crearFacturaUseCase,
+      listarFacturas: listarFacturasUseCase,
+      obtenerFacturaPorId: obtenerFacturaPorIdUseCase,
+      emitirAlertaFacturacion: emitirAlertaFacturacionUseCase,
     },
   };
 }

@@ -21,7 +21,13 @@ export function listarProductosController(container: AppContainer) {
     if (!parsed.success) {
       return c.json({ error: 'VALIDATION_ERROR', issues: parsed.error.errors }, 400);
     }
-    return presentResult(c, await container.inventario.listarProductos.execute(parsed.data));
+    return presentResult(
+      c,
+      await container.inventario.listarProductos.execute({
+        ...parsed.data,
+        actor: obtenerActor(c),
+      }),
+    );
   });
 }
 
@@ -32,7 +38,13 @@ export function obtenerProductoPorIdController(container: AppContainer) {
       return c.json({ error: 'VALIDATION_ERROR', message: 'Id de producto inválido: debe ser un UUID.' }, 400);
     }
     // Aquí TypeScript ya sabe que id es string (type predicate id is string)
-    return presentResult(c, await container.inventario.obtenerProductoPorId.execute({ id }));
+    return presentResult(
+      c,
+      await container.inventario.obtenerProductoPorId.execute({
+        id,
+        actor: obtenerActor(c),
+      }),
+    );
   });
 }
 

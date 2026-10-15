@@ -49,6 +49,8 @@ function makeRepository(existente: Cliente | null) {
                 ),
             );
         },
+        findById: (id: string) => Promise.resolve(existente?.id === id ? existente : null),
+        actualizar: (_id: string, _datos) => Promise.resolve(existente ?? makeCliente()),
     };
     return { repo, creados };
 }
