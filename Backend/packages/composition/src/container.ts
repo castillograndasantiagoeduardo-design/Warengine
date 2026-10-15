@@ -102,6 +102,7 @@ import {
   ConsultarComparativoInventarioUseCase,
   RegistrarEntradaInventarioUseCase,
   RegistrarSalidaInventarioUseCase,
+  ConsultarKardexUseCase,
 } from '@warengine/core';
 
 export interface AppContainer {
@@ -167,6 +168,7 @@ export interface AppContainer {
     cambiarEstadoProducto: CambiarEstadoProductoUseCase;
     registrarEntrada: RegistrarEntradaInventarioUseCase;
     registrarSalida: RegistrarSalidaInventarioUseCase;
+    consultarKardex: ConsultarKardexUseCase;
   };
   facturacion: {
     registrarCliente: RegistrarClienteUseCase;
@@ -409,6 +411,10 @@ export function createContainer(_env?: Record<string, string>): AppContainer {
     auditoriaRepository,
     resolverAlcanceSucursalUseCase,
   );
+  const consultarKardexUseCase = new ConsultarKardexUseCase(
+    movimientoInventarioRepository,
+    resolverAlcanceSucursalUseCase,
+  );
 
   const registrarClienteUseCase = new RegistrarClienteUseCase(clienteRepository, auditoriaRepository);
   const buscarClientesUseCase = new BuscarClientesUseCase(clienteRepository);
@@ -491,6 +497,7 @@ export function createContainer(_env?: Record<string, string>): AppContainer {
       cambiarEstadoProducto: cambiarEstadoProductoUseCase,
       registrarEntrada: registrarEntradaInventarioUseCase,
       registrarSalida: registrarSalidaInventarioUseCase,
+      consultarKardex: consultarKardexUseCase,
     },
     facturacion: {
       registrarCliente: registrarClienteUseCase,

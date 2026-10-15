@@ -1,13 +1,16 @@
 import { assertEquals } from 'jsr:@std/assert';
 import {
   CantidadInvalidaError,
+  ConsultarKardexUseCase,
   DatosRegistroEntrada,
   DatosRegistroSalida,
+  FiltrosKardex,
   IAuditor,
   IMovimientoInventarioRepository,
   IProductoRepository,
   IProveedorRepository,
   ISucursalRepository,
+  ItemKardex,
   MotivoSalidaRequeridoError,
   MovimientoInventario,
   Producto,
@@ -30,6 +33,7 @@ import {
 class InMemoryMovimientoRepository implements IMovimientoInventarioRepository {
   public stock: Map<string, number> = new Map();
   public movimientos: MovimientoInventario[] = [];
+  private seq = 0;
 
   private key(productoId: string, sucursalId: number): string {
     return `${productoId}__${sucursalId}`;
@@ -48,9 +52,10 @@ class InMemoryMovimientoRepository implements IMovimientoInventarioRepository {
     const actual = this.stock.get(k) ?? 0;
     const nuevo = actual + datos.cantidad;
     this.stock.set(k, nuevo);
+    this.seq++;
 
     const mov: MovimientoInventario = {
-      id: 'mov-entrada-1',
+      id: `mov-entrada-${this.seq}`,
       productoId: datos.productoId,
       sucursalId: datos.sucursalId,
       tipo: 'entrada',
@@ -58,7 +63,7 @@ class InMemoryMovimientoRepository implements IMovimientoInventarioRepository {
       motivo: datos.motivo ?? null,
       proveedorId: datos.proveedorId ?? null,
       usuarioId: datos.usuarioId,
-      fecha: new Date(),
+      fecha: new Date(Date.now() + this.seq * 1000),
       stockResultante: nuevo,
     };
     this.movimientos.push(mov);
@@ -73,20 +78,64 @@ class InMemoryMovimientoRepository implements IMovimientoInventarioRepository {
     }
     const nuevo = actual - datos.cantidad;
     this.stock.set(k, nuevo);
+    this.seq++;
 
     const mov: MovimientoInventario = {
-      id: 'mov-salida-1',
+      id: `mov-salida-${this.seq}`,
       productoId: datos.productoId,
       sucursalId: datos.sucursalId,
       tipo: 'salida',
       cantidad: datos.cantidad,
       motivo: datos.motivo,
       usuarioId: datos.usuarioId,
-      fecha: new Date(),
+      fecha: new Date(Date.now() + this.seq * 1000),
       stockResultante: nuevo,
     };
     this.movimientos.push(mov);
     return mov;
+  }
+
+  public async consultarKardex(filtros: FiltrosKardex): Promise<{ items: ItemKardex[]; total: number }> {
+    let items = [...this.movimientos];
+
+    if (filtros.productoId) {
+      items = items.filter((m) => m.productoId === filtros.productoId);
+    }
+    if (filtros.sucursalId !== undefined) {
+      items = items.filter((m) => m.sucursalId === filtros.sucursalId);
+    } else if (filtros.sucursalIds && filtros.sucursalIds.length > 0) {
+      items = items.filter((m) => filtros.sucursalIds!.includes(m.sucursalId));
+    }
+    if (filtros.tipo) {
+      items = items.filter((m) => m.tipo === filtros.tipo);
+    }
+    if (filtros.desde) {
+      items = items.filter((m) => m.fecha >= filtros.desde!);
+    }
+    if (filtros.hasta) {
+      items = items.filter((m) => m.fecha <= filtros.hasta!);
+    }
+
+    // Ordenar cronológicamente descendente
+    items.sort((a, b) => b.fecha.getTime() - a.fecha.getTime());
+
+    const total = items.length;
+    const paginados = items.slice(filtros.offset, filtros.offset + filtros.limit);
+
+    return {
+      items: paginados.map((m) => ({
+        id: m.id,
+        productoId: m.productoId,
+        sucursalId: m.sucursalId,
+        tipo: m.tipo,
+        cantidad: m.cantidad,
+        motivo: m.motivo,
+        proveedorId: m.proveedorId,
+        usuarioId: m.usuarioId,
+        fecha: m.fecha,
+      })),
+      total,
+    };
   }
 }
 
@@ -181,9 +230,11 @@ function crearEscenario() {
     auditor,
   );
 
+  const kardexUseCase = new ConsultarKardexUseCase(movRepo);
+
   const actor = { usuarioId: 'user-admin-1', ip: '127.0.0.1' };
 
-  return { movRepo, prodRepo, sucRepo, provRepo, auditor, entradaUseCase, salidaUseCase, actor };
+  return { movRepo, prodRepo, sucRepo, provRepo, auditor, entradaUseCase, salidaUseCase, kardexUseCase, actor };
 }
 
 // ─── Tests: Entradas de Inventario (RF-ADM-B7) ──────────────────────────────
@@ -498,4 +549,166 @@ Deno.test('Salida (RF-ADM-B8 / RNF-ADM-04): rechaza si la sucursal está fuera d
   assertEquals(res.isSuccess, false);
   assertEquals(res.error instanceof SucursalFueraDeAlcanceError, true);
 });
+
+// ─── Tests: Historial de Movimientos / Kardex (RF-ADM-B10) ───────────────────
+
+Deno.test('Kardex (RF-ADM-B10): consulta cronológica de entradas y salidas ordenadas descendentemente', async () => {
+  const { movRepo, entradaUseCase, salidaUseCase, kardexUseCase, actor } = crearEscenario();
+
+  // 1. Sembrar entrada
+  await entradaUseCase.execute({
+    productoId: 'prod-1',
+    sucursalId: 1,
+    cantidad: 20,
+    proveedorId: 1,
+    motivo: 'Compra de lote 1',
+    actor,
+  });
+
+  // 2. Sembrar salida
+  await salidaUseCase.execute({
+    productoId: 'prod-1',
+    sucursalId: 1,
+    cantidad: 5,
+    motivo: 'Salida por merma',
+    actor,
+  });
+
+  // 3. Consultar kardex
+  const result = await kardexUseCase.execute({
+    limit: 10,
+    offset: 0,
+    actor,
+  });
+
+  assertEquals(result.isSuccess, true);
+  const data = result.value;
+  assertEquals(data.total, 2);
+  assertEquals(data.items.length, 2);
+  // El más reciente primero
+  assertEquals(data.items[0].tipo, 'salida');
+  assertEquals(data.items[0].cantidad, 5);
+  assertEquals(data.items[1].tipo, 'entrada');
+  assertEquals(data.items[1].cantidad, 20);
+});
+
+Deno.test('Kardex (RF-ADM-B10): filtra correctamente por productoId y tipo de movimiento', async () => {
+  const { movRepo, entradaUseCase, salidaUseCase, kardexUseCase, actor } = crearEscenario();
+
+  await entradaUseCase.execute({
+    productoId: 'prod-1',
+    sucursalId: 1,
+    cantidad: 15,
+    actor,
+  });
+  await salidaUseCase.execute({
+    productoId: 'prod-1',
+    sucursalId: 1,
+    cantidad: 2,
+    motivo: 'Avería',
+    actor,
+  });
+
+  // Filtrar solo entradas
+  const resEntradas = await kardexUseCase.execute({
+    productoId: 'prod-1',
+    tipo: 'entrada',
+    limit: 10,
+    offset: 0,
+    actor,
+  });
+
+  assertEquals(resEntradas.isSuccess, true);
+  assertEquals(resEntradas.value.total, 1);
+  assertEquals(resEntradas.value.items[0].tipo, 'entrada');
+  assertEquals(resEntradas.value.items[0].cantidad, 15);
+
+  // Filtrar producto sin movimientos
+  const resVacio = await kardexUseCase.execute({
+    productoId: 'prod-sin-movimientos',
+    limit: 10,
+    offset: 0,
+    actor,
+  });
+
+  assertEquals(resVacio.isSuccess, true);
+  assertEquals(resVacio.value.total, 0);
+  assertEquals(resVacio.value.items.length, 0);
+});
+
+Deno.test('Kardex (RF-ADM-B10 / RNF-ADM-04): rechaza si el usuario consulta una sucursal fuera de su alcance', async () => {
+  const { movRepo, actor } = crearEscenario();
+
+  const mockResolverAlcance = {
+    execute: async () => ({
+      isSuccess: true,
+      isFailure: false,
+      value: {
+        esGlobal: false,
+        permite: (sucursalId: number) => sucursalId === 1,
+        sucursalesPermitidas: () => [1],
+      },
+    }),
+  } as any;
+
+  const kardexConAlcance = new ConsultarKardexUseCase(movRepo, mockResolverAlcance);
+
+  // Intenta consultar la sucursal 2 estando solo autorizado en la 1
+  const res = await kardexConAlcance.execute({
+    sucursalId: 2,
+    limit: 10,
+    offset: 0,
+    actor,
+  });
+
+  assertEquals(res.isSuccess, false);
+  assertEquals(res.error instanceof SucursalFueraDeAlcanceError, true);
+});
+
+Deno.test('Kardex (RF-ADM-B10 / RNF-ADM-04): acota a las sucursales asignadas si no se especifica sucursalId', async () => {
+  const { movRepo, entradaUseCase, actor } = crearEscenario();
+
+  // Movimiento en sucursal 1
+  await entradaUseCase.execute({
+    productoId: 'prod-1',
+    sucursalId: 1,
+    cantidad: 10,
+    actor,
+  });
+
+  // Movimiento en sucursal 2
+  await entradaUseCase.execute({
+    productoId: 'prod-1',
+    sucursalId: 2,
+    cantidad: 30,
+    actor,
+  });
+
+  // Usuario acotado solo a sucursal 1
+  const mockResolverAlcance = {
+    execute: async () => ({
+      isSuccess: true,
+      isFailure: false,
+      value: {
+        esGlobal: false,
+        permite: (sucursalId: number) => sucursalId === 1,
+        sucursalesPermitidas: () => [1],
+      },
+    }),
+  } as any;
+
+  const kardexConAlcance = new ConsultarKardexUseCase(movRepo, mockResolverAlcance);
+
+  const res = await kardexConAlcance.execute({
+    limit: 10,
+    offset: 0,
+    actor,
+  });
+
+  assertEquals(res.isSuccess, true);
+  assertEquals(res.value.total, 1);
+  assertEquals(res.value.items[0].sucursalId, 1);
+  assertEquals(res.value.items[0].cantidad, 10);
+});
+
 

@@ -23,6 +23,7 @@ import {
   obtenerProductoPorIdController,
 } from '../controllers/inventario/producto.controller.ts';
 import {
+  consultarKardexController,
   registrarEntradaController,
   registrarSalidaController,
 } from '../controllers/inventario/movimiento-inventario.controller.ts';
@@ -31,9 +32,11 @@ import {
 // `inventario:leer`: super-admin, admin-sucursal, cajero-vendedor
 // `inventario:escribir`: super-admin, admin-sucursal (cajero-vendedor recibe 403)
 // `inventario:registrar-movimiento`: super-admin, admin-sucursal (registro de entradas/salidas)
+// `inventario:ver-kardex`: super-admin, admin-sucursal (historial de movimientos)
 const PERMISO_INVENTARIO_LEER = 'inventario:leer';
 const PERMISO_INVENTARIO_ESCRIBIR = 'inventario:escribir';
 const PERMISO_INVENTARIO_REGISTRAR_MOVIMIENTO = 'inventario:registrar-movimiento';
+const PERMISO_INVENTARIO_VER_KARDEX = 'inventario:ver-kardex';
 
 export function createInventarioRoutes(container: AppContainer): Hono {
   const api = new Hono();
@@ -129,6 +132,11 @@ export function createInventarioRoutes(container: AppContainer): Hono {
     '/salidas',
     authMiddleware(container, PERMISO_INVENTARIO_REGISTRAR_MOVIMIENTO),
     registrarSalidaController(container),
+  );
+  api.get(
+    '/kardex',
+    authMiddleware(container, PERMISO_INVENTARIO_VER_KARDEX),
+    consultarKardexController(container),
   );
 
   return api;
