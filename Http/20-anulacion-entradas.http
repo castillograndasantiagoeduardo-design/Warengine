@@ -1,0 +1,173 @@
+### ==============================================================================
+### WARENGINE - REQUERIMIENTO RF-ADM-B16: ANULACIÓN DE ENTRADAS DE MERCANCÍA
+### ==============================================================================
+### Descripción de negocio:
+### El sistema debe permitir anular una entrada de mercancía registrada por error
+### o devolución al proveedor, revirtiendo el stock ingresado, exigiendo un motivo
+### obligatorio de anulación (mínimo 5 caracteres) y bloqueando la anulación si el
+### stock actual es inferior a la cantidad a revertir (protección de existencias no negativas).
+### La anulación es idempotente (no se puede anular dos veces la misma entrada).
+### ==============================================================================
+
+@baseUrl = http://localhost:8017
+@contentType = application/json
+
+### ------------------------------------------------------------------------------
+### PASO 0: Autenticación como Super Administrador
+### ------------------------------------------------------------------------------
+# @name loginAdmin
+POST {{baseUrl}}/auth/login
+Content-Type: {{contentType}}
+
+{
+  "email": "superadmin@warengine.local",
+  "password": "Warengine.Admin.2026!"
+}
+
+@tokenAdmin = {{loginAdmin.response.body.accessToken}}
+
+### ------------------------------------------------------------------------------
+### PASO 1: Crear Producto de Prueba para la Anulación
+### Esperado: 201 Created
+### ------------------------------------------------------------------------------
+# @name crearProducto
+POST {{baseUrl}}/inventario/productos
+Authorization: Bearer {{tokenAdmin}}
+Content-Type: {{contentType}}
+
+{
+  "sku": "SKU-B16-{{$timestamp}}",
+  "nombre": "Producto Prueba Anulación Entradas",
+  "precioCompra": 25000.00,
+  "precioVenta": 40000.00
+}
+
+@productoId = {{crearProducto.response.body.id}}
+
+### ------------------------------------------------------------------------------
+### PASO 2: Registrar Entrada de Mercancía de 80 unidades
+### Esperado: 201 Created
+### ------------------------------------------------------------------------------
+# @name registrarEntrada
+POST {{baseUrl}}/inventario/entradas
+Authorization: Bearer {{tokenAdmin}}
+Content-Type: {{contentType}}
+
+{
+  "productoId": "{{productoId}}",
+  "sucursalId": 1,
+  "cantidad": 80,
+  "motivo": "Ingreso por factura proveedor F-5511"
+}
+
+@entradaId = {{registrarEntrada.response.body.id}}
+
+### ------------------------------------------------------------------------------
+### PASO 3: Verificar Existencias antes de Anular
+### Esperado: 200 OK con stockActual = 80
+### ------------------------------------------------------------------------------
+# @name verificarStockAntes
+GET {{baseUrl}}/inventario/stock-minimo/1/{{productoId}}
+Authorization: Bearer {{tokenAdmin}}
+
+### ------------------------------------------------------------------------------
+### PASO 4: ANULACIÓN EXITOSA - Revertir la entrada con motivo obligatorio
+### Esperado: 200 OK con cantidadRevertida = 80 y stockResultante = 0
+### ------------------------------------------------------------------------------
+# @name anularEntradaExitosa
+POST {{baseUrl}}/inventario/entradas/{{entradaId}}/anular
+Authorization: Bearer {{tokenAdmin}}
+Content-Type: {{contentType}}
+
+{
+  "motivo": "Error de digitación en remisión de recepción física"
+}
+
+### ------------------------------------------------------------------------------
+### PASO 5: Verificar Existencias después de Anular
+### Esperado: 200 OK con stockActual = 0 (Revertido exitosamente)
+### ------------------------------------------------------------------------------
+# @name verificarStockDespues
+GET {{baseUrl}}/inventario/stock-minimo/1/{{productoId}}
+Authorization: Bearer {{tokenAdmin}}
+
+### ------------------------------------------------------------------------------
+### PASO 6: RECHAZO - Intentar anular la misma entrada por segunda vez (Idempotencia)
+### Esperado: 409 Conflict con código ENTRADA_YA_ANULADA
+### ------------------------------------------------------------------------------
+# @name rechazarDobleAnulacion
+POST {{baseUrl}}/inventario/entradas/{{entradaId}}/anular
+Authorization: Bearer {{tokenAdmin}}
+Content-Type: {{contentType}}
+
+{
+  "motivo": "Reintento de anulación que debe fallar"
+}
+
+### ------------------------------------------------------------------------------
+### PASO 7: RECHAZO - Intentar anular con motivo demasiado corto (< 5 caracteres)
+### Esperado: 400 Bad Request
+### ------------------------------------------------------------------------------
+# @name rechazarMotivoCorto
+POST {{baseUrl}}/inventario/entradas/{{entradaId}}/anular
+Authorization: Bearer {{tokenAdmin}}
+Content-Type: {{contentType}}
+
+{
+  "motivo": "mal"
+}
+
+### ------------------------------------------------------------------------------
+### PASO 8: RECHAZO - Intentar anular cuando el stock actual es insuficiente
+### (Creamos entrada de 60, descontamos 50 por salida manual, e intentamos anular los 60)
+### Esperado: 409 Conflict con código STOCK_INSUFICIENTE
+### ------------------------------------------------------------------------------
+# @name registrarSegundaEntrada
+POST {{baseUrl}}/inventario/entradas
+Authorization: Bearer {{tokenAdmin}}
+Content-Type: {{contentType}}
+
+{
+  "productoId": "{{productoId}}",
+  "sucursalId": 1,
+  "cantidad": 60,
+  "motivo": "Segunda entrada para prueba de stock insuficiente"
+}
+
+@segundaEntradaId = {{registrarSegundaEntrada.response.body.id}}
+
+### Descontamos 50 unidades por salida manual
+# @name registrarSalidaParcial
+POST {{baseUrl}}/inventario/salidas
+Authorization: Bearer {{tokenAdmin}}
+Content-Type: {{contentType}}
+
+{
+  "productoId": "{{productoId}}",
+  "sucursalId": 1,
+  "cantidad": 50,
+  "motivo": "Avería accidental en bodega"
+}
+
+### Intentar anular la segunda entrada de 60 cuando solo quedan 10 en stock
+# @name rechazarAnulacionStockInsuficiente
+POST {{baseUrl}}/inventario/entradas/{{segundaEntradaId}}/anular
+Authorization: Bearer {{tokenAdmin}}
+Content-Type: {{contentType}}
+
+{
+  "motivo": "Intento de anulación que dejaría el stock en -50"
+}
+
+### ------------------------------------------------------------------------------
+### PASO 9: Error 404 - Entrada inexistente
+### Esperado: 404 Not Found con código ENTRADA_NO_ENCONTRADA
+### ------------------------------------------------------------------------------
+# @name rechazarEntradaInexistente
+POST {{baseUrl}}/inventario/entradas/00000000-0000-0000-0000-000000000000/anular
+Authorization: Bearer {{tokenAdmin}}
+Content-Type: {{contentType}}
+
+{
+  "motivo": "Intento sobre entrada inexistente"
+}

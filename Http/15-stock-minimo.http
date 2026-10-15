@@ -22,8 +22,8 @@ POST {{baseUrl}}/auth/login
 Content-Type: {{contentType}}
 
 {
-  "email": "admin@warengine.com",
-  "password": "Password123*"
+  "email": "superadmin@warengine.local",
+  "password": "Warengine.Admin.2026!"
 }
 
 ### Guardar Token de Super Admin

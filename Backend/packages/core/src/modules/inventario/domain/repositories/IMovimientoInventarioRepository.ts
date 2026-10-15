@@ -68,10 +68,17 @@ export interface ResultadoKardex {
   offset: number;
 }
 
+export interface DatosAnulacionEntrada {
+  motivo: string;
+  usuarioId: string;
+}
+
 export interface IMovimientoInventarioRepository {
   obtenerStockActual(productoId: string, sucursalId: number): Promise<number>;
   registrarEntrada(datos: DatosRegistroEntrada): Promise<MovimientoInventario>;
   registrarSalida(datos: DatosRegistroSalida): Promise<MovimientoInventario>;
   consultarKardex(filtros: FiltrosKardex): Promise<{ items: ItemKardex[]; total: number }>;
   obtenerPorId(id: string): Promise<ItemKardex | null>;
+  estaEntradaAnulada(entradaId: string): Promise<boolean>;
+  anularEntrada(entradaId: string, datos: DatosAnulacionEntrada): Promise<MovimientoInventario>;
 }

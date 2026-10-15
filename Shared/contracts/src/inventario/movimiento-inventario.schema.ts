@@ -130,4 +130,30 @@ export const entradasPaginadasResponseSchema = z.object({
 
 export type EntradasPaginadasResponse = z.infer<typeof entradasPaginadasResponseSchema>;
 
+/**
+ * Esquema para anulación de una entrada de mercancía (RF-ADM-B16).
+ */
+export const anularEntradaSchema = z.object({
+  motivo: z
+    .string({ required_error: 'El motivo de la anulación es obligatorio.' })
+    .trim()
+    .min(5, { message: 'El motivo de anulación debe tener al menos 5 caracteres justificando la causa.' })
+    .max(255, { message: 'El motivo no puede exceder 255 caracteres.' }),
+});
+
+export type AnularEntradaDTO = z.infer<typeof anularEntradaSchema>;
+
+export const anulacionEntradaResponseSchema = z.object({
+  mensaje: z.string(),
+  movimientoCompensatorioId: z.string().uuid(),
+  entradaOriginalId: z.string().uuid(),
+  productoId: z.string().uuid(),
+  sucursalId: z.number().int(),
+  cantidadRevertida: z.number().int(),
+  stockResultante: z.number().int(),
+});
+
+export type AnulacionEntradaResponse = z.infer<typeof anulacionEntradaResponseSchema>;
+
+
 

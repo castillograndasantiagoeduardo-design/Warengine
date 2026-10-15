@@ -1,4 +1,5 @@
 import {
+  anularEntradaSchema,
   filtrosEntradasSchema,
   filtrosKardexSchema,
   registrarEntradaSchema,
@@ -93,4 +94,27 @@ export function obtenerEntradaPorIdController(container: AppContainer) {
     return presentResult(c, result, 200);
   });
 }
+
+/**
+ * RF-ADM-B16: Anulación transaccional y compensatoria de una entrada de mercancía.
+ */
+export function anularEntradaController(container: AppContainer) {
+  return safeHandler(async (c) => {
+    const id = c.req.param('id');
+    if (!esUuidValido(id)) {
+      return c.json({ error: 'VALIDATION_ERROR', message: 'Id de entrada inválido: debe ser un UUID.' }, 400);
+    }
+    const parsed = anularEntradaSchema.safeParse(await leerJson(c));
+    if (!parsed.success) {
+      return c.json({ error: 'VALIDATION_ERROR', issues: parsed.error.errors }, 400);
+    }
+    const result = await container.inventario.anularEntrada.execute({
+      id,
+      motivo: parsed.data.motivo,
+      actor: obtenerActor(c),
+    });
+    return presentResult(c, result, 200);
+  });
+}
+
 
