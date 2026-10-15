@@ -76,3 +76,58 @@ export const filtrosKardexSchema = z.object({
 
 export type FiltrosKardexDTO = z.infer<typeof filtrosKardexSchema>;
 
+/**
+ * Esquema de validación para filtros de consulta de entradas de mercancía (RF-ADM-B15).
+ */
+export const filtrosEntradasSchema = z.object({
+  sucursalId: z.coerce
+    .number()
+    .int({ message: 'El id de sucursal debe ser un entero.' })
+    .positive({ message: 'El id de sucursal debe ser positivo.' })
+    .optional(),
+  proveedorId: z.coerce
+    .number()
+    .int({ message: 'El id de proveedor debe ser un entero.' })
+    .positive({ message: 'El id de proveedor debe ser positivo.' })
+    .optional(),
+  productoId: z
+    .string()
+    .uuid({ message: 'El id de producto debe ser un UUID válido.' })
+    .optional(),
+  desde: z.coerce.date().optional(),
+  hasta: z.coerce.date().optional(),
+  limit: z.coerce.number().int().min(1).max(100).default(20),
+  offset: z.coerce.number().int().min(0).default(0),
+});
+
+export type FiltrosEntradasDTO = z.infer<typeof filtrosEntradasSchema>;
+
+export const detalleEntradaResponseSchema = z.object({
+  id: z.string().uuid(),
+  productoId: z.string().uuid(),
+  productoNombre: z.string().optional(),
+  productoSku: z.string().optional(),
+  sucursalId: z.number().int(),
+  sucursalNombre: z.string().optional(),
+  tipo: z.literal('entrada'),
+  cantidad: z.number().int(),
+  motivo: z.string().nullable().optional(),
+  proveedorId: z.number().int().nullable().optional(),
+  proveedorNombre: z.string().nullable().optional(),
+  usuarioId: z.string(),
+  usuarioNombre: z.string().nullable().optional(),
+  fecha: z.union([z.string(), z.date()]),
+});
+
+export type DetalleEntradaResponse = z.infer<typeof detalleEntradaResponseSchema>;
+
+export const entradasPaginadasResponseSchema = z.object({
+  items: z.array(detalleEntradaResponseSchema),
+  total: z.number().int(),
+  limit: z.number().int(),
+  offset: z.number().int(),
+});
+
+export type EntradasPaginadasResponse = z.infer<typeof entradasPaginadasResponseSchema>;
+
+

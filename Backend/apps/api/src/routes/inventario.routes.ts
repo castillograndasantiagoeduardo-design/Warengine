@@ -25,6 +25,8 @@ import {
 } from '../controllers/inventario/producto.controller.ts';
 import {
   consultarKardexController,
+  listarEntradasController,
+  obtenerEntradaPorIdController,
   registrarEntradaController,
   registrarSalidaController,
 } from '../controllers/inventario/movimiento-inventario.controller.ts';
@@ -131,7 +133,17 @@ export function createInventarioRoutes(container: AppContainer): Hono {
     cambiarEstadoProductoController(container),
   );
 
-  // ─── Movimientos de Inventario (RF-ADM-B7, RF-ADM-B8, RF-ADM-B9) ──────────
+  // ─── Movimientos de Inventario (RF-ADM-B7, RF-ADM-B8, RF-ADM-B9, RF-ADM-B15) ─
+  api.get(
+    '/entradas',
+    authMiddleware(container, PERMISO_INVENTARIO_LEER),
+    listarEntradasController(container),
+  );
+  api.get(
+    '/entradas/:id',
+    authMiddleware(container, PERMISO_INVENTARIO_LEER),
+    obtenerEntradaPorIdController(container),
+  );
   api.post(
     '/entradas',
     authMiddleware(container, PERMISO_INVENTARIO_REGISTRAR_MOVIMIENTO),

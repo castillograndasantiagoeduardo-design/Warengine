@@ -1,0 +1,105 @@
+### ==============================================================================
+### WARENGINE - REQUERIMIENTO RF-ADM-B15: LISTADO Y DETALLE DE ENTRADAS DE MERCANCÍA
+### ==============================================================================
+### Descripción de negocio:
+### El sistema debe permitir listar las entradas de mercancía registradas, con filtros
+### por fecha, proveedor y sucursal, y consultar el detalle de cada entrada con sus
+### productos y cantidades.
+###
+### Aislamiento de sede (RNF-ADM-04):
+### Los administradores de sucursal únicamente pueden ver y consultar entradas
+### pertenecientes a sus sedes autorizadas. Super Admin tiene visibilidad transversal.
+### ==============================================================================
+
+@baseUrl = http://localhost:8017
+@contentType = application/json
+
+### ------------------------------------------------------------------------------
+### PASO 0: Autenticación como Super Administrador
+### ------------------------------------------------------------------------------
+# @name loginAdmin
+POST {{baseUrl}}/auth/login
+Content-Type: {{contentType}}
+
+{
+  "email": "admin@warengine.com",
+  "password": "Password123*"
+}
+
+@tokenAdmin = {{loginAdmin.response.body.accessToken}}
+
+### ------------------------------------------------------------------------------
+### PASO 1: Crear Producto de Prueba para la Entrada
+### Esperado: 201 Created
+### ------------------------------------------------------------------------------
+# @name crearProducto
+POST {{baseUrl}}/inventario/productos
+Authorization: Bearer {{tokenAdmin}}
+Content-Type: {{contentType}}
+
+{
+  "sku": "SKU-B15-PROD-01",
+  "nombre": "Café Colombiano Excelso 1kg",
+  "precioCompra": 18000.00,
+  "precioVenta": 26000.00
+}
+
+@productoId = {{crearProducto.response.body.id}}
+
+### ------------------------------------------------------------------------------
+### PASO 2: Registrar Entrada de Mercancía (Compra a Proveedor)
+### Esperado: 201 Created
+### ------------------------------------------------------------------------------
+# @name registrarEntrada
+POST {{baseUrl}}/inventario/entradas
+Authorization: Bearer {{tokenAdmin}}
+Content-Type: {{contentType}}
+
+{
+  "productoId": "{{productoId}}",
+  "sucursalId": 1,
+  "cantidad": 100,
+  "motivo": "Recepción de lote inicial factura FAC-9081"
+}
+
+@entradaId = {{registrarEntrada.response.body.id}}
+
+### ------------------------------------------------------------------------------
+### PASO 3: Listar Entradas de Mercancía sin filtros (Paginado general)
+### Esperado: 200 OK con array de items y total
+### ------------------------------------------------------------------------------
+# @name listarTodasEntradas
+GET {{baseUrl}}/inventario/entradas?limit=10&offset=0
+Authorization: Bearer {{tokenAdmin}}
+
+### ------------------------------------------------------------------------------
+### PASO 4: Listar Entradas filtrando por Sucursal
+### Esperado: 200 OK conteniendo solo movimientos de la sucursal 1
+### ------------------------------------------------------------------------------
+# @name listarEntradasPorSucursal
+GET {{baseUrl}}/inventario/entradas?sucursalId=1&limit=10&offset=0
+Authorization: Bearer {{tokenAdmin}}
+
+### ------------------------------------------------------------------------------
+### PASO 5: Consultar Detalle de Entrada por ID
+### Esperado: 200 OK con producto, cantidades, motivo, fecha y sede legible
+### ------------------------------------------------------------------------------
+# @name obtenerDetalleEntrada
+GET {{baseUrl}}/inventario/entradas/{{entradaId}}
+Authorization: Bearer {{tokenAdmin}}
+
+### ------------------------------------------------------------------------------
+### PASO 6: Error 404 - Entrada Inexistente
+### Esperado: 404 Not Found con código ENTRADA_NO_ENCONTRADA
+### ------------------------------------------------------------------------------
+# @name entradaNoEncontrada
+GET {{baseUrl}}/inventario/entradas/00000000-0000-0000-0000-000000000000
+Authorization: Bearer {{tokenAdmin}}
+
+### ------------------------------------------------------------------------------
+### PASO 7: Error 400 - ID inválido (No es UUID)
+### Esperado: 400 Bad Request
+### ------------------------------------------------------------------------------
+# @name entradaIdInvalido
+GET {{baseUrl}}/inventario/entradas/id-no-valido-123
+Authorization: Bearer {{tokenAdmin}}

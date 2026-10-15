@@ -97,3 +97,11 @@ export class StockMinimoInvalidoError extends DomainError {
     super(mensaje);
   }
 }
+
+export class EntradaNoEncontradaError extends DomainError {
+  public readonly code = 'ENTRADA_NO_ENCONTRADA';
+  constructor() {
+    super('La entrada de mercancía especificada no existe.');
+  }
+}
+

@@ -137,6 +137,22 @@ class InMemoryMovimientoRepository implements IMovimientoInventarioRepository {
       total,
     };
   }
+
+  public async obtenerPorId(id: string): Promise<ItemKardex | null> {
+    const m = this.movimientos.find((mov) => mov.id === id);
+    if (!m) return null;
+    return {
+      id: m.id,
+      productoId: m.productoId,
+      sucursalId: m.sucursalId,
+      tipo: m.tipo,
+      cantidad: m.cantidad,
+      motivo: m.motivo,
+      proveedorId: m.proveedorId,
+      usuarioId: m.usuarioId,
+      fecha: m.fecha,
+    };
+  }
 }
 
 class InMemoryProductoRepository implements Partial<IProductoRepository> {

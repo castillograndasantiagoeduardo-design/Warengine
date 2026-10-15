@@ -34,6 +34,7 @@ export interface FiltrosKardex {
   productoId?: string;
   sucursalId?: number;
   sucursalIds?: number[];
+  proveedorId?: number;
   tipo?: 'entrada' | 'salida' | 'ajuste_entrada' | 'ajuste_salida';
   desde?: Date;
   hasta?: Date;
@@ -56,6 +57,7 @@ export interface ItemKardex {
   facturaId?: string | null;
   devolucionId?: string | null;
   usuarioId: string;
+  usuarioNombre?: string | null;
   fecha: Date;
 }
 
@@ -71,4 +73,5 @@ export interface IMovimientoInventarioRepository {
   registrarEntrada(datos: DatosRegistroEntrada): Promise<MovimientoInventario>;
   registrarSalida(datos: DatosRegistroSalida): Promise<MovimientoInventario>;
   consultarKardex(filtros: FiltrosKardex): Promise<{ items: ItemKardex[]; total: number }>;
+  obtenerPorId(id: string): Promise<ItemKardex | null>;
 }

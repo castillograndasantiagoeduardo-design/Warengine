@@ -6,7 +6,8 @@ import {
   productos,
   proveedores,
 } from '../../schema/inventario.schema.ts';
-import { sucursales } from '../../schema/administracion.schema.ts';
+import { empleados, sucursales } from '../../schema/administracion.schema.ts';
+import { usuarios } from '../../schema/autenticacion.schema.ts';
 import {
   DatosRegistroEntrada,
   DatosRegistroSalida,
@@ -173,6 +174,10 @@ export class DrizzleMovimientoInventarioRepository implements IMovimientoInventa
       conditions.push(eq(movimientos_inventario.tipo, filtros.tipo));
     }
 
+    if (filtros.proveedorId !== undefined) {
+      conditions.push(eq(movimientos_inventario.proveedor_id, filtros.proveedorId));
+    }
+
     if (filtros.desde) {
       conditions.push(gte(movimientos_inventario.fecha, filtros.desde));
     }
@@ -190,7 +195,7 @@ export class DrizzleMovimientoInventarioRepository implements IMovimientoInventa
       .where(whereClause);
     const total = Number(countResult?.count ?? 0);
 
-    // 2. Consulta de registros con información legible de producto, sucursal y proveedor
+    // 2. Consulta de registros con información legible de producto, sucursal, proveedor y responsable
     const rows = await this.db
       .select({
         id: movimientos_inventario.id_movimiento_inventario,
@@ -207,12 +212,15 @@ export class DrizzleMovimientoInventarioRepository implements IMovimientoInventa
         facturaId: movimientos_inventario.factura_id,
         devolucionId: movimientos_inventario.devolucion_id,
         usuarioId: movimientos_inventario.usuario_id,
+        usuarioNombre: empleados.nombre,
         fecha: movimientos_inventario.fecha,
       })
       .from(movimientos_inventario)
       .leftJoin(productos, eq(movimientos_inventario.producto_id, productos.id_producto))
       .leftJoin(sucursales, eq(movimientos_inventario.sucursal_id, sucursales.id_sucursal))
       .leftJoin(proveedores, eq(movimientos_inventario.proveedor_id, proveedores.id_proveedor))
+      .leftJoin(usuarios, eq(movimientos_inventario.usuario_id, usuarios.id_usuario))
+      .leftJoin(empleados, eq(usuarios.empleado_id, empleados.id_empleado))
       .where(whereClause)
       .orderBy(desc(movimientos_inventario.fecha))
       .limit(filtros.limit)
@@ -233,9 +241,65 @@ export class DrizzleMovimientoInventarioRepository implements IMovimientoInventa
       facturaId: r.facturaId,
       devolucionId: r.devolucionId,
       usuarioId: r.usuarioId,
+      usuarioNombre: r.usuarioNombre,
       fecha: r.fecha,
     }));
 
     return { items, total };
+  }
+
+  /**
+   * RF-ADM-B15: Consulta un movimiento de inventario por su ID único.
+   */
+  public async obtenerPorId(id: string): Promise<ItemKardex | null> {
+    const [row] = await this.db
+      .select({
+        id: movimientos_inventario.id_movimiento_inventario,
+        productoId: movimientos_inventario.producto_id,
+        productoNombre: productos.nombre,
+        productoSku: productos.sku,
+        sucursalId: movimientos_inventario.sucursal_id,
+        sucursalNombre: sucursales.nombre,
+        tipo: movimientos_inventario.tipo,
+        cantidad: movimientos_inventario.cantidad,
+        motivo: movimientos_inventario.motivo,
+        proveedorId: movimientos_inventario.proveedor_id,
+        proveedorNombre: proveedores.nombre,
+        facturaId: movimientos_inventario.factura_id,
+        devolucionId: movimientos_inventario.devolucion_id,
+        usuarioId: movimientos_inventario.usuario_id,
+        usuarioNombre: empleados.nombre,
+        fecha: movimientos_inventario.fecha,
+      })
+      .from(movimientos_inventario)
+      .leftJoin(productos, eq(movimientos_inventario.producto_id, productos.id_producto))
+      .leftJoin(sucursales, eq(movimientos_inventario.sucursal_id, sucursales.id_sucursal))
+      .leftJoin(proveedores, eq(movimientos_inventario.proveedor_id, proveedores.id_proveedor))
+      .leftJoin(usuarios, eq(movimientos_inventario.usuario_id, usuarios.id_usuario))
+      .leftJoin(empleados, eq(usuarios.empleado_id, empleados.id_empleado))
+      .where(eq(movimientos_inventario.id_movimiento_inventario, id));
+
+    if (!row) {
+      return null;
+    }
+
+    return {
+      id: row.id,
+      productoId: row.productoId,
+      productoNombre: row.productoNombre ?? undefined,
+      productoSku: row.productoSku ?? undefined,
+      sucursalId: row.sucursalId,
+      sucursalNombre: row.sucursalNombre ?? undefined,
+      tipo: row.tipo as 'entrada' | 'salida' | 'ajuste_entrada' | 'ajuste_salida',
+      cantidad: row.cantidad,
+      motivo: row.motivo,
+      proveedorId: row.proveedorId,
+      proveedorNombre: row.proveedorNombre,
+      facturaId: row.facturaId,
+      devolucionId: row.devolucionId,
+      usuarioId: row.usuarioId,
+      usuarioNombre: row.usuarioNombre,
+      fecha: row.fecha,
+    };
   }
 }
