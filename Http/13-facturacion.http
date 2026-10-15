@@ -1,0 +1,394 @@
+# ==============================================================================
+# MÓDULO: FACTURACIÓN Y POS (Warengine v2.0)
+# Archivo: 13-facturacion.http
+#
+# Requisitos del SRS cubiertos:
+#   - RF-FMC-A1: Apertura de turno de caja con fondo inicial y sucursal del operador
+#   - RF-FMC-A2: Restricción de un solo turno abierto simultáneo por operador
+#   - RF-FMC-A3: Consulta del turno de caja activo
+#   - RF-FMC-A4: Cierre de turno de caja con arqueo y cálculo automático de diferencia
+#   - RF-FMC-B1..B3: Emisión de facturas con ítems (kardex y stock movidos por triggers)
+#   - RF-FMC-B4..B7: Registro de clientes B2C y B2B con validación de datos fiscales
+#   - RF-FMC-C1..C5: Pagos divididos y medios de pago (efectivo, tarjeta, transferencia, crédito)
+#   - RF-FMC-E1..E2: Venta corporativa B2B con validación de crédito corporativo
+#   - RF-FMC-B8: Consulta de facturas y trazabilidad con alcance de sucursal
+#   - RF-ADM-C13: Alertas operativas al administrador (facturacion:alertar-admin)
+#
+# Requisitos técnicos:
+#   - Requiere: Extensión "REST Client" de VS Code.
+#   - Servidor API en ejecución: http://localhost:8017 (deno task dev-api)
+#   - Ruta base del módulo: /ventas
+#
+# ORDEN OBLIGATORIO DE EJECUCIÓN:
+#   [PASO 1] Login inicial para obtener el token JWT de sesión.
+#   [PASO 2] Registro y habilitación de clientes B2C y B2B.
+#   [PASO 3] Apertura de turno de caja (obligatorio para facturación de mostrador).
+#   [PASO 4] Facturación de Mostrador (valida turno abierto + pago exacto).
+#   [PASO 5] Facturación B2B (exenta de turno + valida crédito corporativo).
+#   [PASO 6] Consulta de facturas emitidas por ID y listado de sucursal.
+#   [PASO 7] Alerta operativa al administrador desde caja o venta.
+#   [PASO 8] Cierre de turno de caja (arqueo final con cálculo de diferencia).
+# ==============================================================================
+
+@baseUrl = http://localhost:8017
+
+# ==============================================================================
+# PASO 1 — AUTENTICACIÓN
+# ==============================================================================
+
+### 1.1 Iniciar sesión como Super Admin
+# Super-admin cuenta con todos los permisos (facturacion:*, inventario:*, administracion:*).
+# @name login
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "superadmin@warengine.local",
+  "password": "Warengine.Admin.2026!"
+}
+
+### Extraer token de autenticación
+@token = {{login.response.body.accessToken}}
+
+
+# ==============================================================================
+# PASO 2 — REGISTRO Y GESTIÓN DE CLIENTES
+# ==============================================================================
+
+### 2.1 Registrar cliente B2C (Venta mostrador - persona natural)
+# Resultado esperado: 201 Created (o 200 OK si ya existía el documento)
+# @name clienteB2C
+POST {{baseUrl}}/ventas/clientes
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "tipoDocumento": "CC",
+  "numeroDocumento": "1020304050",
+  "nombreRazonSocial": "Carlos Mendoza",
+  "tipoCliente": "B2C",
+  "email": "carlos.mendoza@email.com",
+  "telefono": "3105556677"
+}
+
+### Extraer ID de cliente B2C
+@clienteB2CId = {{clienteB2C.response.body.cliente.id}}
+
+### 2.2 Registrar cliente B2B (Corporativo - con NIT, dirección y teléfono obligatorios)
+# Resultado esperado: 201 Created (o 200 OK si ya existía)
+# @name clienteB2B
+POST {{baseUrl}}/ventas/clientes
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "tipoDocumento": "NIT",
+  "numeroDocumento": "901555444-1",
+  "nombreRazonSocial": "Distribuidora Nacional del Café SAS",
+  "tipoCliente": "B2B",
+  "email": "compras@distcafesas.com",
+  "telefono": "6015559988",
+  "direccion": "Avenida El Dorado # 68C-20, Bogotá"
+}
+
+### Extraer ID de cliente B2B
+@clienteB2BId = {{clienteB2B.response.body.cliente.id}}
+
+### 2.3 Habilitar Crédito Corporativo al Cliente B2B (Solo Admin)
+# Regla de Oro: Cajero/Vendedor no pueden alterar creditoHabilitado (reciben 403). Super Admin sí.
+# Resultado esperado: 200 OK con creditoHabilitado: true
+# @name habilitarCredito
+PUT {{baseUrl}}/ventas/clientes/{{clienteB2BId}}
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "creditoHabilitado": true,
+  "telefono": "6015559988",
+  "direccion": "Avenida El Dorado # 68C-20, Bogotá"
+}
+
+### 2.4 Consultar detalle del cliente B2B por ID
+# Resultado esperado: 200 OK con los datos fiscales completos
+GET {{baseUrl}}/ventas/clientes/{{clienteB2BId}}
+Authorization: Bearer {{token}}
+
+
+# ==============================================================================
+# PASO 3 — GESTIÓN DE TURNO DE CAJA (ARQUEO INICIAL)
+# ==============================================================================
+
+### 3.1 Consultar si el operador ya tiene un turno abierto
+# Resultado esperado: 200 OK (retorna null si no tiene turno abierto)
+# @name turnoAntes
+GET {{baseUrl}}/ventas/turnos/actual
+Authorization: Bearer {{token}}
+
+### 3.2 Abrir turno de caja con fondo inicial en efectivo
+# Resultado esperado: 201 Created con estado abierto (fechaCierre: null)
+# @name abrirTurno
+POST {{baseUrl}}/ventas/turnos
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "fondoInicial": 50000.00
+}
+
+### Extraer ID del turno recién abierto
+@turnoId = {{abrirTurno.response.body.id}}
+
+### 3.3 Validar regla de concurrencia: No se pueden abrir 2 turnos simultáneos
+# Resultado esperado: 409 Conflict con error TURNO_YA_ABIERTO
+POST {{baseUrl}}/ventas/turnos
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "fondoInicial": 20000.00
+}
+
+### 3.4 Verificar que el turno activo ahora responde con el turno actual
+# Resultado esperado: 200 OK con el turno abierto ID {{turnoId}}
+GET {{baseUrl}}/ventas/turnos/actual
+Authorization: Bearer {{token}}
+
+
+# ==============================================================================
+# PASO 4 — PREPARAR PRODUCTO PARA FACTURACIÓN
+# ==============================================================================
+
+### 4.1 Consultar productos disponibles con existencias en inventario
+# Resultado esperado: 200 OK con listado de productos
+# @name listarProductos
+GET {{baseUrl}}/inventario/productos?limit=5
+Authorization: Bearer {{token}}
+
+### Variable de producto para la venta (Precargado con stock listo para vender)
+@productoId = 56dbc88f-c2c4-4f5d-b048-8b3b8908050a
+
+### 4.2 (Opcional) Crear un nuevo producto en catálogo
+# Si creas un nuevo SKU, recuerda que las ventas requieren inventario previo (kardex)
+# @name crearProductoPrueba
+POST {{baseUrl}}/inventario/productos
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "sku": "CAF-DEMO-999",
+  "nombre": "Café Especial Huila 500g",
+  "precioCompra": 15000.00,
+  "precioVenta": 25000.00,
+  "precioCorporativo": 22000.00
+}
+
+
+# ==============================================================================
+# PASO 5 — FACTURACIÓN DE MOSTRADOR (Requiere Turno Abierto)
+# ==============================================================================
+
+### 5.1 Emitir factura de mostrador (Caso Feliz - Cajero con Turno Abierto)
+# Subtotal: 1 unidad x 25,000 = 25,000. IVA: 0.00 (base). Total: 25,000.
+# Pago exacto en efectivo: 25,000.
+# Los triggers de MySQL descontarán las unidades del inventario automáticamente.
+# Resultado esperado: 201 Created con estado "emitida", consecutivo asignado y turnoCajaId.
+# @name facturarMostrador
+POST {{baseUrl}}/ventas/facturas
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "clienteId": "{{clienteB2CId}}",
+  "esB2B": false,
+  "items": [
+    {
+      "productoId": "56dbc88f-c2c4-4f5d-b048-8b3b89080",
+      "cantidad": 1,
+      "precioUnitario": 25000.00,
+      "descuento": 0.00
+    }
+  ],
+  "pagos": [
+    {
+      "medioPago": "efectivo",
+      "monto": 25000.00
+    }
+  ]
+}
+
+### Extraer ID de la factura de mostrador
+@facturaMostradorId = {{facturarMostrador.response.body.id}}
+
+### 5.2 Validar regla: Error si la sumatoria de pagos no coincide con el total
+# Subtotal: 25,000. Pago enviado: 20,000 (Incompleto).
+# Resultado esperado: 422 Unprocessable Entity con error PAGO_INVALIDO
+POST {{baseUrl}}/ventas/facturas
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "clienteId": "{{clienteB2CId}}",
+  "esB2B": false,
+  "items": [
+    {
+      "productoId": "{{productoId}}",
+      "cantidad": 1,
+      "precioUnitario": 25000.00,
+      "descuento": 0.00
+    }
+  ],
+  "pagos": [
+    {
+      "medioPago": "efectivo",
+      "monto": 20000.00
+    }
+  ]
+}
+
+
+# ==============================================================================
+# PASO 6 — FACTURACIÓN CORPORATIVA B2B (Exenta de Turno + Crédito Corporativo)
+# ==============================================================================
+
+### 6.1 Emitir factura B2B con Crédito Corporativo
+# Subtotal: 2 unidades x 22,000 = 44,000. Total: 44,000.
+# Medio de pago: "credito_corporativo".
+# Resultado esperado: 201 Created (aprobado porque el cliente B2B tiene crédito habilitado)
+# @name facturarB2B
+POST {{baseUrl}}/ventas/facturas/b2b
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "clienteId": "{{clienteB2BId}}",
+  "esB2B": true,
+  "items": [
+    {
+      "productoId": "{{productoId}}",
+      "cantidad": 2,
+      "precioUnitario": 22000.00,
+      "descuento": 0.00
+    }
+  ],
+  "pagos": [
+    {
+      "medioPago": "credito_corporativo",
+      "monto": 44000.00,
+      "referenciaTransaccion": "ORDEN-COMPRA-B2B-2026-001"
+    }
+  ]
+}
+
+### Extraer ID de la factura B2B
+@facturaB2BId = {{facturarB2B.response.body.id}}
+
+### 6.2 Validar regla B2B: Falla si se intenta facturar B2B a un cliente persona natural (B2C)
+# Resultado esperado: 422 Unprocessable Entity con error CLIENTE_REQUERIDO_B2B
+POST {{baseUrl}}/ventas/facturas/b2b
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "clienteId": "{{clienteB2CId}}",
+  "esB2B": true,
+  "items": [
+    {
+      "productoId": "{{productoId}}",
+      "cantidad": 1,
+      "precioUnitario": 22000.00
+    }
+  ],
+  "pagos": [
+    {
+      "medioPago": "transferencia",
+      "monto": 22000.00
+    }
+  ]
+}
+
+
+# ==============================================================================
+# PASO 7 — CONSULTA Y TRAZABILIDAD DE FACTURAS
+# ==============================================================================
+
+### 7.1 Listar facturas de la sucursal (paginadas)
+# Nota de Privacidad: Oculta costos confidenciales (precioCompra y proveedorId) a cajeros/vendedores.
+# Resultado esperado: 200 OK con array de facturas
+GET {{baseUrl}}/ventas/facturas?limite=10&offset=0
+Authorization: Bearer {{token}}
+
+### 7.2 Obtener detalle completo de una factura por ID
+# Resultado esperado: 200 OK con cabecera, lista de items y pagos registrados
+GET {{baseUrl}}/ventas/facturas/"680738c0-10f6-40ea-b70b-77f631e58a23"
+Authorization: Bearer {{token}}
+
+
+# ==============================================================================
+# PASO 8 — ALERTAS OPERATIVAS AL ADMINISTRADOR (facturacion:alertar-admin)
+# ==============================================================================
+
+### 8.1 Emitir alerta operativa desde caja o venta B2B
+# La sucursal del operador se infiere de forma segura desde el token de autenticación.
+# Resultado esperado: 201 Created con registro en alertas_admin y auditoría
+POST {{baseUrl}}/ventas/alertas
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "motivo": "Faltante de papel para impresora de facturación",
+  "prioridad": "urgente",
+  "descripcion": "Solo queda un rollo térmico en la caja 1 de la sede norte."
+}
+
+
+# ==============================================================================
+# PASO 9 — CIERRE DE TURNO DE CAJA Y ARQUEO FINAL
+# ==============================================================================
+
+### 9.1 Cerrar turno de caja enviando el conteo de efectivo final
+# Fondo Inicial: 50,000. Venta Mostrador Efectivo: 25,000. Total Esperado: 75,000.
+# Si el cajero cuenta 75,000: la diferencia calculada por el trigger de MySQL será 0.00.
+# Si el cajero cuenta 76,000: la diferencia será +1,000.00 (sobrante).
+# Resultado esperado: 200 OK con estaCerrado: true, fechaCierre y diferencia registrada.
+# @name cerrarTurno
+POST {{baseUrl}}/ventas/turnos/{{turnoId}}/cerrar
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "fondoFinal": 75000.00
+}
+
+### 9.2 Validar regla: No se puede volver a cerrar un turno ya cerrado
+# Resultado esperado: 409 Conflict con error TURNO_YA_CERRADO
+POST {{baseUrl}}/ventas/turnos/{{turnoId}}/cerrar
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "fondoFinal": 75000.00
+}
+
+### 9.3 Validar regla: Imposible facturar en mostrador una vez cerrado el turno de caja
+# Resultado esperado: 400 Bad Request con error FACTURACION_SIN_TURNO_ABIERTO
+POST {{baseUrl}}/ventas/facturas
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "clienteId": "{{clienteB2CId}}",
+  "esB2B": false,
+  "items": [
+    {
+      "productoId": "{{productoId}}",
+      "cantidad": 1,
+      "precioUnitario": 25000.00
+    }
+  ],
+  "pagos": [
+    {
+      "medioPago": "efectivo",
+      "monto": 25000.00
+    }
+  ]
+}

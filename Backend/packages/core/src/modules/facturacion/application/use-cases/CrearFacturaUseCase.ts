@@ -8,6 +8,7 @@ import {
     CreditoNoHabilitadoError,
     FacturacionSinTurnoAbiertoError,
     PagoInvalidoError,
+    StockInsuficienteError,
 } from '../../domain/errors/FacturacionErrors.ts';
 import { OperadorSinSucursalError } from '../../domain/errors/TurnoCajaErrors.ts';
 import { IFacturaRepository } from '../../domain/repositories/IFacturaRepository.ts';
@@ -150,11 +151,23 @@ export class CrearFacturaUseCase {
         );
 
         // 6. Transacción atómica en repositorio (los triggers validan stock y descuentan kardex)
-        const facturaGuardada = await this.facturaRepository.crear({
-            factura: facturaEntidad,
-            items: itemsEntidades,
-            pagos: pagosEntidades,
-        });
+        let facturaGuardada: Factura;
+        try {
+            facturaGuardada = await this.facturaRepository.crear({
+                factura: facturaEntidad,
+                items: itemsEntidades,
+                pagos: pagosEntidades,
+            });
+        } catch (error) {
+            if (
+                error instanceof StockInsuficienteError ||
+                error instanceof CreditoNoHabilitadoError ||
+                error instanceof PagoInvalidoError
+            ) {
+                return Result.fail(error);
+            }
+            throw error;
+        }
 
         // 7. Registro de auditoría
         await this.auditor.registrar({

@@ -48,6 +48,7 @@ export function presentResult<T>(c: Context, result: Result<T, DomainError>, suc
     case 'SKU_MODIFICACION_NO_PERMITIDA':
     case 'PAGO_INVALIDO':
     case 'CLIENTE_REQUERIDO_B2B':
+    case 'CREDITO_NO_HABILITADO':
       status = 422; // Regla de negocio violada
       break;
     case 'FACTURACION_SIN_TURNO_ABIERTO':
