@@ -110,6 +110,13 @@ export class CrearProductoUseCase {
           precioCorporativo: producto.precioCorporativo,
           isActive: producto.isActive,
         },
+        cambioPrecio: {
+          precioCompra: { antes: null, despues: producto.precioCompra },
+          precioVenta: { antes: null, despues: producto.precioVenta },
+          ...(producto.precioCorporativo !== null
+            ? { precioCorporativo: { antes: null, despues: producto.precioCorporativo } }
+            : {}),
+        },
       },
     });
 

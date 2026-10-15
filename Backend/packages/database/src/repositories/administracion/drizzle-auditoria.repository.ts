@@ -43,6 +43,7 @@ export class DrizzleAuditoriaRepository implements IAuditoriaRepository {
     if (filtros.usuarioId) condiciones.push(eq(logs_auditoria.usuario_id, filtros.usuarioId));
     if (filtros.accion) condiciones.push(eq(logs_auditoria.accion, filtros.accion));
     if (filtros.entidad) condiciones.push(eq(logs_auditoria.entidad, filtros.entidad));
+    if (filtros.entidadId) condiciones.push(eq(logs_auditoria.entidad_id, filtros.entidadId));
     if (filtros.desde) condiciones.push(gte(logs_auditoria.fecha, filtros.desde));
     if (filtros.hasta) condiciones.push(lte(logs_auditoria.fecha, filtros.hasta));
     const where = condiciones.length > 0 ? and(...condiciones) : undefined;
