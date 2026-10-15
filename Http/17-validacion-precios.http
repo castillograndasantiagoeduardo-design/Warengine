@@ -1,0 +1,126 @@
+### ==============================================================================
+### WARENGINE - REQUERIMIENTO RF-ADM-B13: VALIDACIÓN DE PRECIOS DEL PRODUCTO
+### ==============================================================================
+### Descripción de negocio:
+### El sistema debe validar que los precios de compra y de venta sean valores numéricos
+### mayores que cero (y hasta 2 decimales).
+### Debe advertir al usuario, SIN impedir el guardado (HTTP 201 o 200 exitoso con campo
+### 'advertencia'), cuando el precio de venta sea inferior al precio de compra (margen negativo).
+### Si los precios son menores o iguales a cero, o tienen formato inválido, el sistema
+### rechaza la petición con HTTP 400 Bad Request.
+### ==============================================================================
+
+@baseUrl = http://localhost:8017
+@contentType = application/json
+
+### ------------------------------------------------------------------------------
+### PASO 0: Autenticación como Administrador
+### ------------------------------------------------------------------------------
+# @name loginAdmin
+POST {{baseUrl}}/auth/login
+Content-Type: {{contentType}}
+
+{
+  "email": "admin@warengine.com",
+  "password": "Password123*"
+}
+
+### Guardar Token
+@tokenAdmin = {{loginAdmin.response.body.accessToken}}
+
+### ------------------------------------------------------------------------------
+### PASO 1: Crear producto con precios válidos y margen positivo (Normal)
+### Esperado: 201 Created con advertencia = null
+### ------------------------------------------------------------------------------
+# @name crearProductoNormal
+POST {{baseUrl}}/inventario/productos
+Authorization: Bearer {{tokenAdmin}}
+Content-Type: {{contentType}}
+
+{
+  "sku": "SKU-B13-NORMAL-01",
+  "nombre": "Teclado Mecánico RGB",
+  "precioCompra": 120000.00,
+  "precioVenta": 185000.00
+}
+
+@productoNormalId = {{crearProductoNormal.response.body.id}}
+
+### ------------------------------------------------------------------------------
+### PASO 2: Crear producto con PRECIO DE VENTA INFERIOR AL DE COMPRA (Margen Negativo)
+### Esperado: 201 Created (Se permite el guardado) pero retorna campo 'advertencia'
+### ------------------------------------------------------------------------------
+# @name crearProductoMargenNegativo
+POST {{baseUrl}}/inventario/productos
+Authorization: Bearer {{tokenAdmin}}
+Content-Type: {{contentType}}
+
+{
+  "sku": "SKU-B13-OFERTA-LIQUIDACION",
+  "nombre": "Monitor Gamer en Liquidación",
+  "precioCompra": 500000.00,
+  "precioVenta": 420000.00
+}
+
+@productoLiquidacionId = {{crearProductoMargenNegativo.response.body.id}}
+
+### ------------------------------------------------------------------------------
+### PASO 3: Editar producto normal reduciendo precio de venta bajo el precio de compra
+### Esperado: 200 OK con advertencia de margen negativo
+### ------------------------------------------------------------------------------
+# @name editarProductoMargenNegativo
+PATCH {{baseUrl}}/inventario/productos/{{productoNormalId}}
+Authorization: Bearer {{tokenAdmin}}
+Content-Type: {{contentType}}
+
+{
+  "precioVenta": 99000.00
+}
+
+### ------------------------------------------------------------------------------
+### PASO 4: RECHAZO - Intentar registrar producto con precio de compra <= 0
+### Esperado: 400 Bad Request
+### ------------------------------------------------------------------------------
+# @name rechazarPrecioCompraCero
+POST {{baseUrl}}/inventario/productos
+Authorization: Bearer {{tokenAdmin}}
+Content-Type: {{contentType}}
+
+{
+  "sku": "SKU-B13-ERROR-COMPRA",
+  "nombre": "Mouse Inalámbrico",
+  "precioCompra": 0.00,
+  "precioVenta": 50000.00
+}
+
+### ------------------------------------------------------------------------------
+### PASO 5: RECHAZO - Intentar registrar producto con precio de venta negativo
+### Esperado: 400 Bad Request
+### ------------------------------------------------------------------------------
+# @name rechazarPrecioVentaNegativo
+POST {{baseUrl}}/inventario/productos
+Authorization: Bearer {{tokenAdmin}}
+Content-Type: {{contentType}}
+
+{
+  "sku": "SKU-B13-ERROR-VENTA",
+  "nombre": "Mousepad XL",
+  "precioCompra": 20000.00,
+  "precioVenta": -15000.00
+}
+
+### ------------------------------------------------------------------------------
+### PASO 6: RECHAZO - Intentar registrar precio con más de 2 decimales
+### Esperado: 400 Bad Request (Máximo 2 decimales)
+### ------------------------------------------------------------------------------
+# @name rechazarMasDeDosDecimales
+POST {{baseUrl}}/inventario/productos
+Authorization: Bearer {{tokenAdmin}}
+Content-Type: {{contentType}}
+
+{
+  "sku": "SKU-B13-ERROR-DECIMALES",
+  "nombre": "Cable HDMI 4K",
+  "precioCompra": 15000.555,
+  "precioVenta": 25000.00
+}

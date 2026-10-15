@@ -28,5 +28,6 @@ export function toProductoResponse(producto: Producto, permisos?: string[]): Pro
         : String(producto.precioCorporativoActualizadoEn)
       : null,
     isActive: producto.isActive,
+    ...(producto.advertencia ? { advertencia: producto.advertencia } : {}),
   };
 }

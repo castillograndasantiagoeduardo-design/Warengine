@@ -3,6 +3,8 @@
  * Mapea los campos reales de la tabla `productos` en MySQL.
  */
 export class Producto {
+  public readonly advertencia?: string | null;
+
   constructor(
     public readonly id: string,
     public readonly sku: string,
@@ -14,7 +16,22 @@ export class Producto {
     public readonly precioCorporativo: number | null,
     public readonly precioCorporativoActualizadoEn: Date | null,
     public readonly isActive: boolean = true,
-  ) {}
+    advertencia?: string | null,
+  ) {
+    this.advertencia =
+      advertencia !== undefined
+        ? advertencia
+        : precioVenta < precioCompra
+        ? `Advertencia (RF-ADM-B13): El precio de venta ($${precioVenta}) es inferior al precio de compra ($${precioCompra}). Margen negativo detectado.`
+        : null;
+  }
+
+  /**
+   * Indica si el precio de venta es menor al costo de adquisición (RF-ADM-B13).
+   */
+  public get tieneMargenNegativo(): boolean {
+    return this.precioVenta < this.precioCompra;
+  }
 
   public activar(): Producto {
     return new Producto(
@@ -28,6 +45,7 @@ export class Producto {
       this.precioCorporativo,
       this.precioCorporativoActualizadoEn,
       true,
+      this.advertencia,
     );
   }
 
@@ -43,6 +61,7 @@ export class Producto {
       this.precioCorporativo,
       this.precioCorporativoActualizadoEn,
       false,
+      this.advertencia,
     );
   }
 }
