@@ -115,55 +115,48 @@ Http/
 #### `Cliente` ([Cliente.ts](../../Backend/packages/core/src/modules/facturacion/domain/entities/Cliente.ts))
 Representa al comprador final o corporativo:
 - **Campos:**
-  - `id: number` (PK autoincremental)
-  - `tipo: 'B2C' | 'B2B'`
-  - `nombre: string` (nombre o razón social)
+  - `id: string` (UUID CHAR(36) generado por BD)
   - `tipoDocumento: 'CC' | 'NIT' | 'RUT'`
   - `numeroDocumento: string`
-  - `direccion: string | null`
-  - `telefono: string | null`
+  - `nombreRazonSocial: string` (nombre o razón social)
+  - `tipoCliente: 'B2C' | 'B2B'`
   - `email: string | null`
+  - `telefono: string | null`
+  - `direccion: string | null`
   - `creditoHabilitado: boolean`
-  - `limiteCredito: number`
-  - `plazoDias: number`
-  - `creadoEn: Date`
-- **Métodos de negocio:**
-  - `validarDatosB2B(): boolean`: Si `tipo === 'B2B'`, exige que `direccion` y `telefono` no sean nulos ni cadenas vacías. Retorna `false` si alguno falta.
-  - `esValidoParaCredito(monto: number): boolean`: Verifica si `creditoHabilitado` es verdadero y si el monto no sobrepasa `limiteCredito`.
+- **Métodos y propiedades de negocio:**
+  - `esB2B: boolean`: Retorna si `tipoCliente === 'B2B'`.
+  - `puedePagarConCredito: boolean`: Verifica si `esB2B && creditoHabilitado` (RF-FMC-E2).
 
 #### `TurnoCaja` ([TurnoCaja.ts](../../Backend/packages/core/src/modules/facturacion/domain/entities/TurnoCaja.ts))
 Representa una jornada de facturación de un cajero:
 - **Campos:**
-  - `id: number`
+  - `id: string` (UUID CHAR(36) generado por BD)
   - `usuarioId: string` (cajero operador)
   - `sucursalId: number` (sede física donde opera la caja)
+  - `fondoInicial: number` (saldo base para cambio/vuelto)
   - `fechaApertura: Date`
   - `fechaCierre: Date | null`
-  - `fondoInicial: number` (saldo base para cambio/vuelto)
-  - `fondoFinal: number | null` (declarado al cierre)
-  - `diferencia: number | null` (calculado por trigger)
-  - `observaciones: string | null`
-  - `creadoEn: Date`
-- **Métodos de negocio:**
-  - `estaAbierto(): boolean`: Devuelve `fechaCierre === null`.
+- **Métodos y propiedades de negocio:**
+  - `estaAbierto: boolean`: Devuelve `fechaCierre === null`.
+*(Nota: la tabla `turnos_caja` en BD incluye `fondo_final` y `diferencia` (DECIMAL 14,2) calculada por trigger al cierre; no existe columna `observaciones`).*
 
 ### 4.2 Interfaces de Repositorio (Ports)
 
 - **`IClienteRepository`** ([IClienteRepository.ts](../../Backend/packages/core/src/modules/facturacion/domain/repositories/IClienteRepository.ts)):
   ```typescript
-  guardar(cliente: Cliente): Promise<Cliente>;
-  buscarPorDocumento(tipoDocumento: string, numeroDocumento: string): Promise<Cliente | null>;
-  buscarPorId(id: number): Promise<Cliente | null>;
-  buscar(filtros: { termino?: string; tipo?: 'B2C' | 'B2B'; limite?: number; offset?: number }): Promise<Cliente[]>;
+  buscar(filtros: FiltrosClientes): Promise<Cliente[]>;
+  findByDocumento(tipo: TipoDocumentoCliente, numero: string): Promise<Cliente | null>;
+  crear(datos: DatosCliente): Promise<Cliente>;
   ```
 - **`ITurnoCajaRepository`** ([ITurnoCajaRepository.ts](../../Backend/packages/core/src/modules/facturacion/domain/repositories/ITurnoCajaRepository.ts)):
   ```typescript
-  obtenerTurnoAbiertoPorUsuario(usuarioId: string): Promise<TurnoCaja | null>;
-  crear(turno: Omit<TurnoCaja, 'id' | 'creadoEn'>): Promise<TurnoCaja>;
+  buscarAbiertoDeUsuario(usuarioId: string): Promise<TurnoCaja | null>;
+  abrir(datos: DatosAperturaTurno): Promise<TurnoCaja | null>;
   ```
 - **`ISucursalOperadorRepository`** ([ISucursalOperadorRepository.ts](../../Backend/packages/core/src/modules/facturacion/domain/repositories/ISucursalOperadorRepository.ts)):
   ```typescript
-  obtenerSucursalIdDeOperador(usuarioId: string): Promise<number | null>;
+  obtenerSucursalId(usuarioId: string): Promise<number | null>;
   ```
 
 ### 4.3 Errores de Dominio
@@ -209,16 +202,16 @@ Representa una jornada de facturación de un cajero:
 ### 5.3 `AbrirTurnoCajaUseCase`
 - **Archivo:** [AbrirTurnoCajaUseCase.ts](../../Backend/packages/core/src/modules/facturacion/application/use-cases/AbrirTurnoCajaUseCase.ts)
 - **Dependencias:** `ITurnoCajaRepository`, `ISucursalOperadorRepository`, `IAuditor`
-- **Entrada:** `{ usuarioId: string; fondoInicial: number; observaciones?: string | null; sucursalId?: number; actor: ActorAuditoria }`
+- **Entrada:** `{ fondoInicial: number; actor: ActorAuditoria }` (el `usuarioId` se extrae del actor autenticado)
 - **Salida:** `Result<TurnoCaja, DomainError>`
 - **Reglas de negocio:**
   1. Valida que `fondoInicial >= 0`. Redondea a 2 decimales. Si es negativo, falla con `FondoInicialInvalidoError`.
-  2. Determina la sucursal del operador (usa la provista o la consulta en `ISucursalOperadorRepository`). Si no tiene sede asociada, falla con `OperadorSinSucursalError`.
-  3. Consulta si el usuario ya tiene un turno abierto. Si lo tiene, falla con `TurnoYaAbiertoError`.
-  4. Inserta el turno en `turnos_caja`.
-  5. Maneja carrera concurrente: si la base de datos lanza error por restricción de unicidad de turno abierto, traduce a `TurnoYaAbiertoError`.
+  2. Determina la sucursal del operador consultando `ISucursalOperadorRepository.obtenerSucursalId(actor.usuarioId)`. Si no tiene sede asociada, falla con `OperadorSinSucursalError`.
+  3. Consulta si el usuario ya tiene un turno abierto (`buscarAbiertoDeUsuario`). Si lo tiene, falla con `TurnoYaAbiertoError`.
+  4. Inserta el turno en `turnos_caja` (`abrir`).
+  5. Maneja carrera concurrente: si la base de datos lanza error o retorna null por restricción de unicidad de turno abierto, traduce a `TurnoYaAbiertoError`.
   6. Emite auditoría `{ accion: 'crear', entidad: 'turnos_caja', detalles: { despues: { turnoId, fondoInicial, sucursalId } } }`.
-- **Pruebas:** [abrir-turno-caja.use-case.test.ts](../../Backend/packages/core/tests/facturacion/abrir-turno-caja.use-case.test.ts) (5 tests).
+- **Pruebas:** [abrir-turno-caja.use-case.test.ts](../../Backend/packages/core/tests/facturacion/abrir-turno-caja.use-case.test.ts) (5 tests) y [apertura-turno-roles.test.ts](../../Backend/packages/core/tests/facturacion/apertura-turno-roles.test.ts).
 
 ### 5.4 `ObtenerTurnoActualUseCase`
 - **Archivo:** [ObtenerTurnoActualUseCase.ts](../../Backend/packages/core/src/modules/facturacion/application/use-cases/ObtenerTurnoActualUseCase.ts)
@@ -233,14 +226,15 @@ Representa una jornada de facturación de un cajero:
 
 ### 6.1 Tablas Drizzle ([facturacion.schema.ts](../../Backend/packages/database/src/schema/facturacion.schema.ts) y [turnos-caja.schema.ts](../../Backend/packages/database/src/schema/turnos-caja.schema.ts))
 
-- **`clientes`**: `id_cliente` (int PK auto), `tipo` (enum 'B2C', 'B2B'), `nombre`, `tipo_documento` (enum 'CC', 'NIT', 'RUT'), `numero_documento` (`varcharBin(30)`), `direccion`, `telefono`, `email`, `credito_habilitado` (boolean def 0), `limite_credito` (decimal 12,2), `plazo_dias` (int), `creado_en`.
-  - Índice único: `idx_clientes_documento_unico` (`tipo_documento`, `numero_documento`).
-- **`turnos_caja`**: `id_turno` (int PK auto), `usuario_id` (FK usuarios), `sucursal_id` (FK sucursales), `fecha_apertura` (timestamp def current_timestamp), `fecha_cierre` (timestamp nullable), `fondo_inicial` (decimal 12,2), `fondo_final` (decimal 12,2 nullable), `diferencia` (decimal 12,2 nullable), `observaciones` (text).
-- **Tablas de Facturación en Esquema (Pendientes de use cases):**
-  - `facturas`: `id_factura`, `numero_factura`, `sucursal_id`, `usuario_id`, `cliente_id`, `turno_id`, `subtotal`, `impuestos`, `total`, `estado` ('emitida', 'anulada'), `anulada_por`, `motivo_anulacion`.
-  - `factura_items`: `id_item`, `factura_id`, `producto_id`, `cantidad`, `precio_unitario`, `subtotal`.
-  - `factura_pagos`: `id_pago`, `factura_id`, `medio_pago` ('efectivo', 'tarjeta', 'transferencia', 'credito_corporativo'), `monto`, `referencia_transaccion`.
-  - `devoluciones_ventas`: `id_devolucion`, `factura_id`, `producto_id`, `cantidad`, `reembolso`, `reingresa_stock`, `motivo`.
+- **`clientes`**: `id_cliente` (char 36 PK UUID default UUID()), `tipo_cliente` (varchar 10 def 'B2C'), `nombre_razon_social` (varchar 200), `tipo_documento` (varchar 10 'CC','NIT','RUT'), `numero_documento` (`varcharBin(30)`), `direccion` (varchar 255), `telefono` (varchar 30), `email` (varchar 150), `credito_habilitado` (tinyint def 0), `deleted_at`.
+  - Índice único: `uq_clientes_documento` (`tipo_documento`, `numero_documento`).
+- **`turnos_caja`**: `id_turno_caja` (char 36 PK UUID default UUID()), `usuario_id` (char 36 FK usuarios), `sucursal_id` (int FK sucursales), `fecha_apertura` (datetime def current_timestamp), `fecha_cierre` (datetime nullable), `fondo_inicial` (decimal 14,2), `fondo_final` (decimal 14,2 nullable), `diferencia` (decimal 14,2 nullable), `deleted_at`. *(No existe columna `observaciones`)*.
+- **Tablas de Facturación en Esquema Drizzle (`facturacion.schema.ts`):**
+  - `facturas`: `id_factura` (char 36 PK UUID), `consecutivo` (int), `cliente_id` (char 36 FK clientes), `usuario_id` (char 36 FK usuarios), `sucursal_id` (int FK sucursales), `turno_caja_id` (char 36 FK turnos_caja), `subtotal` (decimal 14,2), `iva` (decimal 14,2), `total` (decimal 14,2), `estado` ('emitida', 'anulada'), `anulada_por` (char 36 FK usuarios), `fecha` (datetime), `deleted_at`.
+  - `factura_items`: `id_factura_item` (char 36 PK UUID), `factura_id` (char 36 FK facturas), `producto_id` (char 36 FK productos), `cantidad` (int), `precio_unitario` (decimal 14,2), `descuento` (decimal 14,2), `subtotal` (decimal 14,2), `deleted_at`.
+- **Tablas pendientes en esquema Drizzle (existen en script SQL `WARENGINE_FULL_BD.sql`):**
+  - `factura_pagos`: `id_factura_pago` (char 36 PK UUID), `factura_id`, `metodo_pago` ('efectivo', 'tarjeta_debito', 'tarjeta_credito', 'transferencia', 'credito_corporativo'), `monto`, `referencia`.
+  - `devoluciones_ventas`: `id_devolucion` (char 36 PK UUID), `factura_id`, `producto_id`, `cantidad`, `monto_reembolso`, `reingresa_stock`, `motivo`.
 
 ### 6.2 Reglas de Base de Datos (Triggers y Constraints)
 - **`chk_clientes_datos_b2b`**: En MySQL, restringe que si `tipo = 'B2B'`, `direccion` y `telefono` no sean NULL.
@@ -260,7 +254,7 @@ Prefijo general de montaje en `main.ts`: `/ventas`.
 |---|---|---|---|---|---|---|
 | `GET` | `/ventas/clientes` | `facturacion:consultar` | `buscarClientesController` | `BuscarClientesUseCase` | `buscarClientesQuerySchema` | 200, 401, 403 |
 | `POST` | `/ventas/clientes` | `facturacion:gestionar-clientes` | `registrarClienteController` | `RegistrarClienteUseCase` | `registrarClienteSchema` | 200, 201, 400, 401, 403, 422 |
-| `POST` | `/ventas/turnos` | `facturacion:facturar` | `abrirTurnoCajaController` | `AbrirTurnoCajaUseCase` | `abrirTurnoCajaSchema` | 201, 400, 401, 403, 409, 422 |
+| `POST` | `/ventas/turnos` | `facturacion:abrir-turno` | `abrirTurnoCajaController` | `AbrirTurnoCajaUseCase` | `abrirTurnoCajaSchema` | 201, 400, 401, 403, 409, 422 |
 | `GET` | `/ventas/turnos/actual` | `facturacion:facturar` | `obtenerTurnoActualController` | `ObtenerTurnoActualUseCase` | Ninguno | 200, 401, 403 |
 
 *Nota sobre códigos de respuesta en clientes:*
@@ -273,41 +267,73 @@ Prefijo general de montaje en `main.ts`: `/ventas`.
 
 - **Clientes** ([cliente.schema.ts](../../Shared/contracts/src/facturacion/cliente.schema.ts)):
   ```typescript
-  export const registrarClienteSchema = z.object({
-    tipo: z.enum(['B2C', 'B2B']),
-    nombre: z.string().trim().min(2),
-    tipoDocumento: z.enum(['CC', 'NIT', 'RUT']),
-    numeroDocumento: z.string().trim().min(5),
-    direccion: z.string().trim().nullable().optional(),
-    telefono: z.string().trim().nullable().optional(),
-    email: z.string().trim().email().nullable().optional(),
+  export const crearClienteSchema = z.object({
+    tipoDocumento: z.enum(TIPOS_DOCUMENTO_CLIENTE),
+    numeroDocumento: z.string().trim().min(5).max(30).regex(/^[0-9A-Za-z-]+$/),
+    nombreRazonSocial: z.string().trim().min(3).max(200),
+    tipoCliente: z.enum(TIPOS_CLIENTE).default('B2C'),
+    email: z.preprocess(vacioAUndefined, z.string().trim().email().max(150).optional()),
+    telefono: z.preprocess(vacioAUndefined, z.string().trim().min(7).max(30).optional()),
+    direccion: z.preprocess(vacioAUndefined, z.string().trim().min(5).max(255).optional()),
   }).superRefine((datos, ctx) => {
-    if (datos.tipo === 'B2B') {
-      if (!datos.direccion?.trim()) ctx.addIssue({ code: 'custom', message: 'Dirección obligatoria para B2B', path: ['direccion'] });
-      if (!datos.telefono?.trim()) ctx.addIssue({ code: 'custom', message: 'Teléfono obligatorio para B2B', path: ['telefono'] });
+    if (datos.tipoCliente === 'B2B') {
+      if (!datos.direccion) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['direccion'], message: 'La dirección es obligatoria para clientes B2B.' });
+      if (!datos.telefono) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['telefono'], message: 'El teléfono es obligatorio para clientes B2B.' });
     }
   });
+
+  export const filtrosClientesSchema = z.object({
+    texto: z.string().trim().max(100).optional(),
+    tipoDocumento: z.enum(TIPOS_DOCUMENTO_CLIENTE).optional(),
+    limite: z.coerce.number().int().min(1).max(50).default(20),
+  });
+
+  export interface ClienteDto {
+    id: string;
+    tipoDocumento: 'CC' | 'NIT' | 'RUT';
+    numeroDocumento: string;
+    nombreRazonSocial: string;
+    tipoCliente: 'B2C' | 'B2B';
+    email: string | null;
+    telefono: string | null;
+    direccion: string | null;
+    creditoHabilitado: boolean;
+  }
   ```
 - **Turnos de Caja** ([turno-caja.schema.ts](../../Shared/contracts/src/facturacion/turno-caja.schema.ts)):
   ```typescript
   export const abrirTurnoCajaSchema = z.object({
-    fondoInicial: z.number().min(0, 'El fondo inicial debe ser >= 0'),
-    observaciones: z.string().trim().max(500).nullable().optional(),
-    sucursalId: z.number().int().positive().optional(),
+    fondoInicial: z.number().min(0, 'El fondo inicial no puede ser negativo.').max(1_000_000_000),
   });
+
+  export interface TurnoCajaDto {
+    id: string;
+    usuarioId: string;
+    sucursalId: number;
+    fondoInicial: number;
+    fechaApertura: string;
+    fechaCierre: string | null;
+    estaAbierto: boolean;
+  }
   ```
 
 ---
 
 ## 9. Permisos y Roles
 
-- `facturacion:consultar`: Búsqueda de clientes y consulta de turnos.
-  - Asignado a: `super-admin`, `admin-sucursal`, `cajero-vendedor`.
+- `facturacion:consultar`: Búsqueda de clientes y consulta de turnos activos.
+  - Asignado a: `super-admin`, `admin-sucursal`, `cajero`, `vendedor-b2b`.
 - `facturacion:gestionar-clientes`: Crear y actualizar directorio de clientes.
-  - Asignado a: `super-admin`, `admin-sucursal`, `cajero-vendedor`.
-- `facturacion:facturar`: Apertura/cierre de turnos y emisión de ventas.
-  - Asignado a: `super-admin`, `admin-sucursal`, `cajero-vendedor`.
-- `facturacion:anular` y `facturacion:devolucion`: Reservados en el seed para `super-admin` y `admin-sucursal` (cajero recibe 403).
+  - Asignado a: `super-admin`, `admin-sucursal`, `cajero`, `vendedor-b2b`.
+- `facturacion:facturar`: Emitir facturas y cobrar (ya no incluye abrir turno).
+  - Asignado a: `super-admin`, `admin-sucursal`, `cajero`, `vendedor-b2b`.
+- `facturacion:abrir-turno`: Apertura de turno de caja y asignación de fondo inicial en efectivo.
+  - Asignado a: `super-admin`, `admin-sucursal`, `cajero`. Denegado estrictamente a: `vendedor-b2b`.
+- `facturacion:vender-b2b`: Emitir facturas y cotizaciones dirigidas a clientes corporativos B2B.
+  - Asignado a: `super-admin`, `admin-sucursal`, `cajero`, `vendedor-b2b`.
+- `facturacion:alertar-admin`: Emisión de alertas directas hacia la administración.
+  - Asignado a: `super-admin`, `admin-sucursal`, `cajero`, `vendedor-b2b`.
+- `facturacion:anular` y `facturacion:devolucion`: Reservados en el seed para `super-admin` y `admin-sucursal` (cajero y vendedor-b2b reciben 403).
 
 ---
 
@@ -342,7 +368,7 @@ deno test --allow-all Backend/packages/core/tests/facturacion/
 ```mermaid
 sequenceDiagram
     autonumber
-    actor Cajero as CajeroVendedor
+    actor Cajero as Cajero
     participant Ctrl as turno-caja.controller
     participant UC as AbrirTurnoCajaUseCase
     participant RepOp as DrizzleSucursalOperadorRepo
@@ -350,8 +376,8 @@ sequenceDiagram
     participant Aud as DrizzleAuditoriaRepo
 
     Cajero->>Ctrl: POST /ventas/turnos { fondoInicial: 50000 }
-    Ctrl->>UC: execute({ usuarioId, fondoInicial, actor })
-    UC->>RepOp: obtenerSucursalIdDeOperador(usuarioId)
+    Ctrl->>UC: execute({ fondoInicial, actor })
+    UC->>RepOp: obtenerSucursalId(actor.usuarioId)
     alt Operador sin sucursal
         UC-->>Ctrl: Result.fail(OperadorSinSucursalError)
         Ctrl-->>Cajero: 422 Unprocessable Entity
