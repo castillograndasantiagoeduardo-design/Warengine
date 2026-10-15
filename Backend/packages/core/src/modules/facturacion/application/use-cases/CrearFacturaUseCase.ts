@@ -8,8 +8,8 @@ import {
     CreditoNoHabilitadoError,
     FacturacionSinTurnoAbiertoError,
     PagoInvalidoError,
-    StockInsuficienteError,
 } from '../../domain/errors/FacturacionErrors.ts';
+import { StockInsuficienteError } from '../../../inventario/domain/errors/InventarioErrors.ts';
 import { OperadorSinSucursalError } from '../../domain/errors/TurnoCajaErrors.ts';
 import { IFacturaRepository } from '../../domain/repositories/IFacturaRepository.ts';
 import { ITurnoCajaRepository } from '../../domain/repositories/ITurnoCajaRepository.ts';

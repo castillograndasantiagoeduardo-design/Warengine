@@ -1,0 +1,174 @@
+### ==============================================================================
+### WARENGINE - REQUERIMIENTO RF-ADM-B11: CONFIGURACIÓN DE STOCK MÍNIMO POR SUCURSAL
+### ==============================================================================
+### Flujo integral paso a paso:
+### 1. Iniciar sesión y autenticarse como SuperAdmin.
+### 2. Seleccionar una sucursal activa y un producto del catálogo.
+### 3. Consultar existencias y umbral actual en la sucursal.
+### 4. Configurar el umbral de stock mínimo (RF-ADM-B11).
+### 5. Verificar que se dispare la alarma de abastecimiento (RF-ADM-A3) en /admin/alertas-stock.
+### 6. Registrar una entrada de mercancía para superar el umbral y verificar el cese de la alarma.
+### 7. Validaciones de control: enteros, valores negativos y producto/sucursal inactiva.
+### ==============================================================================
+
+@baseUrl = http://localhost:8017
+@contentType = application/json
+
+### ------------------------------------------------------------------------------
+### PASO 0: Autenticación como Super Admin
+### ------------------------------------------------------------------------------
+# @name loginAdmin
+POST {{baseUrl}}/auth/login
+Content-Type: {{contentType}}
+
+{
+  "email": "admin@warengine.com",
+  "password": "Password123*"
+}
+
+### Guardar Token de Super Admin
+@tokenAdmin = {{loginAdmin.response.body.accessToken}}
+
+### ------------------------------------------------------------------------------
+### PASO 1: Listar sucursales para obtener ID de sede operativa
+### ------------------------------------------------------------------------------
+# @name listarSucursales
+GET {{baseUrl}}/admin/sucursales?limit=5
+Authorization: Bearer {{tokenAdmin}}
+
+### ------------------------------------------------------------------------------
+### PASO 2: Listar productos o crear uno nuevo para la prueba
+### ------------------------------------------------------------------------------
+# @name listarProductos
+GET {{baseUrl}}/inventario/productos?limit=5
+Authorization: Bearer {{tokenAdmin}}
+
+### (Opcional) Crear un nuevo producto para prueba aislada
+# @name crearProducto
+POST {{baseUrl}}/inventario/productos
+Authorization: Bearer {{tokenAdmin}}
+Content-Type: {{contentType}}
+
+{
+  "sku": "MIN-TEST-001",
+  "nombre": "Aceite Vegetal 1L Test",
+  "precioCompra": 7000.00,
+  "precioVenta": 9500.00
+}
+
+### Extraer ID del producto creado (o reemplazar manualmente con uno existente)
+@productoId = {{crearProducto.response.body.id}}
+@sucursalId = 1
+
+### ------------------------------------------------------------------------------
+### PASO 3: Consultar estado inicial del stock en la sucursal
+### Esperado: 200 OK con stockActual: 0, stockMinimo: 0, alertaAbastecimiento: true
+### ------------------------------------------------------------------------------
+# @name consultarStockInicial
+GET {{baseUrl}}/inventario/stock-minimo/{{sucursalId}}/{{productoId}}
+Authorization: Bearer {{tokenAdmin}}
+
+### ------------------------------------------------------------------------------
+### PASO 4: Configurar Stock Mínimo (RF-ADM-B11)
+### Fijamos un umbral de 20 unidades para esta sucursal.
+### Esperado: 200 OK, stockMinimo: 20, stockActual: 0, tieneAlertaAbastecimiento: true
+### ------------------------------------------------------------------------------
+# @name configurarStockMinimo
+PUT {{baseUrl}}/inventario/stock-minimo
+Authorization: Bearer {{tokenAdmin}}
+Content-Type: {{contentType}}
+
+{
+  "productoId": "{{productoId}}",
+  "sucursalId": {{sucursalId}},
+  "stockMinimo": 20
+}
+
+### ------------------------------------------------------------------------------
+### PASO 5: Verificar consulta ampliada tras configuración
+### Esperado: 200 OK con stockMinimo: 20 y alertaAbastecimiento: true
+### ------------------------------------------------------------------------------
+# @name verificarStockConfigurado
+GET {{baseUrl}}/inventario/stock-minimo/{{sucursalId}}/{{productoId}}
+Authorization: Bearer {{tokenAdmin}}
+
+### ------------------------------------------------------------------------------
+### PASO 6: Constatar que dispara alarma en el Dashboard (RF-ADM-A3)
+### Esperado: 200 OK, el producto figura en la lista de alertas críticas
+### ------------------------------------------------------------------------------
+# @name consultarAlertasDashboard
+GET {{baseUrl}}/admin/alertas-stock?sucursalId={{sucursalId}}
+Authorization: Bearer {{tokenAdmin}}
+
+### ------------------------------------------------------------------------------
+### PASO 7: Abastecer inventario por encima del umbral mínimo (RF-ADM-B7)
+### Ingresamos 25 unidades (25 > 20)
+### Esperado: 201 Created
+### ------------------------------------------------------------------------------
+# @name abastecerInventario
+POST {{baseUrl}}/inventario/entradas
+Authorization: Bearer {{tokenAdmin}}
+Content-Type: {{contentType}}
+
+{
+  "productoId": "{{productoId}}",
+  "sucursalId": {{sucursalId}},
+  "cantidad": 25,
+  "motivo": "Abastecimiento de lote para prueba de stock minimo"
+}
+
+### ------------------------------------------------------------------------------
+### PASO 8: Verificar que la alarma de abastecimiento se desactiva
+### Esperado: stockActual: 25, stockMinimo: 20, alertaAbastecimiento: false
+### ------------------------------------------------------------------------------
+# @name verificarAlertaDesactivada
+GET {{baseUrl}}/inventario/stock-minimo/{{sucursalId}}/{{productoId}}
+Authorization: Bearer {{tokenAdmin}}
+
+### ------------------------------------------------------------------------------
+### PASO 9: CASOS DE ERROR Y VALIDACIÓN DE NEGOCIO
+### ------------------------------------------------------------------------------
+
+### 9.1 Rechazo por valor negativo (esperado 400 VALIDATION_ERROR)
+PUT {{baseUrl}}/inventario/stock-minimo
+Authorization: Bearer {{tokenAdmin}}
+Content-Type: {{contentType}}
+
+{
+  "productoId": "{{productoId}}",
+  "sucursalId": {{sucursalId}},
+  "stockMinimo": -10
+}
+
+### 9.2 Rechazo por valor decimal (esperado 400 VALIDATION_ERROR)
+PUT {{baseUrl}}/inventario/stock-minimo
+Authorization: Bearer {{tokenAdmin}}
+Content-Type: {{contentType}}
+
+{
+  "productoId": "{{productoId}}",
+  "sucursalId": {{sucursalId}},
+  "stockMinimo": 15.5
+}
+
+### 9.3 Rechazo por producto inexistente (esperado 400/404 PRODUCTO_NO_ENCONTRADO)
+PUT {{baseUrl}}/inventario/stock-minimo
+Authorization: Bearer {{tokenAdmin}}
+Content-Type: {{contentType}}
+
+{
+  "productoId": "00000000-0000-0000-0000-000000000000",
+  "sucursalId": {{sucursalId}},
+  "stockMinimo": 10
+}
+
+### 9.4 Rechazo por sucursal inexistente (esperado 400/404 SUCURSAL_NO_ENCONTRADA)
+PUT {{baseUrl}}/inventario/stock-minimo
+Authorization: Bearer {{tokenAdmin}}
+Content-Type: {{contentType}}
+
+{
+  "productoId": "{{productoId}}",
+  "sucursalId": 99999,
+  "stockMinimo": 10
+}

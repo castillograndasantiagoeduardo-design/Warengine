@@ -35,13 +35,6 @@ export class FacturacionSinTurnoAbiertoError extends DomainError {
   }
 }
 
-export class StockInsuficienteError extends DomainError {
-  public readonly code = 'STOCK_INSUFICIENTE';
-  constructor(mensaje: string = 'Stock insuficiente para completar la venta de este producto.') {
-    super(mensaje);
-  }
-}
-
 export class PagoInvalidoError extends DomainError {
   public readonly code = 'PAGO_INVALIDO';
   constructor(mensaje: string = 'La suma de los pagos no coincide con el total de la factura.') {

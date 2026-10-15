@@ -49,7 +49,7 @@ El módulo de **Inventario** administra el catálogo maestro de artículos, cate
 | **RF-ADM-B8** | Salidas manuales de stock por merma o daño con motivo | IMPLEMENTADO | [RegistrarSalidaInventarioUseCase.ts](../../Backend/packages/core/src/modules/inventario/application/use-cases/RegistrarSalidaInventarioUseCase.ts), [movimiento-inventario.controller.ts](../../Backend/apps/api/src/controllers/inventario/movimiento-inventario.controller.ts) |
 | **RF-ADM-B9** | Validación de stock no negativo (control estricto de existencias) | IMPLEMENTADO | Trigger `trg_movimientos_check_stock`, `chk_inventario_stock_actual`, [RegistrarSalidaInventarioUseCase.ts](../../Backend/packages/core/src/modules/inventario/application/use-cases/RegistrarSalidaInventarioUseCase.ts) |
 | **RF-ADM-B10** | Historial de movimientos (Kardex) por producto y sucursal | IMPLEMENTADO | [ConsultarKardexUseCase.ts](../../Backend/packages/core/src/modules/inventario/application/use-cases/ConsultarKardexUseCase.ts), [movimiento-inventario.controller.ts](../../Backend/apps/api/src/controllers/inventario/movimiento-inventario.controller.ts) |
-| **RF-ADM-B11** | Configuración de stock mínimo por producto y alertas de abastecimiento | PENDIENTE | Caso de uso de configuración de umbrales por sucursal. |
+| **RF-ADM-B11** | Configuración de stock mínimo por producto y alertas de abastecimiento | IMPLEMENTADO | [ConfigurarStockMinimoUseCase.ts](../../Backend/packages/core/src/modules/inventario/application/use-cases/ConfigurarStockMinimoUseCase.ts), [stock-minimo.controller.ts](../../Backend/apps/api/src/controllers/inventario/stock-minimo.controller.ts) |
 
 ---
 
@@ -382,10 +382,8 @@ sequenceDiagram
 
 ## 12. Pendientes y Deuda Técnica
 
-1. **Gestión de Stock por Sucursal (`inventario_sucursal`):** Faltan casos de uso para consultar el stock disponible en una sucursal específica.
-2. **Salidas Manuales (`registrar-salida`):** En proceso de finalización formal con sus pruebas y contratos (RF-ADM-B8).
-3. **Ajustes de Inventario (`ajustar-stock`):** Falta caso de uso de auditoría física (`ajuste_entrada` o `ajuste_salida`) (RF-ADM-B9).
-4. **Kardex y Reporte de Stock Bajo (`kardex`, `stock-bajo`):** Falta endpoints de consulta histórica de movimientos e informe de alertas de stock mínimo (RF-ADM-B10, RF-ADM-B11).
+1. **Ajustes Físicos de Inventario (`ajustar-stock`):** Endpoint y caso de uso para cuadres de auditoría física (`ajuste_entrada` o `ajuste_salida` con permiso `inventario:ajustar-stock`).
+2. **Kardex y Stock Mínimo (RF-ADM-B10, RF-ADM-B11):** Culminados con consultas paginadas, validación multisede (RNF-ADM-04) y suite HTTP en `14-kardex-inventario.http` y `15-stock-minimo.http`.
 
 ---
 

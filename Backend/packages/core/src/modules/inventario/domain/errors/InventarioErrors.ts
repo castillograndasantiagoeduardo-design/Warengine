@@ -66,8 +66,14 @@ export class SkuModificacionNoPermitidaError extends DomainError {
 
 export class StockInsuficienteError extends DomainError {
   public readonly code = 'STOCK_INSUFICIENTE';
-  constructor(disponible: number, solicitado: number) {
-    super(`Stock insuficiente. Disponible: ${disponible}, solicitado: ${solicitado}.`);
+  constructor(disponibleOMensaje?: number | string, solicitado?: number) {
+    if (typeof disponibleOMensaje === 'number' && typeof solicitado === 'number') {
+      super(`Stock insuficiente. Disponible: ${disponibleOMensaje}, solicitado: ${solicitado}.`);
+    } else if (typeof disponibleOMensaje === 'string') {
+      super(disponibleOMensaje);
+    } else {
+      super('Stock insuficiente para completar la venta de este producto.');
+    }
   }
 }
 
@@ -82,5 +88,12 @@ export class MotivoSalidaRequeridoError extends DomainError {
   public readonly code = 'MOTIVO_SALIDA_REQUERIDO';
   constructor() {
     super('El motivo de la salida manual es obligatorio (avería, merma, vencimiento, etc.).');
+  }
+}
+
+export class StockMinimoInvalidoError extends DomainError {
+  public readonly code = 'STOCK_MINIMO_INVALIDO';
+  constructor(mensaje: string = 'El stock mínimo debe ser un número entero mayor o igual a cero.') {
+    super(mensaje);
   }
 }

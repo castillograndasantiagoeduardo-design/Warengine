@@ -27,6 +27,10 @@ import {
   registrarEntradaController,
   registrarSalidaController,
 } from '../controllers/inventario/movimiento-inventario.controller.ts';
+import {
+  configurarStockMinimoController,
+  consultarStockSucursalController,
+} from '../controllers/inventario/stock-minimo.controller.ts';
 
 import { PERMISSIONS } from '@warengine/contracts';
 
@@ -136,6 +140,18 @@ export function createInventarioRoutes(container: AppContainer): Hono {
     '/kardex',
     authMiddleware(container, PERMISO_INVENTARIO_VER_KARDEX),
     consultarKardexController(container),
+  );
+
+  // ─── Configuración de Stock Mínimo (RF-ADM-B11) ───────────────────────────
+  api.put(
+    '/stock-minimo',
+    authMiddleware(container, PERMISO_INVENTARIO_ESCRIBIR),
+    configurarStockMinimoController(container),
+  );
+  api.get(
+    '/stock-minimo/:sucursalId/:productoId',
+    authMiddleware(container, PERMISO_INVENTARIO_LEER),
+    consultarStockSucursalController(container),
   );
 
   return api;
