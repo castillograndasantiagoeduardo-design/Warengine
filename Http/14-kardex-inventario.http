@@ -1,0 +1,159 @@
+# ==============================================================================
+# MÓDULO: ADMINISTRACIÓN / INVENTARIO - HISTORIAL DE MOVIMIENTOS (KARDEX)
+# Requisito SRS:
+#   - RF-ADM-B10: Trazabilidad histórica y cronológica de entradas, salidas y ajustes por ítem
+#   - RNF-ADM-04: Aislamiento de sede (Admin Sucursal acotado a su sede, Super Admin global)
+#   - Permiso RBAC: inventario:ver-kardex
+#
+# Requiere: Extensión REST Client en VS Code
+# Base URL: http://localhost:8017
+# ==============================================================================
+
+@baseUrl = http://localhost:8017
+@sucursalId = 1
+
+# ==============================================================================
+# PASO 0: AUTENTICACIÓN
+# ==============================================================================
+
+### Paso 0: Iniciar sesión como Super Admin
+# @name login
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "superadmin@warengine.local",
+  "password": "Warengine.Admin.2026!"
+}
+
+###
+
+# ==============================================================================
+# PASO 1: OBTENER UN PRODUCTO DEL CATÁLOGO MAESTRO
+# ==============================================================================
+
+### Paso 1: Listar productos para obtener dinámicamente el UUID
+# @name listarProductos
+GET {{baseUrl}}/inventario/productos?limit=5
+Authorization: Bearer {{login.response.body.accessToken}}
+
+###
+
+# ==============================================================================
+# PASO 2: SEMBRAR UN MOVIMIENTO DE ENTRADA
+# ==============================================================================
+
+### Paso 2: Registrar entrada de mercancía para generar histórico en el kardex
+# @name registrarEntrada
+POST {{baseUrl}}/inventario/entradas
+Authorization: Bearer {{login.response.body.accessToken}}
+Content-Type: application/json
+
+{
+  "productoId": "{{listarProductos.response.body.items[0].id}}",
+  "sucursalId": {{sucursalId}},
+  "cantidad": 50,
+  "proveedorId": 1,
+  "motivo": "Abastecimiento inicial para pruebas de kardex"
+}
+
+###
+
+# ==============================================================================
+# PASO 3: SEMBRAR UN MOVIMIENTO DE SALIDA
+# ==============================================================================
+
+### Paso 3: Registrar salida manual justificada para complementar el historial
+# @name registrarSalida
+POST {{baseUrl}}/inventario/salidas
+Authorization: Bearer {{login.response.body.accessToken}}
+Content-Type: application/json
+
+{
+  "productoId": "{{listarProductos.response.body.items[0].id}}",
+  "sucursalId": {{sucursalId}},
+  "cantidad": 5,
+  "motivo": "Merma por inspección de control de calidad"
+}
+
+###
+
+# ==============================================================================
+# PASO 4: CONSULTAR KARDEX GLOBAL (RF-ADM-B10)
+# ==============================================================================
+
+### Paso 4: Consultar historial cronológico completo de movimientos
+# Resultado esperado: 200 OK con items ordenados por fecha descendente y total
+GET {{baseUrl}}/inventario/kardex?limit=10&offset=0
+Authorization: Bearer {{login.response.body.accessToken}}
+
+###
+
+# ==============================================================================
+# PASO 5: FILTRAR KARDEX POR PRODUCTO ESPECÍFICO
+# ==============================================================================
+
+### Paso 5: Consultar kardex filtrado por UUID de producto
+# Resultado esperado: 200 OK conteniendo solo movimientos del producto indicado
+GET {{baseUrl}}/inventario/kardex?productoId={{listarProductos.response.body.items[0].id}}
+Authorization: Bearer {{login.response.body.accessToken}}
+
+###
+
+# ==============================================================================
+# PASO 6: FILTRAR KARDEX POR SUCURSAL
+# ==============================================================================
+
+### Paso 6: Consultar kardex filtrado por sucursal
+# Resultado esperado: 200 OK con movimientos de la sucursal 1
+GET {{baseUrl}}/inventario/kardex?sucursalId={{sucursalId}}
+Authorization: Bearer {{login.response.body.accessToken}}
+
+###
+
+# ==============================================================================
+# PASO 7: FILTRAR KARDEX POR TIPO DE MOVIMIENTO
+# ==============================================================================
+
+### Paso 7a: Filtrar solo entradas
+# Resultado esperado: 200 OK donde todos los items tienen tipo = "entrada"
+GET {{baseUrl}}/inventario/kardex?tipo=entrada
+Authorization: Bearer {{login.response.body.accessToken}}
+
+###
+
+### Paso 7b: Filtrar solo salidas
+# Resultado esperado: 200 OK donde todos los items tienen tipo = "salida"
+GET {{baseUrl}}/inventario/kardex?tipo=salida
+Authorization: Bearer {{login.response.body.accessToken}}
+
+###
+
+# ==============================================================================
+# PASO 8: CONSULTA CON PAGINACIÓN
+# ==============================================================================
+
+### Paso 8: Paginación - Página 1 con 2 registros
+# Resultado esperado: 200 OK con limit: 2, offset: 0
+GET {{baseUrl}}/inventario/kardex?limit=2&offset=0
+Authorization: Bearer {{login.response.body.accessToken}}
+
+###
+
+### Paso 9: Paginación - Página 2 con 2 registros
+# Resultado esperado: 200 OK con limit: 2, offset: 2
+GET {{baseUrl}}/inventario/kardex?limit=2&offset=2
+Authorization: Bearer {{login.response.body.accessToken}}
+
+###
+
+# ==============================================================================
+# PASO 10: VALIDACIONES DE ERROR
+# ==============================================================================
+
+### Paso 10: Error por tipo de movimiento inexistente
+# Resultado esperado: 400 Bad Request (VALIDATION_ERROR)
+GET {{baseUrl}}/inventario/kardex?tipo=tipo_invalido
+Authorization: Bearer {{login.response.body.accessToken}}
+
+###

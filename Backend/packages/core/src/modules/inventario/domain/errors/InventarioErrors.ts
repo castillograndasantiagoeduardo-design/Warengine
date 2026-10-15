@@ -21,6 +21,14 @@ export class ProductoNoEncontradoError extends DomainError {
   }
 }
 
+/** Error cuando un producto está inactivo en catálogo maestro y se intenta operar sobre él. */
+export class ProductoInactivoError extends DomainError {
+  public readonly code = 'PRODUCTO_INACTIVO';
+  constructor() {
+    super('El producto seleccionado está inactivo en el catálogo.');
+  }
+}
+
 export class SkuDuplicadoError extends DomainError {
   public readonly code = 'SKU_DUPLICADO';
   constructor(sku?: string) {
@@ -53,5 +61,26 @@ export class SkuModificacionNoPermitidaError extends DomainError {
   public readonly code = 'SKU_MODIFICACION_NO_PERMITIDA';
   constructor() {
     super('No se permite modificar el SKU de un producto que ya registra movimientos.');
+  }
+}
+
+export class StockInsuficienteError extends DomainError {
+  public readonly code = 'STOCK_INSUFICIENTE';
+  constructor(disponible: number, solicitado: number) {
+    super(`Stock insuficiente. Disponible: ${disponible}, solicitado: ${solicitado}.`);
+  }
+}
+
+export class CantidadInvalidaError extends DomainError {
+  public readonly code = 'CANTIDAD_INVALIDA';
+  constructor(mensaje: string = 'La cantidad debe ser un entero positivo mayor a cero.') {
+    super(mensaje);
+  }
+}
+
+export class MotivoSalidaRequeridoError extends DomainError {
+  public readonly code = 'MOTIVO_SALIDA_REQUERIDO';
+  constructor() {
+    super('El motivo de la salida manual es obligatorio (avería, merma, vencimiento, etc.).');
   }
 }

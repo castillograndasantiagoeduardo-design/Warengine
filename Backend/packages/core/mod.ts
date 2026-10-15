@@ -118,6 +118,10 @@ export * from './src/modules/inventario/application/use-cases/ReactivarProductoU
 export * from './src/modules/inventario/application/use-cases/CambiarEstadoProductoUseCase.ts';
 export * from './src/modules/inventario/application/use-cases/ListarProductosUseCase.ts';
 export * from './src/modules/inventario/application/use-cases/ObtenerProductoPorIdUseCase.ts';
+export * from './src/modules/inventario/domain/repositories/IMovimientoInventarioRepository.ts';
+export * from './src/modules/inventario/application/use-cases/RegistrarEntradaInventarioUseCase.ts';
+export * from './src/modules/inventario/application/use-cases/RegistrarSalidaInventarioUseCase.ts';
+export * from './src/modules/inventario/application/use-cases/ConsultarKardexUseCase.ts';
 
 
 // ─── Módulo: Facturacion ─────────────────────────────────────────────────────

@@ -44,6 +44,7 @@ export function presentResult<T>(c: Context, result: Result<T, DomainError>, suc
     case 'CLIENTE_B2B_DATOS_INCOMPLETOS':
     case 'CATEGORIA_INACTIVA':
     case 'PROVEEDOR_INACTIVO':
+    case 'PRODUCTO_INACTIVO':
     case 'REFERENCIA_INVALIDA':
     case 'SKU_MODIFICACION_NO_PERMITIDA':
     case 'PAGO_INVALIDO':

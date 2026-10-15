@@ -22,14 +22,20 @@ import {
   listarProductosController,
   obtenerProductoPorIdController,
 } from '../controllers/inventario/producto.controller.ts';
+import {
+  consultarKardexController,
+  registrarEntradaController,
+  registrarSalidaController,
+} from '../controllers/inventario/movimiento-inventario.controller.ts';
 
 import { PERMISSIONS } from '@warengine/contracts';
 
 // Códigos según la tabla `permisos` (seed).
-// `inventario:leer`: super-admin, admin-sucursal, cajero, vendedor-b2b
-// `inventario:escribir`: super-admin, admin-sucursal (cajero y vendedor-b2b reciben 403)
-const PERMISO_INVENTARIO_LEER = PERMISSIONS.INVENTARIO_LEER;
-const PERMISO_INVENTARIO_ESCRIBIR = PERMISSIONS.INVENTARIO_ESCRIBIR;
+// Si los nuevos permisos ya existen dentro del objeto PERMISOS de @warengine/contratos:
+const PERMISO_INVENTARIO_LEER = PERMISOS.INVENTARIO_LEER;
+const PERMISO_INVENTARIO_ESCRIBIR = PERMISOS.INVENTARIO_ESCRIBIR;
+const PERMISO_INVENTARIO_REGISTRAR_MOVIMIENTO = PERMISOS.INVENTARIO_REGISTRADOR_MOVIMIENTO ?? 'inventario:registrador-movimiento';
+const PERMISO_INVENTARIO_VER_KARDEX = PERMISOS.INVENTARIO_VER_KARDEX ?? 'inventario:ver-kardex';
 
 export function createInventarioRoutes(container: AppContainer): Hono {
   const api = new Hono();
@@ -113,6 +119,23 @@ export function createInventarioRoutes(container: AppContainer): Hono {
     '/productos/:id/estado',
     authMiddleware(container, PERMISO_INVENTARIO_ESCRIBIR),
     cambiarEstadoProductoController(container),
+  );
+
+  // ─── Movimientos de Inventario (RF-ADM-B7, RF-ADM-B8, RF-ADM-B9) ──────────
+  api.post(
+    '/entradas',
+    authMiddleware(container, PERMISO_INVENTARIO_REGISTRAR_MOVIMIENTO),
+    registrarEntradaController(container),
+  );
+  api.post(
+    '/salidas',
+    authMiddleware(container, PERMISO_INVENTARIO_REGISTRAR_MOVIMIENTO),
+    registrarSalidaController(container),
+  );
+  api.get(
+    '/kardex',
+    authMiddleware(container, PERMISO_INVENTARIO_VER_KARDEX),
+    consultarKardexController(container),
   );
 
   return api;
