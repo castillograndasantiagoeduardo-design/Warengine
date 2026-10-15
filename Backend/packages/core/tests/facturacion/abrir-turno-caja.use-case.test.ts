@@ -34,10 +34,12 @@ function armar(opciones: {
     const aperturas: DatosAperturaTurno[] = [];
     const turnos: ITurnoCajaRepository = {
         buscarAbiertoDeUsuario: () => Promise.resolve(opciones.abierto ?? null),
+        findById: () => Promise.resolve(null),
         abrir: (datos) => {
             aperturas.push(datos);
             return Promise.resolve(opciones.abrirDevuelve === undefined ? turno() : opciones.abrirDevuelve);
         },
+        cerrar: () => Promise.resolve(turno()),
     };
     const sucursales: ISucursalOperadorRepository = {
         obtenerSucursalId: () =>

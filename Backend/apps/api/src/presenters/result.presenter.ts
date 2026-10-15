@@ -41,14 +41,17 @@ export function presentResult<T>(c: Context, result: Result<T, DomainError>, suc
       status = 409; // Conflicto con el estado actual
       break;
     case 'OPERADOR_SIN_SUCURSAL':
-      status = 422;
-      break;
     case 'CLIENTE_B2B_DATOS_INCOMPLETOS':
     case 'CATEGORIA_INACTIVA':
     case 'PROVEEDOR_INACTIVO':
     case 'REFERENCIA_INVALIDA':
     case 'SKU_MODIFICACION_NO_PERMITIDA':
+    case 'PAGO_INVALIDO':
+    case 'CLIENTE_REQUERIDO_B2B':
       status = 422; // Regla de negocio violada
+      break;
+    case 'FACTURACION_SIN_TURNO_ABIERTO':
+      status = 400; // Bad request
       break;
     default:
       if (error.code.endsWith('_NO_ENCONTRADO') || error.code.endsWith('_NO_ENCONTRADA')) {

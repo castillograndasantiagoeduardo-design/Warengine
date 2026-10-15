@@ -15,6 +15,14 @@ import {
     obtenerTurnoActualController,
 } from '../controllers/facturacion/turno-caja.controller.ts';
 
+import {
+    crearFacturaController,
+    listarFacturasController,
+    obtenerFacturaPorIdController,
+} from '../controllers/facturacion/factura.controller.ts';
+
+import { emitirAlertaFacturacionController } from '../controllers/facturacion/alerta-facturacion.controller.ts';
+
 export function createFacturacionRoutes(container: AppContainer): Hono {
     const api = new Hono();
 
@@ -24,9 +32,20 @@ export function createFacturacionRoutes(container: AppContainer): Hono {
     // Registro y actualización de clientes (RF-FMC-B4, B5, B7, D10)
     api.post('/clientes', authMiddleware(container, PERMISSIONS.FACTURACION_GESTIONAR_CLIENTES), registrarClienteController(container));
     api.put('/clientes/:id', authMiddleware(container, PERMISSIONS.FACTURACION_GESTIONAR_CLIENTES), actualizarClienteController(container));
+    
+    // Turnos de caja (RF-FMC-A1..A4)
     api.post('/turnos', authMiddleware(container, PERMISSIONS.FACTURACION_ABRIR_TURNO), abrirTurnoCajaController(container));
     api.post('/turnos/:id/cerrar', authMiddleware(container, PERMISSIONS.FACTURACION_ABRIR_TURNO), cerrarTurnoCajaController(container));
     api.get('/turnos/actual', authMiddleware(container, PERMISSIONS.FACTURACION_FACTURAR), obtenerTurnoActualController(container));
 
+    // Facturación mostrador y B2B
+    api.post('/facturas', authMiddleware(container, PERMISSIONS.FACTURACION_FACTURAR), crearFacturaController(container, false));
+    api.post('/facturas/b2b', authMiddleware(container, PERMISSIONS.FACTURACION_VENDER_B2B), crearFacturaController(container, true));
+    api.get('/facturas', authMiddleware(container, PERMISSIONS.FACTURACION_CONSULTAR), listarFacturasController(container));
+    api.get('/facturas/:id', authMiddleware(container, PERMISSIONS.FACTURACION_CONSULTAR), obtenerFacturaPorIdController(container));
+
+    // Alertas operativas al administrador
+    api.post('/alertas', authMiddleware(container, PERMISSIONS.FACTURACION_ALERTAR_ADMIN), emitirAlertaFacturacionController(container));
+
     return api;
-}
+}

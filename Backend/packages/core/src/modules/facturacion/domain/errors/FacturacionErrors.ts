@@ -27,3 +27,38 @@ export class CreditoNoHabilitadoError extends DomainError {
     super('Este cliente no tiene crédito corporativo habilitado.');
   }
 }
+
+export class FacturacionSinTurnoAbiertoError extends DomainError {
+  public readonly code = 'FACTURACION_SIN_TURNO_ABIERTO';
+  constructor() {
+    super('El cajero debe tener un turno de caja abierto para facturar en mostrador.');
+  }
+}
+
+export class StockInsuficienteError extends DomainError {
+  public readonly code = 'STOCK_INSUFICIENTE';
+  constructor(mensaje: string = 'Stock insuficiente para completar la venta de este producto.') {
+    super(mensaje);
+  }
+}
+
+export class PagoInvalidoError extends DomainError {
+  public readonly code = 'PAGO_INVALIDO';
+  constructor(mensaje: string = 'La suma de los pagos no coincide con el total de la factura.') {
+    super(mensaje);
+  }
+}
+
+export class ClienteRequeridoParaVentaB2BError extends DomainError {
+  public readonly code = 'CLIENTE_REQUERIDO_B2B';
+  constructor(mensaje: string = 'La venta B2B requiere un cliente corporativo (B2B).') {
+    super(mensaje);
+  }
+}
+
+export class FacturaNoEncontradaError extends DomainError {
+  public readonly code = 'FACTURA_NO_ENCONTRADA';
+  constructor() {
+    super('La factura no existe.');
+  }
+}
