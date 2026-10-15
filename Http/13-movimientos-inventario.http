@@ -1,0 +1,146 @@
+# ==============================================================================
+# MÓDULO: ADMINISTRACIÓN / INVENTARIO - MOVIMIENTOS Y CONTROL DE STOCK
+# Requisitos SRS:
+#   - RF-ADM-B7: Registro de entradas de mercancía asociada a proveedor
+#   - RF-ADM-B8: Registro de salidas manuales por averías/mermas con motivo obligatorio
+#   - RF-ADM-B9: Validación de stock no negativo (bloqueo ante existencias insuficientes)
+#   - RNF-ADM-02: Registro auditable de mutaciones en inventario
+#   - RNF-ADM-03: Exigencia de permiso RBAC (inventario:escribir)
+#
+# Requiere: REST Client (extensión VS Code)
+# Base URL: http://localhost:8017
+# ==============================================================================
+
+@baseUrl = http://localhost:8017
+@sucursalId = 1
+@productoId = PRODUCTO_UUID
+
+# ------------------------------------------------------------------------------
+# SETUP: Autenticación
+# ------------------------------------------------------------------------------
+
+### Login como Super Admin
+# @name login
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "superadmin@warengine.local",
+  "password": "Warengine.Admin.2026!"
+}
+
+###
+
+# ==============================================================================
+# PASO PREVIO: OBTENER UN PRODUCTO DEL CATÁLOGO
+# ==============================================================================
+
+### Listar productos para copiar un UUID en @productoId
+# @name listarProductos
+GET {{baseUrl}}/inventario/productos?limit=5
+Authorization: Bearer {{login.response.body.accessToken}}
+
+###
+
+# ==============================================================================
+# RF-ADM-B7: REGISTRO DE ENTRADAS DE MERCANCÍA
+# ==============================================================================
+
+### UC-MOV-01: Registrar entrada exitosa de mercancía (compra a proveedor)
+# Resultado esperado: 201 Created con tipo "entrada" y stockResultante incrementado
+# Nota: Reemplaza "PRODUCTO_UUID" por un id copiado de la respuesta anterior
+POST {{baseUrl}}/inventario/entradas
+Authorization: Bearer {{login.response.body.accessToken}}
+Content-Type: application/json
+
+{
+  "productoId": "{{productoId}}",
+  "sucursalId": {{sucursalId}},
+  "cantidad": 25,
+  "proveedorId": 1,
+  "motivo": "Recepción de pedido compra OC-2026-089"
+}
+
+###
+
+# ==============================================================================
+# RF-ADM-B8: REGISTRO DE SALIDAS MANUALES (MERMAS / AVERÍAS)
+# ==============================================================================
+
+### UC-MOV-02: Registrar salida manual por avería con motivo justificado
+# Resultado esperado: 201 Created con tipo "salida" y stockResultante decrementado
+POST {{baseUrl}}/inventario/salidas
+Authorization: Bearer {{login.response.body.accessToken}}
+Content-Type: application/json
+
+{
+  "productoId": "{{productoId}}",
+  "sucursalId": {{sucursalId}},
+  "cantidad": 3,
+  "motivo": "Empaque roto y producto averiado en descargue"
+}
+
+###
+
+# ==============================================================================
+# RF-ADM-B9: VALIDACIÓN DE STOCK NO NEGATIVO (CONTROL ESTRICTO)
+# ==============================================================================
+
+### UC-MOV-03: Rechazo de salida si las existencias son insuficientes
+# Resultado esperado: 400 Bad Request con código STOCK_INSUFICIENTE
+POST {{baseUrl}}/inventario/salidas
+Authorization: Bearer {{login.response.body.accessToken}}
+Content-Type: application/json
+
+{
+  "productoId": "{{productoId}}",
+  "sucursalId": {{sucursalId}},
+  "cantidad": 999999,
+  "motivo": "Intento de salida masiva no soportada por inventario"
+}
+
+###
+
+# ==============================================================================
+# VALIDACIONES DE NEGOCIO (RF-ADM-B8 / ZOD)
+# ==============================================================================
+
+### UC-MOV-04: Error por motivo de salida ausente o menor a 3 caracteres
+# Resultado esperado: 400 Bad Request (motivo obligatorio en salidas manuales)
+POST {{baseUrl}}/inventario/salidas
+Authorization: Bearer {{login.response.body.accessToken}}
+Content-Type: application/json
+
+{
+  "productoId": "{{productoId}}",
+  "sucursalId": {{sucursalId}},
+  "cantidad": 2,
+  "motivo": ""
+}
+
+###
+
+### UC-MOV-05: Error por cantidad inválida (menor o igual a cero)
+# Resultado esperado: 400 Bad Request
+POST {{baseUrl}}/inventario/entradas
+Authorization: Bearer {{login.response.body.accessToken}}
+Content-Type: application/json
+
+{
+  "productoId": "{{productoId}}",
+  "sucursalId": {{sucursalId}},
+  "cantidad": 0
+}
+
+###
+
+# ==============================================================================
+# RNF-ADM-02: TRAZABILIDAD Y AUDITORÍA
+# ==============================================================================
+
+### UC-MOV-06: Verificar eventos de auditoría generados por movimientos de inventario
+# Resultado esperado: 200 OK con registros de 'editar' sobre entidad 'productos'
+GET {{baseUrl}}/administracion/auditoria?entidad=productos&limit=10
+Authorization: Bearer {{login.response.body.accessToken}}
+
+###

@@ -22,6 +22,10 @@ import {
   listarProductosController,
   obtenerProductoPorIdController,
 } from '../controllers/inventario/producto.controller.ts';
+import {
+  registrarEntradaController,
+  registrarSalidaController,
+} from '../controllers/inventario/movimiento-inventario.controller.ts';
 
 // Códigos según la tabla `permisos` (seed).
 // `inventario:leer`: super-admin, admin-sucursal, cajero-vendedor
@@ -111,6 +115,18 @@ export function createInventarioRoutes(container: AppContainer): Hono {
     '/productos/:id/estado',
     authMiddleware(container, PERMISO_INVENTARIO_ESCRIBIR),
     cambiarEstadoProductoController(container),
+  );
+
+  // ─── Movimientos de Inventario (RF-ADM-B7, RF-ADM-B8, RF-ADM-B9) ──────────
+  api.post(
+    '/entradas',
+    authMiddleware(container, PERMISO_INVENTARIO_ESCRIBIR),
+    registrarEntradaController(container),
+  );
+  api.post(
+    '/salidas',
+    authMiddleware(container, PERMISO_INVENTARIO_ESCRIBIR),
+    registrarSalidaController(container),
   );
 
   return api;
