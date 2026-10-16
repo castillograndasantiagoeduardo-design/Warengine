@@ -3,6 +3,7 @@ import {
   anularEntradaSchema,
   filtrosEntradasSchema,
   filtrosKardexSchema,
+  filtrosExportarKardexSchema,
   registrarEntradaSchema,
   registrarSalidaSchema,
   transferirMercanciaSchema,
@@ -153,6 +154,35 @@ export function transferirMercanciaController(container: AppContainer) {
       actor: obtenerActor(c),
     });
     return presentResult(c, result, 200);
+  });
+}
+
+/**
+ * RF-ADM-B21: Exportación de movimientos kardex a CSV.
+ */
+export function exportarKardexCsvController(container: AppContainer) {
+  return safeHandler(async (c) => {
+    const parsed = filtrosExportarKardexSchema.safeParse(c.req.query());
+    if (!parsed.success) {
+      return c.json({ error: 'VALIDATION_ERROR', issues: parsed.error.errors }, 400);
+    }
+
+    const result = await container.inventario.exportarKardexCsv.execute({
+      ...parsed.data,
+      actor: obtenerActor(c),
+    });
+
+    if (result.isFailure) {
+      return presentResult(c, result);
+    }
+
+    if (parsed.data.formato === 'json') {
+      return c.json(result.value, 200);
+    }
+
+    c.header('Content-Type', 'text/csv; charset=utf-8');
+    c.header('Content-Disposition', `attachment; filename="${result.value.nombreArchivo}"`);
+    return c.text(result.value.csv, 200);
   });
 }
 

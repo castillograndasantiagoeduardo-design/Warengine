@@ -121,6 +121,8 @@ import {
   AjustarInventarioUseCase,
   TransferirMercanciaUseCase,
   ImportarProductosUseCase,
+  ExportarProductosCsvUseCase,
+  ExportarKardexCsvUseCase,
 } from '@warengine/core';
 
 export interface AppContainer {
@@ -196,6 +198,8 @@ export interface AppContainer {
     ajustarInventario: AjustarInventarioUseCase;
     transferirMercancia: TransferirMercanciaUseCase;
     importarProductos: ImportarProductosUseCase;
+    exportarProductosCsv: ExportarProductosCsvUseCase;
+    exportarKardexCsv: ExportarKardexCsvUseCase;
   };
   facturacion: {
     registrarCliente: RegistrarClienteUseCase;
@@ -530,6 +534,11 @@ export function createContainer(_env?: Record<string, string>): AppContainer {
     sucursalRepository,
     resolverAlcanceSucursalUseCase,
   );
+  const exportarProductosCsvUseCase = new ExportarProductosCsvUseCase(productoRepository);
+  const exportarKardexCsvUseCase = new ExportarKardexCsvUseCase(
+    movimientoInventarioRepository,
+    resolverAlcanceSucursalUseCase,
+  );
 
   const registrarClienteUseCase = new RegistrarClienteUseCase(clienteRepository, auditoriaRepository);
   const actualizarClienteUseCase = new ActualizarClienteUseCase(clienteRepository, auditoriaRepository);
@@ -624,6 +633,8 @@ export function createContainer(_env?: Record<string, string>): AppContainer {
       ajustarInventario: ajustarInventarioUseCase,
       transferirMercancia: transferirMercanciaUseCase,
       importarProductos: importarProductosUseCase,
+      exportarProductosCsv: exportarProductosCsvUseCase,
+      exportarKardexCsv: exportarKardexCsvUseCase,
     },
     facturacion: {
       registrarCliente: registrarClienteUseCase,

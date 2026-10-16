@@ -1,0 +1,78 @@
+### ==============================================================================
+### WARENGINE - REQUERIMIENTO RF-ADM-B21: EXPORTACIÓN DE INVENTARIO Y KARDEX (CSV)
+### ==============================================================================
+### Descripción de negocio:
+### Permite a los administradores exportar a CSV:
+### 1. El catálogo de productos (RF-ADM-B4):
+###    - Respeta filtros de búsqueda, categoría, proveedor y estado.
+###    - Protege confidencialidad de costos comerciales: oculta precio de compra
+###      y proveedor si el actor carece de permiso de escritura (RF-FMC-B9).
+### 2. El historial cronológico de movimientos kardex (RF-ADM-B10):
+###    - Respeta filtros por producto, sucursal, tipo de movimiento y fechas.
+###    - Aplica aislamiento multi-sede (RNF-ADM-04).
+### ==============================================================================
+
+@baseUrl = http://localhost:8017
+@contentType = application/json
+
+### ------------------------------------------------------------------------------
+### PASO 0: Autenticación como Super Administrador
+### ------------------------------------------------------------------------------
+# @name loginAdmin
+POST {{baseUrl}}/auth/login
+Content-Type: {{contentType}}
+
+{
+  "email": "superadmin@warengine.local",
+  "password": "Warengine.Admin.2026!"
+}
+
+###
+@tokenAdmin = {{loginAdmin.response.body.accessToken}}
+
+### ------------------------------------------------------------------------------
+### CASO 1: Exportar catálogo de productos a CSV (SuperAdmin)
+### Esperado: 200 OK con Content-Type: text/csv y cabeceras completas (incluye costos)
+### ------------------------------------------------------------------------------
+# @name exportarProductosCsv
+GET {{baseUrl}}/inventario/productos/exportar-csv
+Authorization: Bearer {{tokenAdmin}}
+
+### ------------------------------------------------------------------------------
+### CASO 2: Exportar catálogo de productos en formato JSON
+### Esperado: 200 OK con objeto { total, nombreArchivo, csv }
+### ------------------------------------------------------------------------------
+# @name exportarProductosJson
+GET {{baseUrl}}/inventario/productos/exportar-csv?formato=json
+Authorization: Bearer {{tokenAdmin}}
+
+### ------------------------------------------------------------------------------
+### CASO 3: Exportar catálogo de productos filtrado por categoría
+### Esperado: 200 OK con los productos pertenecientes a la categoría indicada
+### ------------------------------------------------------------------------------
+# @name exportarProductosFiltrados
+GET {{baseUrl}}/inventario/productos/exportar-csv?categoriaId=1&formato=json
+Authorization: Bearer {{tokenAdmin}}
+
+### ------------------------------------------------------------------------------
+### CASO 4: Exportar historial de movimientos (Kardex) a CSV (SuperAdmin)
+### Esperado: 200 OK con encabezados ID_Movimiento, Fecha, Sucursal, SKU, etc.
+### ------------------------------------------------------------------------------
+# @name exportarKardexCsv
+GET {{baseUrl}}/inventario/kardex/exportar-csv
+Authorization: Bearer {{tokenAdmin}}
+
+### ------------------------------------------------------------------------------
+### CASO 5: Exportar Kardex con filtros (tipo=entrada y formato JSON)
+### Esperado: 200 OK con movimientos de tipo entrada
+### ------------------------------------------------------------------------------
+# @name exportarKardexFiltrado
+GET {{baseUrl}}/inventario/kardex/exportar-csv?tipo=entrada&formato=json
+Authorization: Bearer {{tokenAdmin}}
+
+### ------------------------------------------------------------------------------
+### CASO 6: Intento de exportar Kardex sin token
+### Esperado: 401 Unauthorized
+### ------------------------------------------------------------------------------
+# @name exportarSinToken
+GET {{baseUrl}}/inventario/kardex/exportar-csv
