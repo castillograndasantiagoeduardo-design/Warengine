@@ -1,4 +1,4 @@
-import { and, count, eq, exists, or, type SQL } from 'drizzle-orm';
+import { and, count, eq, exists, like, or, type SQL } from 'drizzle-orm';
 import { Database } from '../../client.ts';
 import { empleados, sucursales } from '../../schema/administracion.schema.ts';
 import { refresh_tokens, roles, usuario_sucursales, usuarios } from '../../schema/autenticacion.schema.ts';
@@ -9,6 +9,7 @@ import {
   UsuarioGestionado,
 } from '@warengine/core';
 import { usuarioGestionadoFromRow } from '../../mappers/administracion/usuario-gestionado.mapper.ts';
+import { escaparLike } from '../../errors/mysql-error-translator.ts';
 
 const SELECCION = {
   id: usuarios.id_usuario,
@@ -49,6 +50,18 @@ export class DrizzleGestionUsuarioRepository implements IGestionUsuarioRepositor
       );
       const pertenece = or(eq(empleados.sucursal_id, filtros.sucursalId), enAdicionales);
       if (pertenece) condiciones.push(pertenece);
+    }
+
+    // RF-ADM-C16: Búsqueda combinable por nombre de empleado o correo de usuario
+    const termino = (filtros.busqueda ?? filtros.texto)?.trim();
+    if (termino) {
+      const patron = `%${escaparLike(termino)}%`;
+      condiciones.push(
+        or(
+          like(empleados.nombre, patron),
+          like(usuarios.email, patron),
+        )!,
+      );
     }
 
     const rows = await this.consulta()
