@@ -80,6 +80,7 @@ export * from './src/modules/auditoria/domain/repositories/IAuditoriaRepository.
 export * from './src/modules/auditoria/domain/errors/AuditoriaErrors.ts';
 export * from './src/modules/auditoria/domain/services/sanitizar-detalles.ts';
 export * from './src/modules/auditoria/application/use-cases/ConsultarAuditoriaUseCase.ts';
+export * from './src/modules/auditoria/application/use-cases/ExportarAuditoriaCsvUseCase.ts';
 
 // ─── Módulo: Facturación ────────────────────────────────────────────────────
 export * from './src/modules/facturacion/domain/entities/Cliente.ts';
