@@ -27,6 +27,8 @@ export const restablecerPasswordSchema = z.object({
 export const filtrosUsuariosSchema = z.object({
   rolId: z.coerce.number().int().positive().optional(),
   sucursalId: z.coerce.number().int().positive().optional(),
+  busqueda: z.string().trim().optional(),
+  texto: z.string().trim().optional(),
 });
 
 export type CrearUsuarioInput = z.infer<typeof crearUsuarioSchema>;

@@ -3,6 +3,8 @@ import { UsuarioGestionado } from '../entities/UsuarioGestionado.ts';
 export interface FiltrosUsuarios {
   rolId?: number;
   sucursalId?: number;
+  busqueda?: string;
+  texto?: string;
 }
 
 export interface NuevoUsuarioData {
