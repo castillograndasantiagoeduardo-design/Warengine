@@ -229,6 +229,42 @@ Deno.test('InactivarProveedorUseCase: falla si el proveedor no existe y NO audit
   assertEquals(audit.eventos.length, 0);
 });
 
+Deno.test('InactivarProveedorUseCase (RF-ADM-B19): falla si tiene productos activos vinculados y NO audita', async () => {
+  const repo = new FakeProveedorRepository();
+  const audit = new FakeAuditor();
+  await repo.crear({ nombre: 'Distribuidora Central' });
+
+  // Mock de productoRepository con 2 productos activos asociados al proveedor 1
+  const fakeProdRepo = {
+    contarActivosPorProveedor: (provId: number) => Promise.resolve(provId === 1 ? 2 : 0),
+  } as any;
+
+  const useCase = new InactivarProveedorUseCase(repo, audit, fakeProdRepo);
+
+  const res = await useCase.execute({ id: 1, actor });
+  assertEquals(res.isFailure, true);
+  assertEquals(res.error.code, 'PROVEEDOR_CON_PRODUCTOS_ACTIVOS');
+  assertEquals(audit.eventos.length, 0); // No debe auditar inactivación si se rechaza
+});
+
+Deno.test('InactivarProveedorUseCase (RF-ADM-B19): permite inactivar si no tiene productos activos asociados', async () => {
+  const repo = new FakeProveedorRepository();
+  const audit = new FakeAuditor();
+  await repo.crear({ nombre: 'Distribuidora Sin Productos' });
+
+  // Mock de productoRepository con 0 productos activos
+  const fakeProdRepo = {
+    contarActivosPorProveedor: (_provId: number) => Promise.resolve(0),
+  } as any;
+
+  const useCase = new InactivarProveedorUseCase(repo, audit, fakeProdRepo);
+
+  const res = await useCase.execute({ id: 1, actor });
+  assertEquals(res.isSuccess, true);
+  assertEquals(res.value.isActive, false);
+  assertEquals(audit.eventos.length, 1);
+});
+
 Deno.test('ReactivarProveedorUseCase: cambia isActive a true y audita con activar', async () => {
   const repo = new FakeProveedorRepository();
   const audit = new FakeAuditor();

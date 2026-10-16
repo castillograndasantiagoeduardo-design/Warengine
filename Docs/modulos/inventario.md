@@ -66,6 +66,8 @@ mantener `inventario_sucursal.stock_actual` e impedir saldos negativos.
 | **RF-ADM-B16** | Anulación de entradas de mercancía con reversión de existencias y control de stock | IMPLEMENTADO | [AnularEntradaInventarioUseCase.ts](../../Backend/packages/core/src/modules/inventario/application/use-cases/AnularEntradaInventarioUseCase.ts), [movimiento-inventario.controller.ts](../../Backend/apps/api/src/controllers/inventario/movimiento-inventario.controller.ts)                                                                                                                                                                |
 | **RF-ADM-B17** | Ajuste de inventario con conteo físico (cuadre de existencias)                     | IMPLEMENTADO | [AjustarInventarioUseCase.ts](../../Backend/packages/core/src/modules/inventario/application/use-cases/AjustarInventarioUseCase.ts), [movimiento-inventario.controller.ts](../../Backend/apps/api/src/controllers/inventario/movimiento-inventario.controller.ts)                                                                                                                                                                            |
 | **RF-ADM-B18** | Transferencia de mercancía entre sucursales con doble kardex y control de stock    | IMPLEMENTADO | [TransferirMercanciaUseCase.ts](../../Backend/packages/core/src/modules/inventario/application/use-cases/TransferirMercanciaUseCase.ts), [movimiento-inventario.controller.ts](../../Backend/apps/api/src/controllers/inventario/movimiento-inventario.controller.ts)                                                                                                                                                                        |
+| **RF-ADM-B19** | Restricción de inactivación de categorías y proveedores con productos activos      | IMPLEMENTADO | [InactivarCategoriaUseCase.ts](../../Backend/packages/core/src/modules/inventario/application/use-cases/InactivarCategoriaUseCase.ts), [InactivarProveedorUseCase.ts](../../Backend/packages/core/src/modules/inventario/application/use-cases/InactivarProveedorUseCase.ts), [IProductoRepository.ts](../../Backend/packages/core/src/modules/inventario/domain/repositories/IProductoRepository.ts)                                       |
+
 
 ---
 
@@ -220,6 +222,8 @@ Value Object inmutable que encapsula el código de referencia de un producto:
 | `ReferenciaInvalidaError`         | `REFERENCIA_INVALIDA`           | "La referencia de clave foránea es inválida."                                | 422 Unprocessable Entity |
 | `SkuModificacionNoPermitidaError` | `SKU_MODIFICACION_NO_PERMITIDA` | "No se permite modificar el SKU de un producto que ya registra movimientos." | 422 Unprocessable Entity |
 | `SucursalesTransferenciaIgualesError` | `SUCURSALES_TRANSFERENCIA_IGUALES` | "La sucursal de origen y destino no pueden ser la misma."                 | 400 Bad Request          |
+| `CategoriaConProductosActivosError` | `CATEGORIA_CON_PRODUCTOS_ACTIVOS` | "No se puede inactivar la categoría porque tiene productos activos asociados." | 409 Conflict         |
+| `ProveedorConProductosActivosError` | `PROVEEDOR_CON_PRODUCTOS_ACTIVOS` | "No se puede inactivar el proveedor porque tiene productos activos asociados." | 409 Conflict         |
 
 ---
 

@@ -211,6 +211,42 @@ Deno.test('InactivarCategoriaUseCase: falla si la categoría no existe y NO audi
   assertEquals(audit.eventos.length, 0);
 });
 
+Deno.test('InactivarCategoriaUseCase (RF-ADM-B19): falla si tiene productos activos vinculados y NO audita', async () => {
+  const repo = new FakeCategoriaRepository();
+  const audit = new FakeAuditor();
+  await repo.crear({ nombre: 'Ferretería' });
+
+  // Mock de productoRepository con 3 productos activos asociados a la categoría 1
+  const fakeProdRepo = {
+    contarActivosPorCategoria: (catId: number) => Promise.resolve(catId === 1 ? 3 : 0),
+  } as any;
+
+  const useCase = new InactivarCategoriaUseCase(repo, audit, fakeProdRepo);
+
+  const res = await useCase.execute({ id: 1, actor });
+  assertEquals(res.isFailure, true);
+  assertEquals(res.error.code, 'CATEGORIA_CON_PRODUCTOS_ACTIVOS');
+  assertEquals(audit.eventos.length, 0); // No debe registrar auditoría de inactivación si se rechaza
+});
+
+Deno.test('InactivarCategoriaUseCase (RF-ADM-B19): permite inactivar si no tiene productos activos asociados', async () => {
+  const repo = new FakeCategoriaRepository();
+  const audit = new FakeAuditor();
+  await repo.crear({ nombre: 'Ferretería Vacía' });
+
+  // Mock de productoRepository con 0 productos activos
+  const fakeProdRepo = {
+    contarActivosPorCategoria: (_catId: number) => Promise.resolve(0),
+  } as any;
+
+  const useCase = new InactivarCategoriaUseCase(repo, audit, fakeProdRepo);
+
+  const res = await useCase.execute({ id: 1, actor });
+  assertEquals(res.isSuccess, true);
+  assertEquals(res.value.isActive, false);
+  assertEquals(audit.eventos.length, 1);
+});
+
 Deno.test('ReactivarCategoriaUseCase: cambia isActive a true y audita con activar', async () => {
   const repo = new FakeCategoriaRepository();
   const audit = new FakeAuditor();
