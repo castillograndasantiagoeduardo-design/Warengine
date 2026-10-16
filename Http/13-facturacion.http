@@ -23,11 +23,12 @@
 #   [PASO 1] Login inicial para obtener el token JWT de sesión.
 #   [PASO 2] Registro y habilitación de clientes B2C y B2B.
 #   [PASO 3] Apertura de turno de caja (obligatorio para facturación de mostrador).
-#   [PASO 4] Facturación de Mostrador (valida turno abierto + pago exacto).
-#   [PASO 5] Facturación B2B (exenta de turno + valida crédito corporativo).
-#   [PASO 6] Consulta de facturas emitidas por ID y listado de sucursal.
-#   [PASO 7] Alerta operativa al administrador desde caja o venta.
-#   [PASO 8] Cierre de turno de caja (arqueo final con cálculo de diferencia).
+#   [PASO 4] Preparación de producto y asignación de stock en sucursal del operador.
+#   [PASO 5] Facturación de Mostrador (valida turno abierto + stock + pago exacto).
+#   [PASO 6] Facturación B2B (exenta de turno + valida crédito corporativo + stock).
+#   [PASO 7] Consulta de facturas emitidas por ID y listado de sucursal.
+#   [PASO 8] Alerta operativa al administrador desde caja o venta.
+#   [PASO 9] Cierre de turno de caja (arqueo final con cálculo de diferencia).
 # ==============================================================================
 
 @baseUrl = http://localhost:8017
@@ -155,32 +156,50 @@ Authorization: Bearer {{token}}
 
 
 # ==============================================================================
-# PASO 4 — PREPARAR PRODUCTO PARA FACTURACIÓN
+# PASO 4 — PREPARAR PRODUCTO Y ASIGNAR STOCK A LA SUCURSAL
 # ==============================================================================
 
-### 4.1 Consultar productos disponibles con existencias en inventario
-# Resultado esperado: 200 OK con listado de productos
-# @name listarProductos
-GET {{baseUrl}}/inventario/productos?limit=5
-Authorization: Bearer {{token}}
-
-### Variable de producto para la venta (Precargado con stock listo para vender)
-@productoId = 56dbc88f-c2c4-4f5d-b048-8b3b8908050a
-
-### 4.2 (Opcional) Crear un nuevo producto en catálogo
-# Si creas un nuevo SKU, recuerda que las ventas requieren inventario previo (kardex)
+### 4.1 Crear un nuevo producto en catálogo maestro
+# Cada ejecución genera un SKU único con $timestamp para evitar conflictos de unicidad (RF-ADM-B12).
+# Resultado esperado: 201 Created con el ID del producto generado
 # @name crearProductoPrueba
 POST {{baseUrl}}/inventario/productos
 Authorization: Bearer {{token}}
 Content-Type: application/json
 
 {
-  "sku": "CAF-DEMO-999",
+  "sku": "CAF-DEMO-{{$timestamp}}",
   "nombre": "Café Especial Huila 500g",
   "precioCompra": 15000.00,
   "precioVenta": 25000.00,
   "precioCorporativo": 22000.00
 }
+
+### Extraer ID dinámico del producto creado
+@productoId = {{crearProductoPrueba.response.body.id}}
+
+### 4.2 Ingresar existencias de inventario a la Sucursal 1 (Entrada de Kardex)
+# REGLA CLAVE DE WARENGINE: El catálogo maestro es global, pero el inventario reside en inventario_sucursal.
+# El trigger trg_factura_items_check_stock bloquea cualquier venta con 409 si la sucursal no tiene stock disponible.
+# Esta entrada registra el movimiento en kardex y aprovisiona el stock de la sucursal 1 (RF-ADM-B7).
+# Resultado esperado: 201 Created con stock_actual inicial = 50 en sucursal 1
+# @name entradaStock
+POST {{baseUrl}}/inventario/entradas
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "productoId": "{{productoId}}",
+  "sucursalId": 1,
+  "cantidad": 50,
+  "motivo": "Stock inicial para pruebas de facturación mostrador y B2B"
+}
+
+### 4.3 Consultar productos disponibles con existencias en inventario
+# Resultado esperado: 200 OK con listado de productos
+# @name listarProductos
+GET {{baseUrl}}/inventario/productos?limit=5
+Authorization: Bearer {{token}}
 
 
 # ==============================================================================
@@ -202,7 +221,7 @@ Content-Type: application/json
   "esB2B": false,
   "items": [
     {
-      "productoId": "56dbc88f-c2c4-4f5d-b048-8b3b89080",
+      "productoId": "{{productoId}}",
       "cantidad": 1,
       "precioUnitario": 25000.00,
       "descuento": 0.00
@@ -319,7 +338,7 @@ Authorization: Bearer {{token}}
 
 ### 7.2 Obtener detalle completo de una factura por ID
 # Resultado esperado: 200 OK con cabecera, lista de items y pagos registrados
-GET {{baseUrl}}/ventas/facturas/"680738c0-10f6-40ea-b70b-77f631e58a23"
+GET {{baseUrl}}/ventas/facturas/{{facturaMostradorId}}
 Authorization: Bearer {{token}}
 
 
