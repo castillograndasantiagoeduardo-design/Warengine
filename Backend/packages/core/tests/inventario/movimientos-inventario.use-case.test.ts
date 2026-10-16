@@ -208,6 +208,36 @@ class InMemoryMovimientoRepository implements IMovimientoInventarioRepository {
     this.movimientos.push(mov);
     return mov;
   }
+
+  public async transferirMercancia(datos: any): Promise<any> {
+    const kOrigen = this.key(datos.productoId, datos.sucursalOrigenId);
+    const kDestino = this.key(datos.productoId, datos.sucursalDestinoId);
+    const actualOrigen = this.stock.get(kOrigen) ?? 0;
+    const actualDestino = this.stock.get(kDestino) ?? 0;
+    if (actualOrigen < datos.cantidad) {
+      throw new StockInsuficienteError(actualOrigen, datos.cantidad);
+    }
+    const nuevoOrigen = actualOrigen - datos.cantidad;
+    const nuevoDestino = actualDestino + datos.cantidad;
+    this.stock.set(kOrigen, nuevoOrigen);
+    this.stock.set(kDestino, nuevoDestino);
+
+    const movSalidaId = `mov-transf-salida-${++this.seq}`;
+    const movEntradaId = `mov-transf-entrada-${++this.seq}`;
+    const fecha = new Date();
+
+    return {
+      movimientoSalidaId: movSalidaId,
+      movimientoEntradaId: movEntradaId,
+      productoId: datos.productoId,
+      sucursalOrigenId: datos.sucursalOrigenId,
+      sucursalDestinoId: datos.sucursalDestinoId,
+      cantidad: datos.cantidad,
+      stockRestanteOrigen: nuevoOrigen,
+      stockResultanteDestino: nuevoDestino,
+      fecha,
+    };
+  }
 }
 
 class InMemoryProductoRepository implements Partial<IProductoRepository> {

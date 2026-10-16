@@ -31,6 +31,7 @@ import {
   obtenerEntradaPorIdController,
   registrarEntradaController,
   registrarSalidaController,
+  transferirMercanciaController,
 } from '../controllers/inventario/movimiento-inventario.controller.ts';
 import {
   configurarStockMinimoController,
@@ -166,6 +167,11 @@ export function createInventarioRoutes(container: AppContainer): Hono {
     '/ajustes',
     authMiddleware(container, PERMISO_INVENTARIO_AJUSTAR_STOCK),
     ajustarInventarioController(container),
+  );
+  api.post(
+    '/transferencias',
+    authMiddleware(container, PERMISO_INVENTARIO_REGISTRAR_MOVIMIENTO),
+    transferirMercanciaController(container),
   );
   api.get(
     '/kardex',

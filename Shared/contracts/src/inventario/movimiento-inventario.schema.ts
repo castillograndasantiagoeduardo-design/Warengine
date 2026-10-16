@@ -192,3 +192,50 @@ export const ajusteInventarioResponseSchema = z.object({
 });
 
 export type AjusteInventarioResponse = z.infer<typeof ajusteInventarioResponseSchema>;
+
+/**
+ * Esquema para transferencia de mercancía entre sucursales (RF-ADM-B18).
+ */
+export const transferirMercanciaSchema = z.object({
+  productoId: z
+    .string({ required_error: 'El id de producto es obligatorio.' })
+    .uuid({ message: 'El id de producto debe ser un UUID válido.' }),
+  sucursalOrigenId: z
+    .number({ required_error: 'El id de sucursal origen es obligatorio.' })
+    .int({ message: 'El id de sucursal origen debe ser un entero.' })
+    .positive({ message: 'El id de sucursal origen debe ser positivo.' }),
+  sucursalDestinoId: z
+    .number({ required_error: 'El id de sucursal destino es obligatorio.' })
+    .int({ message: 'El id de sucursal destino debe ser un entero.' })
+    .positive({ message: 'El id de sucursal destino debe ser positivo.' }),
+  cantidad: z
+    .number({ required_error: 'La cantidad es obligatoria.' })
+    .int({ message: 'La cantidad debe ser un entero.' })
+    .positive({ message: 'La cantidad a transferir debe ser mayor a cero.' }),
+  motivo: z
+    .string()
+    .trim()
+    .max(255, { message: 'El motivo no puede exceder 255 caracteres.' })
+    .optional()
+    .nullable(),
+}).refine((data) => data.sucursalOrigenId !== data.sucursalDestinoId, {
+  message: 'La sucursal de origen y destino deben ser distintas.',
+  path: ['sucursalDestinoId'],
+});
+
+export type TransferirMercanciaDTO = z.infer<typeof transferirMercanciaSchema>;
+
+export const transferirMercanciaResponseSchema = z.object({
+  mensaje: z.string(),
+  productoId: z.string().uuid(),
+  sucursalOrigenId: z.number().int(),
+  sucursalDestinoId: z.number().int(),
+  cantidad: z.number().int(),
+  movimientoSalidaId: z.string().uuid(),
+  movimientoEntradaId: z.string().uuid(),
+  stockRestanteOrigen: z.number().int(),
+  stockResultanteDestino: z.number().int(),
+  fecha: z.union([z.string(), z.date()]),
+});
+
+export type TransferirMercanciaResponse = z.infer<typeof transferirMercanciaResponseSchema>;

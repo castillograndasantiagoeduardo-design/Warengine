@@ -13,12 +13,14 @@ import {
   DatosRegistroAjuste,
   DatosRegistroEntrada,
   DatosRegistroSalida,
+  DatosTransferenciaMercancia,
   EntradaNoEncontradaError,
   EntradaYaAnuladaError,
   FiltrosKardex,
   IMovimientoInventarioRepository,
   ItemKardex,
   MovimientoInventario,
+  ResultadoTransferenciaMercancia,
   StockInsuficienteError,
 } from '@warengine/core';
 
@@ -499,6 +501,116 @@ export class DrizzleMovimientoInventarioRepository implements IMovimientoInventa
         usuarioId: datos.usuarioId,
         fecha,
         stockResultante: invFinal?.stockActual ?? 0,
+      };
+    });
+  }
+
+  public async transferirMercancia(datos: DatosTransferenciaMercancia): Promise<ResultadoTransferenciaMercancia> {
+    return await this.db.transaction(async (tx) => {
+      // 1. Verificar stock actual en la sucursal de origen
+      const [invOrigen] = await tx
+        .select({ stockActual: inventario_sucursal.stock_actual })
+        .from(inventario_sucursal)
+        .where(
+          and(
+            eq(inventario_sucursal.producto_id, datos.productoId),
+            eq(inventario_sucursal.sucursal_id, datos.sucursalOrigenId),
+          ),
+        );
+
+      const stockActualOrigen = invOrigen?.stockActual ?? 0;
+      if (stockActualOrigen < datos.cantidad) {
+        throw new StockInsuficienteError(
+          `Stock insuficiente en sucursal origen (${stockActualOrigen}) para transferir (${datos.cantidad}).`,
+        );
+      }
+
+      // 2. Descontar en sucursal origen
+      await tx
+        .update(inventario_sucursal)
+        .set({
+          stock_actual: sql`${inventario_sucursal.stock_actual} - ${datos.cantidad}`,
+        })
+        .where(
+          and(
+            eq(inventario_sucursal.producto_id, datos.productoId),
+            eq(inventario_sucursal.sucursal_id, datos.sucursalOrigenId),
+          ),
+        );
+
+      // 3. Incrementar en sucursal destino (creando la fila si no existía)
+      await tx
+        .insert(inventario_sucursal)
+        .values({
+          producto_id: datos.productoId,
+          sucursal_id: datos.sucursalDestinoId,
+          stock_actual: datos.cantidad,
+          stock_minimo: 0,
+        })
+        .onDuplicateKeyUpdate({
+          set: {
+            stock_actual: sql`${inventario_sucursal.stock_actual} + ${datos.cantidad}`,
+          },
+        });
+
+      // 4. Registrar movimientos inmutables en kardex
+      const movimientoSalidaId = crypto.randomUUID();
+      const movimientoEntradaId = crypto.randomUUID();
+      const fecha = new Date();
+
+      const motivoSalida = datos.motivo
+        ? `Transferencia a sucursal ${datos.sucursalDestinoId}: ${datos.motivo}`
+        : `Transferencia a sucursal ${datos.sucursalDestinoId}`;
+
+      const motivoEntrada = datos.motivo
+        ? `Transferencia desde sucursal ${datos.sucursalOrigenId}: ${datos.motivo}`
+        : `Transferencia desde sucursal ${datos.sucursalOrigenId}`;
+
+      // 4.1 Movimiento de salida en origen
+      await tx.insert(movimientos_inventario).values({
+        id_movimiento_inventario: movimientoSalidaId,
+        producto_id: datos.productoId,
+        sucursal_id: datos.sucursalOrigenId,
+        tipo: 'salida',
+        cantidad: datos.cantidad,
+        motivo: motivoSalida,
+        usuario_id: datos.usuarioId,
+        fecha,
+      });
+
+      // 4.2 Movimiento de entrada en destino
+      await tx.insert(movimientos_inventario).values({
+        id_movimiento_inventario: movimientoEntradaId,
+        producto_id: datos.productoId,
+        sucursal_id: datos.sucursalDestinoId,
+        tipo: 'entrada',
+        cantidad: datos.cantidad,
+        motivo: motivoEntrada,
+        usuario_id: datos.usuarioId,
+        fecha,
+      });
+
+      // 5. Consultar stocks resultantes
+      const [invDestinoFinal] = await tx
+        .select({ stockActual: inventario_sucursal.stock_actual })
+        .from(inventario_sucursal)
+        .where(
+          and(
+            eq(inventario_sucursal.producto_id, datos.productoId),
+            eq(inventario_sucursal.sucursal_id, datos.sucursalDestinoId),
+          ),
+        );
+
+      return {
+        movimientoSalidaId,
+        movimientoEntradaId,
+        productoId: datos.productoId,
+        sucursalOrigenId: datos.sucursalOrigenId,
+        sucursalDestinoId: datos.sucursalDestinoId,
+        cantidad: datos.cantidad,
+        stockRestanteOrigen: stockActualOrigen - datos.cantidad,
+        stockResultanteDestino: invDestinoFinal?.stockActual ?? datos.cantidad,
+        fecha,
       };
     });
   }

@@ -5,6 +5,7 @@ import {
   filtrosKardexSchema,
   registrarEntradaSchema,
   registrarSalidaSchema,
+  transferirMercanciaSchema,
 } from '@warengine/contracts';
 import { AppContainer } from '@warengine/composition';
 import { presentResult } from '../../presenters/result.presenter.ts';
@@ -137,6 +138,24 @@ export function ajustarInventarioController(container: AppContainer) {
     return presentResult(c, result, 200);
   });
 }
+
+/**
+ * RF-ADM-B18: Transferencia de mercancía entre sucursales.
+ */
+export function transferirMercanciaController(container: AppContainer) {
+  return safeHandler(async (c) => {
+    const parsed = transferirMercanciaSchema.safeParse(await leerJson(c));
+    if (!parsed.success) {
+      return c.json({ error: 'VALIDATION_ERROR', issues: parsed.error.errors }, 400);
+    }
+    const result = await container.inventario.transferirMercancia.execute({
+      ...parsed.data,
+      actor: obtenerActor(c),
+    });
+    return presentResult(c, result, 200);
+  });
+}
+
 
 
 

@@ -1,0 +1,155 @@
+### ==============================================================================
+### WARENGINE - REQUERIMIENTO RF-ADM-B18: TRANSFERENCIA DE MERCANCÍA ENTRE SUCURSALES
+### ==============================================================================
+### Descripción de negocio:
+### Permite a los administradores registrar la transferencia de stock entre dos sucursales:
+### 1. Descuenta las existencias en la sucursal de origen de forma atómica.
+### 2. Incrementa las existencias en la sucursal de destino de forma atómica.
+### 3. Genera dos movimientos inmutables en el kardex ('salida' en origen y 'entrada' en destino).
+### 4. Impide transferencias con stock insuficiente o cuando origen y destino coinciden.
+###
+### Reglas de seguridad y trazabilidad:
+### - Aislamiento de sede (RNF-ADM-04): el actor debe tener permisos sobre la sucursal de origen.
+### - Auditoría inmutable obligatoria (RNF-ADM-02).
+### - Requiere permiso RBAC: inventario:registrar-movimiento.
+### ==============================================================================
+
+@baseUrl = http://localhost:8017
+@contentType = application/json
+
+### ------------------------------------------------------------------------------
+### PASO 0: Autenticación como Super Administrador
+### ------------------------------------------------------------------------------
+# @name loginAdmin
+POST {{baseUrl}}/auth/login
+Content-Type: {{contentType}}
+
+{
+  "email": "superadmin@warengine.local",
+  "password": "Warengine.Admin.2026!"
+}
+
+###
+@tokenAdmin = {{loginAdmin.response.body.accessToken}}
+
+### ------------------------------------------------------------------------------
+### PASO 1: Crear Producto de Prueba para la Transferencia
+### Esperado: 201 Created
+### ------------------------------------------------------------------------------
+# @name crearProducto
+POST {{baseUrl}}/inventario/productos
+Authorization: Bearer {{tokenAdmin}}
+Content-Type: {{contentType}}
+
+{
+  "sku": "SKU-B18-{{$timestamp}}",
+  "nombre": "Cemento Gris 50kg Prueba Transferencia",
+  "precioCompra": 28000.00,
+  "precioVenta": 35000.00
+}
+
+###
+@productoId = {{crearProducto.response.body.id}}
+
+### ------------------------------------------------------------------------------
+### PASO 2: Registrar Entrada Inicial de 50 unidades en Sucursal 1
+### Esperado: 201 Created
+### ------------------------------------------------------------------------------
+# @name entradaInicial
+POST {{baseUrl}}/inventario/entradas
+Authorization: Bearer {{tokenAdmin}}
+Content-Type: {{contentType}}
+
+{
+  "productoId": "{{productoId}}",
+  "sucursalId": 1,
+  "cantidad": 50,
+  "costoUnitario": 28000.00,
+  "motivo": "Stock inicial para prueba de transferencia"
+}
+
+### ------------------------------------------------------------------------------
+### CASO ERROR 1: Transferir a la misma sucursal (Origen == Destino)
+### Esperado: 400 Bad Request (VALIDATION_ERROR o SUCURSALES_TRANSFERENCIA_IGUALES)
+### ------------------------------------------------------------------------------
+POST {{baseUrl}}/inventario/transferencias
+Authorization: Bearer {{tokenAdmin}}
+Content-Type: {{contentType}}
+
+{
+  "productoId": "{{productoId}}",
+  "sucursalOrigenId": 1,
+  "sucursalDestinoId": 1,
+  "cantidad": 10,
+  "motivo": "Intento de transferir a la misma sede"
+}
+
+### ------------------------------------------------------------------------------
+### CASO ERROR 2: Cantidad inválida (cero o negativa)
+### Esperado: 400 Bad Request
+### ------------------------------------------------------------------------------
+POST {{baseUrl}}/inventario/transferencias
+Authorization: Bearer {{tokenAdmin}}
+Content-Type: {{contentType}}
+
+{
+  "productoId": "{{productoId}}",
+  "sucursalOrigenId": 1,
+  "sucursalDestinoId": 2,
+  "cantidad": 0,
+  "motivo": "Cantidad cero no permitida"
+}
+
+### ------------------------------------------------------------------------------
+### CASO ERROR 3: Stock insuficiente en sucursal de origen
+### Esperado: 400 / 422 Bad Request (STOCK_INSUFICIENTE)
+### ------------------------------------------------------------------------------
+POST {{baseUrl}}/inventario/transferencias
+Authorization: Bearer {{tokenAdmin}}
+Content-Type: {{contentType}}
+
+{
+  "productoId": "{{productoId}}",
+  "sucursalOrigenId": 1,
+  "sucursalDestinoId": 2,
+  "cantidad": 100,
+  "motivo": "Intento de transferir más de lo disponible (origen tiene 50)"
+}
+
+### ------------------------------------------------------------------------------
+### CASO ÉXITO: Transferir 20 unidades de Sucursal 1 a Sucursal 2
+### Esperado: 200 OK con stockRestanteOrigen: 30, stockResultanteDestino: 20
+### ------------------------------------------------------------------------------
+# @name transferenciaExitosa
+POST {{baseUrl}}/inventario/transferencias
+Authorization: Bearer {{tokenAdmin}}
+Content-Type: {{contentType}}
+
+{
+  "productoId": "{{productoId}}",
+  "sucursalOrigenId": 1,
+  "sucursalDestinoId": 2,
+  "cantidad": 20,
+  "motivo": "Reabastecimiento de Sucursal Sur por alta demanda"
+}
+
+### ------------------------------------------------------------------------------
+### PASO 3: Verificar Kardex de Sucursal Origen (Sucursal 1)
+### Esperado: 200 OK, debe reflejar entrada inicial (50) y salida por transferencia (20)
+### ------------------------------------------------------------------------------
+GET {{baseUrl}}/inventario/kardex?productoId={{productoId}}&sucursalId=1
+Authorization: Bearer {{tokenAdmin}}
+
+### ------------------------------------------------------------------------------
+### PASO 4: Verificar Kardex de Sucursal Destino (Sucursal 2)
+### Esperado: 200 OK, debe reflejar entrada por transferencia (20)
+### ------------------------------------------------------------------------------
+GET {{baseUrl}}/inventario/kardex?productoId={{productoId}}&sucursalId=2
+Authorization: Bearer {{tokenAdmin}}
+
+### ------------------------------------------------------------------------------
+### PASO 5: Consultar Logs de Auditoría (RNF-ADM-02)
+### Esperado: 200 OK, debe registrar la acción 'transferir_mercancia'
+### ------------------------------------------------------------------------------
+GET {{baseUrl}}/auditoria?entidad=inventario_sucursal
+Authorization: Bearer {{tokenAdmin}}
