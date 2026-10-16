@@ -30,6 +30,8 @@ export function presentResult<T>(c: Context, result: Result<T, DomainError>, suc
     case 'SKU_DUPLICADO':
     case 'STOCK_INSUFICIENTE':
     case 'ENTRADA_YA_ANULADA':
+    case 'CATEGORIA_CON_PRODUCTOS_ACTIVOS':
+    case 'PROVEEDOR_CON_PRODUCTOS_ACTIVOS':
       status = 409; // Conflict
       break;
     case 'REQUIERE_2FA':

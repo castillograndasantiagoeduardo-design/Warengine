@@ -410,7 +410,11 @@ export function createContainer(_env?: Record<string, string>): AppContainer {
   const obtenerCategoriaPorIdUseCase = new ObtenerCategoriaPorIdUseCase(categoriaRepository);
   const crearCategoriaUseCase = new CrearCategoriaUseCase(categoriaRepository, auditoriaRepository);
   const editarCategoriaUseCase = new EditarCategoriaUseCase(categoriaRepository, auditoriaRepository);
-  const inactivarCategoriaUseCase = new InactivarCategoriaUseCase(categoriaRepository, auditoriaRepository);
+  const inactivarCategoriaUseCase = new InactivarCategoriaUseCase(
+    categoriaRepository,
+    auditoriaRepository,
+    productoRepository,
+  );
   const reactivarCategoriaUseCase = new ReactivarCategoriaUseCase(categoriaRepository, auditoriaRepository);
   const cambiarEstadoCategoriaUseCase = new CambiarEstadoCategoriaUseCase(
     inactivarCategoriaUseCase,
@@ -422,7 +426,11 @@ export function createContainer(_env?: Record<string, string>): AppContainer {
   const obtenerProveedorPorIdUseCase = new ObtenerProveedorPorIdUseCase(proveedorRepository);
   const crearProveedorUseCase = new CrearProveedorUseCase(proveedorRepository, auditoriaRepository);
   const editarProveedorUseCase = new EditarProveedorUseCase(proveedorRepository, auditoriaRepository);
-  const inactivarProveedorUseCase = new InactivarProveedorUseCase(proveedorRepository, auditoriaRepository);
+  const inactivarProveedorUseCase = new InactivarProveedorUseCase(
+    proveedorRepository,
+    auditoriaRepository,
+    productoRepository,
+  );
   const reactivarProveedorUseCase = new ReactivarProveedorUseCase(proveedorRepository, auditoriaRepository);
   const cambiarEstadoProveedorUseCase = new CambiarEstadoProveedorUseCase(
     inactivarProveedorUseCase,

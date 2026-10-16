@@ -122,6 +122,18 @@ class FakeProductoRepository implements IProductoRepository {
   public tieneMovimientos(id: string): Promise<boolean> {
     return Promise.resolve(this.productosConMovimientos.has(id));
   }
+
+  public contarActivosPorCategoria(categoriaId: number): Promise<number> {
+    return Promise.resolve(
+      this.productos.filter((p) => p.categoriaId === categoriaId && p.isActive).length,
+    );
+  }
+
+  public contarActivosPorProveedor(proveedorId: number): Promise<number> {
+    return Promise.resolve(
+      this.productos.filter((p) => p.proveedorId === proveedorId && p.isActive).length,
+    );
+  }
 }
 
 class FakeCategoriaRepository implements ICategoriaRepository {

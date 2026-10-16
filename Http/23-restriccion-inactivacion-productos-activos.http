@@ -1,0 +1,171 @@
+### ==============================================================================
+### WARENGINE - REQUERIMIENTO RF-ADM-B19: RESTRICCIÓN DE INACTIVACIÓN DE CATEGORÍAS
+###             Y PROVEEDORES CON PRODUCTOS ACTIVOS VINCULADOS
+### ==============================================================================
+### Descripción de negocio:
+### El sistema debe impedir la inactivación de una categoría (RF-ADM-B5) o proveedor (RF-ADM-B6)
+### que tenga productos activos vinculados, exigiendo reasignar o inactivar previamente
+### dichos productos para garantizar la integridad referencial y de catálogo.
+###
+### Reglas de negocio:
+### 1. Si la categoría tiene al menos 1 producto activo vinculado:
+###    -> HTTP 409 Conflict (CATEGORIA_CON_PRODUCTOS_ACTIVOS).
+### 2. Si el proveedor tiene al menos 1 producto activo vinculado:
+###    -> HTTP 409 Conflict (PROVEEDOR_CON_PRODUCTOS_ACTIVOS).
+### 3. Si todos sus productos están inactivos o no tiene productos asociados:
+###    -> HTTP 200 OK (inactivación exitosa y auditada).
+### ==============================================================================
+
+@baseUrl = http://localhost:8017
+@contentType = application/json
+
+### ------------------------------------------------------------------------------
+### PASO 0: Autenticación como Super Administrador
+### ------------------------------------------------------------------------------
+# @name loginAdmin
+POST {{baseUrl}}/auth/login
+Content-Type: {{contentType}}
+
+{
+  "email": "superadmin@warengine.local",
+  "password": "Warengine.Admin.2026!"
+}
+
+###
+@tokenAdmin = {{loginAdmin.response.body.accessToken}}
+
+### ------------------------------------------------------------------------------
+### PASO 1: Crear Categoría de Prueba
+### ------------------------------------------------------------------------------
+# @name crearCategoria
+POST {{baseUrl}}/inventario/categorias
+Authorization: Bearer {{tokenAdmin}}
+Content-Type: {{contentType}}
+
+{
+  "nombre": "Categoría Bloqueo B19 {{$timestamp}}"
+}
+
+###
+@categoriaId = {{crearCategoria.response.body.id}}
+
+### ------------------------------------------------------------------------------
+### PASO 2: Crear Proveedor de Prueba
+### ------------------------------------------------------------------------------
+# @name crearProveedor
+POST {{baseUrl}}/inventario/proveedores
+Authorization: Bearer {{tokenAdmin}}
+Content-Type: {{contentType}}
+
+{
+  "nombre": "Distribuciones B19 {{$timestamp}}",
+  "contacto": "contacto@b19.com"
+}
+
+###
+@proveedorId = {{crearProveedor.response.body.id}}
+
+### ------------------------------------------------------------------------------
+### PASO 3: Crear Producto ACTIVO vinculado a la Categoría y al Proveedor
+### ------------------------------------------------------------------------------
+# @name crearProducto
+POST {{baseUrl}}/inventario/productos
+Authorization: Bearer {{tokenAdmin}}
+Content-Type: {{contentType}}
+
+{
+  "sku": "SKU-B19-{{$timestamp}}",
+  "nombre": "Producto Activo Dependiente B19",
+  "categoriaId": {{categoriaId}},
+  "proveedorId": {{proveedorId}},
+  "precioCompra": 15000.00,
+  "precioVenta": 22000.00
+}
+
+###
+@productoId = {{crearProducto.response.body.id}}
+
+### ------------------------------------------------------------------------------
+### CASO BLOQUEO 1: Intentar inactivar la Categoría teniendo un producto activo
+### Esperado: 409 Conflict (CATEGORIA_CON_PRODUCTOS_ACTIVOS)
+### ------------------------------------------------------------------------------
+PUT {{baseUrl}}/inventario/categorias/{{categoriaId}}/estado
+Authorization: Bearer {{tokenAdmin}}
+Content-Type: {{contentType}}
+
+{
+  "isActive": false
+}
+
+### ------------------------------------------------------------------------------
+### CASO BLOQUEO 2: Intentar inactivar el Proveedor teniendo un producto activo
+### Esperado: 409 Conflict (PROVEEDOR_CON_PRODUCTOS_ACTIVOS)
+### ------------------------------------------------------------------------------
+PUT {{baseUrl}}/inventario/proveedores/{{proveedorId}}/estado
+Authorization: Bearer {{tokenAdmin}}
+Content-Type: {{contentType}}
+
+{
+  "isActive": false
+}
+
+### ------------------------------------------------------------------------------
+### PASO 4: Inactivar el Producto Dependiente
+### Esperado: 200 OK
+### ------------------------------------------------------------------------------
+PUT {{baseUrl}}/inventario/productos/{{productoId}}/estado
+Authorization: Bearer {{tokenAdmin}}
+Content-Type: {{contentType}}
+
+{
+  "isActive": false
+}
+
+### ------------------------------------------------------------------------------
+### CASO ÉXITO 1: Inactivar Categoría ahora que el producto está inactivo
+### Esperado: 200 OK (isActive: false)
+### ------------------------------------------------------------------------------
+PUT {{baseUrl}}/inventario/categorias/{{categoriaId}}/estado
+Authorization: Bearer {{tokenAdmin}}
+Content-Type: {{contentType}}
+
+{
+  "isActive": false
+}
+
+### ------------------------------------------------------------------------------
+### CASO ÉXITO 2: Inactivar Proveedor ahora que el producto está inactivo
+### Esperado: 200 OK (isActive: false)
+### ------------------------------------------------------------------------------
+PUT {{baseUrl}}/inventario/proveedores/{{proveedorId}}/estado
+Authorization: Bearer {{tokenAdmin}}
+Content-Type: {{contentType}}
+
+{
+  "isActive": false
+}
+
+### ------------------------------------------------------------------------------
+### CASO ÉXITO 3: Categoría sin productos asociados puede inactivarse directamente
+### ------------------------------------------------------------------------------
+# @name crearCategoriaVacia
+POST {{baseUrl}}/inventario/categorias
+Authorization: Bearer {{tokenAdmin}}
+Content-Type: {{contentType}}
+
+{
+  "nombre": "Categoría Sin Productos {{$timestamp}}"
+}
+
+###
+@categoriaVaciaId = {{crearCategoriaVacia.response.body.id}}
+
+### Inactivar categoría sin productos
+### Esperado: 200 OK
+PUT {{baseUrl}}/inventario/categorias/{{categoriaVaciaId}}/estado
+Authorization: Bearer {{tokenAdmin}}
+Content-Type: {{contentType}}
+
+{
+  "isActive": false
+}

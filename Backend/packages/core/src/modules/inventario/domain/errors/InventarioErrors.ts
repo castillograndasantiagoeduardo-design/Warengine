@@ -140,6 +140,35 @@ export class SucursalesTransferenciaIgualesError extends DomainError {
   }
 }
 
+/**
+ * RF-ADM-B19: Restricción de inactivación de categorías con productos activos vinculados.
+ */
+export class CategoriaConProductosActivosError extends DomainError {
+  public readonly code = 'CATEGORIA_CON_PRODUCTOS_ACTIVOS';
+  constructor(cantidad?: number) {
+    super(
+      cantidad !== undefined
+        ? `No se puede inactivar la categoría porque tiene ${cantidad} producto(s) activo(s) asociado(s). Reasigne o inactive dichos productos previamente.`
+        : 'No se puede inactivar la categoría porque tiene productos activos asociados. Reasigne o inactive dichos productos previamente.',
+    );
+  }
+}
+
+/**
+ * RF-ADM-B19: Restricción de inactivación de proveedores con productos activos vinculados.
+ */
+export class ProveedorConProductosActivosError extends DomainError {
+  public readonly code = 'PROVEEDOR_CON_PRODUCTOS_ACTIVOS';
+  constructor(cantidad?: number) {
+    super(
+      cantidad !== undefined
+        ? `No se puede inactivar el proveedor porque tiene ${cantidad} producto(s) activo(s) asociado(s). Reasigne o inactive dichos productos previamente.`
+        : 'No se puede inactivar el proveedor porque tiene productos activos asociados. Reasigne o inactive dichos productos previamente.',
+    );
+  }
+}
+
+
 
 
 

@@ -46,4 +46,6 @@ export interface IProductoRepository {
   actualizar(id: string, cambios: DatosActualizarProducto): Promise<Producto>;
   cambiarEstado(id: string, isActive: boolean): Promise<Producto>;
   tieneMovimientos(id: string): Promise<boolean>;
+  contarActivosPorCategoria(categoriaId: number): Promise<number>;
+  contarActivosPorProveedor(proveedorId: number): Promise<number>;
 }

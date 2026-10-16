@@ -201,4 +201,31 @@ export class DrizzleProductoRepository implements IProductoRepository {
       .where(eq(movimientos_inventario.producto_id, id));
     return Number(row?.total ?? 0) > 0;
   }
+
+  public async contarActivosPorCategoria(categoriaId: number): Promise<number> {
+    const [row] = await this.db
+      .select({ total: count() })
+      .from(productos)
+      .where(
+        and(
+          eq(productos.categoria_id, categoriaId),
+          eq(productos.is_active, 1),
+        ),
+      );
+    return Number(row?.total ?? 0);
+  }
+
+  public async contarActivosPorProveedor(proveedorId: number): Promise<number> {
+    const [row] = await this.db
+      .select({ total: count() })
+      .from(productos)
+      .where(
+        and(
+          eq(productos.proveedor_id, proveedorId),
+          eq(productos.is_active, 1),
+        ),
+      );
+    return Number(row?.total ?? 0);
+  }
 }
+
