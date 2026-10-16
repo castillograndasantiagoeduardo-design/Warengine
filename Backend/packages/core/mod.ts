@@ -25,6 +25,7 @@ export * from './src/modules/autenticacion/application/use-cases/ResolverAlcance
 
 // ─── Módulo: Administración ─────────────────────────────────────────────────
 export * from './src/modules/administracion/domain/entities/Sucursal.ts';
+export * from './src/modules/administracion/domain/entities/SucursalDetalle.ts';
 export * from './src/modules/administracion/domain/entities/UsuarioGestionado.ts';
 export * from './src/modules/administracion/domain/entities/AlertaStock.ts';
 export * from './src/modules/administracion/domain/entities/Area.ts';
@@ -44,6 +45,7 @@ export * from './src/modules/administracion/domain/repositories/IMetricasAdminRe
 export * from './src/modules/administracion/application/use-cases/CrearSucursalUseCase.ts';
 export * from './src/modules/administracion/application/use-cases/EditarSucursalUseCase.ts';
 export * from './src/modules/administracion/application/use-cases/ListarSucursalesUseCase.ts';
+export * from './src/modules/administracion/application/use-cases/ObtenerDetalleSucursalUseCase.ts';
 export * from './src/modules/administracion/application/use-cases/ListarAreasPorSucursalUseCase.ts';
 export * from './src/modules/administracion/application/use-cases/CrearAreaUseCase.ts';
 export * from './src/modules/administracion/application/use-cases/EditarAreaUseCase.ts';

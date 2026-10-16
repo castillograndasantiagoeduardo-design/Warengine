@@ -58,6 +58,7 @@ El módulo de **Administración** centraliza la estructura organizativa de la em
 | **RF-ADM-C15** | Dashboard de métricas globales y por sucursal | IMPLEMENTADO | Rutas `/administracion/dashboard/*` y puerto `IMetricasAdminRepository` |
 | **RF-ADM-C16** | Búsqueda de usuarios por nombre o correo en listado | IMPLEMENTADO | [ListarUsuariosUseCase.ts](../../Backend/packages/core/src/modules/administracion/application/use-cases/ListarUsuariosUseCase.ts), [usuario.controller.ts](../../Backend/apps/api/src/controllers/administracion/usuario.controller.ts), [drizzle-gestion-usuario.repository.ts](../../Backend/packages/database/src/repositories/administracion/drizzle-gestion-usuario.repository.ts) |
 | **RF-ADM-C17** | Inactivación de sucursales con restricción de usuarios activos asignados y protección de Sede Principal (id=1) | IMPLEMENTADO | [EditarSucursalUseCase.ts](../../Backend/packages/core/src/modules/administracion/application/use-cases/EditarSucursalUseCase.ts), [sucursal.controller.ts](../../Backend/apps/api/src/controllers/administracion/sucursal.controller.ts), [drizzle-sucursal.repository.ts](../../Backend/packages/database/src/repositories/administracion/drizzle-sucursal.repository.ts) |
+| **RF-ADM-C18** | Ficha de detalle de sucursal (contacto, usuarios, inventario, ventas recientes) | IMPLEMENTADO | [ObtenerDetalleSucursalUseCase.ts](../../Backend/packages/core/src/modules/administracion/application/use-cases/ObtenerDetalleSucursalUseCase.ts), [sucursal.controller.ts](../../Backend/apps/api/src/controllers/administracion/sucursal.controller.ts), [drizzle-sucursal.repository.ts](../../Backend/packages/database/src/repositories/administracion/drizzle-sucursal.repository.ts) |
 | **RNF-ADM-01** | Carga de métricas en menos de 3 segundos (< 3s) con históricos | CUMPLIDO | Consultas SQL agregadas de alta eficiencia indexadas en BD |
 | **RNF-ADM-02** | Auditoría inmutable de toda mutación administrativa | CUMPLIDO | Integración con `IAuditor` en todos los casos de uso mutantes |
 | **RNF-ADM-03** | Autorización RBAC estricta en endpoints y casos de uso | CUMPLIDO | `authMiddleware` + `ResolverAlcanceSucursalUseCase` |
@@ -247,7 +248,18 @@ Representa la vista agregada de una cuenta de usuario junto con su empleado vinc
   6. Emite evento de auditoría `{ accion: 'editar', entidad: 'sucursales', detalles: { antes, despues } }` registrando exclusivamente los campos que mutaron.
 - **Pruebas:** [inactivacion-sucursal.use-case.test.ts](../../Backend/packages/core/tests/administracion/inactivacion-sucursal.use-case.test.ts) (5 tests), [auditoria-operaciones.use-case.test.ts](../../Backend/packages/core/tests/administracion/auditoria-operaciones.use-case.test.ts).
 
-### 5.4 `ListarUsuariosUseCase`
+### 5.4 `ObtenerDetalleSucursalUseCase` (RF-ADM-C18)
+- **Archivo:** [ObtenerDetalleSucursalUseCase.ts](../../Backend/packages/core/src/modules/administracion/application/use-cases/ObtenerDetalleSucursalUseCase.ts)
+- **Dependencias:** `ISucursalRepository`
+- **Entrada:** `{ id: number }`
+- **Salida:** `Result<SucursalDetalle, DomainError>`
+- **Reglas:**
+  1. Consulta consolidada de ficha de sucursal. Falla con `SucursalNoEncontradaError` (404) si no existe.
+  2. Retorna datos de contacto, personal asignado (identificando sede principal vs adicional), existencias consolidadas (productos con stock y unidades totales) y resumen de ventas recientes.
+  3. No audita (operación de solo lectura).
+- **Pruebas:** [detalle-sucursal.use-case.test.ts](../../Backend/packages/core/tests/administracion/detalle-sucursal.use-case.test.ts) (3 tests).
+
+### 5.5 `ListarUsuariosUseCase`
 - **Archivo:** [ListarUsuariosUseCase.ts](../../Backend/packages/core/src/modules/administracion/application/use-cases/ListarUsuariosUseCase.ts)
 - **Dependencias:** `IGestionUsuarioRepository`
 - **Entrada:** `{ rolId?: number; sucursalId?: number }`
@@ -354,6 +366,7 @@ Prefijo general de montaje en `main.ts`: `/administracion`.
 | Método | Ruta completa | Permiso requerido | Controlador | Caso de uso | Schema Zod | Códigos HTTP |
 |---|---|---|---|---|---|---|
 | `GET` | `/administracion/sucursales` | `administracion:gestionar-sucursales` | `listarSucursalesController` | `ListarSucursalesUseCase` | Ninguno | 200, 401, 403 |
+| `GET` | `/administracion/sucursales/:id/detalle` | `administracion:gestionar-sucursales` | `obtenerDetalleSucursalController` | `ObtenerDetalleSucursalUseCase` | Ninguno | 200, 400, 401, 403, 404 |
 | `POST` | `/administracion/sucursales` | `administracion:gestionar-sucursales` | `crearSucursalController` | `CrearSucursalUseCase` | `crearSucursalSchema` | 201, 400, 401, 403 |
 | `PUT` | `/administracion/sucursales/:id` | `administracion:gestionar-sucursales` | `editarSucursalController` | `EditarSucursalUseCase` | `editarSucursalSchema` | 200, 400, 401, 403, 404, 422 |
 | `PUT` | `/administracion/sucursales/:id/estado` | `administracion:gestionar-sucursales` | `cambiarEstadoSucursalController` | `EditarSucursalUseCase` | `cambiarEstadoSucursalSchema` | 200, 400, 401, 403, 404, 422 |
@@ -378,6 +391,7 @@ Prefijo general de montaje en `main.ts`: `/administracion`.
   - `crearSucursalSchema`: `{ nombre: min(2), direccion: min(5), telefono: min(7) }`
   - `editarSucursalSchema`: `{ nombre?, direccion?, telefono?, isActive? }` (exige al menos un campo).
   - `cambiarEstadoSucursalSchema`: `{ isActive: boolean }`
+  - `detalleSucursalResponseSchema`: `{ id, nombre, direccion, contacto, isActive, usuariosAsignados, estadisticas, ventasRecientes }`
 - **Usuarios** ([usuario.schema.ts](../../Shared/contracts/src/administracion/usuario.schema.ts)):
   - `crearUsuarioSchema`: `{ email, password: min(8), rolId, nombre: min(2), apellido: min(2), tipoDocumento: enum('CC', 'CE'), numeroDocumento: min(5), sucursalId }`
   - `cambiarRolSchema`: `{ rolId: int > 0 }`
@@ -431,6 +445,10 @@ Roles con acceso:
    - Inactivación exitosa de sucursal sin usuarios asignados y emisión de auditoría.
    - Reactivación exitosa de sucursal inactiva y emisión de auditoría.
    - Idempotencia: no ejecuta mutación ni audita si el estado ya era el solicitado.
+5. [detalle-sucursal.use-case.test.ts](../../Backend/packages/core/tests/administracion/detalle-sucursal.use-case.test.ts) (3 tests):
+   - Rechazo con `SUCURSAL_NO_ENCONTRADA` (404) si la sucursal no existe.
+   - Retorno consolidado de datos de sede, usuarios asignados (con distinción sede principal/adicional), métricas de stock y ventas recientes.
+   - Retorno de listas vacías y contadores en 0 para sucursales nuevas.
 
 ### Brechas Conocidas
 - `ListarSucursalesUseCase` y `ListarUsuariosUseCase` no tienen archivo de test unitario exclusivo en `core/tests/` (cubiertos por HTTP/integración).

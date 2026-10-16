@@ -1,8 +1,17 @@
-import { and, countDistinct, eq, or, sql } from 'drizzle-orm';
+import { and, countDistinct, desc, eq, isNull, or, sql } from 'drizzle-orm';
 import { Database } from '../../client.ts';
 import { empleados, sucursales } from '../../schema/administracion.schema.ts';
-import { usuario_sucursales, usuarios } from '../../schema/autenticacion.schema.ts';
-import { DatosSucursal, ISucursalRepository, Sucursal } from '@warengine/core';
+import { roles, usuario_sucursales, usuarios } from '../../schema/autenticacion.schema.ts';
+import { inventario_sucursal } from '../../schema/inventario.schema.ts';
+import { clientes, facturas } from '../../schema/facturacion.schema.ts';
+import {
+  DatosSucursal,
+  ISucursalRepository,
+  Sucursal,
+  SucursalDetalle,
+  UsuarioAsignadoSucursal,
+  VentaRecienteSucursal,
+} from '@warengine/core';
 import { sucursalFromRow } from '../../mappers/administracion/sucursal.mapper.ts';
 
 export class DrizzleSucursalRepository implements ISucursalRepository {
@@ -72,4 +81,142 @@ export class DrizzleSucursalRepository implements ISucursalRepository {
       );
     return Number(resultado?.total ?? 0);
   }
-}
+
+  /**
+   * RF-ADM-C18: Consulta consolidada de ficha de detalle de sucursal.
+   */
+  public async obtenerDetalle(id: number): Promise<SucursalDetalle | null> {
+    const [sucursalRow] = await this.db
+      .select()
+      .from(sucursales)
+      .where(eq(sucursales.id_sucursal, id))
+      .limit(1);
+
+    if (!sucursalRow) {
+      return null;
+    }
+
+    // 1. Usuarios asignados (por sede principal o asignación multisede)
+    const usuariosRows = await this.db
+      .select({
+        id: usuarios.id_usuario,
+        email: usuarios.email,
+        nombre: empleados.nombre,
+        cargo: empleados.cargo,
+        rolId: roles.id_rol,
+        rolNombre: roles.nombre,
+        isActive: usuarios.is_active,
+        empleadoSucursalId: empleados.sucursal_id,
+      })
+      .from(usuarios)
+      .innerJoin(empleados, eq(usuarios.empleado_id, empleados.id_empleado))
+      .innerJoin(roles, eq(usuarios.rol_id, roles.id_rol))
+      .leftJoin(
+        usuario_sucursales,
+        and(
+          eq(usuarios.id_usuario, usuario_sucursales.usuario_id),
+          eq(usuario_sucursales.sucursal_id, id),
+        ),
+      )
+      .where(
+        or(
+          eq(empleados.sucursal_id, id),
+          eq(usuario_sucursales.sucursal_id, id),
+        ),
+      );
+
+    const usuariosMap = new Map<string, UsuarioAsignadoSucursal>();
+    for (const u of usuariosRows) {
+      if (!usuariosMap.has(u.id)) {
+        usuariosMap.set(u.id, {
+          id: u.id,
+          email: u.email,
+          nombre: u.nombre,
+          cargo: u.cargo ?? null,
+          rolId: u.rolId,
+          rolNombre: u.rolNombre,
+          isActive: u.isActive === 1,
+          esSedePrincipal: u.empleadoSucursalId === id,
+        });
+      }
+    }
+    const usuariosAsignados = Array.from(usuariosMap.values());
+
+    // 2. Métricas de inventario con existencias
+    const [stockMetrics] = await this.db
+      .select({
+        productosConStock: countDistinct(inventario_sucursal.producto_id),
+        totalUnidadesStock: sql<number>`COALESCE(SUM(${inventario_sucursal.stock_actual}), 0)`,
+      })
+      .from(inventario_sucursal)
+      .where(
+        and(
+          eq(inventario_sucursal.sucursal_id, id),
+          sql`${inventario_sucursal.stock_actual} > 0`,
+        ),
+      );
+
+    // 3. Métricas agregadas de ventas
+    const [ventasMetrics] = await this.db
+      .select({
+        totalVentas: sql<number>`COUNT(*)`,
+        montoTotalVentas: sql<number>`COALESCE(SUM(${facturas.total}), 0)`,
+      })
+      .from(facturas)
+      .where(
+        and(
+          eq(facturas.sucursal_id, id),
+          isNull(facturas.deleted_at),
+        ),
+      );
+
+    // 4. Últimas 10 ventas recientes
+    const facturasRecientesRows = await this.db
+      .select({
+        id: facturas.id_factura,
+        consecutivo: facturas.consecutivo,
+        fecha: facturas.fecha,
+        total: facturas.total,
+        estado: facturas.estado,
+        clienteNombre: clientes.nombre_razon_social,
+        clienteDocumento: clientes.numero_documento,
+      })
+      .from(facturas)
+      .leftJoin(clientes, eq(facturas.cliente_id, clientes.id_cliente))
+      .where(
+        and(
+          eq(facturas.sucursal_id, id),
+          isNull(facturas.deleted_at),
+        ),
+      )
+      .orderBy(desc(facturas.fecha), desc(facturas.consecutivo))
+      .limit(10);
+
+    const ventasRecientes: VentaRecienteSucursal[] = facturasRecientesRows.map((f) => ({
+      id: f.id,
+      consecutivo: f.consecutivo,
+      fecha: f.fecha,
+      total: Number(f.total),
+      estado: f.estado,
+      clienteNombre: f.clienteNombre ?? null,
+      clienteDocumento: f.clienteDocumento ?? null,
+    }));
+
+    return new SucursalDetalle(
+      sucursalRow.id_sucursal,
+      sucursalRow.nombre,
+      sucursalRow.direccion,
+      sucursalRow.contacto,
+      sucursalRow.is_active === 1,
+      usuariosAsignados,
+      {
+        totalUsuariosAsignados: usuariosAsignados.length,
+        productosConStock: Number(stockMetrics?.productosConStock ?? 0),
+        totalUnidadesStock: Number(stockMetrics?.totalUnidadesStock ?? 0),
+        totalVentas: Number(ventasMetrics?.totalVentas ?? 0),
+        montoTotalVentas: Number(ventasMetrics?.montoTotalVentas ?? 0),
+      },
+      ventasRecientes,
+    );
+  }
+}

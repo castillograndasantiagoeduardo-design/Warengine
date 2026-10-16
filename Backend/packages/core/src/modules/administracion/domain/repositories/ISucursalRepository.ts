@@ -1,4 +1,5 @@
 import { Sucursal } from '../entities/Sucursal.ts';
+import { SucursalDetalle } from '../entities/SucursalDetalle.ts';
 
 export interface DatosSucursal {
   nombre: string;
@@ -16,4 +17,6 @@ export interface ISucursalRepository {
     cambios: Partial<DatosSucursal> & { isActive?: boolean },
   ): Promise<Sucursal>;
   contarUsuariosActivos?(sucursalId: number): Promise<number>;
+  obtenerDetalle?(id: number): Promise<SucursalDetalle | null>;
 }
+

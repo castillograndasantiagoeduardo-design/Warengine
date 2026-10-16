@@ -50,6 +50,7 @@ import {
   ListarSucursalesUseCase,
   CrearSucursalUseCase,
   EditarSucursalUseCase,
+  ObtenerDetalleSucursalUseCase,
   ListarAreasPorSucursalUseCase,
   CrearAreaUseCase,
   EditarAreaUseCase,
@@ -135,6 +136,7 @@ export interface AppContainer {
   };
   administracion: {
     listarSucursales: ListarSucursalesUseCase;
+    obtenerDetalleSucursal: ObtenerDetalleSucursalUseCase;
     crearSucursal: CrearSucursalUseCase;
     editarSucursal: EditarSucursalUseCase;
     listarAreasPorSucursal: ListarAreasPorSucursalUseCase;
@@ -301,6 +303,7 @@ export function createContainer(_env?: Record<string, string>): AppContainer {
   );
 
   const listarSucursalesUseCase = new ListarSucursalesUseCase(sucursalRepository);
+  const obtenerDetalleSucursalUseCase = new ObtenerDetalleSucursalUseCase(sucursalRepository);
   const crearSucursalUseCase = new CrearSucursalUseCase(sucursalRepository, auditoriaRepository);
   const editarSucursalUseCase = new EditarSucursalUseCase(sucursalRepository, auditoriaRepository);
 
@@ -555,6 +558,7 @@ export function createContainer(_env?: Record<string, string>): AppContainer {
     },
     administracion: {
       listarSucursales: listarSucursalesUseCase,
+      obtenerDetalleSucursal: obtenerDetalleSucursalUseCase,
       crearSucursal: crearSucursalUseCase,
       editarSucursal: editarSucursalUseCase,
       listarAreasPorSucursal: listarAreasPorSucursalUseCase,
