@@ -1,4 +1,5 @@
 import {
+  ajustarInventarioSchema,
   anularEntradaSchema,
   filtrosEntradasSchema,
   filtrosKardexSchema,
@@ -116,5 +117,26 @@ export function anularEntradaController(container: AppContainer) {
     return presentResult(c, result, 200);
   });
 }
+
+/**
+ * RF-ADM-B17: Ajuste de inventario con conteo físico (cuadre de existencias).
+ */
+export function ajustarInventarioController(container: AppContainer) {
+  return safeHandler(async (c) => {
+    const parsed = ajustarInventarioSchema.safeParse(await leerJson(c));
+    if (!parsed.success) {
+      return c.json({ error: 'VALIDATION_ERROR', issues: parsed.error.errors }, 400);
+    }
+    const result = await container.inventario.ajustarInventario.execute({
+      productoId: parsed.data.productoId,
+      sucursalId: parsed.data.sucursalId,
+      stockFisico: parsed.data.stockFisico,
+      motivo: parsed.data.motivo,
+      actor: obtenerActor(c),
+    });
+    return presentResult(c, result, 200);
+  });
+}
+
 
 

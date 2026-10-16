@@ -155,5 +155,40 @@ export const anulacionEntradaResponseSchema = z.object({
 
 export type AnulacionEntradaResponse = z.infer<typeof anulacionEntradaResponseSchema>;
 
+/**
+ * Esquema para ajuste de inventario con conteo físico (RF-ADM-B17).
+ */
+export const ajustarInventarioSchema = z.object({
+  productoId: z
+    .string({ required_error: 'El id de producto es obligatorio.' })
+    .uuid({ message: 'El id de producto debe ser un UUID válido.' }),
+  sucursalId: z
+    .number({ required_error: 'El id de sucursal es obligatorio.' })
+    .int({ message: 'El id de sucursal debe ser un entero.' })
+    .positive({ message: 'El id de sucursal debe ser positivo.' }),
+  stockFisico: z
+    .number({ required_error: 'El stock físico es obligatorio.' })
+    .int({ message: 'El stock físico debe ser un número entero.' })
+    .min(0, { message: 'El stock físico no puede ser negativo.' }),
+  motivo: z
+    .string({ required_error: 'El motivo del ajuste es obligatorio.' })
+    .trim()
+    .min(5, { message: 'El motivo del ajuste debe tener al menos 5 caracteres justificando la causa.' })
+    .max(255, { message: 'El motivo no puede exceder 255 caracteres.' }),
+});
 
+export type AjustarInventarioDTO = z.infer<typeof ajustarInventarioSchema>;
 
+export const ajusteInventarioResponseSchema = z.object({
+  mensaje: z.string(),
+  ajusteRealizado: z.boolean(),
+  movimientoId: z.string().uuid().nullable().optional(),
+  productoId: z.string().uuid(),
+  sucursalId: z.number().int(),
+  stockPrevio: z.number().int(),
+  stockFisico: z.number().int(),
+  diferencia: z.number().int(),
+  tipoAjuste: z.enum(['ajuste_entrada', 'ajuste_salida', 'sin_cambio']),
+});
+
+export type AjusteInventarioResponse = z.infer<typeof ajusteInventarioResponseSchema>;

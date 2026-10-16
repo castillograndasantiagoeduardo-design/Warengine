@@ -119,4 +119,19 @@ export class MotivoAnulacionRequeridoError extends DomainError {
   }
 }
 
+export class MotivoAjusteRequeridoError extends DomainError {
+  public readonly code = 'MOTIVO_AJUSTE_REQUERIDO';
+  constructor() {
+    super('El motivo del ajuste de inventario es obligatorio (mínimo 5 caracteres).');
+  }
+}
+
+export class StockFisicoInvalidoError extends DomainError {
+  public readonly code = 'STOCK_FISICO_INVALIDO';
+  constructor() {
+    super('El stock físico debe ser un número entero mayor o igual a cero.');
+  }
+}
+
+
 

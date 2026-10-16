@@ -73,10 +73,20 @@ export interface DatosAnulacionEntrada {
   usuarioId: string;
 }
 
+export interface DatosRegistroAjuste {
+  productoId: string;
+  sucursalId: number;
+  tipo: 'ajuste_entrada' | 'ajuste_salida';
+  cantidad: number;
+  motivo: string;
+  usuarioId: string;
+}
+
 export interface IMovimientoInventarioRepository {
   obtenerStockActual(productoId: string, sucursalId: number): Promise<number>;
   registrarEntrada(datos: DatosRegistroEntrada): Promise<MovimientoInventario>;
   registrarSalida(datos: DatosRegistroSalida): Promise<MovimientoInventario>;
+  registrarAjuste(datos: DatosRegistroAjuste): Promise<MovimientoInventario>;
   consultarKardex(filtros: FiltrosKardex): Promise<{ items: ItemKardex[]; total: number }>;
   obtenerPorId(id: string): Promise<ItemKardex | null>;
   estaEntradaAnulada(entradaId: string): Promise<boolean>;

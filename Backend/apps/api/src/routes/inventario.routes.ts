@@ -24,6 +24,7 @@ import {
   consultarHistorialPreciosController,
 } from '../controllers/inventario/producto.controller.ts';
 import {
+  ajustarInventarioController,
   anularEntradaController,
   consultarKardexController,
   listarEntradasController,
@@ -44,6 +45,7 @@ const PERMISO_INVENTARIO_LEER = PERMISSIONS.INVENTARIO_LEER;
 const PERMISO_INVENTARIO_ESCRIBIR = PERMISSIONS.INVENTARIO_ESCRIBIR;
 const PERMISO_INVENTARIO_REGISTRAR_MOVIMIENTO = PERMISSIONS.INVENTARIO_REGISTRAR_MOVIMIENTO;
 const PERMISO_INVENTARIO_VER_KARDEX = PERMISSIONS.INVENTARIO_VER_KARDEX;
+const PERMISO_INVENTARIO_AJUSTAR_STOCK = PERMISSIONS.INVENTARIO_AJUSTAR_STOCK;
 
 export function createInventarioRoutes(container: AppContainer): Hono {
   const api = new Hono();
@@ -159,6 +161,11 @@ export function createInventarioRoutes(container: AppContainer): Hono {
     '/salidas',
     authMiddleware(container, PERMISO_INVENTARIO_REGISTRAR_MOVIMIENTO),
     registrarSalidaController(container),
+  );
+  api.post(
+    '/ajustes',
+    authMiddleware(container, PERMISO_INVENTARIO_AJUSTAR_STOCK),
+    ajustarInventarioController(container),
   );
   api.get(
     '/kardex',

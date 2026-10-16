@@ -1,0 +1,194 @@
+### ==============================================================================
+### WARENGINE - REQUERIMIENTO RF-ADM-B17: AJUSTE DE INVENTARIO CON CONTEO FÍSICO
+### ==============================================================================
+### Descripción de negocio:
+### Permite a los administradores registrar la conciliación de existencias a partir
+### de conteos físicos reales en bodega/sucursal:
+### 1. Si stock físico > stock sistema -> registra 'ajuste_entrada' por la diferencia positiva.
+### 2. Si stock físico < stock sistema -> registra 'ajuste_salida' por la diferencia negativa.
+### 3. Si stock físico == stock sistema -> informa coincidencia sin generar movimientos innecesarios.
+###
+### Reglas de seguridad y trazabilidad:
+### - Exige motivo obligatorio de al menos 5 caracteres (RNF-ADM-02).
+### - Aislamiento de sede (RNF-ADM-04): administradores limitados a sus sucursales asignadas.
+### - Requiere permiso RBAC: inventario:ajustar-stock.
+### ==============================================================================
+
+@baseUrl = http://localhost:8017
+@contentType = application/json
+
+### ------------------------------------------------------------------------------
+### PASO 0: Autenticación como Super Administrador
+### ------------------------------------------------------------------------------
+# @name loginAdmin
+POST {{baseUrl}}/auth/login
+Content-Type: {{contentType}}
+
+{
+  "email": "superadmin@warengine.local",
+  "password": "Warengine.Admin.2026!"
+}
+
+@tokenAdmin = {{loginAdmin.response.body.accessToken}}
+
+### ------------------------------------------------------------------------------
+### PASO 1: Crear Producto de Prueba para el Ajuste
+### Esperado: 201 Created
+### ------------------------------------------------------------------------------
+# @name crearProducto
+POST {{baseUrl}}/inventario/productos
+Authorization: Bearer {{tokenAdmin}}
+Content-Type: {{contentType}}
+
+{
+  "sku": "SKU-B17-{{$timestamp}}",
+  "nombre": "Aceite Vegetal 900ml Prueba Ajuste",
+  "precioCompra": 9500.00,
+  "precioVenta": 13500.00
+}
+
+@productoId = {{crearProducto.response.body.id}}
+
+### ------------------------------------------------------------------------------
+### PASO 2: Registrar Entrada Inicial de 30 unidades
+### Esperado: 201 Created
+### ------------------------------------------------------------------------------
+# @name entradaInicial
+POST {{baseUrl}}/inventario/entradas
+Authorization: Bearer {{tokenAdmin}}
+Content-Type: {{contentType}}
+
+{
+  "productoId": "{{productoId}}",
+  "sucursalId": 1,
+  "cantidad": 30,
+  "motivo": "Ingreso de lote inicial para pruebas de conteo físico"
+}
+
+### ------------------------------------------------------------------------------
+### PASO 3: Verificar Stock Inicial antes del Ajuste
+### Esperado: 200 OK con stockActual = 30
+### ------------------------------------------------------------------------------
+# @name stockInicial
+GET {{baseUrl}}/inventario/stock-minimo/1/{{productoId}}
+Authorization: Bearer {{tokenAdmin}}
+
+### ------------------------------------------------------------------------------
+### PASO 4: CASO A - Conteo Físico Superior (35 unidades -> Diferencia +5)
+### Esperado: 200 OK con tipoAjuste = ajuste_entrada, diferencia = 5, ajusteRealizado = true
+### ------------------------------------------------------------------------------
+# @name ajusteEntrada
+POST {{baseUrl}}/inventario/ajustes
+Authorization: Bearer {{tokenAdmin}}
+Content-Type: {{contentType}}
+
+{
+  "productoId": "{{productoId}}",
+  "sucursalId": 1,
+  "stockFisico": 35,
+  "motivo": "Conteo físico en pasillo 4 detectó 5 unidades sobrantes no registradas"
+}
+
+### ------------------------------------------------------------------------------
+### PASO 5: Verificar Existencias tras Ajuste de Entrada
+### Esperado: 200 OK con stockActual = 35
+### ------------------------------------------------------------------------------
+# @name stockTrasAjusteEntrada
+GET {{baseUrl}}/inventario/stock-minimo/1/{{productoId}}
+Authorization: Bearer {{tokenAdmin}}
+
+### ------------------------------------------------------------------------------
+### PASO 6: CASO B - Conteo Físico Inferior (28 unidades -> Diferencia -7)
+### Esperado: 200 OK con tipoAjuste = ajuste_salida, diferencia = -7, ajusteRealizado = true
+### ------------------------------------------------------------------------------
+# @name ajusteSalida
+POST {{baseUrl}}/inventario/ajustes
+Authorization: Bearer {{tokenAdmin}}
+Content-Type: {{contentType}}
+
+{
+  "productoId": "{{productoId}}",
+  "sucursalId": 1,
+  "stockFisico": 28,
+  "motivo": "Conteo físico detectó faltante de 7 unidades por merma/avería"
+}
+
+### ------------------------------------------------------------------------------
+### PASO 7: Verificar Existencias tras Ajuste de Salida
+### Esperado: 200 OK con stockActual = 28
+### ------------------------------------------------------------------------------
+# @name stockTrasAjusteSalida
+GET {{baseUrl}}/inventario/stock-minimo/1/{{productoId}}
+Authorization: Bearer {{tokenAdmin}}
+
+### ------------------------------------------------------------------------------
+### PASO 8: CASO C - Conteo Físico Coincidente (28 unidades -> Diferencia 0)
+### Esperado: 200 OK con tipoAjuste = sin_cambio, diferencia = 0, ajusteRealizado = false
+### ------------------------------------------------------------------------------
+# @name ajusteSinCambio
+POST {{baseUrl}}/inventario/ajustes
+Authorization: Bearer {{tokenAdmin}}
+Content-Type: {{contentType}}
+
+{
+  "productoId": "{{productoId}}",
+  "sucursalId": 1,
+  "stockFisico": 28,
+  "motivo": "Auditoría de verificación confirma existencias idénticas"
+}
+
+### ------------------------------------------------------------------------------
+### PASO 9: Consultar Kardex para Verificar Movimientos de Ajuste Registrados
+### Esperado: 200 OK con los movimientos ajuste_entrada y ajuste_salida
+### ------------------------------------------------------------------------------
+# @name kardexAjustes
+GET {{baseUrl}}/inventario/kardex?productoId={{productoId}}&sucursalId=1
+Authorization: Bearer {{tokenAdmin}}
+
+### ------------------------------------------------------------------------------
+### PASO 10: RECHAZO - Motivo demasiado corto (< 5 caracteres)
+### Esperado: 400 Bad Request
+### ------------------------------------------------------------------------------
+# @name rechazoMotivoCorto
+POST {{baseUrl}}/inventario/ajustes
+Authorization: Bearer {{tokenAdmin}}
+Content-Type: {{contentType}}
+
+{
+  "productoId": "{{productoId}}",
+  "sucursalId": 1,
+  "stockFisico": 25,
+  "motivo": "mal"
+}
+
+### ------------------------------------------------------------------------------
+### PASO 11: RECHAZO - Stock Físico Negativo (< 0)
+### Esperado: 400 Bad Request
+### ------------------------------------------------------------------------------
+# @name rechazoStockNegativo
+POST {{baseUrl}}/inventario/ajustes
+Authorization: Bearer {{tokenAdmin}}
+Content-Type: {{contentType}}
+
+{
+  "productoId": "{{productoId}}",
+  "sucursalId": 1,
+  "stockFisico": -5,
+  "motivo": "Conteo físico erróneo con valor negativo"
+}
+
+### ------------------------------------------------------------------------------
+### PASO 12: RECHAZO - Producto Inexistente
+### Esperado: 404 Not Found con código PRODUCTO_NO_ENCONTRADO
+### ------------------------------------------------------------------------------
+# @name rechazoProductoInexistente
+POST {{baseUrl}}/inventario/ajustes
+Authorization: Bearer {{tokenAdmin}}
+Content-Type: {{contentType}}
+
+{
+  "productoId": "00000000-0000-0000-0000-000000000000",
+  "sucursalId": 1,
+  "stockFisico": 10,
+  "motivo": "Ajuste sobre producto inexistente en catálogo"
+}

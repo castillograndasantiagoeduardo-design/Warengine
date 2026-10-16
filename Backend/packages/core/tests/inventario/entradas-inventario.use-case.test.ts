@@ -39,6 +39,10 @@ class FakeMovimientoInventarioRepository implements IMovimientoInventarioReposit
     throw new Error('No implementado');
   }
 
+  public registrarAjuste(_datos: any): Promise<MovimientoInventario> {
+    throw new Error('No implementado');
+  }
+
   public consultarKardex(filtros: FiltrosKardex): Promise<{ items: ItemKardex[]; total: number }> {
     let filtrados = this.items.filter((item) => {
       if (filtros.tipo && item.tipo !== filtros.tipo) return false;
