@@ -186,6 +186,28 @@ class InMemoryMovimientoRepository implements IMovimientoInventarioRepository {
     this.movimientos.push(compensatorio);
     return compensatorio;
   }
+
+  public async registrarAjuste(datos: any): Promise<MovimientoInventario> {
+    const k = this.key(datos.productoId, datos.sucursalId);
+    const stockActual = this.stock.get(k) ?? 0;
+    const nuevoStock = datos.tipo === 'ajuste_entrada' ? stockActual + datos.cantidad : stockActual - datos.cantidad;
+    this.stock.set(k, nuevoStock);
+    this.seq++;
+
+    const mov: MovimientoInventario = {
+      id: `mov-ajuste-${this.seq}`,
+      productoId: datos.productoId,
+      sucursalId: datos.sucursalId,
+      tipo: datos.tipo,
+      cantidad: datos.cantidad,
+      motivo: datos.motivo,
+      usuarioId: datos.usuarioId,
+      fecha: new Date(),
+      stockResultante: nuevoStock,
+    };
+    this.movimientos.push(mov);
+    return mov;
+  }
 }
 
 class InMemoryProductoRepository implements Partial<IProductoRepository> {

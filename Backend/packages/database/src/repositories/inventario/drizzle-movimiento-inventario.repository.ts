@@ -10,6 +10,7 @@ import { empleados, sucursales } from '../../schema/administracion.schema.ts';
 import { usuarios } from '../../schema/autenticacion.schema.ts';
 import {
   DatosAnulacionEntrada,
+  DatosRegistroAjuste,
   DatosRegistroEntrada,
   DatosRegistroSalida,
   EntradaNoEncontradaError,
@@ -411,4 +412,95 @@ export class DrizzleMovimientoInventarioRepository implements IMovimientoInventa
       };
     });
   }
+
+  public async registrarAjuste(datos: DatosRegistroAjuste): Promise<MovimientoInventario> {
+    return await this.db.transaction(async (tx) => {
+      // 1. Si es ajuste_entrada: incrementar stock
+      //    Si es ajuste_salida: verificar existencia de stock y decrementar
+      if (datos.tipo === 'ajuste_entrada') {
+        await tx
+          .insert(inventario_sucursal)
+          .values({
+            producto_id: datos.productoId,
+            sucursal_id: datos.sucursalId,
+            stock_actual: datos.cantidad,
+            stock_minimo: 0,
+          })
+          .onDuplicateKeyUpdate({
+            set: {
+              stock_actual: sql`${inventario_sucursal.stock_actual} + ${datos.cantidad}`,
+            },
+          });
+      } else {
+        // ajuste_salida
+        const [inv] = await tx
+          .select({ stockActual: inventario_sucursal.stock_actual })
+          .from(inventario_sucursal)
+          .where(
+            and(
+              eq(inventario_sucursal.producto_id, datos.productoId),
+              eq(inventario_sucursal.sucursal_id, datos.sucursalId),
+            ),
+          );
+
+        const stockActual = inv?.stockActual ?? 0;
+        if (stockActual < datos.cantidad) {
+          throw new StockInsuficienteError(
+            `No se puede realizar el ajuste de salida: el stock actual (${stockActual}) es menor a la cantidad a descontar (${datos.cantidad}).`,
+          );
+        }
+
+        await tx
+          .update(inventario_sucursal)
+          .set({
+            stock_actual: sql`${inventario_sucursal.stock_actual} - ${datos.cantidad}`,
+          })
+          .where(
+            and(
+              eq(inventario_sucursal.producto_id, datos.productoId),
+              eq(inventario_sucursal.sucursal_id, datos.sucursalId),
+            ),
+          );
+      }
+
+      // 2. Registrar movimiento inmutable en kardex
+      const id = crypto.randomUUID();
+      const fecha = new Date();
+
+      await tx.insert(movimientos_inventario).values({
+        id_movimiento_inventario: id,
+        producto_id: datos.productoId,
+        sucursal_id: datos.sucursalId,
+        tipo: datos.tipo,
+        cantidad: datos.cantidad,
+        motivo: datos.motivo,
+        usuario_id: datos.usuarioId,
+        fecha,
+      });
+
+      // 3. Obtener el stock resultante
+      const [invFinal] = await tx
+        .select({ stockActual: inventario_sucursal.stock_actual })
+        .from(inventario_sucursal)
+        .where(
+          and(
+            eq(inventario_sucursal.producto_id, datos.productoId),
+            eq(inventario_sucursal.sucursal_id, datos.sucursalId),
+          ),
+        );
+
+      return {
+        id,
+        productoId: datos.productoId,
+        sucursalId: datos.sucursalId,
+        tipo: datos.tipo,
+        cantidad: datos.cantidad,
+        motivo: datos.motivo,
+        usuarioId: datos.usuarioId,
+        fecha,
+        stockResultante: invFinal?.stockActual ?? 0,
+      };
+    });
+  }
 }
+

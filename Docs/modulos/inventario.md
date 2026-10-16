@@ -55,6 +55,7 @@ El módulo de **Inventario** administra el catálogo maestro de artículos, cate
 | **RF-ADM-B14** | Historial de precios de producto con auditoría diferencial y protección de costos | IMPLEMENTADO | [ConsultarHistorialPreciosUseCase.ts](../../Backend/packages/core/src/modules/inventario/application/use-cases/ConsultarHistorialPreciosUseCase.ts), [producto.controller.ts](../../Backend/apps/api/src/controllers/inventario/producto.controller.ts) |
 | **RF-ADM-B15** | Listado y detalle de entradas de mercancía con filtros y aislamiento de sede | IMPLEMENTADO | [ListarEntradasInventarioUseCase.ts](../../Backend/packages/core/src/modules/inventario/application/use-cases/ListarEntradasInventarioUseCase.ts), [ObtenerEntradaInventarioPorIdUseCase.ts](../../Backend/packages/core/src/modules/inventario/application/use-cases/ObtenerEntradaInventarioPorIdUseCase.ts), [movimiento-inventario.controller.ts](../../Backend/apps/api/src/controllers/inventario/movimiento-inventario.controller.ts) |
 | **RF-ADM-B16** | Anulación de entradas de mercancía con reversión de existencias y control de stock | IMPLEMENTADO | [AnularEntradaInventarioUseCase.ts](../../Backend/packages/core/src/modules/inventario/application/use-cases/AnularEntradaInventarioUseCase.ts), [movimiento-inventario.controller.ts](../../Backend/apps/api/src/controllers/inventario/movimiento-inventario.controller.ts) |
+| **RF-ADM-B17** | Ajuste de inventario con conteo físico (cuadre de existencias) | IMPLEMENTADO | [AjustarInventarioUseCase.ts](../../Backend/packages/core/src/modules/inventario/application/use-cases/AjustarInventarioUseCase.ts), [movimiento-inventario.controller.ts](../../Backend/apps/api/src/controllers/inventario/movimiento-inventario.controller.ts) |
 
 ---
 
@@ -280,7 +281,9 @@ Prefijo general de montaje en `main.ts`: `/inventario`.
 | `PUT` | `/inventario/productos/:id` | `inventario:escribir` | `editarProductoController` | `EditarProductoUseCase` | `editarProductoSchema` | 200, 400, 401, 403, 404, 409, 422 |
 | `PUT` | `/inventario/productos/:id/estado` | `inventario:escribir` | `cambiarEstadoProductoController` | `CambiarEstadoProductoUseCase` | `cambiarEstadoProductoSchema` | 200, 400, 401, 403, 404 |
 | `POST` | `/inventario/entradas` | `inventario:registrar-movimiento` | `registrarEntradaController` | `RegistrarEntradaInventarioUseCase` | `registrarEntradaSchema` | 201, 400, 401, 403, 404, 422 |
+| `POST` | `/inventario/entradas/:id/anular` | `inventario:escribir` | `anularEntradaController` | `AnularEntradaInventarioUseCase` | `anularEntradaSchema` | 200, 400, 401, 403, 404, 409 |
 | `POST` | `/inventario/salidas` | `inventario:registrar-movimiento` | `registrarSalidaController` | `RegistrarSalidaInventarioUseCase` | `registrarSalidaSchema` | 201, 400, 401, 403, 404, 409, 422 |
+| `POST` | `/inventario/ajustes` | `inventario:ajustar-stock` | `ajustarInventarioController` | `AjustarInventarioUseCase` | `ajustarInventarioSchema` | 200, 400, 401, 403, 404, 409, 422 |
 | `GET` | `/inventario/kardex` | `inventario:ver-kardex` | `consultarKardexController` | `ConsultarKardexUseCase` | `filtrosKardexSchema` | 200, 400, 401, 403 |
 
 ---
