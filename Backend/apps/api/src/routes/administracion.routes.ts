@@ -2,6 +2,7 @@ import { Hono } from 'hono';
 import { AppContainer } from '@warengine/composition';
 import { authMiddleware } from '../middlewares/auth.middleware.ts';
 import {
+  cambiarEstadoSucursalController,
   crearSucursalController,
   editarSucursalController,
   listarSucursalesController,
@@ -65,10 +66,11 @@ const PERMISO_METRICAS = 'administracion:ver-metricas-sucursal';
 export function createAdministracionRoutes(container: AppContainer): Hono {
   const api = new Hono();
 
-  // Sucursales (RF-ADM-C1, C2, C3)
+  // Sucursales (RF-ADM-C1, C2, C3, C17)
   api.get('/sucursales', authMiddleware(container, PERMISO_SUCURSALES), listarSucursalesController(container));
   api.post('/sucursales', authMiddleware(container, PERMISO_SUCURSALES), crearSucursalController(container));
   api.put('/sucursales/:id', authMiddleware(container, PERMISO_SUCURSALES), editarSucursalController(container));
+  api.put('/sucursales/:id/estado', authMiddleware(container, PERMISO_SUCURSALES), cambiarEstadoSucursalController(container));
 
   // Áreas por Sucursal (RF-ADM-C4)
   api.get('/sucursales/:id/areas', authMiddleware(container, PERMISO_SUCURSALES), listarAreasPorSucursalController(container));

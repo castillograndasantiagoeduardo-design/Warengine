@@ -15,4 +15,5 @@ export interface ISucursalRepository {
     id: number,
     cambios: Partial<DatosSucursal> & { isActive?: boolean },
   ): Promise<Sucursal>;
+  contarUsuariosActivos?(sucursalId: number): Promise<number>;
 }

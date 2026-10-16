@@ -1,0 +1,155 @@
+# ==============================================================================
+# MÓDULO: ADMINISTRACIÓN - RESTRICCIÓN DE INACTIVACIÓN DE SUCURSALES (RF-ADM-C17)
+# Requiere: REST Client (extensión VS Code)
+# Base URL: http://localhost:8017
+# ==============================================================================
+#
+# Reglas validadas por RF-ADM-C17:
+# 1. Regla 6: La Sede Principal (id: 1) es inmutable e ininactivable (SEDE_PRINCIPAL_NO_INACTIVABLE).
+# 2. Bloqueo si hay usuarios activos asignados a la sucursal (SUCURSAL_TIENE_USUARIOS_ACTIVOS).
+# 3. Inactivación exitosa si la sucursal no tiene usuarios activos asignados.
+# 4. Reactivación exitosa de la sucursal.
+#
+# ==============================================================================
+
+@baseUrl = http://localhost:8017
+
+# ------------------------------------------------------------------------------
+# SETUP: Login como Super Admin
+# ------------------------------------------------------------------------------
+
+### 1. Login como Super Admin
+# @name loginAdmin
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "superadmin@warengine.local",
+  "password": "Warengine.Admin.2026!"
+}
+
+###
+
+# ==============================================================================
+# ESCENARIO 1: RESTRICCIÓN DE SEDE PRINCIPAL (id=1)
+# ==============================================================================
+
+### 2. Intento de inactivar Sede Principal (id=1) vía endpoint específico
+# Esperado: 422 Unprocessable Entity / 400 Bad Request
+# Error: SEDE_PRINCIPAL_NO_INACTIVABLE
+PUT {{baseUrl}}/administracion/sucursales/1/estado
+Authorization: Bearer {{loginAdmin.response.body.accessToken}}
+Content-Type: application/json
+
+{
+  "isActive": false
+}
+
+###
+
+### 3. Intento de inactivar Sede Principal (id=1) vía endpoint de edición general
+# Esperado: 422 Unprocessable Entity / 400 Bad Request
+# Error: SEDE_PRINCIPAL_NO_INACTIVABLE
+PUT {{baseUrl}}/administracion/sucursales/1
+Authorization: Bearer {{loginAdmin.response.body.accessToken}}
+Content-Type: application/json
+
+{
+  "nombre": "Sede Principal (Sistema)",
+  "isActive": false
+}
+
+###
+
+# ==============================================================================
+# ESCENARIO 2: RESTRICCIÓN POR USUARIOS ACTIVOS ASIGNADOS
+# ==============================================================================
+
+### 4. Crear sucursal de prueba A
+# @name crearSucursalConUsuarios
+POST {{baseUrl}}/administracion/sucursales
+Authorization: Bearer {{loginAdmin.response.body.accessToken}}
+Content-Type: application/json
+
+{
+  "nombre": "Sucursal Con Personal Activo",
+  "ciudad": "Bogotá",
+  "direccion": "Calle 100 # 15-20",
+  "telefono": "3001112233"
+}
+
+###
+
+### 5. Crear usuario asignado a la sucursal creada
+# Reemplazar sucursalId con el id de la sucursal creada en el paso 4
+POST {{baseUrl}}/administracion/usuarios
+Authorization: Bearer {{loginAdmin.response.body.accessToken}}
+Content-Type: application/json
+
+{
+  "email": "cajero.sucursal.activa@warengine.local",
+  "password": "Password.12345!",
+  "rolId": 3,
+  "sucursalId": {{crearSucursalConUsuarios.response.body.id}},
+  "nombre": "Cajero Prueba Sucursal",
+  "telefono": "3009998877",
+  "salarioBase": 1500000
+}
+
+###
+
+### 6. Intento de inactivar sucursal con usuario activo asignado
+# Esperado: 422 Unprocessable Entity / 400 Bad Request
+# Error: SUCURSAL_TIENE_USUARIOS_ACTIVOS
+PUT {{baseUrl}}/administracion/sucursales/{{crearSucursalConUsuarios.response.body.id}}/estado
+Authorization: Bearer {{loginAdmin.response.body.accessToken}}
+Content-Type: application/json
+
+{
+  "isActive": false
+}
+
+###
+
+# ==============================================================================
+# ESCENARIO 3: INACTIVACIÓN EXITOSA DE SUCURSAL SIN USUARIOS
+# ==============================================================================
+
+### 7. Crear sucursal sin usuarios
+# @name crearSucursalVacia
+POST {{baseUrl}}/administracion/sucursales
+Authorization: Bearer {{loginAdmin.response.body.accessToken}}
+Content-Type: application/json
+
+{
+  "nombre": "Sucursal Vacía Para Inactivar",
+  "ciudad": "Medellín",
+  "direccion": "Carrera 43A # 1-50",
+  "telefono": "3004445566"
+}
+
+###
+
+### 8. Inactivar sucursal vacía vía endpoint de estado
+# Esperado: 200 OK con { "isActive": false }
+PUT {{baseUrl}}/administracion/sucursales/{{crearSucursalVacia.response.body.id}}/estado
+Authorization: Bearer {{loginAdmin.response.body.accessToken}}
+Content-Type: application/json
+
+{
+  "isActive": false
+}
+
+###
+
+### 9. Reactivar sucursal vacía vía endpoint de estado
+# Esperado: 200 OK con { "isActive": true }
+PUT {{baseUrl}}/administracion/sucursales/{{crearSucursalVacia.response.body.id}}/estado
+Authorization: Bearer {{loginAdmin.response.body.accessToken}}
+Content-Type: application/json
+
+{
+  "isActive": true
+}
+
+###
