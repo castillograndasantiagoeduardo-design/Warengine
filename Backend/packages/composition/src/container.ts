@@ -81,6 +81,7 @@ import {
   ReactivarProveedorUseCase,
   CambiarEstadoProveedorUseCase,
   ConsultarAuditoriaUseCase,
+  ExportarAuditoriaCsvUseCase,
   ListarProductosUseCase,
   ObtenerProductoPorIdUseCase,
   CrearProductoUseCase,
@@ -151,6 +152,7 @@ export interface AppContainer {
     cambiarRolUsuario: CambiarRolUsuarioUseCase;
     cambiarEstadoUsuario: CambiarEstadoUsuarioUseCase;
     consultarAuditoria: ConsultarAuditoriaUseCase;
+    exportarAuditoriaCsv: ExportarAuditoriaCsvUseCase;
     restablecerPasswordUsuario: RestablecerPasswordUsuarioUseCase;
     asignarSucursalesUsuario: AsignarSucursalesUsuarioUseCase;
     obtenerSucursalesUsuario: ObtenerSucursalesUsuarioUseCase;
@@ -412,6 +414,7 @@ export function createContainer(_env?: Record<string, string>): AppContainer {
     auditoriaRepository,
   );
   const consultarAuditoriaUseCase = new ConsultarAuditoriaUseCase(auditoriaRepository);
+  const exportarAuditoriaCsvUseCase = new ExportarAuditoriaCsvUseCase(auditoriaRepository);
   
 
   // Casos de uso de Categorías
@@ -573,6 +576,7 @@ export function createContainer(_env?: Record<string, string>): AppContainer {
       cambiarRolUsuario: cambiarRolUsuarioUseCase,
       cambiarEstadoUsuario: cambiarEstadoUsuarioUseCase,
       consultarAuditoria: consultarAuditoriaUseCase,
+      exportarAuditoriaCsv: exportarAuditoriaCsvUseCase,
       restablecerPasswordUsuario: restablecerPasswordUsuarioUseCase,
       consultarAlertasStock: consultarAlertasStockUseCase,
       asignarSucursalesUsuario: asignarSucursalesUsuarioUseCase,

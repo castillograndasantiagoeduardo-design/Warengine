@@ -59,6 +59,8 @@ El módulo de **Administración** centraliza la estructura organizativa de la em
 | **RF-ADM-C16** | Búsqueda de usuarios por nombre o correo en listado | IMPLEMENTADO | [ListarUsuariosUseCase.ts](../../Backend/packages/core/src/modules/administracion/application/use-cases/ListarUsuariosUseCase.ts), [usuario.controller.ts](../../Backend/apps/api/src/controllers/administracion/usuario.controller.ts), [drizzle-gestion-usuario.repository.ts](../../Backend/packages/database/src/repositories/administracion/drizzle-gestion-usuario.repository.ts) |
 | **RF-ADM-C17** | Inactivación de sucursales con restricción de usuarios activos asignados y protección de Sede Principal (id=1) | IMPLEMENTADO | [EditarSucursalUseCase.ts](../../Backend/packages/core/src/modules/administracion/application/use-cases/EditarSucursalUseCase.ts), [sucursal.controller.ts](../../Backend/apps/api/src/controllers/administracion/sucursal.controller.ts), [drizzle-sucursal.repository.ts](../../Backend/packages/database/src/repositories/administracion/drizzle-sucursal.repository.ts) |
 | **RF-ADM-C18** | Ficha de detalle de sucursal (contacto, usuarios, inventario, ventas recientes) | IMPLEMENTADO | [ObtenerDetalleSucursalUseCase.ts](../../Backend/packages/core/src/modules/administracion/application/use-cases/ObtenerDetalleSucursalUseCase.ts), [sucursal.controller.ts](../../Backend/apps/api/src/controllers/administracion/sucursal.controller.ts), [drizzle-sucursal.repository.ts](../../Backend/packages/database/src/repositories/administracion/drizzle-sucursal.repository.ts) |
+| **RF-ADM-C19** | Inmutabilidad de registros de auditoría (bloqueo UPDATE/DELETE) | IMPLEMENTADO | Triggers MySQL `trg_logs_auditoria_bloquear_modificaciones` y `trg_logs_auditoria_bloquear_eliminaciones` |
+| **RF-ADM-C20** | Exportación de registros de auditoría a CSV / Excel | IMPLEMENTADO | [ExportarAuditoriaCsvUseCase.ts](../../Backend/packages/core/src/modules/auditoria/application/use-cases/ExportarAuditoriaCsvUseCase.ts), [auditoria.controller.ts](../../Backend/apps/api/src/controllers/administracion/auditoria.controller.ts), [drizzle-auditoria.repository.ts](../../Backend/packages/database/src/repositories/administracion/drizzle-auditoria.repository.ts) |
 | **RNF-ADM-01** | Carga de métricas en menos de 3 segundos (< 3s) con históricos | CUMPLIDO | Consultas SQL agregadas de alta eficiencia indexadas en BD |
 | **RNF-ADM-02** | Auditoría inmutable de toda mutación administrativa | CUMPLIDO | Integración con `IAuditor` en todos los casos de uso mutantes |
 | **RNF-ADM-03** | Autorización RBAC estricta en endpoints y casos de uso | CUMPLIDO | `authMiddleware` + `ResolverAlcanceSucursalUseCase` |
@@ -377,6 +379,7 @@ Prefijo general de montaje en `main.ts`: `/administracion`.
 | `PUT` | `/administracion/usuarios/:id/password` | `autenticacion:gestionar-usuarios` | `restablecerPasswordUsuarioController` | `RestablecerPasswordUsuarioUseCase` | `restablecerPasswordSchema` | 200, 400, 401, 403, 404 |
 | `GET` | `/administracion/usuarios/:id/sucursales` | `autenticacion:gestionar-usuarios` | `obtenerSucursalesUsuarioController` | `ObtenerSucursalesUsuarioUseCase` | Ninguno | 200, 401, 403, 404 |
 | `PUT` | `/administracion/usuarios/:id/sucursales` | `autenticacion:gestionar-usuarios` | `asignarSucursalesUsuarioController` | `AsignarSucursalesUsuarioUseCase` | `asignarSucursalesSchema` | 200, 400, 401, 403, 404 |
+| `GET` | `/administracion/auditoria/exportar` | `autenticacion:ver-auditoria` | `exportarAuditoriaCsvController` | `ExportarAuditoriaCsvUseCase` | `exportarAuditoriaCsvSchema` | 200, 400, 401, 403 |
 | `GET` | `/administracion/dashboard/metricas` | `administracion:ver-metricas-sucursal` | `consultarMetricasGananciasController` | `ConsultarMetricasGananciasUseCase` | `metricasGananciasQuerySchema` | 200, 400, 401, 403 |
 | `GET` | `/administracion/dashboard/tendencias` | `administracion:ver-metricas-sucursal` | `consultarTendenciasVentasController` | `ConsultarTendenciasVentasUseCase` | `tendenciasVentasQuerySchema` | 200, 400, 401, 403 |
 | `GET` | `/administracion/dashboard/rendimiento` | `administracion:ver-metricas-sucursal` | `consultarRendimientoSucursalesController` | `ConsultarRendimientoSucursalesUseCase` | `rendimientoSucursalesQuerySchema` | 200, 400, 401, 403 |
@@ -400,6 +403,9 @@ Prefijo general de montaje en `main.ts`: `/administracion`.
   - `listarUsuariosQuerySchema`: `{ rolId?: coerce.number, sucursalId?: coerce.number }`
 - **Asignación de Sedes** ([asignacion-sucursales.schema.ts](../../Shared/contracts/src/administracion/asignacion-sucursales.schema.ts)):
   - `asignarSucursalesSchema`: `{ sucursalPrincipalId: int > 0, sucursalesAdicionalesIds: array(int > 0) }`
+- **Auditoría** ([auditoria.schema.ts](../../Shared/contracts/src/administracion/auditoria.schema.ts)):
+  - `consultarAuditoriaSchema`: `{ usuarioId?, accion?, entidad?, desde?, hasta?, pagina?, limite? }`
+  - `exportarAuditoriaCsvSchema`: `{ usuarioId?, accion?, entidad?, desde?, hasta?, limite?, formato? }`
 - **Dashboard y Analítica** ([dashboard.schema.ts](../../Shared/contracts/src/administracion/dashboard.schema.ts)):
   - `metricasGananciasQuerySchema`: `{ sucursalId?: number, fechaInicio?: datetime, fechaFin?: datetime }`
   - `tendenciasVentasQuerySchema`: `{ sucursalId?: number, fechaInicio?: datetime, fechaFin?: datetime, agrupacion?: 'dia'|'semana'|'mes' }`
@@ -449,6 +455,10 @@ Roles con acceso:
    - Rechazo con `SUCURSAL_NO_ENCONTRADA` (404) si la sucursal no existe.
    - Retorno consolidado de datos de sede, usuarios asignados (con distinción sede principal/adicional), métricas de stock y ventas recientes.
    - Retorno de listas vacías y contadores en 0 para sucursales nuevas.
+6. [exportar-auditoria-csv.use-case.test.ts](../../Backend/packages/core/tests/administracion/exportar-auditoria-csv.use-case.test.ts) (3 tests):
+   - Rechazo si la fecha desde es posterior a hasta (`FILTRO_AUDITORIA_INVALIDO`).
+   - Exportación limpia en CSV RFC 4180 con BOM UTF-8 y escape de caracteres en JSON.
+   - Aplicación de filtros de usuario, acción y entidad hacia el repositorio.
 
 ### Brechas Conocidas
 - `ListarSucursalesUseCase` y `ListarUsuariosUseCase` no tienen archivo de test unitario exclusivo en `core/tests/` (cubiertos por HTTP/integración).

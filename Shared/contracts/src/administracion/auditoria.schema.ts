@@ -48,3 +48,15 @@ export const consultarAuditoriaSchema = z.object({
 });
 
 export type ConsultarAuditoriaInput = z.infer<typeof consultarAuditoriaSchema>;
+
+export const exportarAuditoriaCsvSchema = z.object({
+  usuarioId: z.string().uuid({ message: 'usuarioId debe ser un UUID.' }).optional(),
+  accion: z.enum(ACCIONES_AUDITORIA_VALORES).optional(),
+  entidad: z.enum(ENTIDADES_AUDITORIA_VALORES).optional(),
+  desde: fechaParam(false),
+  hasta: fechaParam(true),
+  limite: z.coerce.number().int().min(1).max(50000).default(10000),
+  formato: z.enum(['csv', 'json']).default('csv').optional(),
+});
+
+export type ExportarAuditoriaCsvInput = z.infer<typeof exportarAuditoriaCsvSchema>;

@@ -1,0 +1,75 @@
+# ==============================================================================
+# MÓDULO: ADMINISTRACIÓN - EXPORTACIÓN DE AUDITORÍA A CSV (RF-ADM-C20)
+# Requiere: REST Client (extensión VS Code)
+# Base URL: http://localhost:8017
+# ==============================================================================
+#
+# Especificación RF-ADM-C20:
+# Exportación de registros de auditoría a CSV / Excel con filtros combinables
+# de usuario, fecha, entidad y acción aplicada.
+# Endpoint: GET /administracion/auditoria/exportar
+# Permiso requerido: autenticacion:ver-auditoria
+#
+# ==============================================================================
+
+@baseUrl = http://localhost:8017
+
+# ------------------------------------------------------------------------------
+# SETUP: Login como Super Admin
+# ------------------------------------------------------------------------------
+
+### 1. Login como Super Admin
+# @name loginAdmin
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "superadmin@warengine.local",
+  "password": "Warengine.Admin.2026!"
+}
+
+###
+
+# ==============================================================================
+# ESCENARIO 1: EXPORTACIÓN COMPLETA A CSV
+# ==============================================================================
+
+### 2. Exportar todos los logs a CSV (RFC 4180 con BOM UTF-8)
+# Esperado: 200 OK con Content-Type text/csv y header Content-Disposition attachment
+GET {{baseUrl}}/administracion/auditoria/exportar
+Authorization: Bearer {{loginAdmin.response.body.accessToken}}
+
+###
+
+# ==============================================================================
+# ESCENARIO 2: EXPORTACIÓN CON FILTROS DE ACCIÓN Y ENTIDAD
+# ==============================================================================
+
+### 3. Exportar logs filtrando por acción "crear" y entidad "sucursales"
+# Esperado: 200 OK con registros coincidentes
+GET {{baseUrl}}/administracion/auditoria/exportar?accion=crear&entidad=sucursales
+Authorization: Bearer {{loginAdmin.response.body.accessToken}}
+
+###
+
+# ==============================================================================
+# ESCENARIO 3: EXPORTACIÓN EN FORMATO JSON
+# ==============================================================================
+
+### 4. Consultar exportación con formato=json para integración programática
+# Esperado: 200 OK con { csv: string, total: number, nombreArchivo: string }
+GET {{baseUrl}}/administracion/auditoria/exportar?formato=json&limite=5
+Authorization: Bearer {{loginAdmin.response.body.accessToken}}
+
+###
+
+# ==============================================================================
+# ESCENARIO 4: VALIDACIÓN DE RANGO DE FECHAS INVÁLIDO
+# ==============================================================================
+
+### 5. Rechazo si la fecha desde es posterior a hasta
+# Esperado: 400 Bad Request con FILTRO_AUDITORIA_INVALIDO
+GET {{baseUrl}}/administracion/auditoria/exportar?desde=2026-12-31&hasta=2026-01-01
+Authorization: Bearer {{loginAdmin.response.body.accessToken}}
+
+###
