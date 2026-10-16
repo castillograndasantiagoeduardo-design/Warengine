@@ -1,0 +1,68 @@
+# ==============================================================================
+# MÓDULO: ADMINISTRACIÓN - FICHA DE DETALLE DE SUCURSAL (RF-ADM-C18)
+# Requiere: REST Client (extensión VS Code)
+# Base URL: http://localhost:8017
+# ==============================================================================
+#
+# Especificación RF-ADM-C18:
+# Ficha de detalle consolidado con datos de contacto, usuarios asignados,
+# cantidad de productos con stock y resumen de ventas recientes.
+# Endpoint: GET /administracion/sucursales/:id/detalle
+# Permiso requerido: administracion:gestionar-sucursales
+#
+# ==============================================================================
+
+@baseUrl = http://localhost:8017
+
+# ------------------------------------------------------------------------------
+# SETUP: Login como Super Admin
+# ------------------------------------------------------------------------------
+
+### 1. Login como Super Admin
+# @name loginAdmin
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "superadmin@warengine.local",
+  "password": "Warengine.Admin.2026!"
+}
+
+###
+
+# ==============================================================================
+# ESCENARIO 1: CONSULTA DE FICHA CONSOLIDADA DE SEDE PRINCIPAL (id=1)
+# ==============================================================================
+
+### 2. Consultar detalle de la Sede Principal
+# Esperado: 200 OK con:
+# - Datos de sede (id, nombre, direccion, contacto, isActive)
+# - usuariosAsignados: personal vinculado a la sede
+# - estadisticas: productosConStock, totalUnidadesStock, totalVentas, montoTotalVentas
+# - ventasRecientes: últimas facturas registradas
+GET {{baseUrl}}/administracion/sucursales/1/detalle
+Authorization: Bearer {{loginAdmin.response.body.accessToken}}
+
+###
+
+# ==============================================================================
+# ESCENARIO 2: SUCURSAL NO ENCONTRADA (404)
+# ==============================================================================
+
+### 3. Consultar detalle de sucursal inexistente
+# Esperado: 404 Not Found con error SUCURSAL_NO_ENCONTRADA
+GET {{baseUrl}}/administracion/sucursales/99999/detalle
+Authorization: Bearer {{loginAdmin.response.body.accessToken}}
+
+###
+
+# ==============================================================================
+# ESCENARIO 3: VALIDACIÓN DE PARÁMETROS INVÁLIDOS
+# ==============================================================================
+
+### 4. Consultar detalle con ID inválido (no numérico)
+# Esperado: 400 Bad Request
+GET {{baseUrl}}/administracion/sucursales/abc/detalle
+Authorization: Bearer {{loginAdmin.response.body.accessToken}}
+
+###

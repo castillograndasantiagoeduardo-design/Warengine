@@ -72,3 +72,19 @@ export function cambiarEstadoSucursalController(container: AppContainer) {
     );
   });
 }
+
+/**
+ * RF-ADM-C18: Ficha de detalle consolidado de sucursal.
+ */
+export function obtenerDetalleSucursalController(container: AppContainer) {
+  return safeHandler(async (c) => {
+    const id = Number(c.req.param('id'));
+    if (!Number.isInteger(id) || id <= 0) {
+      return c.json({ error: 'VALIDATION_ERROR', message: 'Id de sucursal inválido.' }, 400);
+    }
+    return presentResult(
+      c,
+      await container.administracion.obtenerDetalleSucursal.execute({ id }),
+    );
+  });
+}

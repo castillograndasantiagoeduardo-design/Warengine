@@ -6,6 +6,7 @@ import {
   crearSucursalController,
   editarSucursalController,
   listarSucursalesController,
+  obtenerDetalleSucursalController,
 } from '../controllers/administracion/sucursal.controller.ts';
 import {
   cambiarEstadoUsuarioController,
@@ -66,8 +67,9 @@ const PERMISO_METRICAS = 'administracion:ver-metricas-sucursal';
 export function createAdministracionRoutes(container: AppContainer): Hono {
   const api = new Hono();
 
-  // Sucursales (RF-ADM-C1, C2, C3, C17)
+  // Sucursales (RF-ADM-C1, C2, C3, C17, C18)
   api.get('/sucursales', authMiddleware(container, PERMISO_SUCURSALES), listarSucursalesController(container));
+  api.get('/sucursales/:id/detalle', authMiddleware(container, PERMISO_SUCURSALES), obtenerDetalleSucursalController(container));
   api.post('/sucursales', authMiddleware(container, PERMISO_SUCURSALES), crearSucursalController(container));
   api.put('/sucursales/:id', authMiddleware(container, PERMISO_SUCURSALES), editarSucursalController(container));
   api.put('/sucursales/:id/estado', authMiddleware(container, PERMISO_SUCURSALES), cambiarEstadoSucursalController(container));
