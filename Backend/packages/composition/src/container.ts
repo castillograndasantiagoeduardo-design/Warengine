@@ -119,6 +119,7 @@ import {
   ObtenerEntradaInventarioPorIdUseCase,
   AnularEntradaInventarioUseCase,
   AjustarInventarioUseCase,
+  TransferirMercanciaUseCase,
 } from '@warengine/core';
 
 export interface AppContainer {
@@ -192,6 +193,7 @@ export interface AppContainer {
     obtenerEntradaPorId: ObtenerEntradaInventarioPorIdUseCase;
     anularEntrada: AnularEntradaInventarioUseCase;
     ajustarInventario: AjustarInventarioUseCase;
+    transferirMercancia: TransferirMercanciaUseCase;
   };
   facturacion: {
     registrarCliente: RegistrarClienteUseCase;
@@ -492,6 +494,13 @@ export function createContainer(_env?: Record<string, string>): AppContainer {
     auditoriaRepository,
     resolverAlcanceSucursalUseCase,
   );
+  const transferirMercanciaUseCase = new TransferirMercanciaUseCase(
+    movimientoInventarioRepository,
+    productoRepository,
+    sucursalRepository,
+    auditoriaRepository,
+    resolverAlcanceSucursalUseCase,
+  );
   const configurarStockMinimoUseCase = new ConfigurarStockMinimoUseCase(
     inventarioSucursalRepository,
     productoRepository,
@@ -597,6 +606,7 @@ export function createContainer(_env?: Record<string, string>): AppContainer {
       obtenerEntradaPorId: obtenerEntradaPorIdUseCase,
       anularEntrada: anularEntradaUseCase,
       ajustarInventario: ajustarInventarioUseCase,
+      transferirMercancia: transferirMercanciaUseCase,
     },
     facturacion: {
       registrarCliente: registrarClienteUseCase,

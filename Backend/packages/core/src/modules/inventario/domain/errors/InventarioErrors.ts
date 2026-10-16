@@ -133,5 +133,13 @@ export class StockFisicoInvalidoError extends DomainError {
   }
 }
 
+export class SucursalesTransferenciaIgualesError extends DomainError {
+  public readonly code = 'SUCURSALES_TRANSFERENCIA_IGUALES';
+  constructor() {
+    super('La sucursal de origen y destino no pueden ser la misma.');
+  }
+}
+
+
 
 

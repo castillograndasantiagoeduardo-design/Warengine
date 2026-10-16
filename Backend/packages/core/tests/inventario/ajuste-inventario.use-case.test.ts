@@ -88,6 +88,10 @@ class FakeMovimientoInventarioRepository implements IMovimientoInventarioReposit
   public anularEntrada(_entradaId: string, _datos: DatosAnulacionEntrada): Promise<MovimientoInventario> {
     throw new Error('No implementado');
   }
+
+  public transferirMercancia(_datos: any): Promise<any> {
+    throw new Error('No implementado');
+  }
 }
 
 class FakeProductoRepository implements Partial<IProductoRepository> {

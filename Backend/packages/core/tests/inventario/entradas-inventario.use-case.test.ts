@@ -98,6 +98,10 @@ class FakeMovimientoInventarioRepository implements IMovimientoInventarioReposit
       stockResultante,
     });
   }
+
+  public transferirMercancia(_datos: any): Promise<any> {
+    throw new Error('No implementado');
+  }
 }
 
 class FakeAuditor implements IAuditor {
