@@ -160,3 +160,25 @@ export type ProductoResponse = z.infer<typeof productoResponseSchema>;
 export type ProductosPaginadosResponse = z.infer<typeof productosPaginadosSchema>;
 export type ItemHistorialPrecio = z.infer<typeof itemHistorialPrecioSchema>;
 export type HistorialPreciosResponse = z.infer<typeof historialPreciosResponseSchema>;
+
+/**
+ * Esquemas para importación masiva de productos (RF-ADM-B20).
+ */
+export const itemReporteImportacionSchema = z.object({
+  fila: z.number().int(),
+  sku: z.string().optional(),
+  nombre: z.string().optional(),
+  estado: z.enum(['cargado', 'rechazado']),
+  motivo: z.string().optional(),
+  productoId: z.string().optional(),
+});
+
+export const reporteImportacionProductosSchema = z.object({
+  totalFilas: z.number().int(),
+  totalCargados: z.number().int(),
+  totalRechazados: z.number().int(),
+  filas: z.array(itemReporteImportacionSchema),
+});
+
+export type ItemReporteImportacion = z.infer<typeof itemReporteImportacionSchema>;
+export type ReporteImportacionProductos = z.infer<typeof reporteImportacionProductosSchema>;

@@ -22,6 +22,7 @@ import {
   listarProductosController,
   obtenerProductoPorIdController,
   consultarHistorialPreciosController,
+  importarProductosController,
 } from '../controllers/inventario/producto.controller.ts';
 import {
   ajustarInventarioController,
@@ -110,6 +111,11 @@ export function createInventarioRoutes(container: AppContainer): Hono {
     '/productos',
     authMiddleware(container, PERMISO_INVENTARIO_LEER),
     listarProductosController(container),
+  );
+  api.post(
+    '/productos/importar-csv',
+    authMiddleware(container, PERMISO_INVENTARIO_ESCRIBIR),
+    importarProductosController(container),
   );
   api.get(
     '/productos/:id',
