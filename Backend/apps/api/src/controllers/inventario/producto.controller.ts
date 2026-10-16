@@ -113,3 +113,55 @@ export function consultarHistorialPreciosController(container: AppContainer) {
     return presentResult(c, result);
   });
 }
+
+/**
+ * RF-ADM-B20: Importación masiva de productos desde archivo CSV.
+ */
+export function importarProductosController(container: AppContainer) {
+  return safeHandler(async (c) => {
+    let csvContenido = '';
+    const contentType = c.req.header('content-type') || '';
+
+    if (contentType.includes('multipart/form-data')) {
+      const body = await c.req.parseBody();
+      const archivo = body['archivo'] ?? body['file'] ?? body['csv'];
+      if (archivo instanceof File) {
+        csvContenido = await archivo.text();
+      } else if (typeof archivo === 'string') {
+        csvContenido = archivo;
+      }
+    } else if (contentType.includes('application/json')) {
+      const json = await leerJson(c);
+      csvContenido = json?.csv ?? json?.csvContenido ?? '';
+    } else if (contentType.includes('text/csv') || contentType.includes('text/plain')) {
+      csvContenido = await c.req.text();
+    } else {
+      // Intentar leer json o texto como fallback
+      try {
+        const json = await leerJson(c);
+        csvContenido = json?.csv ?? json?.csvContenido ?? '';
+      } catch {
+        csvContenido = await c.req.text();
+      }
+    }
+
+    if (!csvContenido || !csvContenido.trim()) {
+      return c.json(
+        {
+          error: 'VALIDATION_ERROR',
+          message:
+            'Se requiere el archivo CSV en el campo "archivo" (multipart/form-data), "csv" (JSON) o como texto plano (text/csv).',
+        },
+        400,
+      );
+    }
+
+    const result = await container.inventario.importarProductos.execute({
+      csvContenido,
+      actor: obtenerActor(c),
+    });
+
+    return presentResult(c, result, 200);
+  });
+}
+

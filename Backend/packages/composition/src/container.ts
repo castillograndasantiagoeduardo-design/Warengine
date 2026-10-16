@@ -120,6 +120,7 @@ import {
   AnularEntradaInventarioUseCase,
   AjustarInventarioUseCase,
   TransferirMercanciaUseCase,
+  ImportarProductosUseCase,
 } from '@warengine/core';
 
 export interface AppContainer {
@@ -194,6 +195,7 @@ export interface AppContainer {
     anularEntrada: AnularEntradaInventarioUseCase;
     ajustarInventario: AjustarInventarioUseCase;
     transferirMercancia: TransferirMercanciaUseCase;
+    importarProductos: ImportarProductosUseCase;
   };
   facturacion: {
     registrarCliente: RegistrarClienteUseCase;
@@ -462,6 +464,12 @@ export function createContainer(_env?: Record<string, string>): AppContainer {
     productoRepository,
     auditoriaRepository,
   );
+  const importarProductosUseCase = new ImportarProductosUseCase(
+    productoRepository,
+    categoriaRepository,
+    proveedorRepository,
+    auditoriaRepository,
+  );
 
   const registrarEntradaInventarioUseCase = new RegistrarEntradaInventarioUseCase(
     movimientoInventarioRepository,
@@ -615,6 +623,7 @@ export function createContainer(_env?: Record<string, string>): AppContainer {
       anularEntrada: anularEntradaUseCase,
       ajustarInventario: ajustarInventarioUseCase,
       transferirMercancia: transferirMercanciaUseCase,
+      importarProductos: importarProductosUseCase,
     },
     facturacion: {
       registrarCliente: registrarClienteUseCase,

@@ -1,0 +1,73 @@
+### ==============================================================================
+### WARENGINE - REQUERIMIENTO RF-ADM-B20: IMPORTACIÓN MASIVA DE PRODUCTOS (CSV)
+### ==============================================================================
+### Descripción de negocio:
+### Permite a los administradores registrar masivamente productos a partir de un archivo CSV:
+### 1. Parsea el contenido CSV con delimitadores (coma o punto y coma).
+### 2. Valida fila por fila las reglas del catálogo maestro:
+###    - SKU único (no duplicado en archivo ni en BD).
+###    - Nombre obligatorio.
+###    - Precios de compra y venta mayores a cero.
+###    - Existencia y estado activo de categoría y proveedor (si aplican).
+### 3. Persiste atómicamente cada producto válido.
+### 4. Devuelve un reporte estructurado con filas cargadas y rechazadas con su motivo.
+### 5. Genera auditoría inmutable consolidada de la importación (RNF-ADM-02).
+### ==============================================================================
+
+@baseUrl = http://localhost:8017
+@contentType = application/json
+
+### ------------------------------------------------------------------------------
+### PASO 0: Autenticación como Super Administrador
+### ------------------------------------------------------------------------------
+# @name loginAdmin
+POST {{baseUrl}}/auth/login
+Content-Type: {{contentType}}
+
+{
+  "email": "superadmin@warengine.local",
+  "password": "Warengine.Admin.2026!"
+}
+
+###
+@tokenAdmin = {{loginAdmin.response.body.accessToken}}
+
+### ------------------------------------------------------------------------------
+### CASO 1: Importación masiva con contenido mixto (válidos y errores de validación)
+### Esperado: 200 OK con desglose de cargados y rechazados por fila
+### ------------------------------------------------------------------------------
+# @name importacionMixta
+POST {{baseUrl}}/inventario/productos/importar-csv
+Authorization: Bearer {{tokenAdmin}}
+Content-Type: {{contentType}}
+
+{
+  "csv": "sku,nombre,precio_compra,precio_venta,categoria_id\nSKU-CSV-OK-{{$timestamp}},Taladro Percutor CSV,120000.00,180000.00,1\nSKU-CSV-INV-1,,50000,80000,1\nSKU-CSV-INV-2,Precio Inválido,0,90000,1\nSKU-CSV-INV-3,Cat Inexistente,40000,60000,9999"
+}
+
+### ------------------------------------------------------------------------------
+### CASO 2: Importación masiva 100% exitosa
+### Esperado: 200 OK con totalCargados: 2, totalRechazados: 0
+### ------------------------------------------------------------------------------
+# @name importacionExitosa
+POST {{baseUrl}}/inventario/productos/importar-csv
+Authorization: Bearer {{tokenAdmin}}
+Content-Type: text/csv
+
+sku,nombre,precioCompra,precioVenta
+SKU-BULK-A-{{$timestamp}},Pulidora Industrial 9",350000.00,480000.00
+SKU-BULK-B-{{$timestamp}},Sierra Caladora 650W,190000.00,265000.00
+
+### ------------------------------------------------------------------------------
+### PASO 3: Verificar que los productos existan en el catálogo
+### Esperado: 200 OK conteniendo los SKUs importados
+### ------------------------------------------------------------------------------
+GET {{baseUrl}}/inventario/productos?texto=BULK
+Authorization: Bearer {{tokenAdmin}}
+
+### ------------------------------------------------------------------------------
+### PASO 4: Verificar Registro de Auditoría (RNF-ADM-02)
+### Esperado: 200 OK registrando la acción 'importar_masivo'
+### ------------------------------------------------------------------------------
+GET {{baseUrl}}/auditoria?accion=importar_masivo
+Authorization: Bearer {{tokenAdmin}}
