@@ -88,5 +88,19 @@ export class RangoFechasInvalidoError extends DomainError {
   constructor() { super('La fecha inicial no puede ser posterior a la fecha final.'); }
 }
 
+export class SedePrincipalNoInactivableError extends DomainError {
+  public readonly code = 'SEDE_PRINCIPAL_NO_INACTIVABLE';
+  constructor() {
+    super('La Sede Principal (id: 1) está reservada para el sistema y no puede ser inactivada.');
+  }
+}
+
+export class SucursalTieneUsuariosActivosError extends DomainError {
+  public readonly code = 'SUCURSAL_TIENE_USUARIOS_ACTIVOS';
+  constructor(total: number) {
+    super(`No se puede inactivar la sucursal porque tiene ${total} usuario(s) activo(s) asignado(s).`);
+  }
+}
+
 
 

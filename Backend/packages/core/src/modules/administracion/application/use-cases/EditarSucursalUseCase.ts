@@ -7,7 +7,11 @@ import {
   ActorAuditoria,
   ENTIDADES_AUDITORIA,
 } from '../../../auditoria/domain/entities/LogAuditoria.ts';
-import { SucursalNoEncontradaError } from '../../domain/errors/AdministracionErrors.ts';
+import {
+  SedePrincipalNoInactivableError,
+  SucursalNoEncontradaError,
+  SucursalTieneUsuariosActivosError,
+} from '../../domain/errors/AdministracionErrors.ts';
 
 export interface EditarSucursalRequest {
   id: number;
@@ -30,6 +34,19 @@ export class EditarSucursalUseCase {
     const existente = await this.sucursalRepository.findById(request.id);
     if (!existente) {
       return Result.fail(new SucursalNoEncontradaError());
+    }
+
+    // RF-ADM-C17 / Regla 6: Restricciones de inactivación de sucursales
+    if (request.isActive === false && existente.isActive) {
+      if (request.id === 1) {
+        return Result.fail(new SedePrincipalNoInactivableError());
+      }
+      const usuariosActivos = this.sucursalRepository.contarUsuariosActivos
+        ? await this.sucursalRepository.contarUsuariosActivos(request.id)
+        : 0;
+      if (usuariosActivos > 0) {
+        return Result.fail(new SucursalTieneUsuariosActivosError(usuariosActivos));
+      }
     }
 
     const { id, actor, ...cambios } = request;

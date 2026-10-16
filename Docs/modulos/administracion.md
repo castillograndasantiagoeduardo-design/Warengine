@@ -57,6 +57,7 @@ El módulo de **Administración** centraliza la estructura organizativa de la em
 | **RF-ADM-C14** | Historial de salarios de empleados (`historial_salarios`) | IMPLEMENTADO | [RegistrarAumentoSalarioUseCase.ts](../../Backend/packages/core/src/modules/administracion/application/use-cases/RegistrarAumentoSalarioUseCase.ts), [ConsultarHistorialSalariosUseCase.ts](../../Backend/packages/core/src/modules/administracion/application/use-cases/ConsultarHistorialSalariosUseCase.ts) |
 | **RF-ADM-C15** | Dashboard de métricas globales y por sucursal | IMPLEMENTADO | Rutas `/administracion/dashboard/*` y puerto `IMetricasAdminRepository` |
 | **RF-ADM-C16** | Búsqueda de usuarios por nombre o correo en listado | IMPLEMENTADO | [ListarUsuariosUseCase.ts](../../Backend/packages/core/src/modules/administracion/application/use-cases/ListarUsuariosUseCase.ts), [usuario.controller.ts](../../Backend/apps/api/src/controllers/administracion/usuario.controller.ts), [drizzle-gestion-usuario.repository.ts](../../Backend/packages/database/src/repositories/administracion/drizzle-gestion-usuario.repository.ts) |
+| **RF-ADM-C17** | Inactivación de sucursales con restricción de usuarios activos asignados y protección de Sede Principal (id=1) | IMPLEMENTADO | [EditarSucursalUseCase.ts](../../Backend/packages/core/src/modules/administracion/application/use-cases/EditarSucursalUseCase.ts), [sucursal.controller.ts](../../Backend/apps/api/src/controllers/administracion/sucursal.controller.ts), [drizzle-sucursal.repository.ts](../../Backend/packages/database/src/repositories/administracion/drizzle-sucursal.repository.ts) |
 | **RNF-ADM-01** | Carga de métricas en menos de 3 segundos (< 3s) con históricos | CUMPLIDO | Consultas SQL agregadas de alta eficiencia indexadas en BD |
 | **RNF-ADM-02** | Auditoría inmutable de toda mutación administrativa | CUMPLIDO | Integración con `IAuditor` en todos los casos de uso mutantes |
 | **RNF-ADM-03** | Autorización RBAC estricta en endpoints y casos de uso | CUMPLIDO | `authMiddleware` + `ResolverAlcanceSucursalUseCase` |
@@ -206,6 +207,8 @@ Representa la vista agregada de una cuenta de usuario junto con su empleado vinc
 | `EmailYaRegistradoError` | `EMAIL_YA_REGISTRADO` | "Ya existe un usuario con ese correo." | 400 Bad Request |
 | `DocumentoYaRegistradoError` | `DOCUMENTO_YA_REGISTRADO` | "Ya existe un empleado con ese documento." | 400 Bad Request |
 | `UltimoSuperAdminError` | `ULTIMO_SUPER_ADMIN` | "No puedes quitar el rol ni desactivar al único Super Admin activo." | 400 Bad Request |
+| `SedePrincipalNoInactivableError` | `SEDE_PRINCIPAL_NO_INACTIVABLE` | "La Sede Principal (id: 1) es inmutable para el sistema y no puede ser inactivada." | 422 Unprocessable Entity |
+| `SucursalTieneUsuariosActivosError` | `SUCURSAL_TIENE_USUARIOS_ACTIVOS` | "No se puede inactivar la sucursal porque tiene {count} usuario(s) activo(s) asignado(s)..." | 422 Unprocessable Entity |
 
 ---
 
@@ -238,9 +241,11 @@ Representa la vista agregada de una cuenta de usuario junto con su empleado vinc
 - **Reglas:**
   1. Carga la sucursal. Falla con `SucursalNoEncontradaError` si no existe.
   2. Si cambia de nombre, verifica unicidad insensible a mayúsculas contra otras sedes.
-  3. Modifica únicamente los campos provistos.
-  4. Emite evento de auditoría `{ accion: 'editar', entidad: 'sucursales', detalles: { antes, despues } }` registrando exclusivamente los campos que mutaron.
-- **Pruebas:** [auditoria-operaciones.use-case.test.ts](../../Backend/packages/core/tests/administracion/auditoria-operaciones.use-case.test.ts).
+  3. **Restricción de Sede Principal (RF-ADM-C17 / Regla 6):** Si se intenta inactivar (`isActive = false`) y `id === 1`, rechaza con `SedePrincipalNoInactivableError`.
+  4. **Restricción por usuarios asignados (RF-ADM-C17):** Si se intenta inactivar (`isActive = false`) y la sucursal posee usuarios activos asignados (como sucursal principal de empleado o en `usuario_sucursales`), rechaza con `SucursalTieneUsuariosActivosError`.
+  5. Modifica únicamente los campos provistos.
+  6. Emite evento de auditoría `{ accion: 'editar', entidad: 'sucursales', detalles: { antes, despues } }` registrando exclusivamente los campos que mutaron.
+- **Pruebas:** [inactivacion-sucursal.use-case.test.ts](../../Backend/packages/core/tests/administracion/inactivacion-sucursal.use-case.test.ts) (5 tests), [auditoria-operaciones.use-case.test.ts](../../Backend/packages/core/tests/administracion/auditoria-operaciones.use-case.test.ts).
 
 ### 5.4 `ListarUsuariosUseCase`
 - **Archivo:** [ListarUsuariosUseCase.ts](../../Backend/packages/core/src/modules/administracion/application/use-cases/ListarUsuariosUseCase.ts)
@@ -350,7 +355,8 @@ Prefijo general de montaje en `main.ts`: `/administracion`.
 |---|---|---|---|---|---|---|
 | `GET` | `/administracion/sucursales` | `administracion:gestionar-sucursales` | `listarSucursalesController` | `ListarSucursalesUseCase` | Ninguno | 200, 401, 403 |
 | `POST` | `/administracion/sucursales` | `administracion:gestionar-sucursales` | `crearSucursalController` | `CrearSucursalUseCase` | `crearSucursalSchema` | 201, 400, 401, 403 |
-| `PUT` | `/administracion/sucursales/:id` | `administracion:gestionar-sucursales` | `editarSucursalController` | `EditarSucursalUseCase` | `editarSucursalSchema` | 200, 400, 401, 403, 404 |
+| `PUT` | `/administracion/sucursales/:id` | `administracion:gestionar-sucursales` | `editarSucursalController` | `EditarSucursalUseCase` | `editarSucursalSchema` | 200, 400, 401, 403, 404, 422 |
+| `PUT` | `/administracion/sucursales/:id/estado` | `administracion:gestionar-sucursales` | `cambiarEstadoSucursalController` | `EditarSucursalUseCase` | `cambiarEstadoSucursalSchema` | 200, 400, 401, 403, 404, 422 |
 | `GET` | `/administracion/usuarios` | `autenticacion:gestionar-usuarios` | `listarUsuariosController` | `ListarUsuariosUseCase` | `listarUsuariosQuerySchema` | 200, 400, 401, 403 |
 | `POST` | `/administracion/usuarios` | `autenticacion:gestionar-usuarios` | `crearUsuarioController` | `CrearUsuarioUseCase` | `crearUsuarioSchema` | 201, 400, 401, 403 |
 | `PUT` | `/administracion/usuarios/:id/rol` | `autenticacion:asignar-roles` | `cambiarRolUsuarioController` | `CambiarRolUsuarioUseCase` | `cambiarRolSchema` | 200, 400, 401, 403, 404 |
@@ -371,6 +377,7 @@ Prefijo general de montaje en `main.ts`: `/administracion`.
 - **Sucursales** ([sucursal.schema.ts](../../Shared/contracts/src/administracion/sucursal.schema.ts)):
   - `crearSucursalSchema`: `{ nombre: min(2), direccion: min(5), telefono: min(7) }`
   - `editarSucursalSchema`: `{ nombre?, direccion?, telefono?, isActive? }` (exige al menos un campo).
+  - `cambiarEstadoSucursalSchema`: `{ isActive: boolean }`
 - **Usuarios** ([usuario.schema.ts](../../Shared/contracts/src/administracion/usuario.schema.ts)):
   - `crearUsuarioSchema`: `{ email, password: min(8), rolId, nombre: min(2), apellido: min(2), tipoDocumento: enum('CC', 'CE'), numeroDocumento: min(5), sucursalId }`
   - `cambiarRolSchema`: `{ rolId: int > 0 }`
@@ -418,6 +425,12 @@ Roles con acceso:
 3. [restablecer-password-usuario.use-case.test.ts](../../Backend/packages/core/tests/administracion/restablecer-password-usuario.use-case.test.ts) (4 tests):
    - Hasheo con Argon2id, invalidación de tokens y auditoría `{ credenciales: 'restablecidas' }`.
    - Falla si el usuario no existe.
+4. [inactivacion-sucursal.use-case.test.ts](../../Backend/packages/core/tests/administracion/inactivacion-sucursal.use-case.test.ts) (5 tests):
+   - Rechazo de inactivación de Sede Principal (`id: 1`) con `SEDE_PRINCIPAL_NO_INACTIVABLE`.
+   - Rechazo de inactivación de sucursal si posee usuarios activos asignados con `SUCURSAL_TIENE_USUARIOS_ACTIVOS`.
+   - Inactivación exitosa de sucursal sin usuarios asignados y emisión de auditoría.
+   - Reactivación exitosa de sucursal inactiva y emisión de auditoría.
+   - Idempotencia: no ejecuta mutación ni audita si el estado ya era el solicitado.
 
 ### Brechas Conocidas
 - `ListarSucursalesUseCase` y `ListarUsuariosUseCase` no tienen archivo de test unitario exclusivo en `core/tests/` (cubiertos por HTTP/integración).

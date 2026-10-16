@@ -17,5 +17,10 @@ export const editarSucursalSchema = crearSucursalSchema
     message: 'Envía al menos un campo a modificar.',
   });
 
+export const cambiarEstadoSucursalSchema = z.object({
+  isActive: z.boolean({ required_error: 'El campo isActive es obligatorio.' }),
+});
+
 export type CrearSucursalInput = z.infer<typeof crearSucursalSchema>;
 export type EditarSucursalInput = z.infer<typeof editarSucursalSchema>;
+export type CambiarEstadoSucursalInput = z.infer<typeof cambiarEstadoSucursalSchema>;

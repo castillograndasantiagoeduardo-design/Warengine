@@ -1,6 +1,7 @@
-import { eq, sql } from 'drizzle-orm';
+import { and, countDistinct, eq, or, sql } from 'drizzle-orm';
 import { Database } from '../../client.ts';
-import { sucursales } from '../../schema/administracion.schema.ts';
+import { empleados, sucursales } from '../../schema/administracion.schema.ts';
+import { usuario_sucursales, usuarios } from '../../schema/autenticacion.schema.ts';
 import { DatosSucursal, ISucursalRepository, Sucursal } from '@warengine/core';
 import { sucursalFromRow } from '../../mappers/administracion/sucursal.mapper.ts';
 
@@ -52,5 +53,23 @@ export class DrizzleSucursalRepository implements ISucursalRepository {
 
     await this.db.update(sucursales).set(set).where(eq(sucursales.id_sucursal, id));
     return (await this.findById(id)) as Sucursal;
+  }
+
+  public async contarUsuariosActivos(sucursalId: number): Promise<number> {
+    const [resultado] = await this.db
+      .select({ total: countDistinct(usuarios.id_usuario) })
+      .from(usuarios)
+      .innerJoin(empleados, eq(usuarios.empleado_id, empleados.id_empleado))
+      .leftJoin(usuario_sucursales, eq(usuarios.id_usuario, usuario_sucursales.usuario_id))
+      .where(
+        and(
+          eq(usuarios.is_active, 1),
+          or(
+            eq(empleados.sucursal_id, sucursalId),
+            eq(usuario_sucursales.sucursal_id, sucursalId),
+          ),
+        ),
+      );
+    return Number(resultado?.total ?? 0);
   }
 }
