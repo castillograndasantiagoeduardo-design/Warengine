@@ -3,6 +3,7 @@ import {
   crearProductoSchema,
   editarProductoSchema,
   filtrosProductosSchema,
+  filtrosExportarProductosSchema,
 } from '@warengine/contracts';
 import { AppContainer } from '@warengine/composition';
 import { presentResult } from '../../presenters/result.presenter.ts';
@@ -131,15 +132,23 @@ export function importarProductosController(container: AppContainer) {
         csvContenido = archivo;
       }
     } else if (contentType.includes('application/json')) {
-      const json = await leerJson(c);
-      csvContenido = json?.csv ?? json?.csvContenido ?? '';
+      const json = (await leerJson(c)) as Record<string, unknown> | null;
+      csvContenido = typeof json?.csv === 'string'
+        ? json.csv
+        : typeof json?.csvContenido === 'string'
+          ? json.csvContenido
+          : '';
     } else if (contentType.includes('text/csv') || contentType.includes('text/plain')) {
       csvContenido = await c.req.text();
     } else {
       // Intentar leer json o texto como fallback
       try {
-        const json = await leerJson(c);
-        csvContenido = json?.csv ?? json?.csvContenido ?? '';
+        const json = (await leerJson(c)) as Record<string, unknown> | null;
+        csvContenido = typeof json?.csv === 'string'
+          ? json.csv
+          : typeof json?.csvContenido === 'string'
+            ? json.csvContenido
+            : '';
       } catch {
         csvContenido = await c.req.text();
       }
@@ -162,6 +171,32 @@ export function importarProductosController(container: AppContainer) {
     });
 
     return presentResult(c, result, 200);
+  });
+}
+
+export function exportarProductosCsvController(container: AppContainer) {
+  return safeHandler(async (c) => {
+    const parsed = filtrosExportarProductosSchema.safeParse(c.req.query());
+    if (!parsed.success) {
+      return c.json({ error: 'VALIDATION_ERROR', issues: parsed.error.errors }, 400);
+    }
+
+    const result = await container.inventario.exportarProductosCsv.execute({
+      ...parsed.data,
+      actor: obtenerActor(c),
+    });
+
+    if (result.isFailure) {
+      return presentResult(c, result);
+    }
+
+    if (parsed.data.formato === 'json') {
+      return c.json(result.value, 200);
+    }
+
+    c.header('Content-Type', 'text/csv; charset=utf-8');
+    c.header('Content-Disposition', `attachment; filename="${result.value.nombreArchivo}"`);
+    return c.text(result.value.csv, 200);
   });
 }
 

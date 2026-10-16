@@ -23,11 +23,13 @@ import {
   obtenerProductoPorIdController,
   consultarHistorialPreciosController,
   importarProductosController,
+  exportarProductosCsvController,
 } from '../controllers/inventario/producto.controller.ts';
 import {
   ajustarInventarioController,
   anularEntradaController,
   consultarKardexController,
+  exportarKardexCsvController,
   listarEntradasController,
   obtenerEntradaPorIdController,
   registrarEntradaController,
@@ -118,6 +120,11 @@ export function createInventarioRoutes(container: AppContainer): Hono {
     importarProductosController(container),
   );
   api.get(
+    '/productos/exportar-csv',
+    authMiddleware(container, PERMISO_INVENTARIO_LEER),
+    exportarProductosCsvController(container),
+  );
+  api.get(
     '/productos/:id',
     authMiddleware(container, PERMISO_INVENTARIO_LEER),
     obtenerProductoPorIdController(container),
@@ -183,6 +190,11 @@ export function createInventarioRoutes(container: AppContainer): Hono {
     '/kardex',
     authMiddleware(container, PERMISO_INVENTARIO_VER_KARDEX),
     consultarKardexController(container),
+  );
+  api.get(
+    '/kardex/exportar-csv',
+    authMiddleware(container, PERMISO_INVENTARIO_VER_KARDEX),
+    exportarKardexCsvController(container),
   );
 
   // ─── Configuración de Stock Mínimo (RF-ADM-B11) ───────────────────────────

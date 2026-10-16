@@ -18,6 +18,7 @@ export * from './inventario/proveedor.schema.ts';
 export * from './inventario/producto.schema.ts';
 export * from './inventario/movimiento-inventario.schema.ts';
 export * from './inventario/stock-minimo.schema.ts';
+export * from './inventario/exportacion.schema.ts';
 
 // ─── Módulo: facturacion ───────────────────────────────────────
 export * from './facturacion/cliente.schema.ts';
