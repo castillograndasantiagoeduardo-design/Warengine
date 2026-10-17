@@ -6,8 +6,10 @@ export class Usuario {
     public readonly rolId: number,
     public readonly isActive: boolean,
     public readonly requiere2fa: boolean,
-    public readonly tokensInvalidadosEn: Date | null
+    public readonly tokensInvalidadosEn: Date | null,
+    public readonly totpSecret: string | null = null,
   ) {}
+
 
   /**
    * Verifica si un token emitido en una fecha específica (iat)

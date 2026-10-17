@@ -15,16 +15,17 @@ export function loginController(container: AppContainer) {
         return c.json({ error: 'VALIDATION_ERROR', issues: result.error.errors }, 400);
       }
 
-      const { email, password } = result.data;
+      const { email, password, recordarme } = result.data;
 
       const useCaseResult = await container.autenticacion.login.execute({
         email,
         passwordPlain: password,
         ip: obtenerIp(c),
+        recordarme,
       });
 
       if (useCaseResult.isSuccess) {
-        setAuthCookies(c, useCaseResult.value);
+        setAuthCookies(c, useCaseResult.value, recordarme);
       }
 
       return presentResult(c, useCaseResult);

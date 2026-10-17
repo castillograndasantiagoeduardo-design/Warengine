@@ -12,15 +12,27 @@ export * from './src/modules/autenticacion/domain/repositories/IRefreshTokenRepo
 export * from './src/modules/autenticacion/domain/repositories/IRegistroIntentosLogin.ts';
 export * from './src/modules/autenticacion/domain/repositories/IControlIntentosLogin.ts';
 export * from './src/modules/autenticacion/domain/repositories/ISucursalesAutorizadasRepository.ts';
+export * from './src/modules/autenticacion/domain/repositories/IPasswordResetRepository.ts';
 export * from './src/modules/autenticacion/domain/value-objects/PoliticaBloqueoLogin.ts';
 export * from './src/modules/autenticacion/domain/value-objects/AlcanceSucursal.ts';
 export * from './src/modules/autenticacion/domain/services/IPasswordService.ts';
 export * from './src/modules/autenticacion/domain/services/ITokenService.ts';
+export * from './src/modules/autenticacion/domain/services/ITotpService.ts';
+export * from './src/modules/autenticacion/domain/services/IMailer.ts';
+
 export * from './src/modules/autenticacion/application/use-cases/LoginUseCase.ts';
 export * from './src/modules/autenticacion/application/use-cases/LogoutUseCase.ts';
 export * from './src/modules/autenticacion/application/use-cases/RenovarTokenUseCase.ts';
 export * from './src/modules/autenticacion/application/use-cases/ValidarPermisoUseCase.ts';
 export * from './src/modules/autenticacion/application/use-cases/ResolverAlcanceSucursalUseCase.ts';
+export * from './src/modules/autenticacion/application/use-cases/Configurar2FAUseCase.ts';
+export * from './src/modules/autenticacion/application/use-cases/Activar2FAUseCase.ts';
+export * from './src/modules/autenticacion/application/use-cases/Verificar2FALoginUseCase.ts';
+export * from './src/modules/autenticacion/application/use-cases/Desactivar2FAUseCase.ts';
+export * from './src/modules/autenticacion/application/use-cases/SolicitarRecuperacionPasswordUseCase.ts';
+export * from './src/modules/autenticacion/application/use-cases/ValidarTokenPasswordResetUseCase.ts';
+export * from './src/modules/autenticacion/application/use-cases/RestablecerPasswordUseCase.ts';
+
 
 
 // ─── Módulo: Administración ─────────────────────────────────────────────────
