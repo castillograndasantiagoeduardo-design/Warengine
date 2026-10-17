@@ -12,6 +12,7 @@ export const COOKIE_NAMES = {
 export function setAuthCookies(
   c: Context,
   tokens: { accessToken: string; refreshToken: string },
+  recordarme = false,
 ): void {
   // Access Token Cookie (15 minutos)
   setCookie(c, COOKIE_NAMES.ACCESS_TOKEN, tokens.accessToken, {
@@ -22,13 +23,14 @@ export function setAuthCookies(
     maxAge: 15 * 60, // 900s = 15 minutos
   });
 
-  // Refresh Token Cookie (7 días)
+  // Refresh Token Cookie (RF-SA-G4: 30 días si recordarme es true, 7 días si false)
+  const refreshMaxAge = recordarme ? 30 * 24 * 60 * 60 : 7 * 24 * 60 * 60;
   setCookie(c, COOKIE_NAMES.REFRESH_TOKEN, tokens.refreshToken, {
     httpOnly: true,
     secure: isSecure,
     sameSite: 'Lax',
     path: '/',
-    maxAge: 7 * 24 * 60 * 60, // 604800s = 7 días
+    maxAge: refreshMaxAge,
   });
 }
 

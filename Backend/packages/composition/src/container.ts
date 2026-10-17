@@ -36,9 +36,12 @@ import { DrizzleMetricasAdminRepository } from '../../database/src/repositories/
 
 import { DrizzleSucursalOperadorRepository } from '../../database/src/repositories/facturacion/drizzle-sucursal-operador.repository.ts';
 import { DrizzleFacturaRepository } from '../../database/src/repositories/facturacion/drizzle-factura.repository.ts';
+import { DrizzlePasswordResetRepository } from '../../database/src/repositories/autenticacion/drizzle-password-reset.repository.ts';
 
 import { JwtTokenService } from '../../platform/src/jwt/jwt-token-service.ts';
 import { Argon2PasswordHasher } from '../../platform/src/hashing/argon2-password-hasher.ts';
+import { TotpService } from '../../platform/src/totp/totp-service.ts';
+import { PlatformMailer } from '../../platform/src/mailer/mailer.ts';
 import { validarYObtenerJwtSecret } from '../../platform/src/config/jwt.config.ts';
 
 import {
@@ -47,6 +50,14 @@ import {
   PoliticaBloqueoLogin,
   ValidarPermisoUseCase,
   RenovarTokenUseCase,
+  Configurar2FAUseCase,
+  Activar2FAUseCase,
+  Verificar2FALoginUseCase,
+  Desactivar2FAUseCase,
+  SolicitarRecuperacionPasswordUseCase,
+  ValidarTokenPasswordResetUseCase,
+  RestablecerPasswordUseCase,
+
   ListarSucursalesUseCase,
   CrearSucursalUseCase,
   EditarSucursalUseCase,
@@ -132,7 +143,15 @@ export interface AppContainer {
     validarPermiso: ValidarPermisoUseCase;
     renovarToken: RenovarTokenUseCase;
     resolverAlcanceSucursal: ResolverAlcanceSucursalUseCase;
+    configurar2FA: Configurar2FAUseCase;
+    activar2FA: Activar2FAUseCase;
+    verificar2FALogin: Verificar2FALoginUseCase;
+    desactivar2FA: Desactivar2FAUseCase;
+    solicitarRecuperacionPassword: SolicitarRecuperacionPasswordUseCase;
+    validarTokenPasswordReset: ValidarTokenPasswordResetUseCase;
+    restablecerPassword: RestablecerPasswordUseCase;
   };
+
   administracion: {
     listarSucursales: ListarSucursalesUseCase;
     crearSucursal: CrearSucursalUseCase;
@@ -272,9 +291,12 @@ export function createContainer(_env?: Record<string, string>): AppContainer {
   const turnoCajaRepository = new DrizzleTurnoCajaRepository(db);
   const sucursalOperadorRepository = new DrizzleSucursalOperadorRepository(db);
   const facturaRepository = new DrizzleFacturaRepository(db);
+  const passwordResetRepository = new DrizzlePasswordResetRepository(db);
   // 2. Instanciar Servicios Técnicos
   const tokenService = new JwtTokenService(refreshTokenRepository, jwtSecret);
   const passwordHasher = new Argon2PasswordHasher();
+  const totpService = new TotpService();
+  const mailer = new PlatformMailer(getEnv('FRONTEND_URL') ?? 'http://localhost:3000');
 
   // 3. Instanciar Casos de Uso
   const loginUseCase = new LoginUseCase(
@@ -283,9 +305,40 @@ export function createContainer(_env?: Record<string, string>): AppContainer {
     tokenService,
     intentoLoginRepository,
     intentoLoginRepository,
+    rolRepository,
     politicaBloqueo,
   );
   const logoutUseCase = new LogoutUseCase(tokenService);
+  const configurar2FAUseCase = new Configurar2FAUseCase(usuarioRepository, totpService);
+  const activar2FAUseCase = new Activar2FAUseCase(usuarioRepository, totpService, auditoriaRepository);
+  const verificar2FALoginUseCase = new Verificar2FALoginUseCase(
+    usuarioRepository,
+    totpService,
+    tokenService,
+    intentoLoginRepository,
+    rolRepository,
+  );
+  const desactivar2FAUseCase = new Desactivar2FAUseCase(
+    usuarioRepository,
+    passwordHasher,
+    auditoriaRepository,
+  );
+  const solicitarRecuperacionPasswordUseCase = new SolicitarRecuperacionPasswordUseCase(
+    usuarioRepository,
+    passwordResetRepository,
+    mailer,
+    auditoriaRepository,
+  );
+  const validarTokenPasswordResetUseCase = new ValidarTokenPasswordResetUseCase(
+    passwordResetRepository,
+  );
+  const restablecerPasswordUseCase = new RestablecerPasswordUseCase(
+    passwordResetRepository,
+    usuarioRepository,
+    passwordHasher,
+    auditoriaRepository,
+  );
+
   const validarPermisoUseCase = new ValidarPermisoUseCase(
     tokenService,
     usuarioRepository,
@@ -552,7 +605,15 @@ export function createContainer(_env?: Record<string, string>): AppContainer {
       validarPermiso: validarPermisoUseCase,
       renovarToken: renovarTokenUseCase,
       resolverAlcanceSucursal: resolverAlcanceSucursalUseCase,
+      configurar2FA: configurar2FAUseCase,
+      activar2FA: activar2FAUseCase,
+      verificar2FALogin: verificar2FALoginUseCase,
+      desactivar2FA: desactivar2FAUseCase,
+      solicitarRecuperacionPassword: solicitarRecuperacionPasswordUseCase,
+      validarTokenPasswordReset: validarTokenPasswordResetUseCase,
+      restablecerPassword: restablecerPasswordUseCase,
     },
+
     administracion: {
       listarSucursales: listarSucursalesUseCase,
       crearSucursal: crearSucursalUseCase,

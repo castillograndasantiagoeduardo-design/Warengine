@@ -18,7 +18,33 @@ export const loginSchema = z.object({
   password: z
     .string({ required_error: 'La contraseña es obligatoria.' })
     .min(8, { message: 'La contraseña debe tener al menos 8 caracteres.' }),
+  recordarme: z.boolean().optional().default(false),
 });
 
 /** Tipo TypeScript inferido directamente del esquema Zod. */
 export type LoginInput = z.infer<typeof loginSchema>;
+
+/**
+ * Esquema de datos de usuario retornados en la sesión autenticada (RF-SA-D5).
+ */
+export const usuarioSesionSchema = z.object({
+  id: z.string(),
+  email: z.string(),
+  rolId: z.number(),
+  rolNombre: z.string(),
+});
+
+export type UsuarioSesionDto = z.infer<typeof usuarioSesionSchema>;
+
+/**
+ * Esquema completo de respuesta exitosa de login / verificación 2FA (RF-SA-D5).
+ */
+export const loginResponseSchema = z.object({
+  accessToken: z.string(),
+  refreshToken: z.string(),
+  usuario: usuarioSesionSchema,
+  permisos: z.array(z.string()),
+});
+
+export type LoginResponseDto = z.infer<typeof loginResponseSchema>;
+

@@ -37,7 +37,15 @@ export function presentResult<T>(c: Context, result: Result<T, DomainError>, suc
     case 'REQUIERE_2FA':
       status = 428; // Precondition Required
       break;
+    case 'CODIGO_TOTP_INVALIDO':
+    case 'TOTP_NO_CONFIGURADO':
+    case 'TOTP_YA_ACTIVADO':
+    case 'TOKEN_RECUPERACION_INVALIDO':
+    case 'PASSWORDS_NO_COINCIDEN':
+      status = 400; // Bad Request
+      break;
     case 'LOGIN_BLOQUEADO':
+    case 'LIMITE_SOLICITUDES_EXCEDIDO':
       status = 429; // Too Many Requests
       break;
         case 'TURNO_YA_ABIERTO':
@@ -66,5 +74,15 @@ export function presentResult<T>(c: Context, result: Result<T, DomainError>, suc
       }
   }
 
-  return c.json({ error: error.code, message: error.message }, status);
+  const responseBody: Record<string, unknown> = {
+    error: error.code,
+    message: error.message,
+  };
+
+  if ('tempToken' in error && (error as { tempToken?: unknown }).tempToken) {
+    responseBody.tempToken = (error as { tempToken: unknown }).tempToken;
+  }
+
+  return c.json(responseBody, status);
 }
+

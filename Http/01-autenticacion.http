@@ -237,3 +237,94 @@ Content-Type: application/json
 
 ###
 
+# ==============================================================================
+# BLOQUE D & G: RECORDARME Y 2FA TOTP
+# ==============================================================================
+
+### Login con opción "Recordarme" (RF-SA-G4: Refresh token de 30 días)
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "superadmin@warengine.local",
+  "password": "Warengine.Admin.2026!",
+  "recordarme": true
+}
+
+###
+
+### Configurar 2FA (Genera secreto base32 y URL otpauth para Google Authenticator)
+# Requiere token en Cookie o Bearer
+POST {{baseUrl}}/auth/2fa/configurar
+Authorization: Bearer {{login.response.body.accessToken}}
+
+###
+
+### Activar 2FA (Requiere el código TOTP generado por la app)
+POST {{baseUrl}}/auth/2fa/activar
+Authorization: Bearer {{login.response.body.accessToken}}
+Content-Type: application/json
+
+{
+  "secretBase32": "JBSWY3DPEHPK3PXP",
+  "codigoTotp": "123456"
+}
+
+###
+
+### Verificar login 2FA (Paso 2 con tempToken y código TOTP de 6 dígitos)
+POST {{baseUrl}}/auth/2fa/verificar
+Content-Type: application/json
+
+{
+  "tempToken": "ey...",
+  "codigoTotp": "123456",
+  "recordarme": true
+}
+
+###
+
+### Desactivar 2FA (Requiere la contraseña actual del usuario)
+POST {{baseUrl}}/auth/2fa/desactivar
+Authorization: Bearer {{login.response.body.accessToken}}
+Content-Type: application/json
+
+{
+  "password": "Warengine.Admin.2026!"
+}
+
+###
+
+# ==============================================================================
+# BLOQUE H: RECUPERACIÓN DE CONTRASEÑA POR EMAIL
+# ==============================================================================
+
+### Solicitar recuperación de contraseña (RF-SA-H1, RF-SA-H2)
+# Anti-enumeración: siempre devuelve 200 con mensaje genérico
+POST {{baseUrl}}/auth/recuperar-password/solicitar
+Content-Type: application/json
+
+{
+  "email": "superadmin@warengine.local"
+}
+
+###
+
+### Validar token de recuperación antes de renderizar pantalla (RF-SA-H4)
+GET {{baseUrl}}/auth/recuperar-password/validar?token=test-token-uuid
+
+###
+
+### Restablecer contraseña con token unívoco (RF-SA-H6)
+POST {{baseUrl}}/auth/recuperar-password/restablecer
+Content-Type: application/json
+
+{
+  "token": "test-token-uuid",
+  "nuevaPassword": "NuevaPasswordSegura2026!",
+  "confirmarPassword": "NuevaPasswordSegura2026!"
+}
+
+###
+
+

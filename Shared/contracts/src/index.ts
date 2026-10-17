@@ -11,6 +11,9 @@ export * from './common/index.ts';
 // ─── Módulo: autenticacion ─────────────────────────────────────
 export * from './autenticacion/login.schema.ts';
 export * from './autenticacion/renovar-token.schema.ts';
+export * from './autenticacion/2fa.schema.ts';
+export * from './autenticacion/recuperar-password.schema.ts';
+
 
 // ─── Módulo: inventario ────────────────────────────────────────
 export * from './inventario/categoria.schema.ts';

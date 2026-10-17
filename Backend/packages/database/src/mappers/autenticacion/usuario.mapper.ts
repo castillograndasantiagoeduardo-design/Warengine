@@ -9,6 +9,8 @@ export function fromRow(row: UsuarioRecord): Usuario {
     row.rol_id,
     row.is_active === 1,
     row.requiere_2fa === 1,
-    row.tokens_invalidados_en
+    row.tokens_invalidados_en,
+    row.totp_secret ?? null,
   );
 }
+

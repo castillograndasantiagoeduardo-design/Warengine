@@ -19,7 +19,7 @@ export function authMiddleware(container: AppContainer, permisoRequerido?: strin
     }
 
     if (!token) {
-      return c.json({ error: 'UNAUTHORIZED', message: 'Falta token de autorización' }, 401);
+      return c.json({ error: 'TOKEN_INVALIDO', message: 'Falta token de autorización' }, 401);
     }
 
     const result = await container.autenticacion.validarPermiso.execute({

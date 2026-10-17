@@ -13,4 +13,7 @@
  * REGLA: este paquete no contiene reglas de negocio. Solo "fontanería"
  * técnica. Si aquí aparece una regla de Warengine, está en el lugar equivocado.
  */
-
+export * from './src/hashing/argon2-password-hasher.ts';
+export * from './src/jwt/jwt-token-service.ts';
+export * from './src/totp/totp-service.ts';
+export * from './src/mailer/mailer.ts';

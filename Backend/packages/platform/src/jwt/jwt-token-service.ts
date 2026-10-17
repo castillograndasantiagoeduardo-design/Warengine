@@ -12,7 +12,7 @@ export class JwtTokenService implements ITokenService {
     private readonly jwtSecret: Uint8Array,
   ) {}
 
-  public async generarTokens(usuarioId: string, rolId: number): Promise<AuthTokens> {
+  public async generarTokens(usuarioId: string, rolId: number, recordarme = false): Promise<AuthTokens> {
     const accessToken = await new SignJWT({ usuarioId, rolId })
       .setProtectedHeader({ alg: 'HS256' })
       .setIssuedAt()
@@ -21,7 +21,9 @@ export class JwtTokenService implements ITokenService {
 
     const refreshToken = crypto.randomUUID();
     const expiraEn = new Date();
-    expiraEn.setDate(expiraEn.getDate() + 7); // 7 días
+    // RF-SA-G4: Si recordarme es true, extender a 30 días; por defecto, 7 días rotativos (RF-SA-D6).
+    const diasVigencia = recordarme ? 30 : 7;
+    expiraEn.setDate(expiraEn.getDate() + diasVigencia);
 
     await this.refreshTokenRepo.guardar(usuarioId, refreshToken, expiraEn);
 
@@ -49,4 +51,25 @@ export class JwtTokenService implements ITokenService {
   public async revocarRefreshToken(token: string): Promise<void> {
     await this.refreshTokenRepo.revocar(token);
   }
+
+  public async generarToken2faTemporal(usuarioId: string): Promise<string> {
+    return await new SignJWT({ usuarioId, purpose: '2fa_pending' })
+      .setProtectedHeader({ alg: 'HS256' })
+      .setIssuedAt()
+      .setExpirationTime('5m')
+      .sign(this.jwtSecret);
+  }
+
+  public async validarToken2faTemporal(token: string): Promise<{ usuarioId: string }> {
+    try {
+      const { payload } = await jwtVerify(token, this.jwtSecret);
+      if (payload.purpose !== '2fa_pending' || !payload.usuarioId) {
+        throw new Error('Propósito de token incorrecto');
+      }
+      return { usuarioId: payload.usuarioId as string };
+    } catch {
+      throw new Error('Token 2FA temporal inválido o expirado');
+    }
+  }
 }
+

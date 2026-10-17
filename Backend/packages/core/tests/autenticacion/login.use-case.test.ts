@@ -37,6 +37,7 @@ function makeUsuarioRepository(usuario: Usuario | null): IUsuarioRepository {
   return {
     findByEmail: (_email: string) => Promise.resolve(usuario),
     findById: (_id: string) => Promise.resolve(usuario),
+    actualizarTotp: (_id: string, _s: string | null, _r: boolean) => Promise.resolve(),
   };
 }
 
@@ -55,9 +56,14 @@ function makePasswordService(
 
 const TOKENS_MOCK: AuthTokens = { accessToken: 'at_test', refreshToken: 'rt_test' };
 
-function makeTokenService(): ITokenService {
+function makeTokenService(
+  onGenerarTokens?: (id: string, rolId: number, recordarme?: boolean) => void,
+): ITokenService {
   return {
-    generarTokens: (_id: string, _rolId: number) => Promise.resolve(TOKENS_MOCK),
+    generarTokens: (id: string, rolId: number, recordarme?: boolean) => {
+      onGenerarTokens?.(id, rolId, recordarme);
+      return Promise.resolve(TOKENS_MOCK);
+    },
     validarAccessToken: (_t: string): Promise<AccessTokenPayload> =>
       Promise.resolve({
         usuarioId: 'uuid-001',
@@ -66,8 +72,11 @@ function makeTokenService(): ITokenService {
       }),
     validarRefreshToken: (_t: string) => Promise.resolve({ usuarioId: 'uuid-001' }),
     revocarRefreshToken: (_t: string) => Promise.resolve(),
+    generarToken2faTemporal: (_id: string) => Promise.resolve('temp_2fa_token'),
+    validarToken2faTemporal: (_t: string) => Promise.resolve({ usuarioId: 'uuid-001' }),
   };
 }
+
 
 interface IntentoConFecha extends DatosIntentoLogin {
   fecha: Date;
@@ -502,3 +511,53 @@ Deno.test('IP null no activa el límite por IP', async () => {
   assertEquals(siguiente.isFailure, true);
   assertEquals(siguiente.error.code, 'CREDENCIALES_INVALIDAS');
 });
+
+Deno.test('RF-SA-G4: Login propaga recordarme: true al generar tokens', async () => {
+  let recordarmeRecibido: boolean | undefined = undefined;
+  const tokenService = makeTokenService((_id, _rolId, recordarme) => {
+    recordarmeRecibido = recordarme;
+  });
+
+  const { registro, control } = makeRegistroYControlIntentos();
+  const useCase = new LoginUseCase(
+    makeUsuarioRepository(makeUsuario()),
+    makePasswordService(true),
+    tokenService,
+    registro,
+    control,
+  );
+
+  const res = await useCase.execute({
+    email: 'test@warengine.local',
+    passwordPlain: 'pass_valido',
+    recordarme: true,
+  });
+
+  assertEquals(res.isSuccess, true);
+  assertEquals(recordarmeRecibido, true);
+});
+
+Deno.test('RF-SA-G4: Login propaga recordarme: false o undefined por defecto', async () => {
+  let recordarmeRecibido: boolean | undefined = true;
+  const tokenService = makeTokenService((_id, _rolId, recordarme) => {
+    recordarmeRecibido = recordarme;
+  });
+
+  const { registro, control } = makeRegistroYControlIntentos();
+  const useCase = new LoginUseCase(
+    makeUsuarioRepository(makeUsuario()),
+    makePasswordService(true),
+    tokenService,
+    registro,
+    control,
+  );
+
+  const res = await useCase.execute({
+    email: 'test@warengine.local',
+    passwordPlain: 'pass_valido',
+  });
+
+  assertEquals(res.isSuccess, true);
+  assertEquals(recordarmeRecibido, undefined);
+});
+

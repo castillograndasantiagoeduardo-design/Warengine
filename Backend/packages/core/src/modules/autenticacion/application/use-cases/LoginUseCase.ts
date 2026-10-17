@@ -2,6 +2,7 @@ import { Result, DomainError } from '@warengine/shared-kernel';
 import { IUsuarioRepository } from '../../domain/repositories/IUsuarioRepository.ts';
 import { IPasswordService } from '../../domain/services/IPasswordService.ts';
 import { ITokenService, AuthTokens } from '../../domain/services/ITokenService.ts';
+import { IRolRepository } from '../../domain/repositories/IRolRepository.ts';
 import {
   CredencialesInvalidasError,
   UsuarioInactivoError,
@@ -19,9 +20,20 @@ export interface LoginRequest {
   email: string;
   passwordPlain: string;
   ip?: string | null;
+  recordarme?: boolean;
 }
 
-export type LoginResponse = Result<AuthTokens, DomainError>;
+export interface LoginOutput extends AuthTokens {
+  usuario: {
+    id: string;
+    email: string;
+    rolId: number;
+    rolNombre: string;
+  };
+  permisos: string[];
+}
+
+export type LoginResponse = Result<LoginOutput, DomainError>;
 
 export class LoginUseCase {
   constructor(
@@ -30,8 +42,10 @@ export class LoginUseCase {
     private readonly tokenService: ITokenService,
     private readonly registroIntentosLogin: IRegistroIntentosLogin,
     private readonly controlIntentosLogin: IControlIntentosLogin,
+    private readonly rolRepository?: IRolRepository,
     private readonly politicaBloqueo: PoliticaBloqueoLogin = POLITICA_BLOQUEO_DEFAULT,
   ) {}
+
 
   public async execute(request: LoginRequest): Promise<LoginResponse> {
     const ip = request.ip ?? 'desconocida';
@@ -96,13 +110,39 @@ export class LoginUseCase {
     }
 
     if (usuario.requiere2fa) {
-      // Nota: Aquí se implementaría flujo 2FA si corresponde.
       await this.registroIntentosLogin.registrar({ email: request.email, ip, exitoso: false });
-      return Result.fail(new Requiere2FAError());
+      const tempToken = this.tokenService.generarToken2faTemporal
+        ? await this.tokenService.generarToken2faTemporal(usuario.id)
+        : undefined;
+      return Result.fail(new Requiere2FAError(tempToken));
     }
 
-    const tokens = await this.tokenService.generarTokens(usuario.id, usuario.rolId);
+
+
+    const tokens = await this.tokenService.generarTokens(
+      usuario.id,
+      usuario.rolId,
+      request.recordarme,
+    );
     await this.registroIntentosLogin.registrar({ email: request.email, ip, exitoso: true });
-    return Result.ok(tokens);
+
+    const rolNombre = this.rolRepository?.obtenerNombreDeRol
+      ? (await this.rolRepository.obtenerNombreDeRol(usuario.rolId)) ?? 'usuario'
+      : 'usuario';
+    const permisos = (await this.rolRepository?.obtenerPermisosDeRol(usuario.rolId)) ?? [];
+
+
+    return Result.ok({
+      accessToken: tokens.accessToken,
+      refreshToken: tokens.refreshToken,
+      usuario: {
+        id: usuario.id,
+        email: usuario.email,
+        rolId: usuario.rolId,
+        rolNombre,
+      },
+      permisos,
+    });
   }
 }
+
