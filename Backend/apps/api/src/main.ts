@@ -8,6 +8,7 @@ import { createAutenticacionRoutes } from './routes/autenticacion.routes.ts';
 import { createAdministracionRoutes } from './routes/administracion.routes.ts';
 import { createFacturacionRoutes } from './routes/facturacion.routes.ts';
 import { createInventarioRoutes } from './routes/inventario.routes.ts';
+import { createSwaggerRoutes } from './docs/swagger.routes.ts';
 
 const app = new Hono();
 const container = createContainer();
@@ -47,8 +48,14 @@ app.route('/administracion', adminRoutes);
 
 const facturacionRoutes = createFacturacionRoutes(container);
 app.route('/ventas', facturacionRoutes);
+
 const inventarioRoutes = createInventarioRoutes(container);
 app.route('/inventario', inventarioRoutes);
 
+// Documentación interactiva Swagger UI y especificación OpenAPI
+const swaggerRoutes = createSwaggerRoutes();
+app.route('/', swaggerRoutes);
+
 console.log('🚀 Warengine API escuchando en http://localhost:8017');
+console.log('📖 Swagger UI disponible en http://localhost:8017/swagger');
 Deno.serve({ port: 8017 }, app.fetch);

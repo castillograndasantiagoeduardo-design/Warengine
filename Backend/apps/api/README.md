@@ -13,4 +13,12 @@ orquestan, no calculan.
 
 ---
 
+## Documentación Interactiva (Swagger UI)
+
+Una vez iniciado el servidor (`deno task dev-api`), puedes acceder a la documentación interactiva:
+- **Swagger UI:** `http://localhost:8017/swagger` (o `http://localhost:8017/docs`)
+- **Especificación OpenAPI (JSON):** `http://localhost:8017/openapi.json`
+
+---
+
 > 📖 **Documentación técnica oficial:** [`Docs/infraestructura/api.md`](../../../Docs/infraestructura/api.md)
