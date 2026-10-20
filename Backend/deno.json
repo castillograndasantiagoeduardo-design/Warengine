@@ -27,7 +27,9 @@
     "argon2": "npm:argon2@^0.41.1",
     "jose": "npm:jose@^5.9.3",
     "hono": "npm:hono@^4.6.11",
-    "@hono/swagger-ui": "npm:@hono/swagger-ui@^0.5.0"
+    "@hono/swagger-ui": "npm:@hono/swagger-ui@^0.5.0",
+    "@modelcontextprotocol/sdk": "npm:@modelcontextprotocol/sdk@^1.32.1",
+    "@modelcontextprotocol/sdk/": "npm:/@modelcontextprotocol/sdk@^1.32.1/"
   },
   "tasks": {
     "dev-api": "deno run --allow-net --allow-env --allow-read --allow-ffi --allow-run --env apps/api/src/main.ts",

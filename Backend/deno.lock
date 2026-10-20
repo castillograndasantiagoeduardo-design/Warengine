@@ -8,6 +8,7 @@
     "npm:@hono/swagger-ui@*": "0.5.3_hono@4.13.10",
     "npm:@hono/swagger-ui@0.5": "0.5.3_hono@4.13.10",
     "npm:@modelcontextprotocol/sdk@*": "1.32.1_zod@4.6.5",
+    "npm:@modelcontextprotocol/sdk@^1.32.1": "1.32.1_zod@4.6.5",
     "npm:@node-rs/argon2@^2.2.1": "2.2.1",
     "npm:argon2@~0.41.1": "0.41.1",
     "npm:drizzle-kit@~0.30.5": "0.30.6",
@@ -1193,6 +1194,7 @@
   "workspace": {
     "dependencies": [
       "npm:@hono/swagger-ui@0.5",
+      "npm:@modelcontextprotocol/sdk@^1.32.1",
       "npm:argon2@~0.41.1",
       "npm:drizzle-kit@~0.30.5",
       "npm:drizzle-orm@~0.38.4",
@@ -1203,6 +1205,7 @@
     ],
     "packageJson": {
       "dependencies": [
+        "npm:@modelcontextprotocol/sdk@^1.32.1",
         "npm:mysql2@^3.24.5",
         "npm:zod@^4.6.5"
       ]
