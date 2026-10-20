@@ -7,6 +7,7 @@ import {
   SessionManager,
   validarSesionJwtMcp,
 } from './session/index.ts';
+import { registrarCatalogoEnMcpServer } from './catalog/index.ts';
 
 export interface McpServerConfig {
   port: number;
@@ -52,13 +53,16 @@ function aplicarCors(
  * para su rol y permisos (RF-SA-I1).
  */
 export function crearMcpServerParaSesion(
-  _container: AppContainer,
-  _sessionContext: McpSessionContext,
+  container: AppContainer,
+  sessionContext: McpSessionContext,
 ): McpServer {
   const server = new McpServer({
     name: 'warengine-mcp-server',
     version: '1.0.0',
   });
+
+  // Registra dinámicamente solo las Tools autorizadas para este usuario (RF-SA-I1)
+  registrarCatalogoEnMcpServer(server, container, sessionContext);
 
   return server;
 }
