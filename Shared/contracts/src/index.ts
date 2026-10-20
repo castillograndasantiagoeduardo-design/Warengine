@@ -46,4 +46,4 @@ export * from './administracion/dashboard.schema.ts';
 // (los esquemas se agregarán cuando se implemente el módulo)
 
 // ─── Módulo: mcp ──────────────────────────────────────────────
-// (los esquemas de Tools MCP se agregarán aquí)
+export * from './mcp/index.ts';

@@ -178,3 +178,9 @@ export * from './src/modules/facturacion/application/use-cases/CrearFacturaUseCa
 export * from './src/modules/facturacion/application/use-cases/ListarFacturasUseCase.ts';
 export * from './src/modules/facturacion/application/use-cases/ObtenerFacturaPorIdUseCase.ts';
 export * from './src/modules/facturacion/application/use-cases/EmitirAlertaFacturacionUseCase.ts';
+
+// ─── Módulo: MCP Server & Auditoría IA ───────────────────────────────────────
+export * from './src/modules/mcp-audit/domain/entities/LogMcpTool.ts';
+export * from './src/modules/mcp-audit/domain/repositories/ILogMcpToolRepository.ts';
+export * from './src/modules/mcp-audit/application/use-cases/RegistrarLogMcpToolUseCase.ts';
+export * from './src/modules/mcp-audit/application/use-cases/ConsultarLogsMcpToolsUseCase.ts';

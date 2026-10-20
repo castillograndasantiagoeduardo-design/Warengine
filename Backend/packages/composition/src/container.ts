@@ -37,6 +37,7 @@ import { DrizzleMetricasAdminRepository } from '../../database/src/repositories/
 import { DrizzleSucursalOperadorRepository } from '../../database/src/repositories/facturacion/drizzle-sucursal-operador.repository.ts';
 import { DrizzleFacturaRepository } from '../../database/src/repositories/facturacion/drizzle-factura.repository.ts';
 import { DrizzlePasswordResetRepository } from '../../database/src/repositories/autenticacion/drizzle-password-reset.repository.ts';
+import { DrizzleLogMcpToolRepository } from '../../database/src/repositories/mcp-audit/drizzle-log-mcp-tool.repository.ts';
 
 import { JwtTokenService } from '../../platform/src/jwt/jwt-token-service.ts';
 import { Argon2PasswordHasher } from '../../platform/src/hashing/argon2-password-hasher.ts';
@@ -136,6 +137,8 @@ import {
   ImportarProductosUseCase,
   ExportarProductosCsvUseCase,
   ExportarKardexCsvUseCase,
+  RegistrarLogMcpToolUseCase,
+  ConsultarLogsMcpToolsUseCase,
 } from '@warengine/core';
 
 export interface AppContainer {
@@ -236,6 +239,10 @@ export interface AppContainer {
     listarFacturas: ListarFacturasUseCase;
     obtenerFacturaPorId: ObtenerFacturaPorIdUseCase;
     emitirAlertaFacturacion: EmitirAlertaFacturacionUseCase;
+  };
+  mcp: {
+    registrarLog: RegistrarLogMcpToolUseCase;
+    consultarLogs: ConsultarLogsMcpToolsUseCase;
   };
 }
 
@@ -604,6 +611,10 @@ export function createContainer(_env?: Record<string, string>): AppContainer {
   const obtenerClientePorIdUseCase = new ObtenerClientePorIdUseCase(clienteRepository);
   const buscarClientesUseCase = new BuscarClientesUseCase(clienteRepository);
 
+  const logMcpToolRepository = new DrizzleLogMcpToolRepository(db);
+  const registrarLogMcpToolUseCase = new RegistrarLogMcpToolUseCase(logMcpToolRepository);
+  const consultarLogsMcpToolsUseCase = new ConsultarLogsMcpToolsUseCase(logMcpToolRepository);
+
   return {
     autenticacion: {
       login: loginUseCase,
@@ -717,6 +728,10 @@ export function createContainer(_env?: Record<string, string>): AppContainer {
       listarFacturas: listarFacturasUseCase,
       obtenerFacturaPorId: obtenerFacturaPorIdUseCase,
       emitirAlertaFacturacion: emitirAlertaFacturacionUseCase,
+    },
+    mcp: {
+      registrarLog: registrarLogMcpToolUseCase,
+      consultarLogs: consultarLogsMcpToolsUseCase,
     },
   };
 }

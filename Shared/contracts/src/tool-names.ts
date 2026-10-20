@@ -15,6 +15,10 @@ export const TOOL_NAMES = {
 
   // Logística
   CONSULTA_ACTIVO: 'consulta-activo',
+
+  // Operaciones de Mutación (SuperAdmin)
+  CREAR_PRODUCTO: 'crear-producto',
+  AJUSTAR_STOCK: 'ajustar-stock',
 } as const;
 
 export type ToolName = (typeof TOOL_NAMES)[keyof typeof TOOL_NAMES];
