@@ -8,6 +8,7 @@ import {
   validarSesionJwtMcp,
 } from './session/index.ts';
 import { registrarCatalogoEnMcpServer } from './catalog/index.ts';
+import { inicializarCatalogoTools } from './tools/index.ts';
 
 export interface McpServerConfig {
   port: number;
@@ -75,6 +76,9 @@ export function createMcpHttpServer(
   container: AppContainer,
   config: McpServerConfig,
 ): http.Server {
+  // Asegura que todas las Tools oficiales estén registradas en el catálogo global
+  inicializarCatalogoTools();
+
   const sessionManager = new SessionManager();
 
   const server = http.createServer(async (req, res) => {

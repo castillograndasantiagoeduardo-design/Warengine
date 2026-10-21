@@ -5,6 +5,8 @@
  * a un token JWT de Warengine, garantizando trazabilidad y RBAC inmutable.
  */
 
+import type { ActorAuditoria } from '@warengine/core';
+
 export interface McpSessionContext {
   /** Identificador único UUID del usuario autenticado */
   usuarioId: string;
@@ -29,6 +31,9 @@ export interface McpSessionContext {
 
   /** Identificador único de la sesión de transporte SSE generado por el SDK de MCP */
   sessionId: string;
+
+  /** Actor de auditoría para su propagación a los casos de uso */
+  actor: ActorAuditoria;
 
   /** Marca temporal del momento en que se estableció la conexión SSE */
   createdAt: Date;

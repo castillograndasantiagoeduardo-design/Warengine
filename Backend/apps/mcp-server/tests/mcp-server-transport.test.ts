@@ -62,6 +62,11 @@ Deno.test('SessionManager: registra, consulta y remueve sesiones activas', () =>
     esGlobal: true,
     permisos: ['mcp:consultar'],
     sessionId: 'session-test-123',
+    actor: {
+      usuarioId: '11111111-1111-1111-1111-111111111111',
+      ip: null,
+      permisos: ['mcp:consultar'],
+    },
     createdAt: new Date(),
   };
 

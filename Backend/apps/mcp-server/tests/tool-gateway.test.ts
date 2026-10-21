@@ -40,6 +40,11 @@ function crearSesionUsuario(
     esGlobal,
     permisos,
     sessionId: 'session-test-uuid',
+    actor: {
+      usuarioId: '11111111-1111-1111-1111-111111111111',
+      ip: null,
+      permisos,
+    },
     createdAt: new Date(),
   };
 }

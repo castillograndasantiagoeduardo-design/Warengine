@@ -100,6 +100,11 @@ export async function validarSesionJwtMcp(
     esGlobal,
     permisos: identidad.permisos,
     sessionId,
+    actor: {
+      usuarioId: identidad.usuarioId,
+      ip: null,
+      permisos: identidad.permisos,
+    },
     createdAt: new Date(),
   };
 

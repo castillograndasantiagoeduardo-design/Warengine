@@ -17,7 +17,7 @@ export interface DefinicionToolMcp<TArgs = any, TResult = any> {
   permisoRequerido: string;
 
   /** Esquema Zod de validación de los argumentos de entrada */
-  schema?: z.ZodType<TArgs>;
+  schema?: z.ZodType<TArgs, any, any>;
 
   /**
    * Forma desglosada del esquema Zod para registrar en el McpServer del SDK.
