@@ -56,7 +56,7 @@ export class GeminiAsistenteService implements IAsistenteService {
     customToolExecutor?: ToolExecutorFn,
   ) {
     this.apiKey = config.apiKey || Deno.env.get('GEMINI_API_KEY');
-    this.modelName = config.modelName || Deno.env.get('GEMINI_MODEL') || 'gemini-1.5-flash';
+    this.modelName = config.modelName || Deno.env.get('GEMINI_MODEL') || 'gemini-3.5-flash';
     this.mcpServerUrl = config.mcpServerUrl || Deno.env.get('MCP_SERVER_URL') || 'http://localhost:3002';
     this.customToolLister = customToolLister;
     this.customToolExecutor = customToolExecutor;
