@@ -56,7 +56,7 @@ export class GeminiAsistenteService implements IAsistenteService {
     customToolExecutor?: ToolExecutorFn,
   ) {
     this.apiKey = config.apiKey || Deno.env.get('GEMINI_API_KEY');
-    this.modelName = config.modelName || Deno.env.get('GEMINI_MODEL') || 'gemini-3.5-flash';
+    this.modelName = config.modelName || Deno.env.get('GEMINI_MODEL') || 'gemini-3.5-flash-lite';
     this.mcpServerUrl = config.mcpServerUrl || Deno.env.get('MCP_SERVER_URL') || 'http://localhost:3002';
     this.customToolLister = customToolLister;
     this.customToolExecutor = customToolExecutor;
@@ -111,25 +111,41 @@ export class GeminiAsistenteService implements IAsistenteService {
         tools: modelTools,
       });
 
-      // 3. Formatear historial previo para el chat de Gemini
-      const contentsHistory = (input.historial || []).map((h) => ({
-        role: h.rol === 'model' || h.rol === 'assistant' ? 'model' : 'user',
-        parts: [{ text: h.texto }],
-      }));
+      // 3. Formatear historial previo y mensaje actual del usuario
+      const contents: Array<{
+        role: string;
+        parts: Array<Record<string, unknown>>;
+      }> = [
+        ...(input.historial || []).map((h) => ({
+          role: h.rol === 'model' || h.rol === 'assistant' ? 'model' : 'user',
+          parts: [{ text: h.texto }],
+        })),
+        {
+          role: 'user',
+          parts: [{ text: input.mensaje }],
+        },
+      ];
 
-      const chat = model.startChat({
-        history: contentsHistory,
+      // 4. Enviar conversación al modelo
+      let result = await model.generateContent({
+        contents: contents as unknown as Array<{ role: string; parts: Part[] }>,
       });
-
-      // 4. Enviar mensaje del usuario al modelo
-      let response = await chat.sendMessage(input.mensaje);
-      let functionCalls = response.response.functionCalls();
+      let candidate = result.response.candidates?.[0];
+      let functionCalls = result.response.functionCalls();
 
       // 5. Bucle de ejecución de Function Calling (máximo 5 iteraciones de seguridad)
       let iteraciones = 0;
       while (functionCalls && functionCalls.length > 0 && iteraciones < 5) {
         iteraciones++;
-        const partsParaGemini: Part[] = [];
+
+        // Guardar el turno del modelo con sus functionCalls y firmas de razonamiento en la conversación
+        if (candidate?.content) {
+          contents.push(
+            candidate.content as unknown as { role: string; parts: Array<Record<string, unknown>> },
+          );
+        }
+
+        const functionResponseParts: Array<Record<string, unknown>> = [];
 
         for (const call of functionCalls) {
           const mcpToolName = mapNombreToMcp(call.name);
@@ -145,7 +161,7 @@ export class GeminiAsistenteService implements IAsistenteService {
             resultadoTexto = `Error al ejecutar la herramienta '${mcpToolName}': ${errMensaje}`;
           }
 
-          partsParaGemini.push({
+          functionResponseParts.push({
             functionResponse: {
               name: call.name,
               response: { resultado: resultadoTexto },
@@ -153,12 +169,21 @@ export class GeminiAsistenteService implements IAsistenteService {
           });
         }
 
-        // Devolver el resultado de la(s) herramienta(s) a Gemini para que elabore la respuesta final
-        response = await chat.sendMessage(partsParaGemini);
-        functionCalls = response.response.functionCalls();
+        // Agregar la respuesta de las funciones como rol 'user' (estándar requerido por Gemini v1beta)
+        contents.push({
+          role: 'user',
+          parts: functionResponseParts,
+        });
+
+        // Solicitar a Gemini la siguiente respuesta con el resultado de las herramientas incorporado
+        result = await model.generateContent({
+          contents: contents as unknown as Array<{ role: string; parts: Part[] }>,
+        });
+        candidate = result.response.candidates?.[0];
+        functionCalls = result.response.functionCalls();
       }
 
-      const respuestaFinal = response.response.text();
+      const respuestaFinal = result.response.text();
 
       return Result.ok({
         respuesta: respuestaFinal,
