@@ -43,7 +43,10 @@ export * from './administracion/alerta-admin.schema.ts';
 export * from './administracion/dashboard.schema.ts';
 
 // ─── Módulo: logistica ─────────────────────────────────────────
-// (los esquemas se agregarán cuando se implemente el módulo)
+export * from './logistica/categoria-activo.schema.ts';
+export * from './logistica/activo.schema.ts';
+export * from './logistica/asignacion.schema.ts';
+export * from './logistica/mantenimiento.schema.ts';
 
 // ─── Módulo: mcp ──────────────────────────────────────────────
 // (los esquemas de Tools MCP se agregarán aquí)

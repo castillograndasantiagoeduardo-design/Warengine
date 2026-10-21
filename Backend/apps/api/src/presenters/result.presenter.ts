@@ -32,6 +32,13 @@ export function presentResult<T>(c: Context, result: Result<T, DomainError>, suc
     case 'ENTRADA_YA_ANULADA':
     case 'CATEGORIA_CON_PRODUCTOS_ACTIVOS':
     case 'PROVEEDOR_CON_PRODUCTOS_ACTIVOS':
+    case 'ACTIVO_NO_DISPONIBLE':
+    case 'ACTIVO_DE_BAJA':
+    case 'ACTIVO_NO_PUEDE_DARSE_DE_BAJA':
+    case 'ACTIVO_NO_PERMITE_MANTENIMIENTO':
+    case 'MANTENIMIENTO_YA_FINALIZADO':
+    case 'CODIGO_ACTIVO_DUPLICADO':
+    case 'CATEGORIA_ACTIVO_DUPLICADA':
       status = 409; // Conflict
       break;
     case 'REQUIERE_2FA':
@@ -61,6 +68,11 @@ export function presentResult<T>(c: Context, result: Result<T, DomainError>, suc
     case 'PAGO_INVALIDO':
     case 'CLIENTE_REQUERIDO_B2B':
     case 'CREDITO_NO_HABILITADO':
+    case 'RESPONSABLE_FUERA_DE_SUCURSAL':
+    case 'CATEGORIA_ACTIVO_INACTIVA':
+    case 'FECHA_FIN_ANTERIOR_A_INICIO':
+    case 'RESPONSABLE_INACTIVO':
+    case 'FECHA_DEVOLUCION_INVALIDA':
       status = 422; // Regla de negocio violada
       break;
     case 'FACTURACION_SIN_TURNO_ABIERTO':
