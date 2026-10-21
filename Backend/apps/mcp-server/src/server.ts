@@ -7,7 +7,12 @@ import {
   SessionManager,
   validarSesionJwtMcp,
 } from './session/index.ts';
-import { registrarCatalogoEnMcpServer } from './catalog/index.ts';
+import {
+  registrarCatalogoEnMcpServer,
+  obtenerCatalogoCompleto,
+  obtenerToolsAutorizadasParaUsuario,
+} from './catalog/index.ts';
+import { McpAuthorizationGateway } from './gateway/index.ts';
 import { inicializarCatalogoTools } from './tools/index.ts';
 
 export interface McpServerConfig {
@@ -188,7 +193,103 @@ export function createMcpHttpServer(
       return;
     }
 
-    // 5. Ruta no encontrada
+    // 5. Ruta de consulta de catálogo de herramientas (/tools) — REST HTTP para clientes directos y Gemini
+    if (url.pathname === '/tools' && req.method === 'GET') {
+      try {
+        const sesionResult = await validarSesionJwtMcp(req, '', container);
+        if (sesionResult.isFailure) {
+          res.writeHead(401, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: sesionResult.error.code, message: sesionResult.error.message }));
+          return;
+        }
+
+        const sessionContext = sesionResult.value;
+        const toolsAutorizadas = obtenerToolsAutorizadasParaUsuario(sessionContext);
+
+        const toolsResponse = toolsAutorizadas.map((t) => ({
+          name: t.name,
+          description: t.description,
+          inputSchema: t.shape
+            ? {
+                type: 'object',
+                properties: Object.fromEntries(
+                  Object.entries(t.shape).map(([k, v]) => [
+                    k,
+                    { type: 'string', description: (v as { description?: string })?.description || '' },
+                  ]),
+                ),
+              }
+            : undefined,
+        }));
+
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ tools: toolsResponse }));
+      } catch (error: unknown) {
+        const msg = error instanceof Error ? error.message : String(error);
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'ERROR_LISTAR_TOOLS', message: msg }));
+      }
+      return;
+    }
+
+    // 6. Ruta de ejecución directa de herramientas (/execute) — REST HTTP para orquestador LLM y Swagger
+    if (url.pathname === '/execute' && req.method === 'POST') {
+      try {
+        const sesionResult = await validarSesionJwtMcp(req, '', container);
+        if (sesionResult.isFailure) {
+          res.writeHead(401, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: sesionResult.error.code, message: sesionResult.error.message }));
+          return;
+        }
+
+        const sessionContext = sesionResult.value;
+        const chunks: Uint8Array[] = [];
+        for await (const chunk of req) {
+          chunks.push(typeof chunk === 'string' ? new TextEncoder().encode(chunk) : chunk);
+        }
+        const bodyRaw = new TextDecoder().decode(
+          chunks.reduce((acc, c) => {
+            const merged = new Uint8Array(acc.length + c.length);
+            merged.set(acc);
+            merged.set(c, acc.length);
+            return merged;
+          }, new Uint8Array(0)),
+        );
+
+        const body = JSON.parse(bodyRaw || '{}');
+        const { tool: toolName, arguments: toolArgs } = body;
+
+        const catalogo = obtenerCatalogoCompleto();
+        const toolDef = catalogo.find((t) => t.name === toolName);
+
+        if (!toolDef) {
+          res.writeHead(404, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'TOOL_NO_ENCONTRADA', message: `La herramienta '${toolName}' no está registrada.` }));
+          return;
+        }
+
+        const resultado = await McpAuthorizationGateway.procesarTool({
+          toolName: toolDef.name,
+          permisoRequerido: toolDef.permisoRequerido,
+          schema: toolDef.schema,
+          args: (toolArgs as Record<string, unknown>) || {},
+          sessionContext,
+          container,
+          handler: (argsValidados, ctx) => toolDef.handler(argsValidados, container, ctx),
+          formateador: toolDef.formateador,
+        });
+
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify(resultado));
+      } catch (error: unknown) {
+        const msg = error instanceof Error ? error.message : String(error);
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'ERROR_EJECUTAR_TOOL', message: msg }));
+      }
+      return;
+    }
+
+    // 7. Ruta no encontrada
     res.writeHead(404, { 'Content-Type': 'application/json' });
     res.end(
       JSON.stringify({
