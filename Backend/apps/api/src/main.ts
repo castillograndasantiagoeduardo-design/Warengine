@@ -8,6 +8,7 @@ import { createAutenticacionRoutes } from './routes/autenticacion.routes.ts';
 import { createAdministracionRoutes } from './routes/administracion.routes.ts';
 import { createFacturacionRoutes } from './routes/facturacion.routes.ts';
 import { createInventarioRoutes } from './routes/inventario.routes.ts';
+import { createLogisticaRoutes } from './routes/logistica.routes.ts';
 import { createSwaggerRoutes } from './docs/swagger.routes.ts';
 
 const app = new Hono();
@@ -51,6 +52,9 @@ app.route('/ventas', facturacionRoutes);
 
 const inventarioRoutes = createInventarioRoutes(container);
 app.route('/inventario', inventarioRoutes);
+
+const logisticaRoutes = createLogisticaRoutes(container);
+app.route('/logistica', logisticaRoutes);
 
 // Documentación interactiva Swagger UI y especificación OpenAPI
 const swaggerRoutes = createSwaggerRoutes();

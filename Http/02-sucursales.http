@@ -67,7 +67,7 @@ Authorization: Bearer {{login.response.body.accessToken}}
 Content-Type: application/json
 
 {
-  "nombre": "Sucursal Norte",
+  "nombre": "Sucursal Amaya",
   "direccion": "Calle 170 # 15-20, Bogotá",
   "contacto": "+57 300 1234567"
 }
