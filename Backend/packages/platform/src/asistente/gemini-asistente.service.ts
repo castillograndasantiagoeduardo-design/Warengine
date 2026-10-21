@@ -1,4 +1,10 @@
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import {
+  GoogleGenerativeAI,
+  type FunctionDeclaration,
+  type FunctionDeclarationSchema,
+  type Part,
+  type Tool,
+} from '@google/generative-ai';
 import { DomainError, Result } from '@warengine/shared-kernel';
 import {
   type IAsistenteService,
@@ -83,11 +89,17 @@ export class GeminiAsistenteService implements IAsistenteService {
       const mapNombreToGemini = (name: string) => name.replace(/-/g, '_');
       const mapNombreToMcp = (name: string) => name.replace(/_/g, '-');
 
-      const functionDeclarations = tools.map((t) => ({
+      const functionDeclarations: FunctionDeclaration[] = tools.map((t) => ({
         name: mapNombreToGemini(t.name),
         description: t.description,
-        parameters: t.inputSchema ? this.sanitizarSchemaParaGemini(t.inputSchema) : undefined,
+        parameters: t.inputSchema
+          ? (this.sanitizarSchemaParaGemini(t.inputSchema) as unknown as FunctionDeclarationSchema)
+          : undefined,
       }));
+
+      const modelTools: Tool[] | undefined = functionDeclarations.length > 0
+        ? [{ functionDeclarations }]
+        : undefined;
 
       const model = ai.getGenerativeModel({
         model: this.modelName,
@@ -96,7 +108,7 @@ export class GeminiAsistenteService implements IAsistenteService {
           'Tienes acceso a herramientas MCP para consultar existencias de inventario, stock bajo, facturas, métricas y conciliación. ' +
           'Responde siempre de forma clara, educada, precisa y en español. ' +
           'Cuando el usuario pregunte por datos del negocio, utiliza las herramientas correspondientes antes de responder.',
-        tools: functionDeclarations.length > 0 ? [{ functionDeclarations: functionDeclarations as any }] : undefined,
+        tools: modelTools,
       });
 
       // 3. Formatear historial previo para el chat de Gemini
@@ -117,7 +129,7 @@ export class GeminiAsistenteService implements IAsistenteService {
       let iteraciones = 0;
       while (functionCalls && functionCalls.length > 0 && iteraciones < 5) {
         iteraciones++;
-        const partsParaGemini: any[] = [];
+        const partsParaGemini: Part[] = [];
 
         for (const call of functionCalls) {
           const mcpToolName = mapNombreToMcp(call.name);
@@ -128,8 +140,9 @@ export class GeminiAsistenteService implements IAsistenteService {
 
           try {
             resultadoTexto = await this.ejecutarTool(mcpToolName, toolArgs, input.tokenJwt);
-          } catch (err: any) {
-            resultadoTexto = `Error al ejecutar la herramienta '${mcpToolName}': ${err.message || String(err)}`;
+          } catch (err: unknown) {
+            const errMensaje = err instanceof Error ? err.message : String(err);
+            resultadoTexto = `Error al ejecutar la herramienta '${mcpToolName}': ${errMensaje}`;
           }
 
           partsParaGemini.push({
@@ -151,46 +164,41 @@ export class GeminiAsistenteService implements IAsistenteService {
         respuesta: respuestaFinal,
         toolsEjecutadas,
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('[GEMINI-ASISTENTE-ERROR] Fallo al procesar mensaje con Gemini:', error);
-      return Result.fail(
-        new ErrorComunicacionAsistenteError(
-          error.message || 'Error inesperado durante la comunicación con el modelo Gemini.',
-        ),
-      );
+      const errorMsg = error instanceof Error
+        ? error.message
+        : 'Error inesperado durante la comunicación con el modelo Gemini.';
+      return Result.fail(new ErrorComunicacionAsistenteError(errorMsg));
     }
   }
 
   /**
-   * Obtiene la lista de Tools disponibles llamando al endpoint /sse del MCP Server
-   * o utilizando el listador personalizado provisto en el constructor.
+   * Obtiene la lista de Tools disponibles delegando al listador personalizado
+   * o consultando la URL HTTP del servidor MCP configurado.
    */
   private async obtenerToolsAutorizadas(tokenJwt: string): Promise<McpToolDeclaration[]> {
     if (this.customToolLister) {
       return await this.customToolLister(tokenJwt);
     }
 
-    // Por defecto, se consulta al catálogo oficial del servidor MCP
-    // Para entornos donde el servidor MCP corre en el mismo backend, importamos dinámicamente el catálogo
     try {
-      const { obtenerCatalogoCompleto, inicializarCatalogoTools } = await import(
-        '../../../apps/mcp-server/src/index.ts'
-      );
-      inicializarCatalogoTools();
-      const catalogo = obtenerCatalogoCompleto();
-
-      return catalogo.map((t: any) => ({
-        name: t.name,
-        description: t.description,
-        inputSchema: t.schema ? this.zodShapeToJsonSchema(t.shape) : undefined,
-      }));
-    } catch (_e) {
+      const response = await fetch(`${this.mcpServerUrl}/tools`, {
+        headers: { authorization: `Bearer ${tokenJwt}` },
+      });
+      if (!response.ok) {
+        return [];
+      }
+      const data = (await response.json()) as { tools?: McpToolDeclaration[] };
+      return data.tools || [];
+    } catch (_e: unknown) {
       return [];
     }
   }
 
   /**
-   * Ejecuta una Tool específica enviando la petición al servidor MCP con el token del usuario.
+   * Ejecuta una Tool específica enviando la petición al ejecutor personalizado
+   * o al servidor MCP por HTTP con el token del usuario.
    */
   private async ejecutarTool(
     toolName: string,
@@ -201,74 +209,26 @@ export class GeminiAsistenteService implements IAsistenteService {
       return await this.customToolExecutor(toolName, args, tokenJwt);
     }
 
-    // Si hay un servidor MCP HTTP activo en mcpServerUrl, podemos enviar la petición
-    // O procesar a través del gateway en memoria si estamos en el mismo entorno de ejecución
     try {
-      const {
-        McpAuthorizationGateway,
-        obtenerCatalogoCompleto,
-        validarSesionJwtMcp,
-      } = await import('../../../apps/mcp-server/src/index.ts');
-      const { createContainer } = await import('../../composition/src/container.ts');
-
-      const container = createContainer();
-      const mockReq = {
-        headers: { authorization: `Bearer ${tokenJwt}` },
-      } as any;
-
-      const sesionResult = await validarSesionJwtMcp(mockReq, '', container);
-      if (sesionResult.isFailure) {
-        return `Acceso denegado: ${sesionResult.error.message}`;
-      }
-
-      const catalogo = obtenerCatalogoCompleto();
-      const toolDef = catalogo.find((t: any) => t.name === toolName);
-
-      if (!toolDef) {
-        return `La herramienta '${toolName}' no existe o no está registrada en el servidor MCP.`;
-      }
-
-      const res = await McpAuthorizationGateway.procesarTool({
-        toolName: toolDef.name,
-        permisoRequerido: toolDef.permisoRequerido,
-        schema: toolDef.schema,
-        args,
-        sessionContext: sesionResult.value,
-        container,
-        handler: (argsValidados: any, ctx: any) => toolDef.handler(argsValidados, container, ctx),
-        formateador: toolDef.formateador,
+      const response = await fetch(`${this.mcpServerUrl}/execute`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          authorization: `Bearer ${tokenJwt}`,
+        },
+        body: JSON.stringify({ tool: toolName, arguments: args }),
       });
 
-      return res.content.map((c: any) => c.text).join('\n');
-    } catch (e: any) {
-      return `Error al invocar la herramienta: ${e.message}`;
+      if (!response.ok) {
+        return `Error del servidor MCP (${response.status}): ${await response.text()}`;
+      }
+
+      const res = (await response.json()) as { content?: Array<{ text: string }> };
+      return (res.content || []).map((c) => c.text).join('\n');
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : String(e);
+      return `Error al invocar la herramienta: ${msg}`;
     }
-  }
-
-  /**
-   * Convierte una forma de propiedades Zod básica a JSON Schema simple compatible con Gemini.
-   */
-  private zodShapeToJsonSchema(shape?: Record<string, any>): Record<string, unknown> {
-    if (!shape) {
-      return { type: 'object', properties: {} };
-    }
-
-    const properties: Record<string, unknown> = {};
-    const required: string[] = [];
-
-    for (const [key, value] of Object.entries(shape)) {
-      const description = value.description || '';
-      properties[key] = {
-        type: 'string', // Gemini interpreta types string/number/boolean
-        description,
-      };
-    }
-
-    return {
-      type: 'object',
-      properties,
-      ...(required.length > 0 ? { required } : {}),
-    };
   }
 
   /**
