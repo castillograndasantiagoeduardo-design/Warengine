@@ -5,6 +5,8 @@
     "jsr:@std/assert@*": "1.0.19",
     "jsr:@std/assert@1": "1.0.19",
     "jsr:@std/internal@^1.0.12": "1.0.14",
+    "npm:@google/generative-ai@0.24": "0.24.1",
+    "npm:@google/generative-ai@~0.24.1": "0.24.1",
     "npm:@hono/swagger-ui@*": "0.5.3_hono@4.13.10",
     "npm:@hono/swagger-ui@0.5": "0.5.3_hono@4.13.10",
     "npm:@modelcontextprotocol/sdk@*": "1.32.1_zod@4.6.5",
@@ -285,6 +287,9 @@
       "integrity": "sha512-T1QyPSDCyMXaO3pzBkF96E8xMkiRYbUEZADd29SyPGabqxMViNoii+NcK7eWJAEoU6RZyEm5lVSIjTmcdoB9HA==",
       "os": ["win32"],
       "cpu": ["x64"]
+    },
+    "@google/generative-ai@0.24.1": {
+      "integrity": "sha512-MqO+MLfM6kjxcKoy0p1wRzG3b4ZZXtPI+z2IE26UogS2Cm/XHO+7gGRBh6gcJsOiIVoH93UwKvW4HdgiOZCy9Q=="
     },
     "@hono/node-server@2.1.5_hono@4.13.10": {
       "integrity": "sha512-MgP/I06GdvsilDspMk/qmRzpk8LOUStP6jFAbSRi40W09DhoyUn+Mj7eyKICPqeYKybOjVFLVIAQzvu1bfIa7Q==",
@@ -1193,6 +1198,7 @@
   },
   "workspace": {
     "dependencies": [
+      "npm:@google/generative-ai@~0.24.1",
       "npm:@hono/swagger-ui@0.5",
       "npm:@modelcontextprotocol/sdk@^1.32.1",
       "npm:argon2@~0.41.1",
@@ -1205,6 +1211,7 @@
     ],
     "packageJson": {
       "dependencies": [
+        "npm:@google/generative-ai@~0.24.1",
         "npm:@modelcontextprotocol/sdk@^1.32.1",
         "npm:mysql2@^3.24.5",
         "npm:zod@^4.6.5"

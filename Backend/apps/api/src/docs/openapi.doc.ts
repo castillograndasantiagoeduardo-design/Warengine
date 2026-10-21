@@ -47,6 +47,7 @@ Para autorizar peticiones interactivas en esta consola:
     { name: 'Facturación - Turnos de Caja', description: 'Apertura y cierre de turnos de caja' },
     { name: 'Facturación - Ventas', description: 'Emisión de facturas B2C y B2B' },
     { name: 'Facturación - Alertas', description: 'Notificaciones operativas de facturación al administrador' },
+    { name: 'Asistente IA', description: 'Consultas conversacionales con Gemini y herramientas MCP (RF-SA-i1)' },
     { name: 'Sistema', description: 'Healthcheck y estado del servicio' },
   ],
   components: {
@@ -71,6 +72,31 @@ Para autorizar peticiones interactivas en esta consola:
           error: { type: 'string', example: 'VALIDATION_ERROR' },
           message: { type: 'string', example: 'Los datos proporcionados no son válidos' },
           issues: { type: 'array', items: { type: 'object' } },
+        },
+      },
+      ChatMensajeRequest: {
+        type: 'object',
+        required: ['mensaje'],
+        properties: {
+          mensaje: { type: 'string', example: '¿Cuál es el stock actual de laptops en mi sucursal?' },
+          historial: {
+            type: 'array',
+            items: {
+              type: 'object',
+              properties: {
+                rol: { type: 'string', enum: ['user', 'model', 'assistant'] },
+                texto: { type: 'string' },
+              },
+            },
+          },
+        },
+      },
+      ChatRespuestaResponse: {
+        type: 'object',
+        properties: {
+          respuesta: { type: 'string', example: 'Actualmente dispones de 15 unidades de Laptop Pro 15 en la Sede Principal.' },
+          toolsEjecutadas: { type: 'array', items: { type: 'string' }, example: ['consulta-stock'] },
+          fecha: { type: 'string', format: 'date-time' },
         },
       },
       LoginRequest: {
@@ -1568,6 +1594,28 @@ Para autorizar peticiones interactivas en esta consola:
           content: { 'application/json': { schema: { $ref: '#/components/schemas/EmitirAlertaFacturacionRequest' } } },
         },
         responses: { 201: { description: 'Alerta enviada' } },
+      },
+    },
+
+    // ─── Asistente IA ─────────────────────────────────────────────────────────
+    '/asistente/chat': {
+      post: {
+        tags: ['Asistente IA'],
+        summary: 'Enviar consulta en lenguaje natural al Asistente IA (Gemini + MCP Tools)',
+        description: 'Permite chatear con el asistente conversacional. El modelo Gemini ejecuta de forma autónoma las herramientas autorizadas del servidor MCP (RF-SA-i1 / RF-SA-i2). Requiere permiso mcp:consultar.',
+        security: [{ bearerAuth: [] }, { cookieAuth: [] }],
+        requestBody: {
+          required: true,
+          content: { 'application/json': { schema: { $ref: '#/components/schemas/ChatMensajeRequest' } } },
+        },
+        responses: {
+          200: {
+            description: 'Respuesta generada por el Asistente IA con detalle de herramientas ejecutadas',
+            content: { 'application/json': { schema: { $ref: '#/components/schemas/ChatRespuestaResponse' } } },
+          },
+          401: { description: 'Token de autorización ausente o inválido' },
+          403: { description: 'Permisos insuficientes (requiere mcp:consultar)' },
+        },
       },
     },
   },

@@ -184,3 +184,8 @@ export * from './src/modules/mcp-audit/domain/entities/LogMcpTool.ts';
 export * from './src/modules/mcp-audit/domain/repositories/ILogMcpToolRepository.ts';
 export * from './src/modules/mcp-audit/application/use-cases/RegistrarLogMcpToolUseCase.ts';
 export * from './src/modules/mcp-audit/application/use-cases/ConsultarLogsMcpToolsUseCase.ts';
+
+// ─── Módulo: Asistente Conversacional IA (Fase 6) ───────────────────────────
+export * from './src/modules/asistente/domain/errors/AsistenteErrors.ts';
+export * from './src/modules/asistente/application/ports/IAsistenteService.ts';
+export * from './src/modules/asistente/application/use-cases/ConversarConAsistenteUseCase.ts';

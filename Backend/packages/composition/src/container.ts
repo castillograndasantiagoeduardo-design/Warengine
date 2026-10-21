@@ -43,6 +43,7 @@ import { JwtTokenService } from '../../platform/src/jwt/jwt-token-service.ts';
 import { Argon2PasswordHasher } from '../../platform/src/hashing/argon2-password-hasher.ts';
 import { TotpService } from '../../platform/src/totp/totp-service.ts';
 import { PlatformMailer } from '../../platform/src/mailer/mailer.ts';
+import { GeminiAsistenteService } from '../../platform/src/asistente/gemini-asistente.service.ts';
 import { validarYObtenerJwtSecret } from '../../platform/src/config/jwt.config.ts';
 
 import {
@@ -139,6 +140,7 @@ import {
   ExportarKardexCsvUseCase,
   RegistrarLogMcpToolUseCase,
   ConsultarLogsMcpToolsUseCase,
+  ConversarConAsistenteUseCase,
 } from '@warengine/core';
 
 export interface AppContainer {
@@ -243,6 +245,9 @@ export interface AppContainer {
   mcp: {
     registrarLog: RegistrarLogMcpToolUseCase;
     consultarLogs: ConsultarLogsMcpToolsUseCase;
+  };
+  asistente: {
+    conversar: ConversarConAsistenteUseCase;
   };
 }
 
@@ -615,6 +620,13 @@ export function createContainer(_env?: Record<string, string>): AppContainer {
   const registrarLogMcpToolUseCase = new RegistrarLogMcpToolUseCase(logMcpToolRepository);
   const consultarLogsMcpToolsUseCase = new ConsultarLogsMcpToolsUseCase(logMcpToolRepository);
 
+  const asistenteService = new GeminiAsistenteService({
+    apiKey: getEnv('GEMINI_API_KEY'),
+    modelName: getEnv('GEMINI_MODEL'),
+    mcpServerUrl: getEnv('MCP_SERVER_URL'),
+  });
+  const conversarConAsistenteUseCase = new ConversarConAsistenteUseCase(asistenteService);
+
   return {
     autenticacion: {
       login: loginUseCase,
@@ -732,6 +744,9 @@ export function createContainer(_env?: Record<string, string>): AppContainer {
     mcp: {
       registrarLog: registrarLogMcpToolUseCase,
       consultarLogs: consultarLogsMcpToolsUseCase,
+    },
+    asistente: {
+      conversar: conversarConAsistenteUseCase,
     },
   };
 }
