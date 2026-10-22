@@ -19,15 +19,42 @@ export const consultaStockMcpSchema = z
       .trim()
       .min(1, 'El nombre no puede estar vacío.')
       .optional(),
-    sucursalId: z
+    categoria: z
+      .string({ invalid_type_error: 'La categoría debe ser una cadena de texto.' })
+      .trim()
+      .min(1, 'La categoría no puede estar vacía.')
+      .optional(),
+    categoriaId: z.coerce
+      .number({ invalid_type_error: 'El ID de categoría debe ser numérico.' })
+      .int('El ID de categoría debe ser un número entero.')
+      .positive('El ID de categoría debe ser positivo.')
+      .optional(),
+    sucursalId: z.coerce
       .number({ invalid_type_error: 'El ID de sucursal debe ser numérico.' })
       .int('El ID de sucursal debe ser un número entero.')
       .positive('El ID de sucursal debe ser positivo.')
       .optional(),
+    limite: z.coerce
+      .number({ invalid_type_error: 'El límite debe ser numérico.' })
+      .int('El límite debe ser un número entero.')
+      .positive('El límite debe ser positivo.')
+      .max(100, 'El límite máximo es de 100 productos por consulta.')
+      .optional(),
   })
-  .refine((data) => Boolean(data.sku || data.nombre), {
-    message: 'Debe proporcionar al menos el SKU o el nombre del producto para consultar stock.',
-  });
+  .refine(
+    (data) =>
+      Boolean(
+        data.sku ||
+          data.nombre ||
+          data.categoria ||
+          data.categoriaId !== undefined ||
+          data.sucursalId !== undefined,
+      ),
+    {
+      message:
+        'Debe proporcionar al menos el SKU, nombre, categoría o sucursal para consultar existencias.',
+    },
+  );
 
 export type ConsultaStockMcpDTO = z.infer<typeof consultaStockMcpSchema>;
 
