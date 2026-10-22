@@ -66,18 +66,18 @@ export const crearProductoMcpSchema = z.object({
     .trim()
     .min(2, 'El nombre debe tener al menos 2 caracteres.')
     .max(150, 'El nombre no puede exceder 150 caracteres.'),
-  precioVenta: z
+  precioVenta: z.coerce
     .number({ required_error: 'El precio de venta es obligatorio.' })
     .positive('El precio de venta debe ser mayor a cero.'),
-  precioCompra: z
+  precioCompra: z.coerce
     .number({ required_error: 'El precio de compra es obligatorio.' })
     .nonnegative('El precio de compra no puede ser negativo.')
     .default(0),
-  categoriaId: z
+  categoriaId: z.coerce
     .number({ required_error: 'El ID de categoría es obligatorio.' })
     .int('El ID de categoría debe ser un número entero.')
     .positive('El ID de categoría debe ser positivo.'),
-  proveedorId: z
+  proveedorId: z.coerce
     .number({ required_error: 'El ID de proveedor es obligatorio.' })
     .int('El ID de proveedor debe ser un número entero.')
     .positive('El ID de proveedor debe ser positivo.'),
@@ -104,11 +104,11 @@ export const ajustarStockMcpSchema = z.object({
     .trim()
     .min(1, 'El SKU no puede estar vacío.')
     .optional(),
-  sucursalId: z
+  sucursalId: z.coerce
     .number({ required_error: 'El ID de sucursal es obligatorio.' })
     .int('El ID de sucursal debe ser entero.')
     .positive('El ID de sucursal debe ser positivo.'),
-  cantidad: z
+  cantidad: z.coerce
     .number({ required_error: 'La cantidad a ajustar es obligatoria.' })
     .int('La cantidad debe ser un número entero.')
     .positive('La cantidad debe ser un entero positivo.'),

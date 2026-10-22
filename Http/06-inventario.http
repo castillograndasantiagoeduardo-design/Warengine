@@ -44,7 +44,7 @@ Authorization: Bearer {{login.response.body.accessToken}}
 Content-Type: application/json
 
 {
-  "nombre": "Abarrotes y Granos"
+  "nombre": "Computadores"
 }
 
 ###

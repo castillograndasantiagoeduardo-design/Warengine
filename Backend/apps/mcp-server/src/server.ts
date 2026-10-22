@@ -213,10 +213,21 @@ export function createMcpHttpServer(
             ? {
                 type: 'object',
                 properties: Object.fromEntries(
-                  Object.entries(t.shape).map(([k, v]) => [
-                    k,
-                    { type: 'string', description: (v as { description?: string })?.description || '' },
-                  ]),
+                  Object.entries(t.shape).map(([k, v]) => {
+                    const typeName = (v as { _def?: { typeName?: string } })?._def?.typeName;
+                    const isNumber =
+                      typeName === 'ZodNumber' ||
+                      k.toLowerCase().endsWith('id') ||
+                      k.toLowerCase().includes('precio') ||
+                      k.toLowerCase().includes('cantidad');
+                    return [
+                      k,
+                      {
+                        type: isNumber ? 'number' : 'string',
+                        description: (v as { description?: string })?.description || '',
+                      },
+                    ];
+                  }),
                 ),
               }
             : undefined,

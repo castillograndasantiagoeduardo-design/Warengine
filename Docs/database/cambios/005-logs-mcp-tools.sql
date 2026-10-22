@@ -9,7 +9,9 @@
 -- o modelos de lenguaje conectados mediante el protocolo MCP.
 -- ============================================================================
 
-CREATE TABLE IF NOT EXISTS logs_mcp_tools (
+DROP TABLE IF EXISTS logs_mcp_tools;
+
+CREATE TABLE logs_mcp_tools (
     id_log_mcp_tool BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     tool_name       VARCHAR(100) NOT NULL,
     usuario_id      CHAR(36) NULL,
@@ -24,4 +26,5 @@ CREATE TABLE IF NOT EXISTS logs_mcp_tools (
     INDEX idx_logs_mcp_fecha (fecha),
     CONSTRAINT fk_logs_mcp_usuario FOREIGN KEY (usuario_id) REFERENCES usuarios (id_usuario) ON DELETE SET NULL,
     CONSTRAINT fk_logs_mcp_sucursal FOREIGN KEY (sucursal_id) REFERENCES sucursales (id_sucursal) ON DELETE SET NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB;
+
