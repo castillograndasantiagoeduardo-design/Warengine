@@ -187,6 +187,7 @@ export * from './src/modules/facturacion/application/use-cases/ActualizarCliente
 export * from './src/modules/facturacion/application/use-cases/ObtenerClientePorIdUseCase.ts';
 export * from './src/modules/facturacion/application/use-cases/BuscarClientesUseCase.ts';
 export * from './src/modules/facturacion/application/use-cases/CrearFacturaUseCase.ts';
+export * from './src/modules/facturacion/application/use-cases/AnularFacturaUseCase.ts';
 export * from './src/modules/facturacion/application/use-cases/ListarFacturasUseCase.ts';
 export * from './src/modules/facturacion/application/use-cases/ObtenerFacturaPorIdUseCase.ts';
 export * from './src/modules/facturacion/application/use-cases/EmitirAlertaFacturacionUseCase.ts';

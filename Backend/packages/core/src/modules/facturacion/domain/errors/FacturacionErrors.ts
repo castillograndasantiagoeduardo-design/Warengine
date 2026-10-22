@@ -55,3 +55,17 @@ export class FacturaNoEncontradaError extends DomainError {
     super('La factura no existe.');
   }
 }
+
+export class MotivoAnulacionFacturaRequeridoError extends DomainError {
+  public readonly code = 'MOTIVO_ANULACION_FACTURA_REQUERIDO';
+  constructor() {
+    super('El motivo de anulación de la factura es obligatorio (mínimo 5 caracteres).');
+  }
+}
+
+export class FacturaYaAnuladaError extends DomainError {
+  public readonly code = 'FACTURA_YA_ANULADA';
+  constructor() {
+    super('La factura ya fue anulada.');
+  }
+}

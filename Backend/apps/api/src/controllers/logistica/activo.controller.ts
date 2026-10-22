@@ -1,4 +1,4 @@
-﻿import {
+import {
   crearActivoSchema,
   filtrosActivosSchema,
   darBajaActivoSchema,
@@ -9,8 +9,8 @@ import { leerJson, safeHandler } from '../../utils/handler.ts';
 import { obtenerActor } from '../../utils/actor.ts';
 import { obtenerIdentidad } from '../../utils/identidad.ts';
 
-function esUuid(val: string): boolean {
-  return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(val);
+function esUuid(val: string | undefined): val is string {
+  return typeof val === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(val);
 }
 
 export function crearActivoController(container: AppContainer) {

@@ -8,6 +8,7 @@ export const ACCIONES_AUDITORIA = {
   SOLICITAR_RECUPERACION_PASSWORD: 'solicitar_recuperacion_password',
   RESTABLECER_PASSWORD: 'restablecer_password',
   ELIMINAR: 'eliminar',
+  ANULAR: 'anular',
 } as const;
 
 export type AccionAuditoria = (typeof ACCIONES_AUDITORIA)[keyof typeof ACCIONES_AUDITORIA];
@@ -22,6 +23,7 @@ export const ACCIONES_AUDITORIA_VALORES = [
   ACCIONES_AUDITORIA.SOLICITAR_RECUPERACION_PASSWORD,
   ACCIONES_AUDITORIA.RESTABLECER_PASSWORD,
   ACCIONES_AUDITORIA.ELIMINAR,
+  ACCIONES_AUDITORIA.ANULAR,
 ] as const;
 
 export const ENTIDADES_AUDITORIA = {

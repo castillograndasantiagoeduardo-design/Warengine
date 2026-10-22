@@ -30,6 +30,7 @@ export function presentResult<T>(c: Context, result: Result<T, DomainError>, suc
     case 'SKU_DUPLICADO':
     case 'STOCK_INSUFICIENTE':
     case 'ENTRADA_YA_ANULADA':
+    case 'FACTURA_YA_ANULADA':
     case 'CATEGORIA_CON_PRODUCTOS_ACTIVOS':
     case 'PROVEEDOR_CON_PRODUCTOS_ACTIVOS':
     case 'ACTIVO_NO_DISPONIBLE':
@@ -66,6 +67,7 @@ export function presentResult<T>(c: Context, result: Result<T, DomainError>, suc
     case 'REFERENCIA_INVALIDA':
     case 'SKU_MODIFICACION_NO_PERMITIDA':
     case 'PAGO_INVALIDO':
+    case 'MOTIVO_ANULACION_FACTURA_REQUERIDO':
     case 'CLIENTE_REQUERIDO_B2B':
     case 'CREDITO_NO_HABILITADO':
     case 'RESPONSABLE_FUERA_DE_SUCURSAL':

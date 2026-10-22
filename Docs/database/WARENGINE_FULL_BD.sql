@@ -279,7 +279,6 @@ CREATE TABLE movimientos_inventario (
 CREATE TABLE categorias_activos (
     id_categoria_activo INT NOT NULL AUTO_INCREMENT,
     nombre              VARCHAR(100) NOT NULL,
-    is_active           TINYINT(1) NOT NULL DEFAULT 1,
     PRIMARY KEY (id_categoria_activo)
 ) ENGINE=InnoDB;
 

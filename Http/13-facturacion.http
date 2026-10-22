@@ -217,11 +217,11 @@ Authorization: Bearer {{token}}
 Content-Type: application/json
 
 {
-  "clienteId": "{{clienteB2CId}}",
+  "clienteId": "1c96169f-bc31-4336-9be7-45faa2856d6d",
   "esB2B": false,
   "items": [
     {
-      "productoId": "{{productoId}}",
+      "productoId": "1d9042cd-0fd9-4808-8fc5-981f9899425e",
       "cantidad": 1,
       "precioUnitario": 25000.00,
       "descuento": 0.00

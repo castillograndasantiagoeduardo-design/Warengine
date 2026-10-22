@@ -1,0 +1,78 @@
+# ==============================================================================
+# MÓDULO: FACTURACIÓN — ANULACIÓN DE FACTURAS
+# Archivo: 30-anulacion-facturas.http
+#
+# Requisito del SRS cubierto:
+#   - RF-FMC-E10: Anulación de facturas y reversión de stock
+#
+# Cómo funciona:
+#   - POST /ventas/facturas/:id/anular  (permiso facturacion:anular)
+#   - Motivo obligatorio (mínimo 5 caracteres).
+#   - La API pasa la factura a 'anulada' y registra anulada_por; el trigger
+#     trg_facturas_anula_reingresa_stock reingresa el stock al kardex
+#     (descontando lo ya devuelto con reingreso).
+#   - Quedan auditados: acción 'anular', entidad 'facturas', con el motivo.
+#
+# PRERREQUISITO: ejecutar antes 13-facturacion.http (paso 5) para tener una
+#                factura emitida y copiar su ID en @facturaId.
+# ==============================================================================
+
+@baseUrl = http://localhost:8017
+@facturaId = ea4a58fb-2767-463a-99bb-72616d933e22
+
+### 1. Iniciar sesión como Super Admin (tiene facturacion:anular)
+# @name login
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "superadmin@warengine.local",
+  "password": "Warengine.Admin.2026!"
+}
+
+### Extraer token
+@token = {{login.response.body.accessToken}}
+
+### 2. Anular sin motivo -> 400 VALIDATION_ERROR
+POST {{baseUrl}}/ventas/facturas/{{facturaId}}/anular
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{}
+
+### 3. Anular con motivo corto -> 400 VALIDATION_ERROR
+POST {{baseUrl}}/ventas/facturas/{{facturaId}}/anular
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "motivo": "ok" }
+
+### 4. Anular correctamente -> 200 con la factura en estado 'anulada'
+POST {{baseUrl}}/ventas/facturas/{{facturaId}}/anular
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "motivo": "Cliente canceló la compra en mostrador" }
+
+### 5. Anular otra vez -> 409 FACTURA_YA_ANULADA
+POST {{baseUrl}}/ventas/facturas/{{facturaId}}/anular
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "motivo": "Cliente canceló la compra en mostrador" }
+
+### 6. Verificar el estado de la factura -> estado: "anulada"
+GET {{baseUrl}}/ventas/facturas/{{facturaId}}
+Authorization: Bearer {{token}}
+
+### 7. Verificar el reingreso en el kardex (movimiento 'entrada', motivo
+#      'Reingreso por anulacion de factura')
+GET {{baseUrl}}/inventario/kardex?limite=10
+Authorization: Bearer {{token}}
+
+### 8. Verificar la auditoría (acción 'anular')
+GET {{baseUrl}}/administracion/auditoria?accion=anular&entidad=facturas
+Authorization: Bearer {{token}}
+
+### 9. Un cajero NO puede anular -> 403 PERMISO_DENEGADO
+# (inicia sesión con un cajero y repite el paso 4 con su token)

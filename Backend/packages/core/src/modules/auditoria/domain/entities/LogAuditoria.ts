@@ -12,6 +12,7 @@ export const ACCIONES_AUDITORIA = {
   SOLICITAR_RECUPERACION_PASSWORD: 'solicitar_recuperacion_password',
   RESTABLECER_PASSWORD: 'restablecer_password',
   ELIMINAR: 'eliminar',
+  ANULAR: 'anular',
 } as const;
 
 /**

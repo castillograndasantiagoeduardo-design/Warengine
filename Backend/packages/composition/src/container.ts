@@ -126,6 +126,7 @@ import {
   ListarFacturasUseCase,
   ObtenerFacturaPorIdUseCase,
   EmitirAlertaFacturacionUseCase,
+  AnularFacturaUseCase,
   RegistrarEntradaInventarioUseCase,
   RegistrarSalidaInventarioUseCase,
   ConsultarKardexUseCase,
@@ -255,6 +256,7 @@ export interface AppContainer {
     listarFacturas: ListarFacturasUseCase;
     obtenerFacturaPorId: ObtenerFacturaPorIdUseCase;
     emitirAlertaFacturacion: EmitirAlertaFacturacionUseCase;
+    anularFactura: AnularFacturaUseCase;
   };
   logistica: {
     crearCategoriaActivo: CrearCategoriaActivoUseCase;
@@ -503,6 +505,11 @@ export function createContainer(_env?: Record<string, string>): AppContainer {
   );
   const emitirAlertaFacturacionUseCase = new EmitirAlertaFacturacionUseCase(
     alertaAdminRepository,
+    sucursalOperadorRepository,
+    auditoriaRepository,
+  );
+  const anularFacturaUseCase = new AnularFacturaUseCase(
+    facturaRepository,
     sucursalOperadorRepository,
     auditoriaRepository,
   );
@@ -821,6 +828,7 @@ export function createContainer(_env?: Record<string, string>): AppContainer {
       listarFacturas: listarFacturasUseCase,
       obtenerFacturaPorId: obtenerFacturaPorIdUseCase,
       emitirAlertaFacturacion: emitirAlertaFacturacionUseCase,
+      anularFactura: anularFacturaUseCase,
     },
     logistica: {
       crearCategoriaActivo: crearCategoriaActivoUseCase,
