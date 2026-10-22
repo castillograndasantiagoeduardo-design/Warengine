@@ -2,6 +2,7 @@ import { Hono } from 'hono';
 import { AppContainer } from '@warengine/composition';
 import { PERMISSIONS } from '@warengine/contracts';
 import { authMiddleware } from '../middlewares/auth.middleware.ts';
+import { registrarDevolucionController } from '../controllers/facturacion/devolucion-venta.controller.ts';
 import {
     actualizarClienteController,
     buscarClientesController,
@@ -44,6 +45,7 @@ export function createFacturacionRoutes(container: AppContainer): Hono {
     api.post('/facturas/b2b', authMiddleware(container, PERMISSIONS.FACTURACION_VENDER_B2B), crearFacturaController(container, true));
     api.get('/facturas', authMiddleware(container, PERMISSIONS.FACTURACION_CONSULTAR), listarFacturasController(container));
     api.get('/facturas/:id', authMiddleware(container, PERMISSIONS.FACTURACION_CONSULTAR), obtenerFacturaPorIdController(container));
+    api.post('/facturas/:id/devolucion', authMiddleware(container, PERMISSIONS.FACTURACION_ANULAR), registrarDevolucionController(container));
     // Anulación administrativa con reversión de stock (RF-FMC-E10)
     api.post('/facturas/:id/anular', authMiddleware(container, PERMISSIONS.FACTURACION_ANULAR), anularFacturaController(container));
 
@@ -51,4 +53,4 @@ export function createFacturacionRoutes(container: AppContainer): Hono {
     api.post('/alertas', authMiddleware(container, PERMISSIONS.FACTURACION_ALERTAR_ADMIN), emitirAlertaFacturacionController(container));
 
     return api;
-}
+}

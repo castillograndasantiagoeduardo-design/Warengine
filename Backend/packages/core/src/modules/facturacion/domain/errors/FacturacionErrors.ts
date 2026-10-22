@@ -69,3 +69,20 @@ export class FacturaYaAnuladaError extends DomainError {
     super('La factura ya fue anulada.');
   }
 }
+
+export class FacturaAnuladaError extends DomainError {
+  public readonly code = 'FACTURA_ANULADA';
+  constructor() { super('No se puede registrar una devolución sobre una factura anulada.'); }
+}
+export class ItemFacturaNoEncontradoError extends DomainError {
+  public readonly code = 'ITEM_FACTURA_NO_ENCONTRADO';
+  constructor() { super('La línea indicada no pertenece a la factura.'); }
+}
+export class CantidadDevolucionExcedidaError extends DomainError {
+  public readonly code = 'CANTIDAD_DEVOLUCION_EXCEDIDA';
+  constructor(mensaje = 'La cantidad devuelta supera la cantidad vendida en esa línea.') { super(mensaje); }
+}
+export class DevolucionInvalidaError extends DomainError {
+  public readonly code = 'DEVOLUCION_INVALIDA';
+  constructor(mensaje = 'La devolución no es válida.') { super(mensaje); }
+}

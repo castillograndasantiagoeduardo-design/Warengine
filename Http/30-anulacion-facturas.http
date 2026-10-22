@@ -76,3 +76,19 @@ Authorization: Bearer {{token}}
 
 ### 9. Un cajero NO puede anular -> 403 PERMISO_DENEGADO
 # (inicia sesión con un cajero y repite el paso 4 con su token)
+
+
+
+
+
+
+
+
+
+
+
+POST {{baseUrl}}/ventas/facturas/{{facturaId}}/devoluciones
+Content-Type: application/json
+
+{ "motivo": "Producto defectuoso", "reingresaStock": true,
+  "items": [{ "facturaItemId": "{{itemId}}", "cantidad": 1 }] }

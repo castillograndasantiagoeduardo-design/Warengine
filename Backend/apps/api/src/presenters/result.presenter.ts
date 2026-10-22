@@ -80,6 +80,11 @@ export function presentResult<T>(c: Context, result: Result<T, DomainError>, suc
     case 'FACTURACION_SIN_TURNO_ABIERTO':
       status = 400; // Bad request
       break;
+      case 'FACTURA_ANULADA':
+      case 'CANTIDAD_DEVOLUCION_EXCEDIDA':
+      status = 409; break;
+      case 'ITEM_FACTURA_NO_ENCONTRADO':
+      status = 404; break;
     default:
       if (error.code.endsWith('_NO_ENCONTRADO') || error.code.endsWith('_NO_ENCONTRADA')) {
         status = 404;

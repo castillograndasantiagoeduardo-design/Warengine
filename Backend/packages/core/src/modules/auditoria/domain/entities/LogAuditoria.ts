@@ -37,6 +37,8 @@ export const ENTIDADES_AUDITORIA = {
   ACTIVOS: 'activos',
   ASIGNACIONES_ACTIVOS: 'asignaciones_activos',
   MANTENIMIENTOS_ACTIVOS: 'mantenimientos_activos',
+  DEVOLUCIONES_VENTAS: 'devoluciones_ventas',
+
 } as const;
 
 /** Quién ejecuta la operación y desde dónde. Lo arma la capa HTTP a partir del token. */
