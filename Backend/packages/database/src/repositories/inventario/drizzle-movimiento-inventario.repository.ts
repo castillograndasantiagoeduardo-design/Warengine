@@ -42,22 +42,9 @@ export class DrizzleMovimientoInventarioRepository implements IMovimientoInventa
 
   public async registrarEntrada(datos: DatosRegistroEntrada): Promise<MovimientoInventario> {
     return await this.db.transaction(async (tx) => {
-      // 1. Insertar o incrementar stock en inventario_sucursal
-      await tx
-        .insert(inventario_sucursal)
-        .values({
-          producto_id: datos.productoId,
-          sucursal_id: datos.sucursalId,
-          stock_actual: datos.cantidad,
-          stock_minimo: 0,
-        })
-        .onDuplicateKeyUpdate({
-          set: {
-            stock_actual: sql`${inventario_sucursal.stock_actual} + ${datos.cantidad}`,
-          },
-        });
-
-      // 2. Registrar movimiento inmutable
+      // 1. Registrar movimiento inmutable en kardex.
+      // NOTA: El trigger de BD `trg_movimientos_actualiza_stock` (AFTER INSERT)
+      // es la única fuente de verdad y actualiza o crea automáticamente `inventario_sucursal.stock_actual`.
       const id = crypto.randomUUID();
       const fecha = new Date();
 
@@ -117,20 +104,9 @@ export class DrizzleMovimientoInventarioRepository implements IMovimientoInventa
         throw new StockInsuficienteError(stockActual, datos.cantidad);
       }
 
-      // 2. Actualizar existencias restando la cantidad
-      await tx
-        .update(inventario_sucursal)
-        .set({
-          stock_actual: sql`${inventario_sucursal.stock_actual} - ${datos.cantidad}`,
-        })
-        .where(
-          and(
-            eq(inventario_sucursal.producto_id, datos.productoId),
-            eq(inventario_sucursal.sucursal_id, datos.sucursalId),
-          ),
-        );
-
-      // 3. Registrar movimiento inmutable
+      // 2. Registrar movimiento inmutable en kardex.
+      // NOTA: El trigger de BD `trg_movimientos_actualiza_stock` (AFTER INSERT)
+      // es la única fuente de verdad y descuenta automáticamente `inventario_sucursal.stock_actual`.
       const id = crypto.randomUUID();
       const fecha = new Date();
 
@@ -145,6 +121,17 @@ export class DrizzleMovimientoInventarioRepository implements IMovimientoInventa
         fecha,
       });
 
+      // 3. Obtener el stock resultante actualizado por el trigger
+      const [invFinal] = await tx
+        .select({ stockActual: inventario_sucursal.stock_actual })
+        .from(inventario_sucursal)
+        .where(
+          and(
+            eq(inventario_sucursal.producto_id, datos.productoId),
+            eq(inventario_sucursal.sucursal_id, datos.sucursalId),
+          ),
+        );
+
       return {
         id,
         productoId: datos.productoId,
@@ -154,7 +141,7 @@ export class DrizzleMovimientoInventarioRepository implements IMovimientoInventa
         motivo: datos.motivo,
         usuarioId: datos.usuarioId,
         fecha,
-        stockResultante: stockActual - datos.cantidad,
+        stockResultante: invFinal?.stockActual ?? (stockActual - datos.cantidad),
       };
     });
   }
@@ -370,20 +357,8 @@ export class DrizzleMovimientoInventarioRepository implements IMovimientoInventa
         );
       }
 
-      // 4. Descontar stock
-      await tx
-        .update(inventario_sucursal)
-        .set({
-          stock_actual: sql`${inventario_sucursal.stock_actual} - ${entrada.cantidad}`,
-        })
-        .where(
-          and(
-            eq(inventario_sucursal.producto_id, entrada.producto_id),
-            eq(inventario_sucursal.sucursal_id, entrada.sucursal_id),
-          ),
-        );
-
-      // 5. Insertar movimiento compensatorio inmutable
+      // 4. Insertar movimiento compensatorio inmutable en kardex.
+      // NOTA: El trigger `trg_movimientos_actualiza_stock` descuenta el stock automáticamente.
       const idCompensatorio = crypto.randomUUID();
       const fecha = new Date();
       const motivoCompensatorio = `Anulación de entrada ${entradaId}: ${datos.motivo}`;
@@ -400,6 +375,16 @@ export class DrizzleMovimientoInventarioRepository implements IMovimientoInventa
         fecha,
       });
 
+      const [invFinal] = await tx
+        .select({ stockActual: inventario_sucursal.stock_actual })
+        .from(inventario_sucursal)
+        .where(
+          and(
+            eq(inventario_sucursal.producto_id, entrada.producto_id),
+            eq(inventario_sucursal.sucursal_id, entrada.sucursal_id),
+          ),
+        );
+
       return {
         id: idCompensatorio,
         productoId: entrada.producto_id,
@@ -410,31 +395,15 @@ export class DrizzleMovimientoInventarioRepository implements IMovimientoInventa
         proveedorId: entrada.proveedor_id,
         usuarioId: datos.usuarioId,
         fecha,
-        stockResultante: stockActual - entrada.cantidad,
+        stockResultante: invFinal?.stockActual ?? (stockActual - entrada.cantidad),
       };
     });
   }
 
   public async registrarAjuste(datos: DatosRegistroAjuste): Promise<MovimientoInventario> {
     return await this.db.transaction(async (tx) => {
-      // 1. Si es ajuste_entrada: incrementar stock
-      //    Si es ajuste_salida: verificar existencia de stock y decrementar
-      if (datos.tipo === 'ajuste_entrada') {
-        await tx
-          .insert(inventario_sucursal)
-          .values({
-            producto_id: datos.productoId,
-            sucursal_id: datos.sucursalId,
-            stock_actual: datos.cantidad,
-            stock_minimo: 0,
-          })
-          .onDuplicateKeyUpdate({
-            set: {
-              stock_actual: sql`${inventario_sucursal.stock_actual} + ${datos.cantidad}`,
-            },
-          });
-      } else {
-        // ajuste_salida
+      // 1. Si es ajuste_salida, verificar existencia previa para lanzar error de dominio claro si es insuficiente
+      if (datos.tipo === 'ajuste_salida') {
         const [inv] = await tx
           .select({ stockActual: inventario_sucursal.stock_actual })
           .from(inventario_sucursal)
@@ -451,21 +420,11 @@ export class DrizzleMovimientoInventarioRepository implements IMovimientoInventa
             `No se puede realizar el ajuste de salida: el stock actual (${stockActual}) es menor a la cantidad a descontar (${datos.cantidad}).`,
           );
         }
-
-        await tx
-          .update(inventario_sucursal)
-          .set({
-            stock_actual: sql`${inventario_sucursal.stock_actual} - ${datos.cantidad}`,
-          })
-          .where(
-            and(
-              eq(inventario_sucursal.producto_id, datos.productoId),
-              eq(inventario_sucursal.sucursal_id, datos.sucursalId),
-            ),
-          );
       }
 
-      // 2. Registrar movimiento inmutable en kardex
+      // 2. Registrar movimiento inmutable en kardex.
+      // NOTA: El trigger de BD `trg_movimientos_actualiza_stock` (AFTER INSERT)
+      // es la única fuente de verdad y actualiza automáticamente `inventario_sucursal.stock_actual`.
       const id = crypto.randomUUID();
       const fecha = new Date();
 
@@ -525,35 +484,9 @@ export class DrizzleMovimientoInventarioRepository implements IMovimientoInventa
         );
       }
 
-      // 2. Descontar en sucursal origen
-      await tx
-        .update(inventario_sucursal)
-        .set({
-          stock_actual: sql`${inventario_sucursal.stock_actual} - ${datos.cantidad}`,
-        })
-        .where(
-          and(
-            eq(inventario_sucursal.producto_id, datos.productoId),
-            eq(inventario_sucursal.sucursal_id, datos.sucursalOrigenId),
-          ),
-        );
-
-      // 3. Incrementar en sucursal destino (creando la fila si no existía)
-      await tx
-        .insert(inventario_sucursal)
-        .values({
-          producto_id: datos.productoId,
-          sucursal_id: datos.sucursalDestinoId,
-          stock_actual: datos.cantidad,
-          stock_minimo: 0,
-        })
-        .onDuplicateKeyUpdate({
-          set: {
-            stock_actual: sql`${inventario_sucursal.stock_actual} + ${datos.cantidad}`,
-          },
-        });
-
-      // 4. Registrar movimientos inmutables en kardex
+      // 2. Registrar movimientos inmutables en kardex.
+      // NOTA: El trigger de BD `trg_movimientos_actualiza_stock` descuenta automáticamente de origen (salida)
+      // e incrementa/crea en destino (entrada).
       const movimientoSalidaId = crypto.randomUUID();
       const movimientoEntradaId = crypto.randomUUID();
       const fecha = new Date();
@@ -590,7 +523,17 @@ export class DrizzleMovimientoInventarioRepository implements IMovimientoInventa
         fecha,
       });
 
-      // 5. Consultar stocks resultantes
+      // 3. Consultar stocks resultantes actualizados por los triggers
+      const [invOrigenFinal] = await tx
+        .select({ stockActual: inventario_sucursal.stock_actual })
+        .from(inventario_sucursal)
+        .where(
+          and(
+            eq(inventario_sucursal.producto_id, datos.productoId),
+            eq(inventario_sucursal.sucursal_id, datos.sucursalOrigenId),
+          ),
+        );
+
       const [invDestinoFinal] = await tx
         .select({ stockActual: inventario_sucursal.stock_actual })
         .from(inventario_sucursal)
@@ -608,7 +551,7 @@ export class DrizzleMovimientoInventarioRepository implements IMovimientoInventa
         sucursalOrigenId: datos.sucursalOrigenId,
         sucursalDestinoId: datos.sucursalDestinoId,
         cantidad: datos.cantidad,
-        stockRestanteOrigen: stockActualOrigen - datos.cantidad,
+        stockRestanteOrigen: invOrigenFinal?.stockActual ?? (stockActualOrigen - datos.cantidad),
         stockResultanteDestino: invDestinoFinal?.stockActual ?? datos.cantidad,
         fecha,
       };
