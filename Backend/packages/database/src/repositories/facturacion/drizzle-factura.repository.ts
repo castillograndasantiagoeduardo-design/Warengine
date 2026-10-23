@@ -96,9 +96,13 @@ export class DrizzleFacturaRepository implements IFacturaRepository {
                     .from(factura_pagos)
                     .where(eq(factura_pagos.factura_id, datos.factura.id));
 
+                // Reconstruir en el orden exacto de inserción
+                const itemsMap = new Map(itemRows.map((r) => [r.id_factura_item, facturaItemFromRow(r)]));
+                const itemsOrdenados = datos.items.map((i) => itemsMap.get(i.id)!).filter(Boolean);
+
                 return facturaFromRow(
                     row,
-                    itemRows.map(facturaItemFromRow),
+                    itemsOrdenados,
                     pagoRows.map(facturaPagoFromRow),
                 );
             });

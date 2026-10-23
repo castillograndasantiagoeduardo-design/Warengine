@@ -308,10 +308,10 @@ datos**: lee la sección 6 antes de escribirlos.
   - `obtener-turno-actual` (`ObtenerTurnoActualUseCase`): `[YA EXISTE]`
   - `registrar-cliente` (`RegistrarClienteUseCase`): `[YA EXISTE]`
   - `buscar-cliente` (`BuscarClientesUseCase`): `[YA EXISTE]`
-  - `cerrar-turno` ⚙️: `[PENDIENTE]` (RF-FA-03)
-  - `emitir-factura` ⚙️: `[PENDIENTE]` (RF-FA-04)
-  - `anular-factura` ⚙️: `[PENDIENTE]` (RF-FA-05)
-  - `registrar-devolucion` ⚙️: `[PENDIENTE]` (RF-FA-06)
+  - `cerrar-turno` (`CerrarTurnoCajaUseCase`): `[YA EXISTE]`
+  - `emitir-factura` (`CrearFacturaUseCase`): `[YA EXISTE]`
+  - `anular-factura` (`AnularFacturaUseCase`): `[YA EXISTE]`
+  - `registrar-devolucion` (`RegistrarDevolucionUseCase`): `[YA EXISTE]` (RF-FMC-G1)
 - **ports**: `impresora-fiscal.service.ts` (stub), `dian.service.ts` (cuando aplique)
 
 ### administracion

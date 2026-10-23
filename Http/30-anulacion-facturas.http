@@ -87,8 +87,3 @@ Authorization: Bearer {{token}}
 
 
 
-POST {{baseUrl}}/ventas/facturas/{{facturaId}}/devoluciones
-Content-Type: application/json
-
-{ "motivo": "Producto defectuoso", "reingresaStock": true,
-  "items": [{ "facturaItemId": "{{itemId}}", "cantidad": 1 }] }
