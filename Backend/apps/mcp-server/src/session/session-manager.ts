@@ -1,6 +1,9 @@
 import type { SSEServerTransport } from '@modelcontextprotocol/sdk/server/sse.js';
 import type { McpSessionContext } from './session.types.ts';
 
+/**
+ * Representa una sesión activa, encapsulando su contexto de seguridad y el transporte SSE.
+ */
 export interface SesionActiva {
   contexto: McpSessionContext;
   transport: SSEServerTransport;
