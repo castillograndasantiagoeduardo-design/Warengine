@@ -8,6 +8,7 @@ export const ACCIONES_AUDITORIA = {
   SOLICITAR_RECUPERACION_PASSWORD: 'solicitar_recuperacion_password',
   RESTABLECER_PASSWORD: 'restablecer_password',
   ELIMINAR: 'eliminar',
+  ANULAR: 'anular',
 } as const;
 
 export type AccionAuditoria = (typeof ACCIONES_AUDITORIA)[keyof typeof ACCIONES_AUDITORIA];
@@ -22,6 +23,7 @@ export const ACCIONES_AUDITORIA_VALORES = [
   ACCIONES_AUDITORIA.SOLICITAR_RECUPERACION_PASSWORD,
   ACCIONES_AUDITORIA.RESTABLECER_PASSWORD,
   ACCIONES_AUDITORIA.ELIMINAR,
+  ACCIONES_AUDITORIA.ANULAR,
 ] as const;
 
 export const ENTIDADES_AUDITORIA = {
@@ -42,6 +44,7 @@ export const ENTIDADES_AUDITORIA = {
   ACTIVOS: 'activos',
   ASIGNACIONES_ACTIVOS: 'asignaciones_activos',
   MANTENIMIENTOS_ACTIVOS: 'mantenimientos_activos',
+  DEVOLUCIONES_VENTAS: 'devoluciones_ventas',
 } as const;
 
 export type EntidadAuditoria = (typeof ENTIDADES_AUDITORIA)[keyof typeof ENTIDADES_AUDITORIA];
@@ -64,4 +67,5 @@ export const ENTIDADES_AUDITORIA_VALORES = [
   ENTIDADES_AUDITORIA.ACTIVOS,
   ENTIDADES_AUDITORIA.ASIGNACIONES_ACTIVOS,
   ENTIDADES_AUDITORIA.MANTENIMIENTOS_ACTIVOS,
+  ENTIDADES_AUDITORIA.DEVOLUCIONES_VENTAS,
 ] as const;

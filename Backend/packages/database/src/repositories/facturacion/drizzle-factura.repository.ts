@@ -96,9 +96,13 @@ export class DrizzleFacturaRepository implements IFacturaRepository {
                     .from(factura_pagos)
                     .where(eq(factura_pagos.factura_id, datos.factura.id));
 
+                // Reconstruir en el orden exacto de inserción
+                const itemsMap = new Map(itemRows.map((r) => [r.id_factura_item, facturaItemFromRow(r)]));
+                const itemsOrdenados = datos.items.map((i) => itemsMap.get(i.id)!).filter(Boolean);
+
                 return facturaFromRow(
                     row,
-                    itemRows.map(facturaItemFromRow),
+                    itemsOrdenados,
                     pagoRows.map(facturaPagoFromRow),
                 );
             });
@@ -115,6 +119,49 @@ export class DrizzleFacturaRepository implements IFacturaRepository {
             }
             throw error;
         }
+    }
+
+    public async anular(id: string, anuladaPor: string): Promise<Factura | null> {
+        return await this.db.transaction(async (tx) => {
+            // El filtro estado = 'emitida' hace la anulación idempotente ante concurrencia.
+            // Al actualizar, MySQL dispara trg_facturas_anula_reingresa_stock (reingreso al kardex).
+            const [resultado] = await tx
+                .update(facturas)
+                .set({ estado: 'anulada', anulada_por: anuladaPor })
+                .where(
+                    and(
+                        eq(facturas.id_factura, id),
+                        eq(facturas.estado, 'emitida'),
+                        isNull(facturas.deleted_at),
+                    ),
+                );
+
+            if (Number(resultado.affectedRows) === 0) {
+                return null;
+            }
+
+            const [row] = await tx
+                .select()
+                .from(facturas)
+                .where(eq(facturas.id_factura, id))
+                .limit(1);
+
+            const itemRows = await tx
+                .select()
+                .from(factura_items)
+                .where(and(eq(factura_items.factura_id, id), isNull(factura_items.deleted_at)));
+
+            const pagoRows = await tx
+                .select()
+                .from(factura_pagos)
+                .where(eq(factura_pagos.factura_id, id));
+
+            return facturaFromRow(
+                row,
+                itemRows.map(facturaItemFromRow),
+                pagoRows.map(facturaPagoFromRow),
+            );
+        });
     }
 
     public async findById(id: string): Promise<Factura | null> {

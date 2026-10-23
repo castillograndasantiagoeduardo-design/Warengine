@@ -30,6 +30,7 @@ export function presentResult<T>(c: Context, result: Result<T, DomainError>, suc
     case 'SKU_DUPLICADO':
     case 'STOCK_INSUFICIENTE':
     case 'ENTRADA_YA_ANULADA':
+    case 'FACTURA_YA_ANULADA':
     case 'CATEGORIA_CON_PRODUCTOS_ACTIVOS':
     case 'PROVEEDOR_CON_PRODUCTOS_ACTIVOS':
     case 'ACTIVO_NO_DISPONIBLE':
@@ -66,6 +67,7 @@ export function presentResult<T>(c: Context, result: Result<T, DomainError>, suc
     case 'REFERENCIA_INVALIDA':
     case 'SKU_MODIFICACION_NO_PERMITIDA':
     case 'PAGO_INVALIDO':
+    case 'MOTIVO_ANULACION_FACTURA_REQUERIDO':
     case 'CLIENTE_REQUERIDO_B2B':
     case 'CREDITO_NO_HABILITADO':
     case 'RESPONSABLE_FUERA_DE_SUCURSAL':
@@ -78,6 +80,11 @@ export function presentResult<T>(c: Context, result: Result<T, DomainError>, suc
     case 'FACTURACION_SIN_TURNO_ABIERTO':
       status = 400; // Bad request
       break;
+      case 'FACTURA_ANULADA':
+      case 'CANTIDAD_DEVOLUCION_EXCEDIDA':
+      status = 409; break;
+      case 'ITEM_FACTURA_NO_ENCONTRADO':
+      status = 404; break;
     default:
       if (error.code.endsWith('_NO_ENCONTRADO') || error.code.endsWith('_NO_ENCONTRADA')) {
         status = 404;

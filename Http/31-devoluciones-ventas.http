@@ -1,0 +1,509 @@
+# ==============================================================================
+# MÓDULO: FACTURACIÓN — DEVOLUCIÓN DE VENTAS (Warengine v2.0)
+# Archivo: Http/30-devoluciones-ventas.http
+#
+# Requisito del SRS cubierto:
+#   - RF-FMC-G1: Devolución de ventas parcial o total y reingreso opcional a existencias.
+#
+# Flujo y arquitectura:
+#   - Endpoint: POST /ventas/facturas/:id/devoluciones
+#   - Permiso RBAC: facturacion:devolucion (asignado a super-admin y admin-sucursal; cajero recibe 403).
+#   - Transacción atómica en BD con triggers:
+#       * trg_devoluciones_check_cantidad: valida factura real, sucursal, no anulada y límite de cantidad y monto.
+#       * trg_devoluciones_genera_entrada: si reingresaStock: true, genera 'entrada' en movimientos_inventario.
+#
+# Requiere: Extensión REST Client en VS Code
+# API Base: http://localhost:8017
+# ==============================================================================
+
+@baseUrl = http://localhost:8017
+
+# ==============================================================================
+# ESCENARIO 1 — PREPARACIÓN: LOGIN, TURNO Y FACTURA CON 2 LÍNEAS
+# ==============================================================================
+### 1.1 Iniciar sesión como Super Admin (o Admin con permisos para preparar datos)
+# @name loginAdmin
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "superadmin@warengine.local",
+  "password": "Warengine.Admin.2026!"
+}
+
+### Extraer Token Admin
+@tokenAdmin = {{loginAdmin.response.body.accessToken}}
+
+### 1.2 Asegurar que el operador tiene un turno de caja abierto en sucursal 1
+# Si ya está abierto responde 409 (se ignora), si no responde 201 Created.
+# @name abrirTurno
+POST {{baseUrl}}/ventas/turnos
+Authorization: Bearer {{tokenAdmin}}
+Content-Type: application/json
+
+{
+  "fondoInicial": 50000.00
+}
+
+### 1.3 Obtener producto 1 con existencias (o crearlo dinámicamente)
+# @name crearProducto1
+POST {{baseUrl}}/inventario/productos
+Authorization: Bearer {{tokenAdmin}}
+Content-Type: application/json
+
+{
+  "sku": "DEV-PROD1-{{$timestamp}}",
+  "nombre": "Producto Prueba Devolución A (Cantidad >= 3)",
+  "precioCompra": 10000.00,
+  "precioVenta": 20000.00,
+  "precioCorporativo": 18000.00
+}
+
+@prodId1 = {{crearProducto1.response.body.id}}
+
+### 1.4 Entrada de inventario a producto 1 en sucursal 1 (20 unidades)
+# @name entradaProd1
+POST {{baseUrl}}/inventario/entradas
+Authorization: Bearer {{tokenAdmin}}
+Content-Type: application/json
+
+{
+  "productoId": "{{prodId1}}",
+  "sucursalId": 1,
+  "cantidad": 20,
+  "motivo": "Stock inicial para pruebas de devolución de ventas"
+}
+
+### 1.5 Obtener producto 2 con existencias
+# @name crearProducto2
+POST {{baseUrl}}/inventario/productos
+Authorization: Bearer {{tokenAdmin}}
+Content-Type: application/json
+
+{
+  "sku": "DEV-PROD2-{{$timestamp}}",
+  "nombre": "Producto Prueba Devolución B (1 unidad)",
+  "precioCompra": 5000.00,
+  "precioVenta": 10000.00,
+  "precioCorporativo": 9000.00
+}
+
+@prodId2 = {{crearProducto2.response.body.id}}
+
+### 1.6 Entrada de inventario a producto 2 en sucursal 1 (10 unidades)
+# @name entradaProd2
+POST {{baseUrl}}/inventario/entradas
+Authorization: Bearer {{tokenAdmin}}
+Content-Type: application/json
+
+{
+  "productoId": "{{prodId2}}",
+  "sucursalId": 1,
+  "cantidad": 10,
+  "motivo": "Stock inicial para pruebas de devolución de ventas"
+}
+
+### 1.7 Crear cliente B2C para facturación
+# @name clientePrueba
+POST {{baseUrl}}/ventas/clientes
+Authorization: Bearer {{tokenAdmin}}
+Content-Type: application/json
+
+{
+  "tipoDocumento": "CC",
+  "numeroDocumento": "708090{{$timestamp}}",
+  "nombreRazonSocial": "Cliente Pruebas Devolucion",
+  "tipoCliente": "B2C",
+  "email": "cliente.dev@warengine.local"
+}
+
+@clienteId = {{clientePrueba.response.body.cliente.id}}
+
+### 1.8 Emitir factura de mostrador con 2 líneas:
+# - Línea 1: 4 unidades de Producto 1 x 20,000 = 80,000 (cantidad >= 3)
+# - Línea 2: 1 unidad de Producto 2 x 10,000 = 10,000
+# Total: 90,000 efectivo
+# Resultado esperado: 201 Created
+# @name emitirFacturaPrincipal
+POST {{baseUrl}}/ventas/facturas
+Authorization: Bearer {{tokenAdmin}}
+Content-Type: application/json
+
+{
+  "clienteId": "{{clienteId}}",
+  "esB2B": false,
+  "items": [
+    {
+      "productoId": "{{prodId1}}",
+      "cantidad": 4,
+      "precioUnitario": 20000.00,
+      "descuento": 0.00
+    },
+    {
+      "productoId": "{{prodId2}}",
+      "cantidad": 1,
+      "precioUnitario": 10000.00,
+      "descuento": 0.00
+    }
+  ],
+  "pagos": [
+    {
+      "medioPago": "efectivo",
+      "monto": 90000.00
+    }
+  ]
+}
+
+### Extraer IDs de Factura y Líneas para los escenarios de prueba
+@facturaId = {{emitirFacturaPrincipal.response.body.id}}
+@itemId1 = {{emitirFacturaPrincipal.response.body.items[0].id}}
+@itemId2 = {{emitirFacturaPrincipal.response.body.items[1].id}}
+
+
+# ==============================================================================
+# ESCENARIO 2 — DEVOLUCIÓN PARCIAL (201 CREATED)
+# ==============================================================================
+# Se devuelve 1 unidad de itemId1 con reingresaStock: true.
+# Debe responder 201 con { facturaId, totalReembolso: 20000, lineas: [...] }
+# @name devolucionParcial
+POST {{baseUrl}}/ventas/facturas/{{facturaId}}/devoluciones
+Authorization: Bearer {{tokenAdmin}}
+Content-Type: application/json
+
+{
+  "motivo": "Producto defectuoso o averiado en empaque",
+  "reingresaStock": true,
+  "devolverTodo": false,
+  "items": [
+    {
+      "facturaItemId": "{{itemId1}}",
+      "cantidad": 1
+    }
+  ]
+}
+
+
+# ==============================================================================
+# ESCENARIO 3 — DEVOLUCIÓN TOTAL (201 CREATED)
+# ==============================================================================
+# Preparar una segunda factura para probar la devolución total completa (devolverTodo: true)
+# @name emitirFacturaParaTotal
+POST {{baseUrl}}/ventas/facturas
+Authorization: Bearer {{tokenAdmin}}
+Content-Type: application/json
+
+{
+  "clienteId": "{{clienteId}}",
+  "esB2B": false,
+  "items": [
+    {
+      "productoId": "{{prodId2}}",
+      "cantidad": 2,
+      "precioUnitario": 10000.00,
+      "descuento": 0.00
+    }
+  ],
+  "pagos": [
+    {
+      "medioPago": "efectivo",
+      "monto": 20000.00
+    }
+  ]
+}
+
+@facturaTotalId = {{emitirFacturaParaTotal.response.body.id}}
+
+### 3.1 Registrar devolución total sobre la nueva factura (201 Created)
+# Debe devolver todo el remanente de todas las líneas automáticamente
+# @name devolucionTotal
+POST {{baseUrl}}/ventas/facturas/{{facturaTotalId}}/devoluciones
+Authorization: Bearer {{tokenAdmin}}
+Content-Type: application/json
+
+{
+  "motivo": "Cliente cancela la compra por inconformidad general",
+  "reingresaStock": true,
+  "devolverTodo": true
+}
+
+
+# ==============================================================================
+# ESCENARIO 4 — SEGUNDA DEVOLUCIÓN QUE COMPLETA LA LÍNEA (201 CREATED)
+# ==============================================================================
+# Sobre la factura principal (@facturaId):
+# En itemId1 quedaban 3 unidades (de 4 iniciales, subtotal remanente = 60,000).
+# Devolvemos las 3 unidades restantes de itemId1. El reembolso es el remanente exacto (60,000).
+# @name completarLinea
+POST {{baseUrl}}/ventas/facturas/{{facturaId}}/devoluciones
+Authorization: Bearer {{tokenAdmin}}
+Content-Type: application/json
+
+{
+  "motivo": "Cliente devuelve el resto del lote por sospecha de lote vencido",
+  "reingresaStock": true,
+  "devolverTodo": false,
+  "items": [
+    {
+      "facturaItemId": "{{itemId1}}",
+      "cantidad": 3
+    }
+  ]
+}
+
+
+# ==============================================================================
+# ESCENARIO 5 — EXCESO EN CANTIDAD DE DEVOLUCIÓN (409 CONFLICT)
+# ==============================================================================
+# itemId1 ya no tiene unidades disponibles (0 restantes de 4).
+# Intentar devolver 1 unidad más genera CANTIDAD_DEVOLUCION_EXCEDIDA.
+POST {{baseUrl}}/ventas/facturas/{{facturaId}}/devoluciones
+Authorization: Bearer {{tokenAdmin}}
+Content-Type: application/json
+
+{
+  "motivo": "Intento de devolver más unidades de las disponibles",
+  "reingresaStock": true,
+  "items": [
+    {
+      "facturaItemId": "{{itemId1}}",
+      "cantidad": 1
+    }
+  ]
+}
+
+
+# ==============================================================================
+# ESCENARIO 6 — FACTURA YA DEVUELTA POR COMPLETO + DEVOLVERTODO (409 CONFLICT)
+# ==============================================================================
+# La factura @facturaTotalId ya fue devuelta en su totalidad en el Escenario 3.
+# Intentar devolverTodo de nuevo responde 409 con CANTIDAD_DEVOLUCION_EXCEDIDA.
+POST {{baseUrl}}/ventas/facturas/{{facturaTotalId}}/devoluciones
+Authorization: Bearer {{tokenAdmin}}
+Content-Type: application/json
+
+{
+  "motivo": "Intento de devolver factura totalmente devuelta",
+  "reingresaStock": true,
+  "devolverTodo": true
+}
+
+
+# ==============================================================================
+# ESCENARIO 7 — VALIDACIÓN DE ESQUEMA (400 BAD REQUEST)
+# ==============================================================================
+# 7.1 Motivo vacío (mínimo 5 caracteres)
+POST {{baseUrl}}/ventas/facturas/{{facturaId}}/devoluciones
+Authorization: Bearer {{tokenAdmin}}
+Content-Type: application/json
+
+{
+  "motivo": "   ",
+  "reingresaStock": true,
+  "items": [
+    {
+      "facturaItemId": "{{itemId2}}",
+      "cantidad": 1
+    }
+  ]
+}
+
+### 7.2 Body sin items ni devolverTodo
+POST {{baseUrl}}/ventas/facturas/{{facturaId}}/devoluciones
+Authorization: Bearer {{tokenAdmin}}
+Content-Type: application/json
+
+{
+  "motivo": "Motivo suficientemente largo",
+  "reingresaStock": true,
+  "devolverTodo": false,
+  "items": []
+}
+
+
+# ==============================================================================
+# ESCENARIO 8 — ÍTEM AJENO A LA FACTURA (404 NOT FOUND)
+# ==============================================================================
+# Envío de un UUID válido que no pertenece a los factura_items de esta factura
+POST {{baseUrl}}/ventas/facturas/{{facturaId}}/devoluciones
+Authorization: Bearer {{tokenAdmin}}
+Content-Type: application/json
+
+{
+  "motivo": "Línea de factura ajena al comprobante",
+  "reingresaStock": true,
+  "items": [
+    {
+      "facturaItemId": "a0000000-0000-0000-0000-000000000001",
+      "cantidad": 1
+    }
+  ]
+}
+
+
+# ==============================================================================
+# ESCENARIO 9 — FACTURA INEXISTENTE (404 NOT FOUND)
+# ==============================================================================
+POST {{baseUrl}}/ventas/facturas/b0000000-0000-0000-0000-000000000001/devoluciones
+Authorization: Bearer {{tokenAdmin}}
+Content-Type: application/json
+
+{
+  "motivo": "Devolución sobre factura no existente",
+  "reingresaStock": true,
+  "devolverTodo": true
+}
+
+
+# ==============================================================================
+# ESCENARIO 10 — FACTURA ANULADA (409 CONFLICT)
+# ==============================================================================
+# Se emite una factura y se anula administrativamente (RF-FMC-E10).
+# Luego se intenta devolver: debe fallar con 409 FACTURA_ANULADA.
+# @name facturaParaAnular
+POST {{baseUrl}}/ventas/facturas
+Authorization: Bearer {{tokenAdmin}}
+Content-Type: application/json
+
+{
+  "clienteId": "{{clienteId}}",
+  "esB2B": false,
+  "items": [
+    {
+      "productoId": "{{prodId2}}",
+      "cantidad": 1,
+      "precioUnitario": 10000.00,
+      "descuento": 0.00
+    }
+  ],
+  "pagos": [
+    {
+      "medioPago": "efectivo",
+      "monto": 10000.00
+    }
+  ]
+}
+
+@facturaAnuladaId = {{facturaParaAnular.response.body.id}}
+
+### 10.1 Anular la factura emitida
+# @name anularFacturaPrevia
+POST {{baseUrl}}/ventas/facturas/{{facturaAnuladaId}}/anular
+Authorization: Bearer {{tokenAdmin}}
+Content-Type: application/json
+
+{
+  "motivo": "Anulación de prueba para validar restricción de devoluciones"
+}
+
+### 10.2 Intentar registrar devolución sobre la factura recién anulada (Esperado: 409 FACTURA_ANULADA)
+POST {{baseUrl}}/ventas/facturas/{{facturaAnuladaId}}/devoluciones
+Authorization: Bearer {{tokenAdmin}}
+Content-Type: application/json
+
+{
+  "motivo": "Intento de devolución en factura previamente anulada",
+  "reingresaStock": true,
+  "devolverTodo": true
+}
+
+
+# ==============================================================================
+# ESCENARIO 11 — ROL CAJERO SIN PERMISO (403 FORBIDDEN)
+# ==============================================================================
+# 11.1 Crear o loguear como usuario con rol Cajero (rolId: 3, carece de facturacion:devolucion)
+# @name crearCajero
+POST {{baseUrl}}/administracion/usuarios
+Authorization: Bearer {{tokenAdmin}}
+Content-Type: application/json
+
+{
+  "nombre": "Cajero Sin Permiso Devolucion",
+  "tipoDocumento": "CC",
+  "numeroDocumento": "334455{{$timestamp}}",
+  "email": "cajero.nodevolucion@warengine.local",
+  "password": "Password.2026!",
+  "rolId": 3,
+  "sucursalId": 1
+}
+
+### 11.2 Iniciar sesión como cajero
+# @name loginCajero
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "cajero.nodevolucion@warengine.local",
+  "password": "Password.2026!"
+}
+
+@tokenCajero = {{loginCajero.response.body.accessToken}}
+
+### 11.3 Cajero intenta registrar devolución (Esperado: 403 PERMISO_DENEGADO)
+POST {{baseUrl}}/ventas/facturas/{{facturaId}}/devoluciones
+Authorization: Bearer {{tokenCajero}}
+Content-Type: application/json
+
+{
+  "motivo": "Cajero intentando registrar devolución sin permiso",
+  "reingresaStock": true,
+  "items": [
+    {
+      "facturaItemId": "{{itemId2}}",
+      "cantidad": 1
+    }
+  ]
+}
+
+
+# ==============================================================================
+# ESCENARIO 12 — PETICIÓN SIN TOKEN (401 UNAUTHORIZED)
+# ==============================================================================
+POST {{baseUrl}}/ventas/facturas/{{facturaId}}/devoluciones
+Content-Type: application/json
+
+{
+  "motivo": "Intento de devolución sin enviar header Authorization",
+  "reingresaStock": true,
+  "devolverTodo": true
+}
+
+
+# ==============================================================================
+# ESCENARIO 13 — VERIFICACIÓN EN KARDEX DE INVENTARIO
+# ==============================================================================
+# El trigger trg_devoluciones_genera_entrada genera un movimiento de 'entrada' en el
+# kardex (movimientos_inventario) con motivo "Reingreso por devolucion de venta"
+# SI y solo SI reingresaStock fue true.
+#
+# 13.1 Consultar kardex de Producto 1 (prodId1)
+# Debe evidenciar un movimiento tipo 'entrada' con:
+# - cantidad: 1 (del Escenario 2)
+# - cantidad: 3 (del Escenario 4)
+# - motivo: "Reingreso por devolucion de venta"
+# - devolucion_id: ID generado en devoluciones_ventas
+GET {{baseUrl}}/inventario/kardex?productoId={{prodId1}}
+Authorization: Bearer {{tokenAdmin}}
+
+### 13.2 Devolución con reingresaStock: false sobre itemId2 restante
+# @name devolucionSinStock
+POST {{baseUrl}}/ventas/facturas/{{facturaId}}/devoluciones
+Authorization: Bearer {{tokenAdmin}}
+Content-Type: application/json
+
+{
+  "motivo": "Producto consumible o dañado irreparable no reingresable al stock",
+  "reingresaStock": false,
+  "devolverTodo": false,
+  "items": [
+    {
+      "facturaItemId": "{{itemId2}}",
+      "cantidad": 1
+    }
+  ]
+}
+
+### 13.3 Consultar kardex de Producto 2 (prodId2) para verificar ausencia de entrada
+# Al haber enviado reingresaStock: false en el paso 13.2, NO debe existir un nuevo
+# movimiento de entrada en el kardex correspondiente a esa devolución.
+GET {{baseUrl}}/inventario/kardex?productoId={{prodId2}}
+Authorization: Bearer {{tokenAdmin}}

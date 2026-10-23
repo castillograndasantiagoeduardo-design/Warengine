@@ -1,6 +1,7 @@
 import { AppContainer } from '@warengine/composition';
 import { Factura } from '@warengine/core';
 import {
+    anularFacturaSchema,
     crearFacturaSchema,
     FacturaDto,
     FacturaItemDto,
@@ -104,4 +105,34 @@ export function obtenerFacturaPorIdController(container: AppContainer) {
         return c.json(toFacturaDto(result.value), 200);
     });
 }
+
+export function anularFacturaController(container: AppContainer) {
+    return safeHandler(async (c) => {
+        const id = c.req.param('id');
+        if (!id || id.trim() === '') {
+            return c.json({ error: 'VALIDATION_ERROR', message: 'ID de factura requerido.' }, 400);
+        }
+        const parsed = anularFacturaSchema.safeParse(await leerJson(c));
+        if (!parsed.success) {
+            return c.json({ error: 'VALIDATION_ERROR', issues: parsed.error.errors }, 400);
+        }
+        const actor = obtenerActor(c);
+        const result = await container.facturacion.anularFactura.execute({
+            id,
+            motivo: parsed.data.motivo,
+            actor,
+        });
+        if (result.isFailure) {
+            return presentResult(c, result);
+        }
+        return c.json(
+            {
+                mensaje: `Factura ${result.value.consecutivo} anulada. El stock vendido fue reingresado al inventario.`,
+                factura: toFacturaDto(result.value),
+            },
+            200,
+        );
+    });
+}
+
 

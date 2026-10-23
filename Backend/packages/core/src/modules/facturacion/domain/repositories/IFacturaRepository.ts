@@ -24,4 +24,10 @@ export interface IFacturaRepository {
     findById(id: string): Promise<Factura | null>;
     listar(filtros: FiltrosFacturas): Promise<Factura[]>;
     obtenerSiguienteConsecutivo(sucursalId: number): Promise<number>;
+    /**
+     * Pasa la factura de 'emitida' a 'anulada' de forma atómica (RF-FMC-E10).
+     * El trigger trg_facturas_anula_reingresa_stock reingresa el stock al kardex.
+     * Devuelve null si no había una factura 'emitida' con ese id (ya anulada o inexistente).
+     */
+    anular(id: string, anuladaPor: string): Promise<Factura | null>;
 }

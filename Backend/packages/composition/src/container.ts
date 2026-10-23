@@ -34,19 +34,27 @@ import { DrizzleHistorialSalarioRepository } from '../../database/src/repositori
 import { DrizzleAlertaAdminRepository } from '../../database/src/repositories/administracion/drizzle-alerta-admin.repository.ts';
 import { DrizzleMetricasAdminRepository } from '../../database/src/repositories/administracion/drizzle-metricas-admin.repository.ts';
 
+
+
 import { DrizzleSucursalOperadorRepository } from '../../database/src/repositories/facturacion/drizzle-sucursal-operador.repository.ts';
 import { DrizzleFacturaRepository } from '../../database/src/repositories/facturacion/drizzle-factura.repository.ts';
+import { DrizzleDevolucionVentaRepository } from '../../database/src/repositories/facturacion/drizzle-devolucion-venta.repository.ts';
 import { DrizzlePasswordResetRepository } from '../../database/src/repositories/autenticacion/drizzle-password-reset.repository.ts';
 import { DrizzleCategoriaActivoRepository } from '../../database/src/repositories/logistica/drizzle-categoria-activo.repository.ts';
 import { DrizzleActivoRepository } from '../../database/src/repositories/logistica/drizzle-activo.repository.ts';
 import { DrizzleAsignacionActivoRepository } from '../../database/src/repositories/logistica/drizzle-asignacion-activo.repository.ts';
 import { DrizzleMantenimientoActivoRepository } from '../../database/src/repositories/logistica/drizzle-mantenimiento-activo.repository.ts';
 
+
+
 import { JwtTokenService } from '../../platform/src/jwt/jwt-token-service.ts';
 import { Argon2PasswordHasher } from '../../platform/src/hashing/argon2-password-hasher.ts';
 import { TotpService } from '../../platform/src/totp/totp-service.ts';
 import { PlatformMailer } from '../../platform/src/mailer/mailer.ts';
 import { validarYObtenerJwtSecret } from '../../platform/src/config/jwt.config.ts';
+
+
+
 
 import {
   LoginUseCase,
@@ -126,6 +134,7 @@ import {
   ListarFacturasUseCase,
   ObtenerFacturaPorIdUseCase,
   EmitirAlertaFacturacionUseCase,
+  AnularFacturaUseCase,
   RegistrarEntradaInventarioUseCase,
   RegistrarSalidaInventarioUseCase,
   ConsultarKardexUseCase,
@@ -155,6 +164,9 @@ import {
   FinalizarMantenimientoUseCase,
   ConsultarHistorialMantenimientosUseCase,
   ConsultarActivoUseCase,
+  RegistrarDevolucionUseCase,
+  
+  
 } from '@warengine/core';
 
 export interface AppContainer {
@@ -171,6 +183,7 @@ export interface AppContainer {
     solicitarRecuperacionPassword: SolicitarRecuperacionPasswordUseCase;
     validarTokenPasswordReset: ValidarTokenPasswordResetUseCase;
     restablecerPassword: RestablecerPasswordUseCase;
+    
   };
 
   administracion: {
@@ -255,6 +268,8 @@ export interface AppContainer {
     listarFacturas: ListarFacturasUseCase;
     obtenerFacturaPorId: ObtenerFacturaPorIdUseCase;
     emitirAlertaFacturacion: EmitirAlertaFacturacionUseCase;
+    anularFactura: AnularFacturaUseCase;
+    registrarDevolucion: RegistrarDevolucionUseCase;
   };
   logistica: {
     crearCategoriaActivo: CrearCategoriaActivoUseCase;
@@ -331,6 +346,7 @@ export function createContainer(_env?: Record<string, string>): AppContainer {
   const turnoCajaRepository = new DrizzleTurnoCajaRepository(db);
   const sucursalOperadorRepository = new DrizzleSucursalOperadorRepository(db);
   const facturaRepository = new DrizzleFacturaRepository(db);
+  const devolucionVentaRepository = new DrizzleDevolucionVentaRepository(db);
   const passwordResetRepository = new DrizzlePasswordResetRepository(db);
   const categoriaActivoRepository = new DrizzleCategoriaActivoRepository(db);
   const activoRepository = new DrizzleActivoRepository(db);
@@ -503,6 +519,17 @@ export function createContainer(_env?: Record<string, string>): AppContainer {
   );
   const emitirAlertaFacturacionUseCase = new EmitirAlertaFacturacionUseCase(
     alertaAdminRepository,
+    sucursalOperadorRepository,
+    auditoriaRepository,
+  );
+  const anularFacturaUseCase = new AnularFacturaUseCase(
+    facturaRepository,
+    sucursalOperadorRepository,
+    auditoriaRepository,
+  );
+  const registrarDevolucionUseCase = new RegistrarDevolucionUseCase(
+    facturaRepository,
+    devolucionVentaRepository,
     sucursalOperadorRepository,
     auditoriaRepository,
   );
@@ -821,7 +848,9 @@ export function createContainer(_env?: Record<string, string>): AppContainer {
       listarFacturas: listarFacturasUseCase,
       obtenerFacturaPorId: obtenerFacturaPorIdUseCase,
       emitirAlertaFacturacion: emitirAlertaFacturacionUseCase,
-    },
+      anularFactura: anularFacturaUseCase,
+      registrarDevolucion: registrarDevolucionUseCase,
+    },  
     logistica: {
       crearCategoriaActivo: crearCategoriaActivoUseCase,
       listarCategoriasActivos: listarCategoriasActivosUseCase,

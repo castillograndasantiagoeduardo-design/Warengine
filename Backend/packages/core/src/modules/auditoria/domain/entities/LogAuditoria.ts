@@ -12,6 +12,7 @@ export const ACCIONES_AUDITORIA = {
   SOLICITAR_RECUPERACION_PASSWORD: 'solicitar_recuperacion_password',
   RESTABLECER_PASSWORD: 'restablecer_password',
   ELIMINAR: 'eliminar',
+  ANULAR: 'anular',
 } as const;
 
 /**
@@ -36,6 +37,8 @@ export const ENTIDADES_AUDITORIA = {
   ACTIVOS: 'activos',
   ASIGNACIONES_ACTIVOS: 'asignaciones_activos',
   MANTENIMIENTOS_ACTIVOS: 'mantenimientos_activos',
+  DEVOLUCIONES_VENTAS: 'devoluciones_ventas',
+
 } as const;
 
 /** Quién ejecuta la operación y desde dónde. Lo arma la capa HTTP a partir del token. */
