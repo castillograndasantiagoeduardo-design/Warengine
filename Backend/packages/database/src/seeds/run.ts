@@ -13,6 +13,7 @@
 import { getDatabase, closeDatabase } from '../client.ts';
 import { seedAutenticacion } from './autenticacion.seed.ts';
 import { crearSuperAdminInicial } from './super-admin.seed.ts';
+import { sembrarDatosDemo } from './demo-metricas.seed.ts';
 
 async function main() {
   console.log('🌱 Iniciando seeds de Warengine...');
@@ -23,10 +24,11 @@ async function main() {
     // Paso 1: Roles, permisos y asignaciones (siempre idempotente)
     await seedAutenticacion(db);
 
-    // Paso 2: Solo en entorno development, crear el super-admin inicial
+    // Paso 2: Solo en entorno development, crear el super-admin inicial y datos demo
     const env = Deno.env.get('NODE_ENV') ?? 'production';
     if (env === 'development') {
       await crearSuperAdminInicial(db);
+      await sembrarDatosDemo(db);
     } else {
       console.log('ℹ️  Modo producción: omitiendo creación de super-admin inicial.');
     }

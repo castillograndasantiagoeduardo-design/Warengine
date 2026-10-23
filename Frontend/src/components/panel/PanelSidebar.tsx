@@ -114,6 +114,30 @@ export function PanelSidebar() {
     },
   ];
 
+  const [userEmail, setUserEmail] = React.useState('superadmin@warengine.local');
+
+  React.useEffect(() => {
+    try {
+      const stored = localStorage.getItem('warengine_user');
+      if (stored) {
+        const u = JSON.parse(stored);
+        if (u.email) setUserEmail(u.email);
+      }
+    } catch {
+      // ignore
+    }
+  }, []);
+
+  const handleLogout = () => {
+    localStorage.removeItem('warengine_access_token');
+    localStorage.removeItem('warengine_user');
+    localStorage.removeItem('warengine_permisos');
+    document.cookie = 'warengine_access_token=; path=/; max-age=0; SameSite=Lax';
+    document.cookie = 'warengine_role_id=; path=/; max-age=0; SameSite=Lax';
+    document.cookie = 'access_token=; path=/; max-age=0; SameSite=Lax';
+    window.location.href = '/acceso';
+  };
+
   return (
     <aside className="w-64 xl:w-72 shrink-0 bg-[#0c142b]/95 border-r border-white/10 flex flex-col justify-between h-screen sticky top-0 z-40 select-none backdrop-blur-md">
       {/* Encabezado: Logotipo y Badge de Rol */}
@@ -199,20 +223,21 @@ export function PanelSidebar() {
               <span className="text-xs font-semibold text-white truncate font-[family-name:var(--font-archivo)]">
                 Super Administrador
               </span>
-              <span className="text-[10px] text-white/50 truncate">
-                admin@warengine.com
+              <span className="text-[10px] text-white/50 truncate font-mono">
+                {userEmail}
               </span>
             </div>
           </div>
-          <Link
-            href="/"
-            title="Ir al portal público"
-            className="p-1.5 text-white/40 hover:text-[#e3b341] hover:bg-white/10 rounded-lg transition-colors"
+          <button
+            onClick={handleLogout}
+            type="button"
+            title="Cerrar sesión de Super Admin"
+            className="p-1.5 text-white/40 hover:text-rose-400 hover:bg-rose-500/10 rounded-lg transition-colors cursor-pointer"
           >
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
             </svg>
-          </Link>
+          </button>
         </div>
       </div>
     </aside>

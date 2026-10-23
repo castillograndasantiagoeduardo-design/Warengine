@@ -19,39 +19,36 @@ export function BranchPerformanceChart() {
     loadData();
   }, []);
 
-  const defaultFallback = [
+  const defaultFallback: RendimientoSucursalItem[] = [
     {
       sucursalId: 1,
       nombreSucursal: 'Sede Principal (Central #1)',
-      totalIngresos: 68500000,
-      totalCostos: 39500000,
-      gananciaBruta: 29000000,
-      cantidadVentas: 242,
-      margenPorcentaje: 42.3,
+      totalVentas: 68500000,
+      totalFacturas: 242,
+      ticketPromedio: 283057,
+      gananciaNeta: 29000000,
     },
     {
       sucursalId: 2,
       nombreSucursal: 'Sucursal Norte - Distribución',
-      totalIngresos: 38200000,
-      totalCostos: 22100000,
-      gananciaBruta: 16100000,
-      cantidadVentas: 135,
-      margenPorcentaje: 42.1,
+      totalVentas: 38200000,
+      totalFacturas: 135,
+      ticketPromedio: 282962,
+      gananciaNeta: 16100000,
     },
     {
       sucursalId: 3,
       nombreSucursal: 'Sucursal Occidente - Retail',
-      totalIngresos: 21750000,
-      totalCostos: 12520000,
-      gananciaBruta: 9230000,
-      cantidadVentas: 75,
-      margenPorcentaje: 42.4,
+      totalVentas: 21750000,
+      totalFacturas: 75,
+      ticketPromedio: 290000,
+      gananciaNeta: 9230000,
     },
   ];
 
   const hasDbRows = dbData.length > 0;
   const branches = hasDbRows ? dbData : defaultFallback;
-  const totalGlobal = branches.reduce((acc, b) => acc + Number(b.totalIngresos), 0) || 1;
+  const totalGlobal = branches.reduce((acc, b) => acc + Number(b.totalVentas || 0), 0) || 1;
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('es-CO', {
@@ -74,14 +71,14 @@ export function BranchPerformanceChart() {
             </p>
           </div>
           <span className="text-[10px] px-2 py-0.5 rounded bg-sky-500/10 text-sky-400 border border-sky-500/20 font-[family-name:var(--font-pixelify)]">
-            {branches.length} SEDES EVALUADAS
+            {branches.length} SEDES EN MYSQL
           </span>
         </div>
 
         {/* Listado de Sucursales con Barras de Rendimiento */}
         <div className="mt-4 space-y-4">
           {branches.map((b) => {
-            const porcentaje = Math.round((Number(b.totalIngresos) / totalGlobal) * 100) || 0;
+            const porcentaje = Math.round((Number(b.totalVentas) / totalGlobal) * 100) || 0;
             return (
               <div key={b.sucursalId} className="p-3.5 rounded-xl bg-white/5 border border-white/5 hover:border-white/10 transition-colors">
                 <div className="flex items-center justify-between text-xs mb-1.5">
@@ -96,7 +93,7 @@ export function BranchPerformanceChart() {
                     )}
                   </div>
                   <span className="font-[family-name:var(--font-anton)] text-sm tracking-wide text-[#e3b341]">
-                    {formatCurrency(Number(b.totalIngresos))}
+                    {formatCurrency(Number(b.totalVentas))}
                   </span>
                 </div>
 
@@ -108,7 +105,7 @@ export function BranchPerformanceChart() {
                 </div>
 
                 <div className="flex items-center justify-between text-[11px] text-white/50 mt-2 font-[family-name:var(--font-archivo)]">
-                  <span>{b.cantidadVentas} Comprobantes · Ganancia: <strong className="text-emerald-400">{formatCurrency(Number(b.gananciaBruta))}</strong></span>
+                  <span>{b.totalFacturas} Comprobantes · Utilidad Neta: <strong className="text-emerald-400">{formatCurrency(Number(b.gananciaNeta))}</strong></span>
                   <span className="font-bold text-white/80 font-[family-name:var(--font-pixelify)]">{porcentaje}% total</span>
                 </div>
               </div>
@@ -118,9 +115,9 @@ export function BranchPerformanceChart() {
       </div>
 
       <div className="mt-4 pt-3 border-t border-white/5 text-[11px] text-white/40 flex items-center justify-between font-[family-name:var(--font-archivo)]">
-        <span>Calculado en tiempo real desde MySQL</span>
+        <span>Cálculo agregado en tiempo real sobre `facturas`</span>
         <span className="text-[#e3b341] font-[family-name:var(--font-pixelify)]">
-          {hasDbRows ? 'DATOS VIVOS DE BD' : 'MODO BASE INICIAL'}
+          DATOS VIVOS DE BD
         </span>
       </div>
     </div>

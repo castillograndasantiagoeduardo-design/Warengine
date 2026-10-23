@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { fetchAlertasStock, AlertaStockItem, cambiarEstadoAlerta } from '@/features/administracion/api/alertas.api';
+import { fetchAlertasStock, AlertaStockItem } from '@/features/administracion/api/alertas.api';
 
 export function AlertsFeedCard() {
   const [dbAlerts, setDbAlerts] = useState<AlertaStockItem[]>([]);
@@ -11,8 +11,8 @@ export function AlertsFeedCard() {
     async function loadAlerts() {
       setLoading(true);
       const res = await fetchAlertasStock();
-      if (res.data) {
-        setDbAlerts(res.data);
+      if (res.data && res.data.items) {
+        setDbAlerts(res.data.items);
       }
       setLoading(false);
     }
@@ -21,34 +21,34 @@ export function AlertsFeedCard() {
 
   const defaultFallback: AlertaStockItem[] = [
     {
-      productoId: 101,
+      productoId: '101',
       sucursalId: 2,
-      nombreSucursal: 'Sucursal Norte',
-      nombreProducto: 'Martillo Neumático 1500W',
+      sucursalNombre: 'Sucursal Norte',
+      nombre: 'Martillo Neumático 1500W',
       sku: 'MAR-1500',
       stockActual: 0,
       stockMinimo: 10,
-      deficit: 10,
+      faltante: 10,
     },
     {
-      productoId: 102,
+      productoId: '102',
       sucursalId: 3,
-      nombreSucursal: 'Sucursal Occidente',
-      nombreProducto: 'Disco Corte Metal 4.5"',
+      sucursalNombre: 'Sucursal Occidente',
+      nombre: 'Disco Corte Metal 4.5"',
       sku: 'DIS-4500',
       stockActual: 3,
       stockMinimo: 50,
-      deficit: 47,
+      faltante: 47,
     },
     {
-      productoId: 103,
+      productoId: '103',
       sucursalId: 1,
-      nombreSucursal: 'Sede Principal (Central)',
-      nombreProducto: 'Pintura Epóxica Gris Galón',
+      sucursalNombre: 'Sede Principal (Central)',
+      nombre: 'Pintura Epóxica Gris Galón',
       sku: 'PIN-9021',
       stockActual: 8,
       stockMinimo: 20,
-      deficit: 12,
+      faltante: 12,
     },
   ];
 
@@ -73,12 +73,12 @@ export function AlertsFeedCard() {
         </div>
 
         {/* Lista de Alertas */}
-        <div className="mt-4 space-y-2.5">
+        <div className="mt-4 space-y-2.5 max-h-72 overflow-y-auto">
           {alerts.map((alert, idx) => {
             const esAgotado = alert.stockActual === 0;
             return (
               <div
-                key={`${alert.sku}-${idx}`}
+                key={`${alert.sku}-${alert.sucursalId}-${idx}`}
                 className={`p-3 rounded-xl border transition-all ${
                   esAgotado
                     ? 'bg-rose-500/5 border-rose-500/20 hover:border-rose-500/40'
@@ -96,18 +96,18 @@ export function AlertsFeedCard() {
                         {esAgotado ? 'AGOTADO' : 'STOCK BAJO'}
                       </span>
                       <span className="text-xs font-semibold text-white truncate font-[family-name:var(--font-archivo)]">
-                        {alert.nombreProducto}
+                        {alert.nombre}
                       </span>
                     </div>
                     <div className="flex items-center gap-2 text-[11px] text-white/60 mt-1 font-[family-name:var(--font-archivo)]">
                       <span className="text-[#e3b341] font-[family-name:var(--font-pixelify)] font-medium">
-                        {alert.nombreSucursal}
+                        {alert.sucursalNombre}
                       </span>
                       <span>·</span>
                       <span>SKU: {alert.sku}</span>
                       <span>·</span>
                       <span>
-                        Stock: <strong className="text-rose-400">{alert.stockActual} u.</strong> / Mín: {alert.stockMinimo} u.
+                        Stock: <strong className="text-rose-400">{alert.stockActual} u.</strong> / Mín: {alert.stockMinimo} u. (Faltan {alert.faltante} u.)
                       </span>
                     </div>
                   </div>

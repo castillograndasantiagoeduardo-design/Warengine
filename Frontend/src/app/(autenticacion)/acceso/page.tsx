@@ -37,8 +37,11 @@ export default function AccesoPage() {
         className="w-full flex items-center justify-center z-10 my-auto py-12"
         aria-label="Panel de autenticación WarEngine"
       >
-        <AuthCard />
+        <React.Suspense fallback={<div className="text-[#e3b341] text-xs font-mono animate-pulse">Cargando sistema de acceso...</div>}>
+          <AuthCard />
+        </React.Suspense>
       </section>
+
 
       {/* Pie de página sutil con marca WarEngine anclado abajo sin desplazar el centro */}
       <footer className="absolute bottom-2.5 left-0 right-0 text-center text-[clamp(10px,0.9vw,12px)] text-white/30 font-[family-name:var(--font-archivo)] z-10 pointer-events-none">

@@ -33,52 +33,72 @@ export default function InventarioAdminPage() {
     loadData();
   }, []);
 
-  // Datos de catálogo si la BD de desarrollo aún no tiene productos creados
-  const fallbackProducts = [
+  interface FlatInventarioRow {
+    productoId: string | number;
+    sku: string;
+    nombre: string;
+    categoriaNombre?: string;
+    sucursalId: number;
+    nombreSucursal: string;
+    stockActual: number;
+    stockMinimo: number;
+    estadoStock: string;
+  }
+
+  // Aplanar inventario por producto y sucursal desde la BD
+  const flatDbItems: FlatInventarioRow[] = dbItems.flatMap((prod) => {
+    if (!prod.existenciasPorSucursal || prod.existenciasPorSucursal.length === 0) {
+      return [{
+        productoId: prod.productoId,
+        sku: prod.sku,
+        nombre: prod.nombre,
+        categoriaNombre: prod.categoriaNombre,
+        sucursalId: 1,
+        nombreSucursal: 'Sede Principal',
+        stockActual: prod.stockTotal || 0,
+        stockMinimo: 10,
+        estadoStock: prod.stockTotal === 0 ? 'agotado' : 'optimo',
+      }];
+    }
+    return prod.existenciasPorSucursal.map((ex) => ({
+      productoId: prod.productoId,
+      sku: prod.sku,
+      nombre: prod.nombre,
+      categoriaNombre: prod.categoriaNombre,
+      sucursalId: ex.sucursalId,
+      nombreSucursal: ex.nombreSucursal,
+      stockActual: ex.stockActual,
+      stockMinimo: ex.stockMinimo,
+      estadoStock: ex.estadoStock,
+    }));
+  });
+
+  // Datos de catálogo si la BD aún no responde
+  const fallbackProducts: FlatInventarioRow[] = [
     {
       productoId: 1,
-      sku: 'TAL-0941',
-      nombre: 'Taladro Percutor Industrial 850W',
+      sku: 'PROD-SRV-001',
+      nombre: 'Servidor Rack 1U Xeon Silver',
       sucursalId: 1,
       nombreSucursal: 'Sede Principal (Central)',
-      stockActual: 18,
-      stockMinimo: 15,
-      estadoStock: 'optimo' as const,
+      stockActual: 15,
+      stockMinimo: 5,
+      estadoStock: 'optimo',
     },
     {
       productoId: 2,
-      sku: 'DIS-2019',
-      nombre: 'Disco Diamantado 7" Concreto',
-      sucursalId: 1,
-      nombreSucursal: 'Sede Principal (Central)',
-      stockActual: 60,
-      stockMinimo: 40,
-      estadoStock: 'optimo' as const,
-    },
-    {
-      productoId: 3,
-      sku: 'MAR-1500',
-      nombre: 'Martillo Neumático 1500W',
+      sku: 'PROD-LAP-001',
+      nombre: 'Portátil Empresarial ThinkPad T14',
       sucursalId: 2,
       nombreSucursal: 'Sucursal Norte',
-      stockActual: 0,
-      stockMinimo: 5,
-      estadoStock: 'agotado' as const,
-    },
-    {
-      productoId: 4,
-      sku: 'GEL-1044',
-      nombre: 'Guante de Seguridad Reforzado Nitrilo',
-      sucursalId: 1,
-      nombreSucursal: 'Sede Principal (Central)',
-      stockActual: 120,
-      stockMinimo: 50,
-      estadoStock: 'optimo' as const,
+      stockActual: 20,
+      stockMinimo: 8,
+      estadoStock: 'optimo',
     },
   ];
 
-  const hasDbRows = dbItems.length > 0;
-  const items = hasDbRows ? dbItems : fallbackProducts;
+  const hasDbRows = flatDbItems.length > 0;
+  const items: FlatInventarioRow[] = hasDbRows ? flatDbItems : fallbackProducts;
 
   const filteredItems = items.filter(
     (i) =>
@@ -86,6 +106,7 @@ export default function InventarioAdminPage() {
       i.sku.toLowerCase().includes(query.toLowerCase()) ||
       i.nombreSucursal.toLowerCase().includes(query.toLowerCase())
   );
+
 
   return (
     <div className="space-y-6 select-none">

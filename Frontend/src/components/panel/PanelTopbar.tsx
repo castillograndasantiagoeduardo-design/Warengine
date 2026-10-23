@@ -26,7 +26,7 @@ export function PanelTopbar({
       setLoading(true);
       const [branchRes, alertRes] = await Promise.all([
         fetchSucursales(),
-        fetchAlertasAdmin({ atendida: false }),
+        fetchAlertasAdmin({ estado: 'pendiente' }),
       ]);
 
       if (branchRes.data) {
@@ -46,7 +46,7 @@ export function PanelTopbar({
     onBranchChange?.(id);
   };
 
-  const pendingAlerts = alerts.filter((a) => !a.atendida);
+  const pendingAlerts = alerts.filter((a) => a.estado === 'pendiente');
 
   return (
     <header className="h-18 px-6 bg-[#0c142b]/80 border-b border-white/10 flex items-center justify-between sticky top-0 z-30 backdrop-blur-md select-none">
@@ -139,12 +139,13 @@ export function PanelTopbar({
                         }`}
                       />
                       <div className="text-xs">
-                        <p className="font-semibold text-white/90">{a.tipo}</p>
-                        <p className="text-white/70 text-[11px]">{a.mensaje}</p>
+                        <p className="font-semibold text-white/90">{a.motivo}</p>
+                        <p className="text-white/70 text-[11px]">{a.descripcion || a.motivo}</p>
                         <span className="text-[10px] text-white/40 mt-1 block">
                           {new Date(a.fechaCreacion).toLocaleString()}
                         </span>
                       </div>
+
                     </div>
                   ))
                 )}

@@ -1,8 +1,10 @@
 'use client';
 
 import React, { useState, useId } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 
 type AuthMode = 'login' | 'registro';
+
 
 interface FormState {
   nombre: string;
@@ -17,9 +19,26 @@ interface FormErrors {
 }
 
 export function AuthCard() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const urlError = searchParams?.get('error');
+
   const [mode, setMode] = useState<AuthMode>('login');
   const [showPassword, setShowPassword] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [serverError, setServerError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [loginSuccess, setLoginSuccess] = useState(false);
+
+  // Mensaje derivado de la protección de rutas
+  const accessDeniedMessage =
+    urlError === 'unauthorized_super_admin_only'
+      ? 'Acceso denegado: Se requieren permisos de Super Administrador para acceder al panel.'
+      : urlError === 'unauthenticated'
+      ? 'Debes iniciar sesión con tu cuenta de Super Administrador.'
+      : urlError === 'session_expired'
+      ? 'Tu sesión ha caducado. Vuelve a ingresar tus credenciales.'
+      : null;
 
   // Estados de formularios
   const [loginState, setLoginState] = useState<FormState>({
@@ -50,6 +69,17 @@ export function AuthCard() {
     setLoginErrors({});
     setRegisterErrors({});
     setSubmitted(false);
+    setServerError(null);
+  };
+
+  const autofillSuperAdmin = () => {
+    setLoginState({
+      nombre: '',
+      email: 'superadmin@warengine.local',
+      password: 'Warengine.Admin.2026!',
+    });
+    setLoginErrors({});
+    setServerError(null);
   };
 
   // Validaciones
@@ -72,8 +102,10 @@ export function AuthCard() {
     return undefined;
   };
 
-  const handleLoginSubmit = (e: React.FormEvent) => {
+  const handleLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setServerError(null);
+
     const emailErr = validateEmail(loginState.email);
     const passErr = validatePassword(loginState.password);
 
@@ -83,11 +115,58 @@ export function AuthCard() {
     }
 
     setLoginErrors({});
-    setSubmitted(true);
+    setIsLoading(true);
 
-    // TODO: Conectar autenticación backend (POST /api/auth/login)
-    console.log('[AuthCard] Iniciar sesión enviado:', { email: loginState.email });
+    try {
+      const res = await fetch('http://localhost:8017/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: loginState.email.trim(),
+          password: loginState.password,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setServerError(data.message || data.error || 'Credenciales inválidas');
+        setIsLoading(false);
+        return;
+      }
+
+      if (data.accessToken && data.usuario) {
+        // Almacenar token y sesión en localStorage
+        localStorage.setItem('warengine_access_token', data.accessToken);
+        localStorage.setItem('warengine_user', JSON.stringify(data.usuario));
+        localStorage.setItem('warengine_permisos', JSON.stringify(data.permisos || []));
+
+        // Establecer cookies para Next.js Edge Middleware
+        document.cookie = `warengine_access_token=${data.accessToken}; path=/; max-age=86400; SameSite=Lax`;
+        document.cookie = `warengine_role_id=${data.usuario.rolId}; path=/; max-age=86400; SameSite=Lax`;
+
+        // Validar si el usuario es Super Admin
+        if (data.usuario.rolId === 1 || data.usuario.rolNombre === 'super-admin') {
+          setLoginSuccess(true);
+          setSubmitted(true);
+          setTimeout(() => {
+            router.push('/admin/dashboard');
+          }, 400);
+        } else {
+          setServerError('Acceso restringido: Esta cuenta no posee privilegios de Super Administrador.');
+          setIsLoading(false);
+        }
+      } else {
+        setServerError('Respuesta inesperada del servidor de autenticación.');
+        setIsLoading(false);
+      }
+    } catch (err) {
+      console.error('[AuthCard] Error conectando con API:', err);
+      setServerError('No se pudo establecer conexión con el servidor backend (puerto 8017).');
+      setIsLoading(false);
+    }
   };
+
 
   const handleRegisterSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -338,26 +417,62 @@ export function AuthCard() {
                   )}
                 </div>
 
+                {/* Mensajes de Alerta y Notificación */}
+                {accessDeniedMessage && !serverError && (
+                  <div className="p-2.5 rounded-xl bg-amber-500/15 border border-amber-500/30 text-amber-300 text-[11px] font-[family-name:var(--font-archivo)] leading-snug">
+                    ⚠️ {accessDeniedMessage}
+                  </div>
+                )}
+
+                {serverError && (
+                  <div className="p-2.5 rounded-xl bg-rose-500/15 border border-rose-500/30 text-rose-300 text-[11px] font-[family-name:var(--font-archivo)] leading-snug">
+                    ✕ {serverError}
+                  </div>
+                )}
+
+                {loginSuccess && (
+                  <div className="p-2.5 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-[11px] font-[family-name:var(--font-archivo)] text-center animate-pulse">
+                    ✓ Autenticación exitosa. Redirigiendo a Panel Super Admin...
+                  </div>
+                )}
+
+                {/* Enlace rápido de pruebas para auto-completar Super Admin */}
+                <div className="flex justify-between items-center text-[10px] text-white/50 pt-1">
+                  <button
+                    type="button"
+                    onClick={autofillSuperAdmin}
+                    className="text-[#e3b341] hover:underline cursor-pointer flex items-center gap-1 font-[family-name:var(--font-pixelify)] uppercase tracking-wider"
+                  >
+                    ⚡ Auto-completar Super Admin
+                  </button>
+                  <span className="text-[10px] text-white/40">Rol: Super Admin (id=1)</span>
+                </div>
+
                 {/* Botón Píldora Primario (Dorado dominante con hover invertido) */}
                 <div className="pt-2">
                   <button
                     type="submit"
-                    className="w-full rounded-full py-2.5 px-5 font-[family-name:var(--font-pixelify)] font-bold text-xs uppercase tracking-wider bg-[#E9B949] text-[#14213D] hover:bg-[#14213D] hover:text-white hover:border hover:border-[#E9B949]/60 active:scale-[0.98] transition-colors duration-200 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E9B949]"
+                    disabled={isLoading || loginSuccess}
+                    className="w-full rounded-full py-2.5 px-5 font-[family-name:var(--font-pixelify)] font-bold text-xs uppercase tracking-wider bg-[#E9B949] text-[#14213D] hover:bg-[#14213D] hover:text-white hover:border hover:border-[#E9B949]/60 active:scale-[0.98] transition-colors duration-200 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E9B949] disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                     style={{
                       boxShadow:
                         '5px 5px 12px rgba(0,0,0,0.45), -3px -3px 10px rgba(255,255,255,0.06)',
                     }}
                   >
-                    Ingresar al Sistema
+                    {isLoading ? (
+                      <>
+                        <span className="w-3.5 h-3.5 rounded-full border-2 border-[#14213D] border-t-transparent animate-spin" />
+                        <span>Verificando...</span>
+                      </>
+                    ) : loginSuccess ? (
+                      <span>¡Acceso Concedido!</span>
+                    ) : (
+                      <span>Ingresar al Sistema</span>
+                    )}
                   </button>
                 </div>
               </form>
 
-              {submitted && isLogin && (
-                <p className="text-[#E9B949] font-[family-name:var(--font-archivo)] text-[11px] text-center mt-2.5 animate-pulse">
-                  ✓ Validación local exitosa.
-                </p>
-              )}
             </div>
           </div>
 

@@ -1,38 +1,46 @@
 import { apiFetch } from '@/lib/api-client';
 
 export interface AlertaStockItem {
-  productoId: number;
+  productoId: string;
   sku: string;
-  nombreProducto: string;
+  nombre: string;
   sucursalId: number;
-  nombreSucursal: string;
+  sucursalNombre: string;
   stockActual: number;
   stockMinimo: number;
-  deficit: number;
+  faltante: number;
+}
+
+export interface AlertaStockResponse {
+  items: AlertaStockItem[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
 }
 
 export interface AlertaAdminItem {
-  id: number;
+  id: string | number;
   sucursalId: number;
   nombreSucursal?: string;
-  tipo: string;
-  mensaje: string;
+  motivo: string;
+  descripcion?: string;
   prioridad: 'urgente' | 'normal';
-  atendida: boolean;
+  estado: 'pendiente' | 'visto' | 'atendido';
   fechaCreacion: string;
 }
 
 export async function fetchAlertasStock() {
-  return apiFetch<AlertaStockItem[]>('/administracion/alertas-stock');
+  return apiFetch<AlertaStockResponse>('/administracion/alertas-stock');
 }
 
-export async function fetchAlertasAdmin(params?: { sucursalId?: number; atendida?: boolean }) {
+export async function fetchAlertasAdmin(params?: { sucursalId?: number; estado?: string }) {
   return apiFetch<AlertaAdminItem[]>('/administracion/alertas', { params });
 }
 
-export async function cambiarEstadoAlerta(id: number, atendida: boolean) {
+export async function cambiarEstadoAlerta(id: string | number, estado: 'pendiente' | 'visto' | 'atendido') {
   return apiFetch<void>(`/administracion/alertas/${id}/estado`, {
     method: 'PUT',
-    body: JSON.stringify({ atendida }),
+    body: JSON.stringify({ estado }),
   });
 }

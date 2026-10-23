@@ -12,36 +12,43 @@ export interface MetricasGananciasResponse {
 export interface TendenciaVentaItem {
   periodo: string;
   totalVentas: number;
+  totalGanancias?: number;
   cantidadFacturas: number;
 }
 
 export interface RendimientoSucursalItem {
   sucursalId: number;
   nombreSucursal: string;
-  totalIngresos: number;
-  totalCostos: number;
-  gananciaBruta: number;
-  cantidadVentas: number;
-  margenPorcentaje: number;
+  totalVentas: number;
+  totalFacturas: number;
+  ticketPromedio: number;
+  gananciaNeta: number;
 }
 
 export interface RankingProductoItem {
-  productoId: number;
-  codigoSku: string;
-  nombreProducto: string;
-  unidadesVendidas: number;
-  ingresosGenerados: number;
-}
-
-export interface ComparativoInventarioItem {
-  productoId: number;
+  productoId: string | number;
   sku: string;
   nombre: string;
+  cantidadVendida: number;
+  totalRecaudado: number;
+  gananciaGenerada?: number;
+}
+
+export interface ExistenciaPorSucursal {
   sucursalId: number;
   nombreSucursal: string;
   stockActual: number;
   stockMinimo: number;
-  estadoStock: 'agotado' | 'critico' | 'optimo';
+  estadoStock: string;
+}
+
+export interface ComparativoInventarioItem {
+  productoId: string;
+  sku: string;
+  nombre: string;
+  categoriaNombre: string;
+  stockTotal: number;
+  existenciasPorSucursal: ExistenciaPorSucursal[];
 }
 
 export async function fetchMetricasGanancias(params?: {
@@ -73,7 +80,7 @@ export async function fetchRankingProductos(params?: {
   fechaInicio?: string;
   fechaFin?: string;
   limite?: number;
-  orden?: 'asc' | 'desc';
+  orden?: 'mas_vendidos' | 'menos_vendidos';
 }) {
   return apiFetch<RankingProductoItem[]>('/administracion/dashboard/ranking', { params });
 }

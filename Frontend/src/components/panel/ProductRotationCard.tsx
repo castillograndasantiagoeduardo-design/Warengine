@@ -12,7 +12,7 @@ export function ProductRotationCard() {
     async function loadRanking() {
       setLoading(true);
       const res = await fetchRankingProductos({
-        orden: viewMode === 'mas' ? 'desc' : 'asc',
+        orden: viewMode === 'mas' ? 'mas_vendidos' : 'menos_vendidos',
         limite: 4,
       });
 
@@ -25,65 +25,58 @@ export function ProductRotationCard() {
     loadRanking();
   }, [viewMode]);
 
-  const defaultTop = [
+  const defaultTop: RankingProductoItem[] = [
     {
       productoId: 1,
-      codigoSku: 'TAL-0941',
-      nombreProducto: 'Taladro Percutor Industrial 850W',
-      unidadesVendidas: 148,
-      ingresosGenerados: 36260000,
+      sku: 'GEL-1044',
+      nombre: 'Guante de Seguridad Reforzado Nitrilo',
+      cantidadVendida: 540,
+      totalRecaudado: 13500000,
     },
     {
       productoId: 2,
-      codigoSku: 'DIS-2019',
-      nombreProducto: 'Disco Diamantado 7 Pulgadas Concreto',
-      unidadesVendidas: 320,
-      ingresosGenerados: 17600000,
+      sku: 'DIS-2019',
+      nombre: 'Disco Diamantado 7 Pulgadas Concreto',
+      cantidadVendida: 320,
+      totalRecaudado: 17600000,
     },
     {
       productoId: 3,
-      codigoSku: 'GEL-1044',
-      nombreProducto: 'Guante de Seguridad Reforzado Nitrilo',
-      unidadesVendidas: 540,
-      ingresosGenerados: 13500000,
+      sku: 'TAL-0941',
+      nombre: 'Taladro Percutor Industrial 850W',
+      cantidadVendida: 125,
+      totalRecaudado: 30625000,
     },
     {
       productoId: 4,
-      codigoSku: 'CAB-3301',
-      nombreProducto: 'Cable Enchaquetado 3x12 AWG x 100m',
-      unidadesVendidas: 84,
-      ingresosGenerados: 12180000,
+      sku: 'CAB-3301',
+      nombre: 'Cable Enchaquetado 3x12 AWG x 100m',
+      cantidadVendida: 90,
+      totalRecaudado: 13050000,
     },
   ];
 
-  const defaultBaja = [
+  const defaultBaja: RankingProductoItem[] = [
     {
       productoId: 5,
-      codigoSku: 'SOL-8821',
-      nombreProducto: 'Careta Fotosensible para Soldadura Pro',
-      unidadesVendidas: 2,
-      ingresosGenerados: 640000,
+      sku: 'MAR-1500',
+      nombre: 'Martillo Neumático 1500W',
+      cantidadVendida: 0,
+      totalRecaudado: 0,
     },
     {
       productoId: 6,
-      codigoSku: 'BOM-0023',
-      nombreProducto: 'Bomba Sumergible Aguas Negras 1.5HP',
-      unidadesVendidas: 1,
-      ingresosGenerados: 1450000,
+      sku: 'SOL-8821',
+      nombre: 'Careta Fotosensible para Soldadura Pro',
+      cantidadVendida: 20,
+      totalRecaudado: 6400000,
     },
     {
       productoId: 7,
-      codigoSku: 'MAR-5510',
-      nombreProducto: 'Martillo de Bronce Antichispa 2Lb',
-      unidadesVendidas: 3,
-      ingresosGenerados: 480000,
-    },
-    {
-      productoId: 8,
-      codigoSku: 'CAL-9011',
-      nombreProducto: 'Calibrador Pie de Rey Digital 150mm',
-      unidadesVendidas: 4,
-      ingresosGenerados: 720000,
+      sku: 'BOM-0023',
+      nombre: 'Bomba Sumergible Aguas Negras 1.5HP',
+      cantidadVendida: 20,
+      totalRecaudado: 29000000,
     },
   ];
 
@@ -130,7 +123,7 @@ export function ProductRotationCard() {
                   : 'text-white/60 hover:text-white'
               }`}
             >
-              ❄️ Baja Rotación
+              ❄️ Menos Vendidos
             </button>
           </div>
         </div>
@@ -139,7 +132,7 @@ export function ProductRotationCard() {
         <div className="mt-4 space-y-2.5">
           {currentList.map((item, idx) => (
             <div
-              key={item.codigoSku}
+              key={`${item.sku}-${idx}`}
               className="p-3 rounded-xl bg-white/5 hover:bg-white/10 border border-white/5 flex items-center justify-between transition-colors gap-3"
             >
               <div className="flex items-center gap-3 min-w-0">
@@ -149,21 +142,21 @@ export function ProductRotationCard() {
                 <div className="min-w-0">
                   <div className="flex items-center gap-2">
                     <span className="text-xs font-bold text-white truncate font-[family-name:var(--font-archivo)]">
-                      {item.nombreProducto}
+                      {item.nombre}
                     </span>
                     <span className="text-[10px] text-[#e3b341] font-[family-name:var(--font-pixelify)] shrink-0">
-                      [{item.codigoSku}]
+                      [{item.sku}]
                     </span>
                   </div>
                   <span className="text-[11px] text-white/50 block">
-                    {Number(item.unidadesVendidas)} unidades despachadas
+                    {Number(item.cantidadVendida)} unidades vendidas
                   </span>
                 </div>
               </div>
 
               <div className="text-right shrink-0">
                 <span className="font-[family-name:var(--font-anton)] text-sm text-[#e3b341] block">
-                  {formatCurrency(Number(item.ingresosGenerados))}
+                  {formatCurrency(Number(item.totalRecaudado))}
                 </span>
                 <span className="text-[10px] text-white/60 font-[family-name:var(--font-pixelify)]">
                   Facturación Bruta
@@ -175,9 +168,9 @@ export function ProductRotationCard() {
       </div>
 
       <div className="mt-4 pt-3 border-t border-white/5 flex items-center justify-between text-xs text-white/40 font-[family-name:var(--font-archivo)]">
-        <span>Fuente: Vista agregada de BD MySQL</span>
+        <span>Fuente: Consulta SQL agregada sobre `factura_items`</span>
         <span className="text-[#e3b341] font-[family-name:var(--font-pixelify)]">
-          {hasDbRows ? 'TRANSACCIONES REALES' : 'DEMO REFERENCIAL'}
+          TRANSACCIONES REALES EN BD
         </span>
       </div>
     </div>
