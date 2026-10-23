@@ -1,67 +1,59 @@
 'use client';
 
-import React, { useState } from 'react';
-
-interface StockAlert {
-  id: number;
-  sucursal: string;
-  producto: string;
-  sku: string;
-  stockActual: number;
-  stockMinimo: number;
-  prioridad: 'urgente' | 'normal';
-  atendida: boolean;
-}
+import React, { useEffect, useState } from 'react';
+import { fetchAlertasStock, AlertaStockItem, cambiarEstadoAlerta } from '@/features/administracion/api/alertas.api';
 
 export function AlertsFeedCard() {
-  const [alerts, setAlerts] = useState<StockAlert[]>([
+  const [dbAlerts, setDbAlerts] = useState<AlertaStockItem[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    async function loadAlerts() {
+      setLoading(true);
+      const res = await fetchAlertasStock();
+      if (res.data) {
+        setDbAlerts(res.data);
+      }
+      setLoading(false);
+    }
+    loadAlerts();
+  }, []);
+
+  const defaultFallback: AlertaStockItem[] = [
     {
-      id: 1,
-      sucursal: 'Sucursal Norte',
-      producto: 'Martillo Neumático 1500W',
+      productoId: 101,
+      sucursalId: 2,
+      nombreSucursal: 'Sucursal Norte',
+      nombreProducto: 'Martillo Neumático 1500W',
       sku: 'MAR-1500',
       stockActual: 0,
       stockMinimo: 10,
-      prioridad: 'urgente',
-      atendida: false,
+      deficit: 10,
     },
     {
-      id: 2,
-      sucursal: 'Sucursal Occidente',
-      producto: 'Disco Corte Metal 4.5"',
+      productoId: 102,
+      sucursalId: 3,
+      nombreSucursal: 'Sucursal Occidente',
+      nombreProducto: 'Disco Corte Metal 4.5"',
       sku: 'DIS-4500',
       stockActual: 3,
       stockMinimo: 50,
-      prioridad: 'urgente',
-      atendida: false,
+      deficit: 47,
     },
     {
-      id: 3,
-      sucursal: 'Sede Principal (Central)',
-      producto: 'Pintura Epóxica Gris Galón',
+      productoId: 103,
+      sucursalId: 1,
+      nombreSucursal: 'Sede Principal (Central)',
+      nombreProducto: 'Pintura Epóxica Gris Galón',
       sku: 'PIN-9021',
       stockActual: 8,
       stockMinimo: 20,
-      prioridad: 'normal',
-      atendida: false,
+      deficit: 12,
     },
-    {
-      id: 4,
-      sucursal: 'Sucursal Norte',
-      producto: 'Casco de Seguridad con Barbuquejo',
-      sku: 'CAS-1002',
-      stockActual: 5,
-      stockMinimo: 30,
-      prioridad: 'normal',
-      atendida: false,
-    },
-  ]);
+  ];
 
-  const toggleAtendida = (id: number) => {
-    setAlerts((prev) =>
-      prev.map((a) => (a.id === id ? { ...a, atendida: !a.atendida } : a))
-    );
-  };
+  const hasDbRows = dbAlerts.length > 0;
+  const alerts = hasDbRows ? dbAlerts : defaultFallback;
 
   return (
     <div className="p-5 rounded-2xl bg-[#0f1733]/90 border border-white/10 flex flex-col justify-between backdrop-blur-sm select-none">
@@ -72,77 +64,71 @@ export function AlertsFeedCard() {
               Alertas de Stock por Sucursal (RF-ADM-A6)
             </h2>
             <p className="text-xs text-white/50 mt-0.5 font-[family-name:var(--font-archivo)]">
-              Monitoreo activo de agotamiento e inventario por debajo del mínimo de seguridad
+              Monitoreo de agotamiento en tiempo real (/administracion/alertas-stock)
             </p>
           </div>
           <span className="text-[10px] px-2 py-0.5 rounded bg-rose-500/10 text-rose-400 border border-rose-500/20 font-[family-name:var(--font-pixelify)] font-bold">
-            {alerts.filter((a) => !a.atendida).length} PENDIENTES
+            {alerts.length} CRÍTICAS
           </span>
         </div>
 
         {/* Lista de Alertas */}
         <div className="mt-4 space-y-2.5">
-          {alerts.map((alert) => (
-            <div
-              key={alert.id}
-              className={`p-3 rounded-xl border transition-all ${
-                alert.atendida
-                  ? 'bg-white/2 border-white/5 opacity-50'
-                  : alert.prioridad === 'urgente'
-                  ? 'bg-rose-500/5 border-rose-500/20 hover:border-rose-500/40'
-                  : 'bg-amber-500/5 border-amber-500/20 hover:border-amber-500/40'
-              }`}
-            >
-              <div className="flex items-start justify-between gap-2">
-                <div className="min-w-0">
-                  <div className="flex items-center gap-2">
-                    <span
-                      className={`text-[9px] px-1.5 py-0.5 rounded font-bold uppercase font-[family-name:var(--font-pixelify)] ${
-                        alert.prioridad === 'urgente'
-                          ? 'bg-rose-500 text-white'
-                          : 'bg-amber-500 text-[#111111]'
-                      }`}
-                    >
-                      {alert.prioridad === 'urgente' ? 'AGOTADO' : 'STOCK BAJO'}
-                    </span>
-                    <span className="text-xs font-semibold text-white truncate font-[family-name:var(--font-archivo)]">
-                      {alert.producto}
-                    </span>
+          {alerts.map((alert, idx) => {
+            const esAgotado = alert.stockActual === 0;
+            return (
+              <div
+                key={`${alert.sku}-${idx}`}
+                className={`p-3 rounded-xl border transition-all ${
+                  esAgotado
+                    ? 'bg-rose-500/5 border-rose-500/20 hover:border-rose-500/40'
+                    : 'bg-amber-500/5 border-amber-500/20 hover:border-amber-500/40'
+                }`}
+              >
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2">
+                      <span
+                        className={`text-[9px] px-1.5 py-0.5 rounded font-bold uppercase font-[family-name:var(--font-pixelify)] ${
+                          esAgotado ? 'bg-rose-500 text-white' : 'bg-amber-500 text-[#111111]'
+                        }`}
+                      >
+                        {esAgotado ? 'AGOTADO' : 'STOCK BAJO'}
+                      </span>
+                      <span className="text-xs font-semibold text-white truncate font-[family-name:var(--font-archivo)]">
+                        {alert.nombreProducto}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2 text-[11px] text-white/60 mt-1 font-[family-name:var(--font-archivo)]">
+                      <span className="text-[#e3b341] font-[family-name:var(--font-pixelify)] font-medium">
+                        {alert.nombreSucursal}
+                      </span>
+                      <span>·</span>
+                      <span>SKU: {alert.sku}</span>
+                      <span>·</span>
+                      <span>
+                        Stock: <strong className="text-rose-400">{alert.stockActual} u.</strong> / Mín: {alert.stockMinimo} u.
+                      </span>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2 text-[11px] text-white/60 mt-1 font-[family-name:var(--font-archivo)]">
-                    <span className="text-[#e3b341] font-[family-name:var(--font-pixelify)] font-medium">
-                      {alert.sucursal}
-                    </span>
-                    <span>·</span>
-                    <span>SKU: {alert.sku}</span>
-                    <span>·</span>
-                    <span>
-                      Existencia: <strong className="text-rose-400">{alert.stockActual} u.</strong> / Mín: {alert.stockMinimo} u.
-                    </span>
-                  </div>
-                </div>
 
-                {/* Botón de Resolver / Atender */}
-                <button
-                  onClick={() => toggleAtendida(alert.id)}
-                  className={`px-2.5 py-1 rounded-lg text-[10px] font-semibold transition-all cursor-pointer font-[family-name:var(--font-pixelify)] shrink-0 ${
-                    alert.atendida
-                      ? 'bg-white/10 text-white/40 hover:bg-white/20'
-                      : 'bg-[#e3b341] text-[#111111] hover:bg-[#f3c65c] shadow-sm'
-                  }`}
-                >
-                  {alert.atendida ? 'Atendida ✓' : 'Atender'}
-                </button>
+                  <a
+                    href="/admin/inventario"
+                    className="px-2.5 py-1 rounded-lg text-[10px] font-semibold transition-all cursor-pointer font-[family-name:var(--font-pixelify)] shrink-0 bg-[#e3b341] text-[#111111] hover:bg-[#f3c65c] shadow-sm"
+                  >
+                    Trasladar &rarr;
+                  </a>
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
 
       <div className="mt-4 pt-3 border-t border-white/5 flex items-center justify-between text-xs text-white/40 font-[family-name:var(--font-archivo)]">
-        <span>Disparadores automáticos calculados cada 5 minutos</span>
+        <span>Evaluado contra Kardex de movimientos</span>
         <span className="text-white/60 font-[family-name:var(--font-pixelify)]">
-          KARDEX SYNCHRONIZED
+          {hasDbRows ? 'DESDE BD MYSQL' : 'MODO REFERENCIA'}
         </span>
       </div>
     </div>

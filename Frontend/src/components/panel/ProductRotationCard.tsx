@@ -1,90 +1,94 @@
 'use client';
 
-import React, { useState } from 'react';
-
-interface ProductItem {
-  sku: string;
-  nombre: string;
-  categoria: string;
-  unidadesVendidas: number;
-  ingresosTotales: number;
-  stockActual: number;
-}
+import React, { useEffect, useState } from 'react';
+import { fetchRankingProductos, RankingProductoItem } from '@/features/administracion/api/dashboard.api';
 
 export function ProductRotationCard() {
   const [viewMode, setViewMode] = useState<'mas' | 'menos'>('mas');
+  const [dbData, setDbData] = useState<RankingProductoItem[]>([]);
+  const [loading, setLoading] = useState(false);
 
-  const topVendidos: ProductItem[] = [
+  useEffect(() => {
+    async function loadRanking() {
+      setLoading(true);
+      const res = await fetchRankingProductos({
+        orden: viewMode === 'mas' ? 'desc' : 'asc',
+        limite: 4,
+      });
+
+      if (res.data) {
+        setDbData(res.data);
+      }
+      setLoading(false);
+    }
+
+    loadRanking();
+  }, [viewMode]);
+
+  const defaultTop = [
     {
-      sku: 'TAL-0941',
-      nombre: 'Taladro Percutor Industrial 850W',
-      categoria: 'Herramientas Eléctricas',
+      productoId: 1,
+      codigoSku: 'TAL-0941',
+      nombreProducto: 'Taladro Percutor Industrial 850W',
       unidadesVendidas: 148,
-      ingresosTotales: 36260000,
-      stockActual: 32,
+      ingresosGenerados: 36260000,
     },
     {
-      sku: 'DIS-2019',
-      nombre: 'Disco Diamantado 7 Pulgadas Concreto',
-      categoria: 'Abrasivos',
+      productoId: 2,
+      codigoSku: 'DIS-2019',
+      nombreProducto: 'Disco Diamantado 7 Pulgadas Concreto',
       unidadesVendidas: 320,
-      ingresosTotales: 17600000,
-      stockActual: 114,
+      ingresosGenerados: 17600000,
     },
     {
-      sku: 'GEL-1044',
-      nombre: 'Guante de Seguridad Reforzado Nitrilo',
-      categoria: 'Seguridad Industrial',
+      productoId: 3,
+      codigoSku: 'GEL-1044',
+      nombreProducto: 'Guante de Seguridad Reforzado Nitrilo',
       unidadesVendidas: 540,
-      ingresosTotales: 13500000,
-      stockActual: 240,
+      ingresosGenerados: 13500000,
     },
     {
-      sku: 'CAB-3301',
-      nombre: 'Cable Enchaquetado 3x12 AWG x 100m',
-      categoria: 'Material Eléctrico',
+      productoId: 4,
+      codigoSku: 'CAB-3301',
+      nombreProducto: 'Cable Enchaquetado 3x12 AWG x 100m',
       unidadesVendidas: 84,
-      ingresosTotales: 12180000,
-      stockActual: 18,
+      ingresosGenerados: 12180000,
     },
   ];
 
-  const menosVendidos: ProductItem[] = [
+  const defaultBaja = [
     {
-      sku: 'SOL-8821',
-      nombre: 'Careta Fotosensible para Soldadura Pro',
-      categoria: 'Seguridad Industrial',
+      productoId: 5,
+      codigoSku: 'SOL-8821',
+      nombreProducto: 'Careta Fotosensible para Soldadura Pro',
       unidadesVendidas: 2,
-      ingresosTotales: 640000,
-      stockActual: 45,
+      ingresosGenerados: 640000,
     },
     {
-      sku: 'BOM-0023',
-      nombre: 'Bomba Sumergible Aguas Negras 1.5HP',
-      categoria: 'Maquinaria',
+      productoId: 6,
+      codigoSku: 'BOM-0023',
+      nombreProducto: 'Bomba Sumergible Aguas Negras 1.5HP',
       unidadesVendidas: 1,
-      ingresosTotales: 1450000,
-      stockActual: 12,
+      ingresosGenerados: 1450000,
     },
     {
-      sku: 'MAR-5510',
-      nombre: 'Martillo de Bronce Antichispa 2Lb',
-      categoria: 'Herramientas Manuales',
+      productoId: 7,
+      codigoSku: 'MAR-5510',
+      nombreProducto: 'Martillo de Bronce Antichispa 2Lb',
       unidadesVendidas: 3,
-      ingresosTotales: 480000,
-      stockActual: 28,
+      ingresosGenerados: 480000,
     },
     {
-      sku: 'CAL-9011',
-      nombre: 'Calibrador Pie de Rey Digital 150mm',
-      categoria: 'Instrumentación',
+      productoId: 8,
+      codigoSku: 'CAL-9011',
+      nombreProducto: 'Calibrador Pie de Rey Digital 150mm',
       unidadesVendidas: 4,
-      ingresosTotales: 720000,
-      stockActual: 35,
+      ingresosGenerados: 720000,
     },
   ];
 
-  const currentList = viewMode === 'mas' ? topVendidos : menosVendidos;
+  const hasDbRows = dbData.length > 0;
+  const currentList = hasDbRows ? dbData : viewMode === 'mas' ? defaultTop : defaultBaja;
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('es-CO', {
@@ -103,11 +107,10 @@ export function ProductRotationCard() {
               Rotación de Catálogo (RF-ADM-A4)
             </h2>
             <p className="text-xs text-white/50 mt-0.5 font-[family-name:var(--font-archivo)]">
-              Productos líderes en facturación vs. inventario de baja rotación
+              Líderes en facturación vs. inventario estancado (/dashboard/ranking)
             </p>
           </div>
 
-          {/* Selector de Modo */}
           <div className="flex items-center gap-1 p-1 rounded-xl bg-white/5 border border-white/10 self-start sm:self-auto">
             <button
               onClick={() => setViewMode('mas')}
@@ -136,7 +139,7 @@ export function ProductRotationCard() {
         <div className="mt-4 space-y-2.5">
           {currentList.map((item, idx) => (
             <div
-              key={item.sku}
+              key={item.codigoSku}
               className="p-3 rounded-xl bg-white/5 hover:bg-white/10 border border-white/5 flex items-center justify-between transition-colors gap-3"
             >
               <div className="flex items-center gap-3 min-w-0">
@@ -146,24 +149,24 @@ export function ProductRotationCard() {
                 <div className="min-w-0">
                   <div className="flex items-center gap-2">
                     <span className="text-xs font-bold text-white truncate font-[family-name:var(--font-archivo)]">
-                      {item.nombre}
+                      {item.nombreProducto}
                     </span>
                     <span className="text-[10px] text-[#e3b341] font-[family-name:var(--font-pixelify)] shrink-0">
-                      [{item.sku}]
+                      [{item.codigoSku}]
                     </span>
                   </div>
                   <span className="text-[11px] text-white/50 block">
-                    {item.categoria} · Stock: <strong className="text-white/80">{item.stockActual} u.</strong>
+                    {Number(item.unidadesVendidas)} unidades despachadas
                   </span>
                 </div>
               </div>
 
               <div className="text-right shrink-0">
                 <span className="font-[family-name:var(--font-anton)] text-sm text-[#e3b341] block">
-                  {formatCurrency(item.ingresosTotales)}
+                  {formatCurrency(Number(item.ingresosGenerados))}
                 </span>
                 <span className="text-[10px] text-white/60 font-[family-name:var(--font-pixelify)]">
-                  {item.unidadesVendidas} unidades
+                  Facturación Bruta
                 </span>
               </div>
             </div>
@@ -172,9 +175,9 @@ export function ProductRotationCard() {
       </div>
 
       <div className="mt-4 pt-3 border-t border-white/5 flex items-center justify-between text-xs text-white/40 font-[family-name:var(--font-archivo)]">
-        <span>Evaluado sobre 1.420 transacciones registradas</span>
+        <span>Fuente: Vista agregada de BD MySQL</span>
         <span className="text-[#e3b341] font-[family-name:var(--font-pixelify)]">
-          {viewMode === 'mas' ? 'ALTA DEMANDA' : 'ANALIZAR PROMOCIÓN'}
+          {hasDbRows ? 'TRANSACCIONES REALES' : 'DEMO REFERENCIAL'}
         </span>
       </div>
     </div>

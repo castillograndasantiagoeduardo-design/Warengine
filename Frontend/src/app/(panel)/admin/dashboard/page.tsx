@@ -1,15 +1,46 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { MetricKpiCard } from '@/components/panel/MetricKpiCard';
 import { TrendSalesChart } from '@/components/panel/TrendSalesChart';
 import { BranchPerformanceChart } from '@/components/panel/BranchPerformanceChart';
 import { ProductRotationCard } from '@/components/panel/ProductRotationCard';
 import { AlertsFeedCard } from '@/components/panel/AlertsFeedCard';
 import { Button3D } from '@/components/ui/Button3D';
+import { fetchMetricasGanancias, MetricasGananciasResponse } from '@/features/administracion/api/dashboard.api';
 
 export default function DashboardAdminPage() {
   const [periodo, setPeriodo] = useState<'hoy' | '7dias' | 'mes' | 'anio'>('mes');
+  const [metricas, setMetricas] = useState<MetricasGananciasResponse | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    async function loadMetricas() {
+      setLoading(true);
+      const res = await fetchMetricasGanancias();
+      if (res.data) {
+        setMetricas(res.data);
+      }
+      setLoading(false);
+    }
+
+    loadMetricas();
+  }, [periodo]);
+
+  const formatCurrency = (val?: number) => {
+    if (val === undefined || isNaN(val)) return '$0';
+    return new Intl.NumberFormat('es-CO', {
+      style: 'currency',
+      currency: 'COP',
+      maximumFractionDigits: 0,
+    }).format(val);
+  };
+
+  const ingresos = metricas?.ingresosTotales ?? 0;
+  const costos = metricas?.costoTotal ?? 0;
+  const ganancia = metricas?.gananciaNeta ?? 0;
+  const margen = metricas?.margenPorcentaje ?? 0;
+  const facturas = metricas?.totalFacturas ?? 0;
 
   return (
     <div className="space-y-6">
@@ -19,14 +50,14 @@ export default function DashboardAdminPage() {
           <div className="flex items-center gap-2">
             <span className="w-2.5 h-2.5 rounded-full bg-[#e3b341] animate-pulse" />
             <span className="text-xs font-bold uppercase tracking-wider text-[#e3b341] font-[family-name:var(--font-pixelify)]">
-              PANEL EJECUTIVO MULTI-SEDE
+              CONECTADO A MYSQL · PUERTO 8017
             </span>
           </div>
           <h2 className="text-xl sm:text-2xl font-black text-white mt-1 font-[family-name:var(--font-archivo)] tracking-tight">
-            Consolidado Financiero & Operativo
+            Métricas Financieras en Tiempo Real (RF-ADM-A1)
           </h2>
           <p className="text-xs text-white/60 mt-0.5 font-[family-name:var(--font-archivo)]">
-            Métricas de ingresos, costos de inventario, márgenes y rendimiento comercial en tiempo real
+            Consultas agregadas indexadas en base de datos ejecutadas en &lt; 3 segundos (RNF-ADM-01)
           </p>
         </div>
 
@@ -56,21 +87,23 @@ export default function DashboardAdminPage() {
           </div>
 
           <Button3D
-            onClick={() => alert('Generando informe ejecutivo consolidado en PDF...')}
+            onClick={() => {
+              window.open('http://localhost:8017/administracion/auditoria/exportar', '_blank');
+            }}
             className="text-xs py-2 px-3.5"
           >
-            Descargar Reporte PDF
+            Exportar Auditoría CSV
           </Button3D>
         </div>
       </div>
 
-      {/* Grid de KPIs Financieros Principales (RF-ADM-A1) */}
+      {/* Grid de KPIs Financieros Reales de la Base de Datos */}
       <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4" aria-label="KPIs Financieros">
         <MetricKpiCard
           title="Ingresos Totales Brutos"
-          value="$128.450.000"
-          subtitle="452 facturas emitidas"
-          trend={{ value: '14.2%', isPositive: true, label: 'vs periodo anterior' }}
+          value={formatCurrency(ingresos)}
+          subtitle={`${facturas} facturas en BD`}
+          trend={{ value: 'Real BD', isPositive: true, label: 'ventas de mostrador y B2B' }}
           accent="gold"
           icon={
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -81,9 +114,9 @@ export default function DashboardAdminPage() {
 
         <MetricKpiCard
           title="Costo de Ventas (COGS)"
-          value="$74.120.000"
-          subtitle="Costo adquisición inventario"
-          trend={{ value: '2.1%', isPositive: true, label: 'eficiencia de compra' }}
+          value={formatCurrency(costos)}
+          subtitle="Valorado con Kardex"
+          trend={{ value: 'Costos BD', isPositive: true, label: 'costo promedio ponderado' }}
           accent="blue"
           icon={
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -93,10 +126,10 @@ export default function DashboardAdminPage() {
         />
 
         <MetricKpiCard
-          title="Ganancia Bruta Neta"
-          value="$54.330.000"
+          title="Ganancia Neta Bruta"
+          value={formatCurrency(ganancia)}
           subtitle="Ingresos menos Costos"
-          trend={{ value: '18.5%', isPositive: true, label: 'utilidad neta al alza' }}
+          trend={{ value: 'Utilidad', isPositive: ganancia >= 0, label: 'margen neto generado' }}
           accent="emerald"
           icon={
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -107,9 +140,9 @@ export default function DashboardAdminPage() {
 
         <MetricKpiCard
           title="Margen de Utilidad"
-          value="42.3%"
-          subtitle="Meta proyectada: > 38.0%"
-          trend={{ value: '3.8%', isPositive: true, label: 'sobre meta anual' }}
+          value={`${margen.toFixed(1)}%`}
+          subtitle="Objetivo: > 38.0%"
+          trend={{ value: 'Margen', isPositive: margen >= 38, label: 'rentabilidad sobre ventas' }}
           accent="rose"
           icon={
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">

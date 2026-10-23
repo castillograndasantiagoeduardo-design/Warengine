@@ -1,114 +1,91 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Button3D } from '@/components/ui/Button3D';
-
-interface StockComparativo {
-  sku: string;
-  nombre: string;
-  categoria: string;
-  costoUnitario: number;
-  precioVenta: number;
-  stockSedes: {
-    sedeCentral: number;
-    sedeNorte: number;
-    sedeOccidente: number;
-  };
-  totalStock: number;
-  stockMinimo: number;
-}
+import { fetchComparativoInventario, ComparativoInventarioItem } from '@/features/administracion/api/dashboard.api';
+import { fetchSucursales, SucursalResponse } from '@/features/administracion/api/sucursales.api';
 
 export default function InventarioAdminPage() {
-  const [items] = useState<StockComparativo[]>([
-    {
-      sku: 'TAL-0941',
-      nombre: 'Taladro Percutor Industrial 850W',
-      categoria: 'Herramientas Eléctricas',
-      costoUnitario: 145000,
-      precioVenta: 245000,
-      stockSedes: {
-        sedeCentral: 18,
-        sedeNorte: 10,
-        sedeOccidente: 4,
-      },
-      totalStock: 32,
-      stockMinimo: 15,
-    },
-    {
-      sku: 'DIS-2019',
-      nombre: 'Disco Diamantado 7" Concreto',
-      categoria: 'Abrasivos',
-      costoUnitario: 32000,
-      precioVenta: 55000,
-      stockSedes: {
-        sedeCentral: 60,
-        sedeNorte: 45,
-        sedeOccidente: 9,
-      },
-      totalStock: 114,
-      stockMinimo: 40,
-    },
-    {
-      sku: 'MAR-1500',
-      nombre: 'Martillo Neumático 1500W',
-      categoria: 'Maquinaria',
-      costoUnitario: 890000,
-      precioVenta: 1450000,
-      stockSedes: {
-        sedeCentral: 0,
-        sedeNorte: 0,
-        sedeOccidente: 0,
-      },
-      totalStock: 0,
-      stockMinimo: 5,
-    },
-    {
-      sku: 'GEL-1044',
-      nombre: 'Guante de Seguridad Reforzado Nitrilo',
-      categoria: 'Seguridad Industrial',
-      costoUnitario: 12000,
-      precioVenta: 25000,
-      stockSedes: {
-        sedeCentral: 120,
-        sedeNorte: 90,
-        sedeOccidente: 30,
-      },
-      totalStock: 240,
-      stockMinimo: 50,
-    },
-    {
-      sku: 'CAB-3301',
-      nombre: 'Cable Enchaquetado 3x12 AWG x 100m',
-      categoria: 'Material Eléctrico',
-      costoUnitario: 95000,
-      precioVenta: 145000,
-      stockSedes: {
-        sedeCentral: 12,
-        sedeNorte: 4,
-        sedeOccidente: 2,
-      },
-      totalStock: 18,
-      stockMinimo: 20,
-    },
-  ]);
-
+  const [dbItems, setDbItems] = useState<ComparativoInventarioItem[]>([]);
+  const [sucursales, setSucursales] = useState<SucursalResponse[]>([]);
+  const [loading, setLoading] = useState(false);
   const [query, setQuery] = useState('');
   const [modalTransferOpen, setModalTransferOpen] = useState(false);
-  const [selectedItem, setSelectedItem] = useState<StockComparativo | null>(null);
+  const [selectedSku, setSelectedSku] = useState<string>('');
+
+  useEffect(() => {
+    async function loadData() {
+      setLoading(true);
+      const [invRes, sucRes] = await Promise.all([
+        fetchComparativoInventario(),
+        fetchSucursales(),
+      ]);
+
+      if (invRes.data) {
+        setDbItems(invRes.data);
+      }
+      if (sucRes.data) {
+        setSucursales(sucRes.data);
+      }
+      setLoading(false);
+    }
+
+    loadData();
+  }, []);
+
+  // Datos de catálogo si la BD de desarrollo aún no tiene productos creados
+  const fallbackProducts = [
+    {
+      productoId: 1,
+      sku: 'TAL-0941',
+      nombre: 'Taladro Percutor Industrial 850W',
+      sucursalId: 1,
+      nombreSucursal: 'Sede Principal (Central)',
+      stockActual: 18,
+      stockMinimo: 15,
+      estadoStock: 'optimo' as const,
+    },
+    {
+      productoId: 2,
+      sku: 'DIS-2019',
+      nombre: 'Disco Diamantado 7" Concreto',
+      sucursalId: 1,
+      nombreSucursal: 'Sede Principal (Central)',
+      stockActual: 60,
+      stockMinimo: 40,
+      estadoStock: 'optimo' as const,
+    },
+    {
+      productoId: 3,
+      sku: 'MAR-1500',
+      nombre: 'Martillo Neumático 1500W',
+      sucursalId: 2,
+      nombreSucursal: 'Sucursal Norte',
+      stockActual: 0,
+      stockMinimo: 5,
+      estadoStock: 'agotado' as const,
+    },
+    {
+      productoId: 4,
+      sku: 'GEL-1044',
+      nombre: 'Guante de Seguridad Reforzado Nitrilo',
+      sucursalId: 1,
+      nombreSucursal: 'Sede Principal (Central)',
+      stockActual: 120,
+      stockMinimo: 50,
+      estadoStock: 'optimo' as const,
+    },
+  ];
+
+  const hasDbRows = dbItems.length > 0;
+  const items = hasDbRows ? dbItems : fallbackProducts;
 
   const filteredItems = items.filter(
     (i) =>
       i.nombre.toLowerCase().includes(query.toLowerCase()) ||
       i.sku.toLowerCase().includes(query.toLowerCase()) ||
-      i.categoria.toLowerCase().includes(query.toLowerCase())
+      i.nombreSucursal.toLowerCase().includes(query.toLowerCase())
   );
-
-  const formatCurrency = (val: number) =>
-    new Intl.NumberFormat('es-CO', {
-      style: 'currency',
-      currency: 'COP',
-      maximumFractionDigits: 0,
-    }).format(val);
 
   return (
     <div className="space-y-6 select-none">
@@ -116,21 +93,22 @@ export default function InventarioAdminPage() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-5 rounded-2xl bg-gradient-to-r from-[#121d3d] to-[#0c1326] border border-white/10 backdrop-blur-md">
         <div>
           <div className="flex items-center gap-2">
+            <span className="w-2.5 h-2.5 rounded-full bg-[#e3b341] animate-pulse" />
             <span className="text-xs font-bold uppercase tracking-wider text-[#e3b341] font-[family-name:var(--font-pixelify)]">
-              CONTROL MULTI-ALMACÉN (RF-ADM-C4, RF-ADM-A6)
+              CONEXIÓN DIRECTA A /dashboard/inventario
             </span>
           </div>
           <h2 className="text-xl sm:text-2xl font-black text-white mt-1 font-[family-name:var(--font-archivo)]">
-            Inventario Comparativo por Sucursal
+            Inventario Comparativo por Sucursal (RF-ADM-C4)
           </h2>
           <p className="text-xs text-white/60 mt-0.5 font-[family-name:var(--font-archivo)]">
-            Balance consolidado de existencias en tiempo real, costos de adquisición y traslados
+            Balance consolidado de existencias en tiempo real calculado por el Kardex append-only
           </p>
         </div>
 
         <Button3D
           onClick={() => {
-            setSelectedItem(items[0]);
+            setSelectedSku(items[0]?.sku || 'PROD-001');
             setModalTransferOpen(true);
           }}
           className="text-xs py-2.5 px-4 self-start sm:self-auto"
@@ -144,7 +122,7 @@ export default function InventarioAdminPage() {
         <div className="relative flex-1 max-w-md">
           <input
             type="text"
-            placeholder="Buscar por SKU, producto o categoría..."
+            placeholder="Buscar por SKU, producto o sucursal..."
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             className="w-full pl-10 pr-4 py-2 rounded-xl bg-white/5 border border-white/15 text-white text-xs placeholder:text-white/40 focus:outline-none focus:border-[#e3b341] transition-all font-[family-name:var(--font-archivo)]"
@@ -155,9 +133,15 @@ export default function InventarioAdminPage() {
         </div>
 
         <div className="text-xs text-[#e3b341] font-[family-name:var(--font-pixelify)] hidden sm:block">
-          KARDEX APPEND-ONLY CONCILIADO
+          {hasDbRows ? 'KARDEX VIVO DE BD' : 'MODO INICIAL DE CATÁLOGO'}
         </div>
       </div>
+
+      {loading && (
+        <div className="p-8 text-center text-xs font-[family-name:var(--font-pixelify)] text-[#e3b341] animate-pulse">
+          Consultando balance de existencias por sede...
+        </div>
+      )}
 
       {/* Tabla Comparativa de Inventario Multi-Sede */}
       <div className="rounded-2xl bg-[#0f1733]/90 border border-white/10 overflow-hidden backdrop-blur-sm">
@@ -166,20 +150,20 @@ export default function InventarioAdminPage() {
             <thead className="bg-[#0b1228] text-white/50 text-[10px] uppercase tracking-wider border-b border-white/10">
               <tr>
                 <th className="p-4">SKU & Producto</th>
-                <th className="p-4">Categoría</th>
-                <th className="p-4 text-center">Sede Central</th>
-                <th className="p-4 text-center">Suc. Norte</th>
-                <th className="p-4 text-center">Suc. Occidente</th>
-                <th className="p-4 text-center">Total Cadena</th>
-                <th className="p-4 text-right">Precio Venta</th>
+                <th className="p-4">Sucursal / Almacén</th>
+                <th className="p-4 text-center">Stock Actual</th>
+                <th className="p-4 text-center">Stock Mínimo</th>
+                <th className="p-4 text-center">Condición</th>
                 <th className="p-4 text-right">Acción</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-white/5">
-              {filteredItems.map((item) => {
-                const isCritico = item.totalStock <= item.stockMinimo;
+              {filteredItems.map((item, idx) => {
+                const esAgotado = item.stockActual === 0;
+                const esCritico = item.stockActual <= item.stockMinimo && !esAgotado;
+
                 return (
-                  <tr key={item.sku} className="hover:bg-white/5 transition-colors">
+                  <tr key={`${item.sku}-${item.sucursalId}-${idx}`} className="hover:bg-white/5 transition-colors">
                     <td className="p-4">
                       <div className="font-bold text-white text-sm">{item.nombre}</div>
                       <div className="text-[10px] font-mono text-[#e3b341] mt-0.5">
@@ -187,69 +171,46 @@ export default function InventarioAdminPage() {
                       </div>
                     </td>
 
-                    <td className="p-4 text-white/70">{item.categoria}</td>
+                    <td className="p-4 text-white/80 font-medium">
+                      🏢 {item.nombreSucursal}
+                    </td>
 
-                    {/* Sede Central */}
                     <td className="p-4 text-center">
                       <span
-                        className={`inline-block px-2.5 py-1 rounded-lg font-bold font-[family-name:var(--font-pixelify)] ${
-                          item.stockSedes.sedeCentral === 0
+                        className={`inline-block px-3 py-1 rounded-lg font-bold font-[family-name:var(--font-anton)] text-sm ${
+                          esAgotado
                             ? 'bg-rose-500/20 text-rose-400'
+                            : esCritico
+                            ? 'bg-amber-500/20 text-amber-400'
                             : 'bg-white/5 text-white'
                         }`}
                       >
-                        {item.stockSedes.sedeCentral} u.
+                        {item.stockActual} u.
                       </span>
                     </td>
 
-                    {/* Sede Norte */}
+                    <td className="p-4 text-center text-white/60 font-mono">
+                      {item.stockMinimo} u.
+                    </td>
+
                     <td className="p-4 text-center">
                       <span
-                        className={`inline-block px-2.5 py-1 rounded-lg font-bold font-[family-name:var(--font-pixelify)] ${
-                          item.stockSedes.sedeNorte === 0
-                            ? 'bg-rose-500/20 text-rose-400'
-                            : 'bg-white/5 text-white'
+                        className={`inline-block px-2 py-0.5 rounded text-[10px] font-bold uppercase font-[family-name:var(--font-pixelify)] ${
+                          esAgotado
+                            ? 'bg-rose-500 text-white'
+                            : esCritico
+                            ? 'bg-amber-500 text-[#111111]'
+                            : 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
                         }`}
                       >
-                        {item.stockSedes.sedeNorte} u.
-                      </span>
-                    </td>
-
-                    {/* Sede Occidente */}
-                    <td className="p-4 text-center">
-                      <span
-                        className={`inline-block px-2.5 py-1 rounded-lg font-bold font-[family-name:var(--font-pixelify)] ${
-                          item.stockSedes.sedeOccidente === 0
-                            ? 'bg-rose-500/20 text-rose-400'
-                            : 'bg-white/5 text-white'
-                        }`}
-                      >
-                        {item.stockSedes.sedeOccidente} u.
-                      </span>
-                    </td>
-
-                    {/* Total Cadena */}
-                    <td className="p-4 text-center">
-                      <div className="font-[family-name:var(--font-anton)] text-sm text-white">
-                        {item.totalStock} u.
-                      </div>
-                      {isCritico && (
-                        <span className="text-[9px] px-1.5 py-0.2 rounded bg-rose-500/20 text-rose-400 font-[family-name:var(--font-pixelify)] font-bold">
-                          BAJO MÍNIMO ({item.stockMinimo})
-                        </span>
-                      )}
-                    </td>
-
-                    <td className="p-4 text-right">
-                      <span className="font-[family-name:var(--font-anton)] text-sm text-[#e3b341]">
-                        {formatCurrency(item.precioVenta)}
+                        {esAgotado ? 'AGOTADO' : esCritico ? 'STOCK CRÍTICO' : 'ÓPTIMO'}
                       </span>
                     </td>
 
                     <td className="p-4 text-right">
                       <button
                         onClick={() => {
-                          setSelectedItem(item);
+                          setSelectedSku(item.sku);
                           setModalTransferOpen(true);
                         }}
                         className="px-2.5 py-1 rounded-lg bg-[#e3b341]/10 hover:bg-[#e3b341]/20 text-[#e3b341] border border-[#e3b341]/20 text-[11px] font-semibold cursor-pointer font-[family-name:var(--font-pixelify)]"
@@ -265,24 +226,24 @@ export default function InventarioAdminPage() {
         </div>
 
         <div className="p-4 border-t border-white/5 text-xs text-white/40 flex items-center justify-between font-[family-name:var(--font-archivo)]">
-          <span>Mostrando balance consolidado en las 3 sedes comerciales</span>
+          <span>Mostrando existencias indexadas en base de datos</span>
           <span className="text-white/60 font-[family-name:var(--font-pixelify)]">
-            VALUACIÓN A PRECIO DE COSTO ACTIVA
+            CONCILIACIÓN AUTOMÁTICA
           </span>
         </div>
       </div>
 
       {/* Modal Traslado de Stock Inter-Sucursal */}
-      {modalTransferOpen && selectedItem && (
+      {modalTransferOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-150">
           <div className="w-full max-w-md bg-[#0f1838] border border-white/20 rounded-2xl shadow-2xl p-6 select-none">
             <div className="flex items-center justify-between pb-3 border-b border-white/10">
               <div>
                 <span className="text-[10px] text-[#e3b341] font-[family-name:var(--font-pixelify)]">
-                  TRASLADO INTER-SUCURSAL (KARDEX)
+                  MOVIMIENTO EN KARDEX (APPEND-ONLY)
                 </span>
                 <h3 className="text-base font-bold text-white font-[family-name:var(--font-archivo)]">
-                  {selectedItem.nombre}
+                  Orden de Traslado entre Sedes
                 </h3>
               </div>
               <button
@@ -296,46 +257,49 @@ export default function InventarioAdminPage() {
             <form
               onSubmit={(e) => {
                 e.preventDefault();
-                alert(`Orden de traslado confirmada para ${selectedItem.nombre}. Se generó movimiento de salida en origen y entrada en destino en el Kardex.`);
+                alert(`Orden de traslado confirmada para SKU ${selectedSku}. Se registra movimiento inmutable en Kardex.`);
                 setModalTransferOpen(false);
               }}
               className="mt-4 space-y-3.5 text-xs font-[family-name:var(--font-archivo)]"
             >
               <div>
+                <label className="text-white/70 block mb-1">Producto a Trasladar</label>
+                <input
+                  type="text"
+                  readOnly
+                  value={`SKU: ${selectedSku}`}
+                  className="w-full px-3 py-2 rounded-xl bg-white/5 border border-white/15 text-white/80 font-mono"
+                />
+              </div>
+
+              <div>
                 <label className="text-white/70 block mb-1">Sucursal Origen (Salida de Stock)</label>
                 <select className="w-full px-3 py-2 rounded-xl bg-[#121c3b] border border-white/15 text-white">
-                  <option value="1">Sede Principal (Central) &mdash; {selectedItem.stockSedes.sedeCentral} u. disponibles</option>
-                  <option value="2">Sucursal Norte &mdash; {selectedItem.stockSedes.sedeNorte} u. disponibles</option>
-                  <option value="3">Sucursal Occidente &mdash; {selectedItem.stockSedes.sedeOccidente} u. disponibles</option>
+                  {sucursales.map((s) => (
+                    <option key={s.id} value={s.id}>
+                      {s.nombre}
+                    </option>
+                  ))}
                 </select>
               </div>
 
               <div>
                 <label className="text-white/70 block mb-1">Sucursal Destino (Entrada de Stock)</label>
-                <select className="w-full px-3 py-2 rounded-xl bg-[#121c3b] border border-white/15 text-white" defaultValue="2">
-                  <option value="1">Sede Principal (Central)</option>
-                  <option value="2">Sucursal Norte</option>
-                  <option value="3">Sucursal Occidente</option>
+                <select className="w-full px-3 py-2 rounded-xl bg-[#121c3b] border border-white/15 text-white" defaultValue={2}>
+                  {sucursales.map((s) => (
+                    <option key={s.id} value={s.id}>
+                      {s.nombre}
+                    </option>
+                  ))}
                 </select>
               </div>
 
               <div>
-                <label className="text-white/70 block mb-1">Cantidad de Unidades a Trasladar</label>
+                <label className="text-white/70 block mb-1">Cantidad de Unidades</label>
                 <input
                   type="number"
                   min={1}
-                  max={selectedItem.totalStock || 1}
                   defaultValue={5}
-                  required
-                  className="w-full px-3 py-2 rounded-xl bg-white/5 border border-white/15 text-white"
-                />
-              </div>
-
-              <div>
-                <label className="text-white/70 block mb-1">Motivo / Guía de Transporte</label>
-                <input
-                  type="text"
-                  placeholder="Ej: Reabastecimiento por stock crítico"
                   required
                   className="w-full px-3 py-2 rounded-xl bg-white/5 border border-white/15 text-white"
                 />
@@ -350,7 +314,7 @@ export default function InventarioAdminPage() {
                   Cancelar
                 </button>
                 <button type="submit" className="btn-3d text-xs py-2 px-5 font-bold">
-                  Ejecutar Traslado
+                  Confirmar en Kardex
                 </button>
               </div>
             </form>

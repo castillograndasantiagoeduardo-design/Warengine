@@ -1,15 +1,39 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import { fetchTendenciasVentas, TendenciaVentaItem } from '@/features/administracion/api/dashboard.api';
 
 type GroupingType = 'dia' | 'semana' | 'mes';
 
-export function TrendSalesChart() {
+interface TrendSalesChartProps {
+  sucursalId?: number;
+}
+
+export function TrendSalesChart({ sucursalId }: TrendSalesChartProps) {
   const [grouping, setGrouping] = useState<GroupingType>('dia');
   const [hoveredPoint, setHoveredPoint] = useState<number | null>(null);
+  const [dbData, setDbData] = useState<TendenciaVentaItem[]>([]);
+  const [loading, setLoading] = useState(false);
 
-  // Datos simulados estructurados según el contrato de /dashboard/tendencias
-  const dataMap: Record<GroupingType, { label: string; ventas: number; tickets: number }[]> = {
+  useEffect(() => {
+    async function loadTendencias() {
+      setLoading(true);
+      const res = await fetchTendenciasVentas({
+        sucursalId,
+        agrupacion: grouping,
+      });
+
+      if (res.data) {
+        setDbData(res.data);
+      }
+      setLoading(false);
+    }
+
+    loadTendencias();
+  }, [grouping, sucursalId]);
+
+  // Si la BD aún no tiene ventas en la tabla facturas para este periodo, mostramos la serie de referencia con indicador
+  const defaultFallback: Record<GroupingType, { label: string; ventas: number; tickets: number }[]> = {
     dia: [
       { label: 'Lun', ventas: 14200000, tickets: 48 },
       { label: 'Mar', ventas: 16800000, tickets: 56 },
@@ -35,8 +59,16 @@ export function TrendSalesChart() {
     ],
   };
 
-  const points = dataMap[grouping];
-  const maxVentas = Math.max(...points.map((p) => p.ventas)) * 1.15;
+  const hasDbRows = dbData.length > 0;
+  const points = hasDbRows
+    ? dbData.map((d) => ({
+        label: d.periodo,
+        ventas: Number(d.totalVentas),
+        tickets: Number(d.cantidadFacturas),
+      }))
+    : defaultFallback[grouping];
+
+  const maxVentas = Math.max(...points.map((p) => p.ventas), 100000) * 1.15;
 
   // Dimensiones del SVG
   const width = 600;
@@ -45,7 +77,7 @@ export function TrendSalesChart() {
   const paddingY = 30;
 
   const getCoordinates = (index: number, val: number) => {
-    const x = paddingX + (index / (points.length - 1)) * (width - paddingX * 2);
+    const x = paddingX + (index / Math.max(points.length - 1, 1)) * (width - paddingX * 2);
     const y = height - paddingY - (val / maxVentas) * (height - paddingY * 2);
     return { x, y };
   };
@@ -77,11 +109,11 @@ export function TrendSalesChart() {
               Tendencia de Ventas (RF-ADM-A2)
             </h2>
             <span className="text-[10px] px-2 py-0.5 rounded bg-[#e3b341]/10 text-[#e3b341] border border-[#e3b341]/20 font-[family-name:var(--font-pixelify)]">
-              FACTURACIÓN
+              {hasDbRows ? 'MYSQL LIVE' : 'PROYECCIÓN DEMO'}
             </span>
           </div>
           <p className="text-xs text-white/50 mt-0.5 font-[family-name:var(--font-archivo)]">
-            Comportamiento temporal de ingresos brutos y emisión de comprobantes
+            Comportamiento temporal de facturación directa calculado por /dashboard/tendencias
           </p>
         </div>
 
@@ -108,6 +140,13 @@ export function TrendSalesChart() {
 
       {/* Área del Gráfico SVG */}
       <div className="relative w-full h-64 mt-4">
+        {loading && (
+          <div className="absolute inset-0 z-10 flex items-center justify-center bg-[#0d1630]/60 backdrop-blur-xs">
+            <span className="text-xs font-[family-name:var(--font-pixelify)] text-[#e3b341] animate-pulse">
+              Consultando BD...
+            </span>
+          </div>
+        )}
         <svg
           viewBox={`0 0 ${width} ${height}`}
           className="w-full h-full overflow-visible"
@@ -182,10 +221,8 @@ export function TrendSalesChart() {
                   {p.label}
                 </text>
 
-                {/* Área invisible para facilitar el hover en táctil/mouse */}
                 <circle cx={x} cy={y} r="14" fill="transparent" />
 
-                {/* Punto exterior */}
                 <circle
                   cx={x}
                   cy={y}
@@ -196,7 +233,6 @@ export function TrendSalesChart() {
                   className="transition-all duration-150"
                 />
 
-                {/* Tooltip flotante al hacer hover */}
                 {isHovered && (
                   <g>
                     <rect
@@ -239,13 +275,12 @@ export function TrendSalesChart() {
         </svg>
       </div>
 
-      {/* Pie de Estadísticas Rápido */}
       <div className="mt-2 pt-3 border-t border-white/5 flex items-center justify-between text-xs text-white/50">
         <span className="font-[family-name:var(--font-archivo)]">
-          Total acumulado en periodo: <strong className="text-white">{formatCurrency(points.reduce((acc, curr) => acc + curr.ventas, 0))}</strong>
+          Total acumulado: <strong className="text-white">{formatCurrency(points.reduce((acc, curr) => acc + curr.ventas, 0))}</strong>
         </span>
         <span className="font-[family-name:var(--font-pixelify)] text-[#e3b341]">
-          {points.reduce((acc, curr) => acc + curr.tickets, 0)} FACTURAS EMITIDAS
+          {points.reduce((acc, curr) => acc + curr.tickets, 0)} FACTURAS REGISTRADAS
         </span>
       </div>
     </div>
