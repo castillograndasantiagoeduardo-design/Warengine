@@ -20,9 +20,7 @@
       }
     ],
     "paths": {
-      "@/*": ["./src/*"],
-      "@warengine/contracts": ["../Shared/contracts/src/index.ts"],
-      "@warengine/contracts/*": ["../Shared/contracts/src/*"]
+      "@/*": ["./src/*"]
     }
   },
   "include": [
