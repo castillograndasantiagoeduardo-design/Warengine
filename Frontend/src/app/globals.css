@@ -101,6 +101,84 @@ body {
   }
 }
 
+/* Variante de panel: medidas fijas en px y área táctil mínima de 44 px */
+.btn-3d.btn-3d-panel {
+  min-height: 44px;
+  min-width: 44px;
+  gap: 0.5rem;
+  border-radius: 12px;
+  box-shadow: 0 4px 0 var(--ac-dk, var(--gold-dark));
+}
+
+.btn-3d.btn-3d-panel:hover {
+  transform: translateY(3px);
+  box-shadow: 0 1px 0 var(--ac-dk, var(--gold-dark));
+}
+
+.btn-3d.btn-3d-panel:active {
+  transform: translateY(4px);
+  box-shadow: 0 0 0 var(--ac-dk, var(--gold-dark));
+}
+
+.btn-3d:disabled,
+.btn-3d.btn-3d-panel:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: 0 4px 0 var(--ac-dk, var(--gold-dark));
+}
+
+/* Superficies del panel administrativo */
+.panel-card {
+  background: #14213d;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 1rem;
+  box-shadow: 0 18px 40px -24px rgba(0, 0, 0, 0.8);
+}
+
+.panel-input {
+  min-height: 44px;
+  width: 100%;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: #0d1630;
+  padding: 0.5rem 0.75rem;
+  color: #ffffff;
+  font-size: 0.875rem;
+  outline: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.panel-input:focus {
+  border-color: var(--gold);
+  box-shadow: 0 0 0 3px rgba(227, 179, 65, 0.25);
+}
+
+.panel-input[aria-invalid='true'] {
+  border-color: #f87171;
+}
+
+@keyframes skeleton-shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.skeleton {
+  background: linear-gradient(90deg, rgba(255,255,255,0.05) 25%, rgba(255,255,255,0.12) 37%, rgba(255,255,255,0.05) 63%);
+  background-size: 400% 100%;
+  animation: skeleton-shimmer 1.4s ease infinite;
+  border-radius: 8px;
+}
+
+@keyframes toast-in {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.toast-in {
+  animation: toast-in 0.25s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
 /* Animaciones de Planes y PixelCard */
 @keyframes pick-pulse {
   0%, 100% {
@@ -132,7 +210,7 @@ body {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .btn-3d, .card-picked, .card-rise {
+  .btn-3d, .card-picked, .card-rise, .skeleton, .toast-in {
     animation: none !important;
     transition: none !important;
   }
