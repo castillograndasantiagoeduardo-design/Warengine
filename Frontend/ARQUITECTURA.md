@@ -59,6 +59,11 @@ Frontend/src/
 │   │   ├── hooks/                          # Custom hooks (useAuth, useLoginForm, usePermissions)
 │   │   ├── types/                          # Contratos y tipos de dominio
 │   │   └── index.ts                        # Punto de entrada público del feature
+│   ├── landing/                            # Landing page modularizada
+│   │   ├── components/                     # Hero, Alcance, Planes, PixelCard, NosotrosModal
+│   │   ├── data/                           # Datasets y constantes estáticas aisladas de la vista
+│   │   ├── types/                          # Contratos y tipos de datos del landing
+│   │   └── index.ts                        # Punto de entrada público del feature landing
 │   ├── facturacion/                        # Próximo módulo POS / Turnos de Caja
 │   ├── inventario/                         # Próximo módulo Kardex / Productos
 │   └── administracion/                     # Próximo módulo Sucursales / Empleados

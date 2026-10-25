@@ -1,5 +1,9 @@
 'use client';
 
+/**
+ * HeroCopy.tsx — Titular principal y tipografía de impacto de la sección Hero.
+ */
+
 import React from 'react';
 
 export function HeroCopy({ isVisible = true }: { isVisible?: boolean }) {

@@ -1,32 +1,35 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Navbar, TabType } from '@/components/ui/Navbar';
+import { Navbar, type TabType } from '@/components/ui/Navbar';
 import { NoiseOverlay } from '@/components/ui/NoiseOverlay';
-import { HeroRobotCanvas } from '@/components/hero/HeroRobotCanvas';
-import { HeroCopy } from '@/components/hero/HeroCopy';
-import { AlcanceSection, SlideData, SLIDES } from '@/components/alcance/AlcanceSection';
-import { PlanesSection } from '@/components/planes/PlanesSection';
+import {
+  HeroRobotCanvas,
+  HeroCopy,
+  AlcanceSection,
+  PlanesSection,
+  NosotrosModal,
+  SLIDES,
+  type SlideData,
+  type ThemeColors,
+} from '@/features/landing';
+
+const INITIAL_THEME: ThemeColors = {
+  c: '#e3b341',
+  k: '#b88a1f',
+  tc: '#e3b341',
+  fg: '#111111',
+};
 
 export default function Home() {
   const [activeTab, setActiveTab] = useState<TabType>('inicio');
   const [selectedPlanIndex, setSelectedPlanIndex] = useState<number>(-1);
-  const [theme, setTheme] = useState({
-    c: '#e3b341',
-    k: '#b88a1f',
-    tc: '#e3b341',
-    fg: '#111111',
-  });
+  const [theme, setTheme] = useState<ThemeColors>(INITIAL_THEME);
 
   const handleNavigate = (tab: TabType) => {
     setActiveTab(tab);
-    if (tab === 'inicio') {
-      setTheme({
-        c: '#e3b341',
-        k: '#b88a1f',
-        tc: '#e3b341',
-        fg: '#111111',
-      });
+    if (tab === 'inicio' || tab === 'planes') {
+      setTheme(INITIAL_THEME);
     } else if (tab === 'alcance') {
       const first = SLIDES[0];
       setTheme({
@@ -34,13 +37,6 @@ export default function Home() {
         k: first.k,
         tc: first.tc,
         fg: first.fg,
-      });
-    } else if (tab === 'planes') {
-      setTheme({
-        c: '#e3b341',
-        k: '#b88a1f',
-        tc: '#e3b341',
-        fg: '#111111',
       });
     }
   };
@@ -61,7 +57,7 @@ export default function Home() {
     setActiveTab('planes');
   };
 
-  // Keyboard escape shortcut to return home
+  // Atajo de teclado 'Escape' para volver al inicio
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape' && activeTab !== 'inicio') {
@@ -110,25 +106,11 @@ export default function Home() {
         selectedPlanIndex={selectedPlanIndex}
       />
 
-      {/* Vista NOSOTROS (Modal informativo rápido) */}
-      {activeTab === 'nosotros' && (
-        <div className="absolute inset-0 z-30 flex items-center justify-center p-6 bg-black/80 backdrop-blur-md">
-          <div className="bg-[#17151c] border border-white/10 rounded-2xl p-8 max-w-lg text-center shadow-2xl">
-            <h2 className="font-[family-name:var(--font-anton)] text-3xl text-[var(--gold)] mb-4 uppercase">
-              Sobre WarEngine
-            </h2>
-            <p className="font-[family-name:var(--font-archivo)] font-light text-white/90 leading-relaxed mb-6">
-              WarEngine es la plataforma empresarial integral de última generación diseñada para potenciar la gestión multi-sucursal, facturación POS en tiempo real y trazabilidad logística sin límites.
-            </p>
-            <button
-              onClick={() => handleNavigate('inicio')}
-              className="btn-3d px-6 py-2 text-sm"
-            >
-              Volver al Inicio
-            </button>
-          </div>
-        </div>
-      )}
+      {/* Vista NOSOTROS (Modal informativo) */}
+      <NosotrosModal
+        isOpen={activeTab === 'nosotros'}
+        onClose={() => handleNavigate('inicio')}
+      />
     </main>
   );
 }
