@@ -34,6 +34,21 @@ export function formatFechaHora(valor: string | Date | null | undefined): string
   return fecha ? FECHA_HORA.format(fecha) : '—';
 }
 
+const DIA_MES = new Intl.DateTimeFormat('es-CO', { day: 'numeric', month: 'short' });
+const MES_ANIO = new Intl.DateTimeFormat('es-CO', { month: 'short', year: 'numeric' });
+
+/**
+ * Etiqueta corta para los periodos de /dashboard/tendencias:
+ * '2026-10-13' → '13 oct' · '2026-W41' → 'Sem 41' · '2026-10' → 'oct 2026'.
+ */
+export function formatPeriodo(periodo: string): string {
+  const semana = /^(\d{4})-W(\d{1,2})$/.exec(periodo);
+  if (semana) return `Sem ${Number(semana[2])}`;
+  if (/^\d{4}-\d{2}-\d{2}/.test(periodo)) return DIA_MES.format(new Date(`${periodo.slice(0, 10)}T12:00:00`));
+  if (/^\d{4}-\d{2}$/.test(periodo)) return MES_ANIO.format(new Date(`${periodo}-15T12:00:00`));
+  return periodo;
+}
+
 /** Date → 'YYYY-MM-DD' en hora local (para inputs type="date" y fechaEfectiva). */
 export function aFechaISO(fecha: Date = new Date()): string {
   const y = fecha.getFullYear();
