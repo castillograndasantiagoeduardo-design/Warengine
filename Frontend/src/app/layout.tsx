@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Anton, Archivo, Pixelify_Sans, Bodoni_Moda } from "next/font/google";
+import { AuthProvider } from "@/features/autenticacion";
 import "./globals.css";
 
 const anton = Anton({
@@ -53,7 +54,7 @@ export default function RootLayout({
       className={`${anton.variable} ${archivo.variable} ${pixelify.variable} ${bodoni.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col bg-[#0d1630] text-white overflow-x-hidden selection:bg-[#e3b341] selection:text-black">
-        {children}
+        <AuthProvider>{children}</AuthProvider>
       </body>
     </html>
   );

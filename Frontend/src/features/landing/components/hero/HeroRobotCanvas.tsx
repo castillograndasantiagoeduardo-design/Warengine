@@ -1,5 +1,12 @@
 'use client';
 
+/**
+ * HeroRobotCanvas.tsx — Canvas interactivo del robot de WarEngine siguiendo el cursor.
+ *
+ * NOTA: La lógica interna de animación se preserva idéntica. Su optimización de rendimiento
+ * se abordará en una rama posterior según lo indicado.
+ */
+
 import React, { useEffect, useRef } from 'react';
 
 const FRAMES = 116;

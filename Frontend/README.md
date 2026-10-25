@@ -13,4 +13,6 @@ través de HTTP usando los DTOs de `@warengine/contracts`.
 
 ---
 
+> 🏛️ **Guía Maestra de Arquitectura y Buenas Prácticas:** [`ARQUITECTURA.md`](./ARQUITECTURA.md)  
 > 📖 **Documentación técnica oficial:** [`Docs/infraestructura/frontend.md`](../Docs/infraestructura/frontend.md)
+
