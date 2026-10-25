@@ -6,6 +6,8 @@ export * from './EmptyState';
 export * from './FormField';
 export * from './Modal';
 export * from './Pagination';
+export * from './SectionCard';
+export * from './SegmentedControl';
 export * from './Skeleton';
 export * from './Spinner';
 export * from './Toast';
