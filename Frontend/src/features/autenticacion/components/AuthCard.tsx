@@ -58,11 +58,11 @@ export function AuthCard() {
     if (rol === 'cajero') {
       router.push('/pos');
     } else if (rol === 'admin-sucursal') {
-      router.push('/dashboard');
+      router.push('/admin-sucursal');
     } else {
       // Superadministrador u otros roles: No permitir entrar al panel de sucursal
       setRolError(
-        'Acceso restringido: Has iniciado sesión como Superadministrador. El panel /dashboard está reservado exclusivamente para Administradores de Sucursal (admin-sucursal).'
+        'Acceso restringido: Has iniciado sesión como Superadministrador. El panel /admin-sucursal está reservado exclusivamente para Administradores de Sucursal (admin-sucursal).'
       );
     }
   };

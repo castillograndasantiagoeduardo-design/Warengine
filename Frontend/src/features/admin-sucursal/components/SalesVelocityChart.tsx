@@ -37,9 +37,9 @@ export function SalesVelocityChart({ data, className = '' }: SalesVelocityChartP
     porcentajeAvance: 0,
   };
 
-  // Dimensiones del canvas SVG
+  // Dimensiones del canvas SVG: altura ampliada a 220 para curvas esbeltas y pronunciadas
   const width = 640;
-  const height = 140;
+  const height = 220;
   const paddingX = 40;
   const paddingY = 20;
 

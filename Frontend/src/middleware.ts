@@ -53,6 +53,7 @@ export function middleware(request: NextRequest) {
   const tieneSesion = accessTokenValido || Boolean(refreshTokenCookie);
 
   const esRutaProtegida =
+    pathname.startsWith('/admin-sucursal') ||
     pathname.startsWith('/dashboard') ||
     pathname.startsWith('/pos') ||
     pathname.startsWith('/administracion') ||
@@ -67,10 +68,17 @@ export function middleware(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
+  // 2. Redirección de compatibilidad: /dashboard redirige a /admin-sucursal
+  if (pathname.startsWith('/dashboard')) {
+    if (payload?.rolId === 2) {
+      return NextResponse.redirect(new URL('/admin-sucursal', request.url));
+    }
+  }
+
   // 3. Control de acceso granular por rol (RBAC perimetral)
   if (tieneSesion && payload?.rolId) {
-    // El panel de sucursal (/dashboard) es exclusivo para Administradores de Sucursal (rolId: 2)
-    if (pathname.startsWith('/dashboard') && payload.rolId !== 2) {
+    // El panel de sucursal (/admin-sucursal) es exclusivo para Administradores de Sucursal (rolId: 2)
+    if (pathname.startsWith('/admin-sucursal') && payload.rolId !== 2) {
       if (payload.rolId === 3) {
         // Cajero redirigido a su terminal POS
         return NextResponse.redirect(new URL('/pos', request.url));
@@ -82,9 +90,9 @@ export function middleware(request: NextRequest) {
     }
 
     if (pathname.startsWith('/pos') && payload.rolId !== 3 && payload.rolId !== 1) {
-      // Si un admin-sucursal visita /pos, redirigir a su panel /dashboard
+      // Si un admin-sucursal visita /pos, redirigir a su panel /admin-sucursal
       if (payload.rolId === 2) {
-        return NextResponse.redirect(new URL('/dashboard', request.url));
+        return NextResponse.redirect(new URL('/admin-sucursal', request.url));
       }
     }
   }

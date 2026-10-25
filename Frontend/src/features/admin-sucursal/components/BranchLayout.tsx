@@ -62,7 +62,7 @@ export function BranchLayout({
 
         {/* Cuerpo Principal Scrollable */}
         <main className="flex-1 overflow-y-auto px-4 md:px-7 py-5 custom-scrollbar">
-          <div className="max-w-[1440px] mx-auto space-y-5">
+          <div className="max-w-[1140px] mx-auto space-y-6">
             {children}
           </div>
         </main>

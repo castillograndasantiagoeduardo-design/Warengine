@@ -77,24 +77,26 @@ El módulo de caja es la pieza central que demuestra la operatividad del negocio
 
 ---
 
-### Módulo 3: Administrador de Sucursal (`admin-sucursal` en `/dashboard`)
+### Módulo 3: Administrador de Sucursal (`admin-sucursal` en `/admin-sucursal`)
 Demuestra el control operativo y la visibilidad de inventario dentro de una sede específica.
+Aislamiento estricto: Todo el código de frontend de este rol reside en `features/admin-sucursal/` y la ruta `/admin-sucursal`, garantizando cero colisiones con el compañero que desarrolla `superadmin`. (Seguridad: 2FA TOTP es exclusivo para superadmin; no aplica a admin de sucursal).
 
-* **Ruta Frontend:** `src/app/(panel)/dashboard/page.tsx`
-* **Feature:** `src/features/inventario/` y `src/features/administracion/`
+* **Ruta Frontend:** `src/app/(panel)/admin-sucursal/page.tsx`
+* **Feature:** `src/features/admin-sucursal/`
 * **Funcionalidades Básicas Indispensables:**
   1. **Dashboard Resumen de Sucursal:**
-     * Tarjetas de indicadores rápidos (KPIs):
-       * Ventas del día en la sucursal ($).
-       * Total de facturas emitidas hoy.
-       * Alertas activas de stock bajo o agotado.
-  2. **Gestión de Catálogo e Inventario:**
-     * Tabla interactiva de productos con columnas: Código, Nombre, Categoría, Precio Venta y Stock en Sucursal.
-     * Filtro por categoría y barra de búsqueda.
-     * **Modal de Registro de Producto:** Formulario validado con Zod (`@warengine/contracts`) para registrar un nuevo producto o ajustar el stock inicial.
-     * Indicadores visuales de semáforo en stock (Verde: Óptimo, Amarillo: Por debajo de mínimo, Rojo: Agotado).
-  3. **Personal de la Sucursal:**
-     * Vista simplificada con la lista de cajeros y empleados asignados a la sucursal, mostrando su estado (Activo/Inactivo) y si tienen un turno de caja abierto en el momento.
+     * Tarjetas de indicadores rápidos (KPIs) en diseño vertical/alargado:
+       * Ventas del día en la sucursal ($) con comparativa de jornada previa.
+       * Transacciones con ticket promedio en tiempo real.
+       * Productos en catálogo con alertas de stock bajo y agotado.
+       * Cajeros activos en línea y turnos de caja en curso.
+     * Gráfico esbelto de velocidad de ventas horaria (curva Bezier SVG con altura ampliada) y barra de meta diaria.
+  2. **Gestión de Catálogo e Inventario de Sede:**
+     * Monitoreo de salud de stock por categorías.
+     * **Modal de Registro de Producto:** Formulario validado con Zod (`@warengine/contracts`) para registrar un nuevo producto o ajustar el stock de sede.
+  3. **Personal y Turnos de la Sucursal:**
+     * Vista de cajeros asignados a la sede y estado de turno de caja en tiempo real.
+     * Operaciones recientes con folios y método de pago.
 
 ---
 

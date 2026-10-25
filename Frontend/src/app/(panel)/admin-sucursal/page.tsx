@@ -32,8 +32,8 @@ import {
   TrendingUpIcon,
   CalendarDaysIcon,
   ShieldIcon,
-} from '@/features/administracion';
-import { useBranchDashboard } from '@/features/administracion/hooks';
+} from '@/features/admin-sucursal';
+import { useBranchDashboard } from '@/features/admin-sucursal/hooks';
 
 export default function DashboardPage() {
   const router = useRouter();

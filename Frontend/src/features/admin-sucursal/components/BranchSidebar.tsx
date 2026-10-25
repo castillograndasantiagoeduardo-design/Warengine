@@ -28,8 +28,7 @@ export type BranchSection =
   | 'cajeros'
   | 'facturacion'
   | 'reportes'
-  | 'configuracion'
-  | 'seguridad';
+  | 'configuracion';
 
 interface BranchSidebarProps {
   activeSection?: BranchSection;
@@ -55,7 +54,6 @@ const MENU_ITEMS: NavItem[] = [
 
 const SISTEMA_ITEMS: NavItem[] = [
   { id: 'configuracion', label: 'Configuración Sede', icon: <SettingsIcon size={18} /> },
-  { id: 'seguridad', label: 'Seguridad & 2FA', icon: <ShieldIcon size={18} /> },
 ];
 
 export function BranchSidebar({
@@ -77,7 +75,7 @@ export function BranchSidebar({
   return (
     <aside
       className={`
-        flex flex-col justify-between w-64 shrink-0
+        flex flex-col justify-between w-[218px] shrink-0
         bg-[#09132b]/80 backdrop-blur-xl border-r border-white/[0.08]
         p-4 select-none min-h-screen text-slate-300
         ${className}
