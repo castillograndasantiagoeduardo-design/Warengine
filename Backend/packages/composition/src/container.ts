@@ -34,10 +34,19 @@ import { DrizzleHistorialSalarioRepository } from '../../database/src/repositori
 import { DrizzleAlertaAdminRepository } from '../../database/src/repositories/administracion/drizzle-alerta-admin.repository.ts';
 import { DrizzleMetricasAdminRepository } from '../../database/src/repositories/administracion/drizzle-metricas-admin.repository.ts';
 
+
+
 import { DrizzleSucursalOperadorRepository } from '../../database/src/repositories/facturacion/drizzle-sucursal-operador.repository.ts';
 import { DrizzleFacturaRepository } from '../../database/src/repositories/facturacion/drizzle-factura.repository.ts';
+import { DrizzleDevolucionVentaRepository } from '../../database/src/repositories/facturacion/drizzle-devolucion-venta.repository.ts';
 import { DrizzlePasswordResetRepository } from '../../database/src/repositories/autenticacion/drizzle-password-reset.repository.ts';
 import { DrizzleLogMcpToolRepository } from '../../database/src/repositories/mcp-audit/drizzle-log-mcp-tool.repository.ts';
+import { DrizzleCategoriaActivoRepository } from '../../database/src/repositories/logistica/drizzle-categoria-activo.repository.ts';
+import { DrizzleActivoRepository } from '../../database/src/repositories/logistica/drizzle-activo.repository.ts';
+import { DrizzleAsignacionActivoRepository } from '../../database/src/repositories/logistica/drizzle-asignacion-activo.repository.ts';
+import { DrizzleMantenimientoActivoRepository } from '../../database/src/repositories/logistica/drizzle-mantenimiento-activo.repository.ts';
+
+
 
 import { JwtTokenService } from '../../platform/src/jwt/jwt-token-service.ts';
 import { Argon2PasswordHasher } from '../../platform/src/hashing/argon2-password-hasher.ts';
@@ -45,6 +54,9 @@ import { TotpService } from '../../platform/src/totp/totp-service.ts';
 import { PlatformMailer } from '../../platform/src/mailer/mailer.ts';
 import { GeminiAsistenteService } from '../../platform/src/asistente/gemini-asistente.service.ts';
 import { validarYObtenerJwtSecret } from '../../platform/src/config/jwt.config.ts';
+
+
+
 
 import {
   LoginUseCase,
@@ -124,6 +136,7 @@ import {
   ListarFacturasUseCase,
   ObtenerFacturaPorIdUseCase,
   EmitirAlertaFacturacionUseCase,
+  AnularFacturaUseCase,
   RegistrarEntradaInventarioUseCase,
   RegistrarSalidaInventarioUseCase,
   ConsultarKardexUseCase,
@@ -141,6 +154,24 @@ import {
   RegistrarLogMcpToolUseCase,
   ConsultarLogsMcpToolsUseCase,
   ConversarConAsistenteUseCase,
+  CrearCategoriaActivoUseCase,
+  ListarCategoriasActivosUseCase,
+  EditarCategoriaActivoUseCase,
+  CambiarEstadoCategoriaActivoUseCase,
+  CrearActivoUseCase,
+  ListarActivosUseCase,
+  DarBajaActivoUseCase,
+  AsignarActivoEmpleadoUseCase,
+  AsignarActivoAreaUseCase,
+  DevolverActivoUseCase,
+  ConsultarHistorialAsignacionesUseCase,
+  RegistrarMantenimientoUseCase,
+  FinalizarMantenimientoUseCase,
+  ConsultarHistorialMantenimientosUseCase,
+  ConsultarActivoUseCase,
+  RegistrarDevolucionUseCase,
+  
+  
 } from '@warengine/core';
 
 export interface AppContainer {
@@ -157,6 +188,7 @@ export interface AppContainer {
     solicitarRecuperacionPassword: SolicitarRecuperacionPasswordUseCase;
     validarTokenPasswordReset: ValidarTokenPasswordResetUseCase;
     restablecerPassword: RestablecerPasswordUseCase;
+    
   };
 
   administracion: {
@@ -241,6 +273,25 @@ export interface AppContainer {
     listarFacturas: ListarFacturasUseCase;
     obtenerFacturaPorId: ObtenerFacturaPorIdUseCase;
     emitirAlertaFacturacion: EmitirAlertaFacturacionUseCase;
+    anularFactura: AnularFacturaUseCase;
+    registrarDevolucion: RegistrarDevolucionUseCase;
+  };
+  logistica: {
+    crearCategoriaActivo: CrearCategoriaActivoUseCase;
+    listarCategoriasActivos: ListarCategoriasActivosUseCase;
+    editarCategoriaActivo: EditarCategoriaActivoUseCase;
+    cambiarEstadoCategoriaActivo: CambiarEstadoCategoriaActivoUseCase;
+    crearActivo: CrearActivoUseCase;
+    listarActivos: ListarActivosUseCase;
+    darBajaActivo: DarBajaActivoUseCase;
+    asignarActivoEmpleado: AsignarActivoEmpleadoUseCase;
+    asignarActivoArea: AsignarActivoAreaUseCase;
+    devolverActivo: DevolverActivoUseCase;
+    consultarHistorialAsignaciones: ConsultarHistorialAsignacionesUseCase;
+    registrarMantenimiento: RegistrarMantenimientoUseCase;
+    finalizarMantenimiento: FinalizarMantenimientoUseCase;
+    consultarHistorialMantenimientos: ConsultarHistorialMantenimientosUseCase;
+    consultarActivo: ConsultarActivoUseCase;
   };
   mcp: {
     registrarLog: RegistrarLogMcpToolUseCase;
@@ -307,7 +358,12 @@ export function createContainer(_env?: Record<string, string>): AppContainer {
   const turnoCajaRepository = new DrizzleTurnoCajaRepository(db);
   const sucursalOperadorRepository = new DrizzleSucursalOperadorRepository(db);
   const facturaRepository = new DrizzleFacturaRepository(db);
+  const devolucionVentaRepository = new DrizzleDevolucionVentaRepository(db);
   const passwordResetRepository = new DrizzlePasswordResetRepository(db);
+  const categoriaActivoRepository = new DrizzleCategoriaActivoRepository(db);
+  const activoRepository = new DrizzleActivoRepository(db);
+  const asignacionActivoRepository = new DrizzleAsignacionActivoRepository(db);
+  const mantenimientoActivoRepository = new DrizzleMantenimientoActivoRepository(db);
   // 2. Instanciar Servicios Técnicos
   const tokenService = new JwtTokenService(refreshTokenRepository, jwtSecret);
   const passwordHasher = new Argon2PasswordHasher();
@@ -478,6 +534,17 @@ export function createContainer(_env?: Record<string, string>): AppContainer {
     sucursalOperadorRepository,
     auditoriaRepository,
   );
+  const anularFacturaUseCase = new AnularFacturaUseCase(
+    facturaRepository,
+    sucursalOperadorRepository,
+    auditoriaRepository,
+  );
+  const registrarDevolucionUseCase = new RegistrarDevolucionUseCase(
+    facturaRepository,
+    devolucionVentaRepository,
+    sucursalOperadorRepository,
+    auditoriaRepository,
+  );
   const consultarAuditoriaUseCase = new ConsultarAuditoriaUseCase(auditoriaRepository);
   const exportarAuditoriaCsvUseCase = new ExportarAuditoriaCsvUseCase(auditoriaRepository);
   
@@ -611,6 +678,70 @@ export function createContainer(_env?: Record<string, string>): AppContainer {
     resolverAlcanceSucursalUseCase,
   );
 
+  // Casos de uso de Logística (Activos fijos)
+  const crearCategoriaActivoUseCase = new CrearCategoriaActivoUseCase(categoriaActivoRepository, auditoriaRepository);
+  const listarCategoriasActivosUseCase = new ListarCategoriasActivosUseCase(categoriaActivoRepository);
+  const editarCategoriaActivoUseCase = new EditarCategoriaActivoUseCase(categoriaActivoRepository, auditoriaRepository);
+  const cambiarEstadoCategoriaActivoUseCase = new CambiarEstadoCategoriaActivoUseCase(categoriaActivoRepository, auditoriaRepository);
+  const crearActivoUseCase = new CrearActivoUseCase(
+    activoRepository,
+    categoriaActivoRepository,
+    sucursalRepository,
+    resolverAlcanceSucursalUseCase,
+    auditoriaRepository,
+  );
+  const listarActivosUseCase = new ListarActivosUseCase(activoRepository, resolverAlcanceSucursalUseCase);
+  const darBajaActivoUseCase = new DarBajaActivoUseCase(activoRepository, resolverAlcanceSucursalUseCase, auditoriaRepository);
+  const asignarActivoEmpleadoUseCase = new AsignarActivoEmpleadoUseCase(
+    activoRepository,
+    asignacionActivoRepository,
+    empleadoRepository,
+    resolverAlcanceSucursalUseCase,
+    auditoriaRepository,
+  );
+  const asignarActivoAreaUseCase = new AsignarActivoAreaUseCase(
+    activoRepository,
+    asignacionActivoRepository,
+    areaRepository,
+    resolverAlcanceSucursalUseCase,
+    auditoriaRepository,
+  );
+  const devolverActivoUseCase = new DevolverActivoUseCase(
+    activoRepository,
+    asignacionActivoRepository,
+    resolverAlcanceSucursalUseCase,
+    auditoriaRepository,
+  );
+  const consultarHistorialAsignacionesUseCase = new ConsultarHistorialAsignacionesUseCase(
+    activoRepository,
+    asignacionActivoRepository,
+    resolverAlcanceSucursalUseCase,
+  );
+  const registrarMantenimientoUseCase = new RegistrarMantenimientoUseCase(
+    activoRepository,
+    mantenimientoActivoRepository,
+    proveedorRepository,
+    resolverAlcanceSucursalUseCase,
+    auditoriaRepository,
+  );
+  const finalizarMantenimientoUseCase = new FinalizarMantenimientoUseCase(
+    activoRepository,
+    mantenimientoActivoRepository,
+    resolverAlcanceSucursalUseCase,
+    auditoriaRepository,
+  );
+  const consultarHistorialMantenimientosUseCase = new ConsultarHistorialMantenimientosUseCase(
+    activoRepository,
+    mantenimientoActivoRepository,
+    resolverAlcanceSucursalUseCase,
+  );
+  const consultarActivoUseCase = new ConsultarActivoUseCase(
+    activoRepository,
+    asignacionActivoRepository,
+    mantenimientoActivoRepository,
+    resolverAlcanceSucursalUseCase,
+  );
+
   const registrarClienteUseCase = new RegistrarClienteUseCase(clienteRepository, auditoriaRepository);
   const actualizarClienteUseCase = new ActualizarClienteUseCase(clienteRepository, auditoriaRepository);
   const obtenerClientePorIdUseCase = new ObtenerClientePorIdUseCase(clienteRepository);
@@ -740,6 +871,25 @@ export function createContainer(_env?: Record<string, string>): AppContainer {
       listarFacturas: listarFacturasUseCase,
       obtenerFacturaPorId: obtenerFacturaPorIdUseCase,
       emitirAlertaFacturacion: emitirAlertaFacturacionUseCase,
+      anularFactura: anularFacturaUseCase,
+      registrarDevolucion: registrarDevolucionUseCase,
+    },  
+    logistica: {
+      crearCategoriaActivo: crearCategoriaActivoUseCase,
+      listarCategoriasActivos: listarCategoriasActivosUseCase,
+      editarCategoriaActivo: editarCategoriaActivoUseCase,
+      cambiarEstadoCategoriaActivo: cambiarEstadoCategoriaActivoUseCase,
+      crearActivo: crearActivoUseCase,
+      listarActivos: listarActivosUseCase,
+      darBajaActivo: darBajaActivoUseCase,
+      asignarActivoEmpleado: asignarActivoEmpleadoUseCase,
+      asignarActivoArea: asignarActivoAreaUseCase,
+      devolverActivo: devolverActivoUseCase,
+      consultarHistorialAsignaciones: consultarHistorialAsignacionesUseCase,
+      registrarMantenimiento: registrarMantenimientoUseCase,
+      finalizarMantenimiento: finalizarMantenimientoUseCase,
+      consultarHistorialMantenimientos: consultarHistorialMantenimientosUseCase,
+      consultarActivo: consultarActivoUseCase,
     },
     mcp: {
       registrarLog: registrarLogMcpToolUseCase,

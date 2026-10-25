@@ -92,6 +92,7 @@ function armar(opciones: {
         },
         findById: (id: string) => Promise.resolve(facturasGuardadas.find((f) => f.id === id) ?? null),
         listar: () => Promise.resolve(facturasGuardadas),
+        anular: () => Promise.resolve(null),
     };
 
     const turnoRepo: ITurnoCajaRepository = {

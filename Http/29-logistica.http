@@ -1,0 +1,338 @@
+# ==============================================================================
+# MODULO: LOGISTICA Y ACTIVOS FIJOS (RF-LOG-A1 a RF-LOG-C4)
+# Requiere: REST Client (extension VS Code)
+# Roles requeridos:
+#   - Lectura: logistica:leer
+#   - Gestion activos/categorias: logistica:gestionar-activos
+#   - Asignar/devolver: logistica:asignar-activos
+#   - Mantenimiento: logistica:mantenimiento
+# Base URL: http://localhost:8017
+# ==============================================================================
+
+@baseUrl = http://localhost:8017
+@empleadoId = bd1c9936-c277-11f1-855e-3822e20d9040
+@areaId = 1
+
+# ------------------------------------------------------------------------------
+# SETUP: Login como Super Admin
+# ------------------------------------------------------------------------------
+
+### Login Superadmin
+# @name login
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "superadmin@warengine.local",
+  "password": "Warengine.Admin.2026!"
+}
+
+###
+
+# ==============================================================================
+# RF-LOG-A1: CATEGORIAS DE ACTIVOS
+# ==============================================================================
+
+### CAT-01: Crear categoria de activos
+# @name crearCatActivo
+POST {{baseUrl}}/logistica/categorias-activos
+Authorization: Bearer {{login.response.body.accessToken}}
+Content-Type: application/json
+
+{
+  "nombre": "Mobiliario"
+}
+
+###
+
+### CAT-02: Crear segunda categoria
+POST {{baseUrl}}/logistica/categorias-activos
+Authorization: Bearer {{login.response.body.accessToken}}
+Content-Type: application/json
+
+{
+  "nombre": "Equipos de Computo"
+}
+
+###
+
+### CAT-03: Listar categorias de activos
+GET {{baseUrl}}/logistica/categorias-activos
+Authorization: Bearer {{login.response.body.accessToken}}
+
+###
+
+### CAT-04: Listar categorias con filtro de busqueda
+GET {{baseUrl}}/logistica/categorias-activos?busqueda=Mobiliario
+Authorization: Bearer {{login.response.body.accessToken}}
+
+###
+
+### CAT-05: Editar nombre de categoria
+PUT {{baseUrl}}/logistica/categorias-activos/{{crearCatActivo.response.body.id}}
+Authorization: Bearer {{login.response.body.accessToken}}
+Content-Type: application/json
+
+{
+  "nombre": "Oficina"
+}
+
+###
+
+### CAT-06: Inactivar categoria
+PUT {{baseUrl}}/logistica/categorias-activos/{{crearCatActivo.response.body.id}}/estado
+Authorization: Bearer {{login.response.body.accessToken}}
+Content-Type: application/json
+
+{
+  "isActive": false
+}
+
+###
+
+### CAT-07: Reactivar categoria
+PUT {{baseUrl}}/logistica/categorias-activos/{{crearCatActivo.response.body.id}}/estado
+Authorization: Bearer {{login.response.body.accessToken}}
+Content-Type: application/json
+
+{
+  "isActive": true
+}
+
+###
+
+### CAT-08: Nombre duplicado (esperado 409)
+POST {{baseUrl}}/logistica/categorias-activos
+Authorization: Bearer {{login.response.body.accessToken}}
+Content-Type: application/json
+
+{
+  "nombre": "Mobiliario de Oficina"
+}
+
+###
+
+# ==============================================================================
+# RF-LOG-A2: REGISTRAR ACTIVO
+# ==============================================================================
+
+### ACT-01: Crear activo
+# @name crearActivo
+POST {{baseUrl}}/logistica/activos
+Authorization: Bearer {{login.response.body.accessToken}}
+Content-Type: application/json
+
+{
+  "codigoActivo": "ACT-010",
+  "nombre": "Escritorio Ejecutivo negro",
+  "categoriaActivoId": {{crearCatActivo.response.body.id}},
+  "sucursalId": 1,
+  "valorAdquisicion": 1500000,
+  "fechaAdquisicion": "2026-01-15",
+  "condicion": "nuevo"
+}
+
+###
+
+### ACT-02: Crear segundo activo
+# @name crearActivo2
+POST {{baseUrl}}/logistica/activos
+Authorization: Bearer {{login.response.body.accessToken}}
+Content-Type: application/json
+
+{
+  "codigoActivo": "ACT-002",
+  "nombre": "Laptop Dell Latitude 5540",
+  "sucursalId": 1,
+  "valorAdquisicion": 4200000,
+  "condicion": "nuevo"
+}
+
+###
+
+### ACT-03: Codigo duplicado (esperado 409)
+POST {{baseUrl}}/logistica/activos
+Authorization: Bearer {{login.response.body.accessToken}}
+Content-Type: application/json
+
+{
+  "codigoActivo": "ACT-001",
+  "nombre": "Otro activo",
+  "sucursalId": 1
+}
+
+###
+
+# ==============================================================================
+# RF-LOG-A4: LISTAR ACTIVOS
+# ==============================================================================
+
+### ACT-04: Listar todos los activos
+GET {{baseUrl}}/logistica/activos
+Authorization: Bearer {{login.response.body.accessToken}}
+
+###
+
+### ACT-05: Listar por sucursal
+GET {{baseUrl}}/logistica/activos?sucursalId=1
+Authorization: Bearer {{login.response.body.accessToken}}
+
+###
+
+### ACT-06: Listar por estado
+GET {{baseUrl}}/logistica/activos?estado=disponible
+Authorization: Bearer {{login.response.body.accessToken}}
+
+###
+
+### ACT-07: Buscar por nombre/codigo
+GET {{baseUrl}}/logistica/activos?busqueda=Laptop
+Authorization: Bearer {{login.response.body.accessToken}}
+
+###
+
+# ==============================================================================
+# RF-LOG-C4: CONSULTAR ACTIVO (estado + responsable + mantenimiento)
+# ==============================================================================
+
+### ACT-08: Consultar detalle de activo
+GET {{baseUrl}}/logistica/activos/{{crearActivo.response.body.id}}
+Authorization: Bearer {{login.response.body.accessToken}}
+
+###
+
+# ==============================================================================
+# RF-LOG-B1: ASIGNAR ACTIVO A EMPLEADO
+# ==============================================================================
+
+### ASIG-01: Asignar activo a empleado (usar UUID de empleado real de la BD)
+# @name asignarEmpleado
+POST {{baseUrl}}/logistica/activos/{{crearActivo.response.body.id}}/asignar-empleado
+Authorization: Bearer {{login.response.body.accessToken}}
+Content-Type: application/json
+
+{
+  "empleadoId": "bd1c9936-c277-11f1-855e-3822e20d9040",
+  "observaciones": "Asignado para uso en oficina principal"
+}
+
+###
+
+# ==============================================================================
+# RF-LOG-B4: HISTORIAL DE ASIGNACIONES
+# ==============================================================================
+
+### ASIG-02: Consultar historial de asignaciones
+GET {{baseUrl}}/logistica/activos/{{crearActivo.response.body.id}}/asignaciones
+Authorization: Bearer {{login.response.body.accessToken}}
+
+###
+
+# ==============================================================================
+# RF-LOG-B5: DEVOLVER ACTIVO
+# ==============================================================================
+
+### ASIG-03: Devolver activo
+PUT {{baseUrl}}/logistica/activos/{{crearActivo.response.body.id}}/devolver
+Authorization: Bearer {{login.response.body.accessToken}}
+Content-Type: application/json
+
+{
+  "observaciones": "Devuelto por cambio de puesto"
+}
+
+###
+
+# ==============================================================================
+# RF-LOG-B2: ASIGNAR ACTIVO A AREA
+# ==============================================================================
+
+### ASIG-04: Asignar activo a area (usar ID de area real)
+POST {{baseUrl}}/logistica/activos/{{crearActivo2.response.body.id}}/asignar-area
+Authorization: Bearer {{login.response.body.accessToken}}
+Content-Type: application/json
+
+{
+  "areaId": {{areaId}},
+  "observaciones": "Equipamiento de sala de juntas"
+}
+
+###
+
+# ==============================================================================
+# RF-LOG-C1: REGISTRAR MANTENIMIENTO
+# ==============================================================================
+
+### MANT-01: Registrar mantenimiento preventivo (activo debe estar disponible)
+# @name registrarMantenimiento
+POST {{baseUrl}}/logistica/activos/{{crearActivo.response.body.id}}/mantenimientos
+Authorization: Bearer {{login.response.body.accessToken}}
+Content-Type: application/json
+
+{
+  "tipo": "preventivo",
+  "fecha": "2026-10-21",
+  "descripcion": "Revision general del mobiliario",
+  "costo": 50000
+}
+
+###
+
+# ==============================================================================
+# RF-LOG-C3: HISTORIAL DE MANTENIMIENTOS
+# ==============================================================================
+
+### MANT-02: Consultar historial de mantenimientos
+GET {{baseUrl}}/logistica/activos/{{crearActivo.response.body.id}}/mantenimientos
+Authorization: Bearer {{login.response.body.accessToken}}
+
+###
+
+# ==============================================================================
+# RF-LOG-C3: FINALIZAR MANTENIMIENTO
+# ==============================================================================
+
+### MANT-03: Finalizar mantenimiento
+PUT {{baseUrl}}/logistica/mantenimientos/{{registrarMantenimiento.response.body.id}}/finalizar
+Authorization: Bearer {{login.response.body.accessToken}}
+Content-Type: application/json
+
+{
+  "fechaFin": "2026-10-22",
+  "costo": 75000,
+  "descripcion": "Revision completa + tapizado"
+}
+
+###
+
+# ==============================================================================
+# RF-LOG-A5: DAR DE BAJA ACTIVO
+# ==============================================================================
+
+### BAJA-01: Baja rechazada si asignado (esperado 409)
+PUT {{baseUrl}}/logistica/activos/{{crearActivo2.response.body.id}}/baja
+Authorization: Bearer {{login.response.body.accessToken}}
+Content-Type: application/json
+
+{
+  "motivo": "Equipo obsoleto que ya no sirve para operaciones"
+}
+
+###
+
+### BAJA-02: Dar de baja activo disponible
+PUT {{baseUrl}}/logistica/activos/{{crearActivo.response.body.id}}/baja
+Authorization: Bearer {{login.response.body.accessToken}}
+Content-Type: application/json
+
+{
+  "motivo": "Mobiliario danado irreparablemente por humedad"
+}
+
+###
+
+### BAJA-03: Verificar estado despues de baja
+GET {{baseUrl}}/logistica/activos/{{crearActivo.response.body.id}}
+Authorization: Bearer {{login.response.body.accessToken}}
+
+###

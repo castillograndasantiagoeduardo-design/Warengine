@@ -154,6 +154,18 @@ export * from './src/modules/inventario/application/utils/csv-generator.ts';
 export * from './src/modules/inventario/application/utils/csv-parser.ts';
 
 
+// ─── Módulo: Logística (Activos fijos) ──────────────────────────────────────
+export * from './src/modules/logistica/domain/entities/CategoriaActivo.ts';
+export * from './src/modules/logistica/domain/entities/Activo.ts';
+export * from './src/modules/logistica/domain/entities/AsignacionActivo.ts';
+export * from './src/modules/logistica/domain/entities/MantenimientoActivo.ts';
+export * from './src/modules/logistica/domain/errors/LogisticaErrors.ts';
+export * from './src/modules/logistica/domain/repositories/ICategoriaActivoRepository.ts';
+export * from './src/modules/logistica/domain/repositories/IActivoRepository.ts';
+export * from './src/modules/logistica/domain/repositories/IAsignacionActivoRepository.ts';
+export * from './src/modules/logistica/domain/repositories/IMantenimientoActivoRepository.ts';
+
+
 // ─── Módulo: Facturacion ─────────────────────────────────────────────────────
 export * from './src/modules/facturacion/domain/entities/TurnoCaja.ts';
 export * from './src/modules/facturacion/domain/errors/TurnoCajaErrors.ts';
@@ -175,6 +187,7 @@ export * from './src/modules/facturacion/application/use-cases/ActualizarCliente
 export * from './src/modules/facturacion/application/use-cases/ObtenerClientePorIdUseCase.ts';
 export * from './src/modules/facturacion/application/use-cases/BuscarClientesUseCase.ts';
 export * from './src/modules/facturacion/application/use-cases/CrearFacturaUseCase.ts';
+export * from './src/modules/facturacion/application/use-cases/AnularFacturaUseCase.ts';
 export * from './src/modules/facturacion/application/use-cases/ListarFacturasUseCase.ts';
 export * from './src/modules/facturacion/application/use-cases/ObtenerFacturaPorIdUseCase.ts';
 export * from './src/modules/facturacion/application/use-cases/EmitirAlertaFacturacionUseCase.ts';
@@ -189,3 +202,24 @@ export * from './src/modules/mcp-audit/application/use-cases/ConsultarLogsMcpToo
 export * from './src/modules/asistente/domain/errors/AsistenteErrors.ts';
 export * from './src/modules/asistente/application/ports/IAsistenteService.ts';
 export * from './src/modules/asistente/application/use-cases/ConversarConAsistenteUseCase.ts';
+export * from './src/modules/facturacion/domain/entities/DevolucionVenta.ts';
+export * from './src/modules/facturacion/domain/repositories/IDevolucionVentaRepository.ts';
+export * from './src/modules/facturacion/application/use-cases/RegistrarDevolucionUseCase.ts';
+
+// ---------- Logística — helpers y casos de uso----------------------------------------------------------------
+export * from './src/modules/logistica/application/helpers/activo.helpers.ts';
+export * from './src/modules/logistica/application/use-cases/CrearCategoriaActivoUseCase.ts';
+export * from './src/modules/logistica/application/use-cases/ListarCategoriasActivosUseCase.ts';
+export * from './src/modules/logistica/application/use-cases/EditarCategoriaActivoUseCase.ts';
+export * from './src/modules/logistica/application/use-cases/CambiarEstadoCategoriaActivoUseCase.ts';
+export * from './src/modules/logistica/application/use-cases/CrearActivoUseCase.ts';
+export * from './src/modules/logistica/application/use-cases/ListarActivosUseCase.ts';
+export * from './src/modules/logistica/application/use-cases/ConsultarActivoUseCase.ts';
+export * from './src/modules/logistica/application/use-cases/DarBajaActivoUseCase.ts';
+export * from './src/modules/logistica/application/use-cases/AsignarActivoEmpleadoUseCase.ts';
+export * from './src/modules/logistica/application/use-cases/AsignarActivoAreaUseCase.ts';
+export * from './src/modules/logistica/application/use-cases/ConsultarHistorialAsignacionesUseCase.ts';
+export * from './src/modules/logistica/application/use-cases/DevolverActivoUseCase.ts';
+export * from './src/modules/logistica/application/use-cases/RegistrarMantenimientoUseCase.ts';
+export * from './src/modules/logistica/application/use-cases/FinalizarMantenimientoUseCase.ts';
+export * from './src/modules/logistica/application/use-cases/ConsultarHistorialMantenimientosUseCase.ts';

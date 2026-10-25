@@ -27,6 +27,7 @@ export * from './inventario/exportacion.schema.ts';
 export * from './facturacion/cliente.schema.ts';
 export * from './facturacion/turno-caja.schema.ts';
 export * from './facturacion/factura.schema.ts';
+export * from './facturacion/devolucion-venta.schema.ts';
 
 
 // ─── Módulo: administracion ────────────────────────────────────
@@ -43,7 +44,10 @@ export * from './administracion/alerta-admin.schema.ts';
 export * from './administracion/dashboard.schema.ts';
 
 // ─── Módulo: logistica ─────────────────────────────────────────
-// (los esquemas se agregarán cuando se implemente el módulo)
+export * from './logistica/categoria-activo.schema.ts';
+export * from './logistica/activo.schema.ts';
+export * from './logistica/asignacion.schema.ts';
+export * from './logistica/mantenimiento.schema.ts';
 
 // ─── Módulo: mcp ──────────────────────────────────────────────
 export * from './mcp/index.ts';

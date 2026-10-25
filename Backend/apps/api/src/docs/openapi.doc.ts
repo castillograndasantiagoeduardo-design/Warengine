@@ -1582,6 +1582,33 @@ Para autorizar peticiones interactivas en esta consola:
         responses: { 200: { description: 'Comprobante y líneas de detalle' } },
       },
     },
+    '/ventas/facturas/{id}/anular': {
+      post: {
+        tags: ['Facturación - Ventas'],
+        summary: 'Anular factura emitida y reingresar el stock al inventario (RF-FMC-E10)',
+        security: [{ bearerAuth: [] }, { cookieAuth: [] }],
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string', format: 'uuid' } }],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                required: ['motivo'],
+                properties: { motivo: { type: 'string', minLength: 5, maxLength: 255, example: 'Cliente canceló la compra' } },
+              },
+            },
+          },
+        },
+        responses: {
+          200: { description: 'Factura anulada; el trigger reingresó el stock al kardex' },
+          400: { description: 'Motivo ausente o menor a 5 caracteres' },
+          403: { description: 'Sin permiso facturacion:anular' },
+          404: { description: 'Factura inexistente o fuera de la sede del usuario' },
+          409: { description: 'La factura ya estaba anulada' },
+        },
+      },
+    },
 
     // ─── Facturación - Alertas ────────────────────────────────────────────────
     '/ventas/alertas': {
