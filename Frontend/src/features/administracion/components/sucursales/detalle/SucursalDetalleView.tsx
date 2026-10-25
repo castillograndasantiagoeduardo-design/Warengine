@@ -17,6 +17,7 @@ import { useCambiarEstadoSucursal } from '../../../hooks/useCambiarEstadoSucursa
 import { SEDE_PRINCIPAL_ID, type Sucursal } from '../../../types';
 import { SucursalFormModal } from '../SucursalFormModal';
 import { SucursalEstadoDialog } from '../SucursalEstadoDialog';
+import { SucursalAreas } from './SucursalAreas';
 import { SucursalFicha } from './SucursalFicha';
 import { SucursalUsuarios } from './SucursalUsuarios';
 import { SucursalVentasRecientes } from './SucursalVentasRecientes';
@@ -99,6 +100,7 @@ export function SucursalDetalleView({ id }: { id: number }) {
       />
 
       <SucursalFicha detalle={detalle} encargados={encargados} />
+      <SucursalAreas sucursalId={detalle.id} />
       <SucursalUsuarios usuarios={detalle.usuariosAsignados} />
       <SucursalVentasRecientes ventas={detalle.ventasRecientes} />
 
