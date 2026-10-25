@@ -11,4 +11,7 @@ export * from './InventoryHealthCard';
 export * from './RecentOperationsTable';
 export * from './ActiveCashiersCard';
 export * from './CreateProductModal';
+export * from './CreateSupplierModal';
+export * from './EditProductModal';
+export * from './BranchInventoryView';
 export * from './DashboardSkeleton';

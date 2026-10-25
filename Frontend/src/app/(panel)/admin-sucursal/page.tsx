@@ -25,6 +25,7 @@ import {
   ActiveCashiersCard,
   CreateProductModal,
   DashboardSkeleton,
+  BranchInventoryView,
   DollarSignIcon,
   ReceiptTextIcon,
   PackageIcon,
@@ -131,7 +132,12 @@ export default function DashboardPage() {
       ultimaSincronizacion={data?.ultimaSincronizacion || '17:42:08'}
       isOnline={isAuthenticated}
     >
-      {isDashboardLoading && !data ? (
+      {activeSection === 'inventario' ? (
+        <BranchInventoryView
+          sucursalId={usuario?.sucursalId ?? 1}
+          sucursalNombre={data?.sucursalNombre || 'Sede Norte'}
+        />
+      ) : isDashboardLoading && !data ? (
         <DashboardSkeleton />
       ) : (
         <div className="space-y-5 animate-in fade-in duration-300">
