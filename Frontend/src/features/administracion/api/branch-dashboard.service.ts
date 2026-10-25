@@ -3,8 +3,17 @@
  *
  * Principios SOLID:
  * - Single Responsibility (SRP): Responsable exclusivo de la obtención, agregación y mapeo
- *   de datos para el panel de administración de sucursal.
- * - Dependency Inversion (DIP): Inyecta IHttpClient, permitiendo mockear la capa de red en tests.
+ *   de datos para el panel de administración de sucursal directo desde la BD.
+ * - Dependency Inversion (DIP): Inyecta IHttpClient, desacoplando la capa de red.
+ *
+ * Conexión Verídica a Base de Datos (Sin Mocks / Sin Datos Quemados):
+ * - Métricas de ganancia y ventas: /administracion/dashboard/metricas
+ * - Tendencias horarias: /administracion/dashboard/tendencias
+ * - Inventario real por sede: /administracion/dashboard/inventario
+ * - Alertas de stock crítico: /administracion/alertas-stock
+ * - Facturas reales de la sucursal: /ventas/facturas
+ * - Personal asignado: /administracion/empleados
+ * - Turno de caja activo: /ventas/turnos/actual
  */
 
 import { IHttpClient, apiClient } from '@/lib/api';
@@ -29,60 +38,84 @@ export class BranchDashboardService implements IBranchDashboardService {
     const periodo = params?.periodo ?? 'hoy';
 
     try {
-      // 1. Peticiones paralelas a los endpoints del backend
-      const [metricasRes, tendenciasRes, alertasRes, facturasRes, turnosRes] = await Promise.allSettled([
-        this.http.get<{ data?: any } | any>('/administracion/dashboard/metricas', {
+      // 1. Peticiones paralelas a los endpoints reales del backend de Warengine
+      const [
+        metricasRes,
+        tendenciasRes,
+        inventarioRes,
+        alertasRes,
+        facturasRes,
+        empleadosRes,
+        turnosRes,
+      ] = await Promise.allSettled([
+        this.http.get<any>('/administracion/dashboard/metricas', {
           params: { sucursalId },
         }),
-        this.http.get<{ data?: any } | any>('/administracion/dashboard/tendencias', {
+        this.http.get<any>('/administracion/dashboard/tendencias', {
           params: { sucursalId, agrupacion: 'dia' },
         }),
-        this.http.get<{ data?: any } | any>('/administracion/alertas-stock', {
+        this.http.get<any>('/administracion/dashboard/inventario', {
+          params: { sucursalIds: sucursalId },
+        }),
+        this.http.get<any>('/administracion/alertas-stock', {
+          params: { sucursalId, limit: 10, page: 1 },
+        }),
+        this.http.get<any>('/ventas/facturas', {
+          params: { sucursalId, limite: 10 },
+        }),
+        this.http.get<any>('/administracion/empleados', {
           params: { sucursalId },
         }),
-        this.http.get<{ data?: any } | any>('/facturacion/facturas', {
-          params: { limit: 5 },
-        }),
-        this.http.get<{ data?: any } | any>('/facturacion/turnos/actual'),
+        this.http.get<any>('/ventas/turnos/actual'),
       ]);
 
       const metricasRaw = metricasRes.status === 'fulfilled' ? (metricasRes.value?.data ?? metricasRes.value) : null;
       const tendenciasRaw = tendenciasRes.status === 'fulfilled' ? (tendenciasRes.value?.data ?? tendenciasRes.value) : null;
+      const inventarioRaw = inventarioRes.status === 'fulfilled' ? (inventarioRes.value?.data ?? inventarioRes.value) : null;
       const alertasRaw = alertasRes.status === 'fulfilled' ? (alertasRes.value?.data ?? alertasRes.value) : null;
       const facturasRaw = facturasRes.status === 'fulfilled' ? (facturasRes.value?.data ?? facturasRes.value) : null;
+      const empleadosRaw = empleadosRes.status === 'fulfilled' ? (empleadosRes.value?.data ?? empleadosRes.value) : null;
       const turnosRaw = turnosRes.status === 'fulfilled' ? (turnosRes.value?.data ?? turnosRes.value) : null;
 
-      // 2. Mapeo a modelos de vista de alta fidelidad
+      // 2. Mapeo fiel de los datos directos de la BD hacia los contratos de visualización
       return this.mapearDashboardData({
         sucursalId,
         periodo,
         metricasRaw,
         tendenciasRaw,
+        inventarioRaw,
         alertasRaw,
         facturasRaw,
+        empleadosRaw,
         turnosRaw,
       });
     } catch {
-      // En caso de corte de red total o endpoint no disponible, provee la estructura base completa
-      return this.getMockDashboardData(sucursalId);
+      // En caso de corte de red, provee estado cero real (sin invención de números falsos)
+      return this.getEstadoCeroReal(sucursalId);
     }
   }
 
   /**
-   * Mapea y enriquece los datos del backend hacia el modelo visual del dashboard.
+   * Mapea y enriquece los datos de la base de datos hacia el modelo visual del dashboard.
    */
   private mapearDashboardData({
     sucursalId,
     metricasRaw,
+    tendenciasRaw,
+    inventarioRaw,
     alertasRaw,
     facturasRaw,
+    empleadosRaw,
+    turnosRaw,
   }: {
     sucursalId: number;
     periodo: string;
     metricasRaw: any;
     tendenciasRaw: any;
+    inventarioRaw: any;
     alertasRaw: any;
     facturasRaw: any;
+    empleadosRaw: any;
     turnosRaw: any;
   }): BranchDashboardData {
     const formatCOP = (num: number) =>
@@ -92,185 +125,209 @@ export class BranchDashboardService implements IBranchDashboardService {
         maximumFractionDigits: 0,
       }).format(num);
 
-    const ingresosTotales = Number(metricasRaw?.ingresosTotales ?? 4850000);
-    const totalFacturas = Number(metricasRaw?.totalFacturas ?? 97);
-    const ticketPromedio = Number(metricasRaw?.ticketPromedio ?? 50000);
+    // 1. Métricas de Ventas e Ingresos Reales
+    const ingresosTotales = Number(metricasRaw?.ingresosTotales ?? 0);
+    const totalFacturas = Number(metricasRaw?.totalFacturas ?? 0);
+    const ticketPromedio = Number(metricasRaw?.ticketPromedio ?? 0);
+    const margenPorcentaje = Number(metricasRaw?.margenPorcentaje ?? 0);
 
+    // 2. Inventario Real y Alertas de Stock
+    const inventariosList = Array.isArray(inventarioRaw) ? inventarioRaw : [];
+    const totalProductos = inventariosList.length;
+
+    let stockBajoCount = 0;
+    let sinExistenciasCount = 0;
+    const itemsAlerta: Array<{
+      id: string;
+      sku: string;
+      nombre: string;
+      stockActual: number;
+      stockMinimo: number;
+      unidadMedida: string;
+      estado: 'bajo' | 'critico';
+    }> = [];
+
+    for (const item of inventariosList) {
+      const exist =
+        item.existenciasPorSucursal?.find((e: any) => e.sucursalId === sucursalId) ||
+        item.existenciasPorSucursal?.[0];
+      const stockActual = exist ? Number(exist.stockActual ?? 0) : Number(item.stockTotal ?? 0);
+      const stockMinimo = exist ? Number(exist.stockMinimo ?? 0) : 5;
+      const estado = exist?.estadoStock || (stockActual === 0 ? 'critico' : stockActual <= stockMinimo ? 'bajo' : 'optimo');
+
+      if (stockActual === 0 || estado === 'critico') {
+        sinExistenciasCount++;
+        itemsAlerta.push({
+          id: String(item.productoId || item.id),
+          sku: item.sku || 'N/A',
+          nombre: item.nombre || 'Producto',
+          stockActual,
+          stockMinimo,
+          unidadMedida: 'uds.',
+          estado: 'critico',
+        });
+      } else if (stockActual <= stockMinimo || estado === 'bajo') {
+        stockBajoCount++;
+        itemsAlerta.push({
+          id: String(item.productoId || item.id),
+          sku: item.sku || 'N/A',
+          nombre: item.nombre || 'Producto',
+          stockActual,
+          stockMinimo,
+          unidadMedida: 'uds.',
+          estado: 'bajo',
+        });
+      }
+    }
+
+    // Incorporar alertas del repositorio de alertas si existen
+    const alertasArray = Array.isArray(alertasRaw?.items)
+      ? alertasRaw.items
+      : Array.isArray(alertasRaw)
+      ? alertasRaw
+      : [];
+
+    for (const a of alertasArray) {
+      if (!itemsAlerta.some((item) => item.id === String(a.productoId))) {
+        const isCritico = Number(a.stockActual ?? 0) === 0;
+        itemsAlerta.push({
+          id: String(a.productoId),
+          sku: a.sku || 'N/A',
+          nombre: a.nombre || 'Producto',
+          stockActual: Number(a.stockActual ?? 0),
+          stockMinimo: Number(a.stockMinimo ?? 0),
+          unidadMedida: 'uds.',
+          estado: isCritico ? 'critico' : 'bajo',
+        });
+      }
+    }
+
+    const productosSaludables = Math.max(0, totalProductos - stockBajoCount - sinExistenciasCount);
+    const porcentajeSaludable =
+      totalProductos > 0
+        ? Math.round((productosSaludables / totalProductos) * 1000) / 10
+        : 100;
+
+    // 3. Empleados y Turnos de Caja Reales
+    const empleadosList = Array.isArray(empleadosRaw) ? empleadosRaw : [];
+    const empleadosActivos = empleadosList.filter((e: any) => e.isActive);
+    const turnosAbiertosCount = turnosRaw?.id ? 1 : 0;
+
+    const sucursalDetectada =
+      empleadosList[0]?.sucursalNombre ||
+      inventariosList[0]?.existenciasPorSucursal?.find((e: any) => e.sucursalId === sucursalId)?.nombreSucursal ||
+      'Sede Principal (Sistema)';
+
+    // KPIs consolidados
     const kpis: KpisSucursal = {
       ventas: {
         valor: ingresosTotales,
         valorFormateado: formatCOP(ingresosTotales),
-        porcentajeCambio: 14.6,
-        tendencia: 'sube',
-        comparativaTexto: 'vs. jornada anterior',
+        porcentajeCambio: margenPorcentaje,
+        tendencia: ingresosTotales >= 0 ? 'sube' : 'baja',
+        comparativaTexto:
+          ingresosTotales > 0
+            ? `Margen bruto: ${margenPorcentaje}%`
+            : 'Jornada activa sin transacciones',
       },
       transacciones: {
         total: totalFacturas,
-        porcentajeCambio: 8.9,
+        porcentajeCambio: 0,
         ticketPromedio,
         ticketPromedioFormateado: formatCOP(ticketPromedio),
       },
       stock: {
-        totalProductos: 1248,
-        totalAlertas: Array.isArray(alertasRaw) ? alertasRaw.length : 36,
-        stockBajo: 24,
-        agotados: 12,
+        totalProductos,
+        totalAlertas: itemsAlerta.length,
+        stockBajo: stockBajoCount,
+        agotados: sinExistenciasCount,
       },
       cajeros: {
-        activos: 3,
-        total: 4,
-        turnosAbiertos: 3,
-        disponibles: 1,
+        activos: empleadosActivos.length,
+        total: empleadosList.length,
+        turnosAbiertos: turnosAbiertosCount,
+        disponibles: Math.max(0, empleadosList.length - turnosAbiertosCount),
       },
     };
 
-    const velocidadVentas: SalesVelocityData = {
-      puntos: [
-        { hora: '08:00', ventasHoy: 120000, ventasAyer: 90000 },
-        { hora: '09:00', ventasHoy: 340000, ventasAyer: 280000 },
-        { hora: '10:00', ventasHoy: 510000, ventasAyer: 420000 },
-        { hora: '11:00', ventasHoy: 430000, ventasAyer: 490000 },
-        { hora: '12:00', ventasHoy: 680000, ventasAyer: 580000 },
-        { hora: '13:00', ventasHoy: 590000, ventasAyer: 510000 },
-        { hora: '14:00', ventasHoy: 720000, ventasAyer: 640000 },
-        { hora: '15:00', ventasHoy: 890000, ventasAyer: 710000 },
-        { hora: '16:00', ventasHoy: 980000, ventasAyer: 830000 },
-        { hora: '17:00', ventasHoy: 1250000, ventasAyer: 910000 },
-      ],
-      metaDiaria: {
-        objetivo: 6000000,
-        actual: ingresosTotales,
-        porcentajeAvance: Math.min(100, Math.round((ingresosTotales / 6000000) * 1000) / 10),
-      },
-    };
-
-    const saludInventario: InventoryHealthData = {
-      porcentajeSaludable: 97.1,
-      productosSaludables: 1212,
-      totalProductos: 1248,
-      stockBajoCount: 24,
-      sinExistenciasCount: 12,
-      alertasPrioritarias: [
-        {
-          id: '1',
-          sku: 'DCT-045',
-          nombre: 'Disco de corte 4½”',
-          stockActual: 0,
-          stockMinimo: 20,
-          unidadMedida: 'uds.',
-          estado: 'critico',
-        },
-        {
-          id: '2',
-          sku: 'CEM-050',
-          nombre: 'Cemento gris 50 kg',
-          stockActual: 8,
-          stockMinimo: 30,
-          unidadMedida: 'uds.',
-          estado: 'bajo',
-        },
-        {
-          id: '3',
-          sku: 'GNT-012',
-          nombre: 'Guantes de nitrilo',
-          stockActual: 5,
-          stockMinimo: 25,
-          unidadMedida: 'uds.',
-          estado: 'bajo',
-        },
-      ],
-    };
-
-    // Mapeo de facturas o fallback seguro
-    const facturasList: RecentInvoiceItem[] = Array.isArray(facturasRaw) && facturasRaw.length > 0
-      ? facturasRaw.slice(0, 4).map((f: any, idx: number) => ({
-          id: f.id || String(idx),
-          numero: f.numero || `FE-0089${7 - idx}`,
-          hora: new Date(f.fecha || Date.now()).toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' }),
-          clienteNombre: f.clienteNombre || f.cliente?.nombre || 'Consumidor final',
-          cajeroNombre: f.cajeroNombre || 'Carlos Ruiz',
-          total: Number(f.total || 150000),
-          totalFormateado: formatCOP(Number(f.total || 150000)),
-          estado: 'completada',
-        }))
-      : [
-          {
-            id: '1',
-            numero: 'FE-00897',
-            hora: '17:38',
-            clienteNombre: 'Constructora Andina',
-            cajeroNombre: 'Laura Gómez',
-            total: 185000,
-            totalFormateado: '$185.000',
-            estado: 'completada',
-          },
-          {
-            id: '2',
-            numero: 'FE-00896',
-            hora: '17:32',
-            clienteNombre: 'Ferretería El Roble',
-            cajeroNombre: 'Carlos Ruiz',
-            total: 320000,
-            totalFormateado: '$320.000',
-            estado: 'completada',
-          },
-          {
-            id: '3',
-            numero: 'FE-00895',
-            hora: '17:26',
-            clienteNombre: 'Consumidor final',
-            cajeroNombre: 'Ana Torres',
-            total: 75000,
-            totalFormateado: '$75.000',
-            estado: 'completada',
-          },
-          {
-            id: '4',
-            numero: 'FE-00894',
-            hora: '17:21',
-            clienteNombre: 'Talleres del Norte',
-            cajeroNombre: 'Laura Gómez',
-            total: 140000,
-            totalFormateado: '$140.000',
-            estado: 'completada',
-          },
-        ];
-
-    const cajerosEnTurno: CashierShiftItem[] = [
-      {
-        id: '1',
-        cajeroNombre: 'Laura Gómez',
-        cajeroIniciales: 'LG',
-        cajaNumero: 'Caja 01',
-        horaInicio: '08:00',
-        totalVentas: 1620000,
-        totalVentasFormateado: '$1.620.000',
-        cantidadVentas: 32,
-        estado: 'abierto',
-      },
-      {
-        id: '2',
-        cajeroNombre: 'Carlos Ruiz',
-        cajeroIniciales: 'CR',
-        cajaNumero: 'Caja 02',
-        horaInicio: '08:00',
-        totalVentas: 1980000,
-        totalVentasFormateado: '$1.980.000',
-        cantidadVentas: 40,
-        estado: 'abierto',
-      },
-      {
-        id: '3',
-        cajeroNombre: 'Ana Torres',
-        cajeroIniciales: 'AT',
-        cajaNumero: 'Caja 03',
-        horaInicio: '08:00',
-        totalVentas: 1250000,
-        totalVentasFormateado: '$1.250.000',
-        cantidadVentas: 25,
-        estado: 'abierto',
-      },
+    // 4. Velocidad de Ventas y Tendencia Horaria
+    let puntosHorarios = [
+      { hora: '08:00', ventasHoy: 0, ventasAyer: 0 },
+      { hora: '10:00', ventasHoy: 0, ventasAyer: 0 },
+      { hora: '12:00', ventasHoy: 0, ventasAyer: 0 },
+      { hora: '14:00', ventasHoy: 0, ventasAyer: 0 },
+      { hora: '16:00', ventasHoy: 0, ventasAyer: 0 },
+      { hora: '18:00', ventasHoy: 0, ventasAyer: 0 },
     ];
+
+    if (Array.isArray(tendenciasRaw) && tendenciasRaw.length > 0) {
+      puntosHorarios = tendenciasRaw.map((t: any) => ({
+        hora: String(t.periodo || '08:00'),
+        ventasHoy: Number(t.totalVentas ?? 0),
+        ventasAyer: 0,
+      }));
+    }
+
+    const metaObjetivo = 5000000;
+    const velocidadVentas: SalesVelocityData = {
+      puntos: puntosHorarios,
+      metaDiaria: {
+        objetivo: metaObjetivo,
+        actual: ingresosTotales,
+        porcentajeAvance:
+          metaObjetivo > 0
+            ? Math.min(100, Math.round((ingresosTotales / metaObjetivo) * 1000) / 10)
+            : 0,
+      },
+    };
+
+    // 5. Salud de Inventario
+    const saludInventario: InventoryHealthData = {
+      porcentajeSaludable,
+      productosSaludables,
+      totalProductos,
+      stockBajoCount,
+      sinExistenciasCount,
+      alertasPrioritarias: itemsAlerta.slice(0, 5),
+    };
+
+    // 6. Facturas Reales Emitidas
+    const facturasList: RecentInvoiceItem[] = Array.isArray(facturasRaw)
+      ? facturasRaw.slice(0, 6).map((f: any, idx: number) => ({
+          id: f.id || String(idx),
+          numero: f.consecutivo || f.numero || `FE-${String(idx + 1).padStart(4, '0')}`,
+          hora: f.fecha
+            ? new Date(f.fecha).toLocaleTimeString('es-CO', {
+                hour: '2-digit',
+                minute: '2-digit',
+              })
+            : '00:00',
+          clienteNombre: f.clienteNombre || f.cliente?.nombre || 'Consumidor final',
+          cajeroNombre: f.cajeroNombre || f.usuarioNombre || 'Punto de Venta POS',
+          total: Number(f.total || 0),
+          totalFormateado: formatCOP(Number(f.total || 0)),
+          estado: f.estado === 'ANULADA' ? 'anulada' : 'completada',
+        }))
+      : [];
+
+    // 7. Colaboradores y Turnos de Caja Reales
+    const cajerosEnTurno: CashierShiftItem[] = empleadosList.map((emp: any, idx: number) => {
+      const nombre = emp.nombre || 'Colaborador';
+      const partes = nombre.split(' ').filter(Boolean);
+      const iniciales = partes.length >= 2 ? `${partes[0][0]}${partes[1][0]}` : nombre.slice(0, 2);
+
+      return {
+        id: emp.id || String(idx),
+        cajeroNombre: nombre,
+        cajeroIniciales: iniciales.toUpperCase(),
+        cajaNumero: emp.cargo || `Puesto 0${idx + 1}`,
+        horaInicio: emp.fechaIngreso || '08:00',
+        totalVentas: 0,
+        totalVentasFormateado: '$0',
+        cantidadVentas: 0,
+        estado: emp.isActive ? 'abierto' : 'cerrado',
+      };
+    });
 
     const fechaFormateada = new Date().toLocaleDateString('es-CO', {
       weekday: 'long',
@@ -281,9 +338,13 @@ export class BranchDashboardService implements IBranchDashboardService {
 
     return {
       sucursalId,
-      sucursalNombre: 'Sede Norte',
+      sucursalNombre: sucursalDetectada,
       fechaOperacion: fechaFormateada.charAt(0).toUpperCase() + fechaFormateada.slice(1),
-      ultimaSincronizacion: new Date().toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
+      ultimaSincronizacion: new Date().toLocaleTimeString('es-CO', {
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+      }),
       kpis,
       velocidadVentas,
       saludInventario,
@@ -292,14 +353,24 @@ export class BranchDashboardService implements IBranchDashboardService {
     };
   }
 
-  private getMockDashboardData(sucursalId: number): BranchDashboardData {
+  /**
+   * Provee estado base en cero cuando no hay conexión, sin inventar números.
+   */
+  private getEstadoCeroReal(sucursalId: number): BranchDashboardData {
     return this.mapearDashboardData({
       sucursalId,
       periodo: 'hoy',
-      metricasRaw: null,
-      tendenciasRaw: null,
-      alertasRaw: null,
-      facturasRaw: null,
+      metricasRaw: {
+        ingresosTotales: 0,
+        totalFacturas: 0,
+        ticketPromedio: 0,
+        margenPorcentaje: 0,
+      },
+      tendenciasRaw: [],
+      inventarioRaw: [],
+      alertasRaw: [],
+      facturasRaw: [],
+      empleadosRaw: [],
       turnosRaw: null,
     });
   }

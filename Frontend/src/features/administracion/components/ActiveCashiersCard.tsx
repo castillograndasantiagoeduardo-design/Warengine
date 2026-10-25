@@ -11,7 +11,7 @@
 import React from 'react';
 import { GlassCard } from './GlassCard';
 import { StatusBadge } from './StatusBadge';
-import { ArrowRightIcon } from './Icons';
+import { ArrowRightIcon, UsersRoundIcon } from './Icons';
 import type { CashierShiftItem } from '../types/branch-dashboard.types';
 
 interface ActiveCashiersCardProps {
@@ -20,48 +20,12 @@ interface ActiveCashiersCardProps {
   className?: string;
 }
 
-const DEFAULT_TURNOS: CashierShiftItem[] = [
-  {
-    id: '1',
-    cajeroNombre: 'Laura Gómez',
-    cajeroIniciales: 'LG',
-    cajaNumero: 'Caja 01',
-    horaInicio: '08:00',
-    totalVentas: 1620000,
-    totalVentasFormateado: '$1.620.000',
-    cantidadVentas: 32,
-    estado: 'abierto',
-  },
-  {
-    id: '2',
-    cajeroNombre: 'Carlos Ruiz',
-    cajeroIniciales: 'CR',
-    cajaNumero: 'Caja 02',
-    horaInicio: '08:00',
-    totalVentas: 1980000,
-    totalVentasFormateado: '$1.980.000',
-    cantidadVentas: 40,
-    estado: 'abierto',
-  },
-  {
-    id: '3',
-    cajeroNombre: 'Ana Torres',
-    cajeroIniciales: 'AT',
-    cajaNumero: 'Caja 03',
-    horaInicio: '08:00',
-    totalVentas: 1250000,
-    totalVentasFormateado: '$1.250.000',
-    cantidadVentas: 25,
-    estado: 'abierto',
-  },
-];
-
 export function ActiveCashiersCard({
-  turnos = DEFAULT_TURNOS,
+  turnos = [],
   onAdministrarTurnosClick,
   className = '',
 }: ActiveCashiersCardProps) {
-  const lista = turnos && turnos.length > 0 ? turnos : DEFAULT_TURNOS;
+  const lista = turnos;
   const turnosAbiertosCount = lista.filter((t) => t.estado === 'abierto').length;
 
   return (
@@ -73,48 +37,62 @@ export function ActiveCashiersCard({
             Turnos en curso
           </h3>
           <StatusBadge
-            variant="success"
+            variant={turnosAbiertosCount > 0 ? 'success' : 'neutral'}
             label={`${turnosAbiertosCount} abiertas`}
-            pulseDot
+            pulseDot={turnosAbiertosCount > 0}
             size="sm"
           />
         </div>
 
-        {/* 2. Lista de Cajeros en Servicio */}
-        <div className="space-y-2 mt-2">
-          {lista.map((turno) => (
-            <div
-              key={turno.id}
-              className="flex items-center justify-between p-2.5 rounded-xl bg-white/[0.02] border border-white/[0.04] hover:border-white/[0.08] transition-colors"
-            >
-              <div className="flex items-center gap-3 min-w-0">
-                {/* Avatar circular del Cajero */}
-                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gradient-to-tr from-[#1b2b54] to-[#2a3f78] border border-white/[0.08] text-[#e3b341] font-bold text-xs font-[family-name:var(--font-pixelify)]">
-                  {turno.cajeroIniciales}
+        {/* 2. Lista de Cajeros en Servicio o Estado Vacío */}
+        {lista && lista.length > 0 ? (
+          <div className="space-y-2 mt-2">
+            {lista.map((turno) => (
+              <div
+                key={turno.id}
+                className="flex items-center justify-between p-2.5 rounded-xl bg-white/[0.02] border border-white/[0.04] hover:border-white/[0.08] transition-colors"
+              >
+                <div className="flex items-center gap-3 min-w-0">
+                  {/* Avatar circular del Cajero */}
+                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gradient-to-tr from-[#1b2b54] to-[#2a3f78] border border-white/[0.08] text-[#e3b341] font-bold text-xs font-[family-name:var(--font-pixelify)]">
+                    {turno.cajeroIniciales}
+                  </div>
+
+                  <div className="min-w-0">
+                    <p className="text-xs font-semibold text-white truncate font-[family-name:var(--font-archivo)]">
+                      {turno.cajeroNombre}
+                    </p>
+                    <p className="text-[10px] text-slate-400 font-[family-name:var(--font-archivo)]">
+                      {turno.cajaNumero} &bull; Desde {turno.horaInicio}
+                    </p>
+                  </div>
                 </div>
 
-                <div className="min-w-0">
-                  <p className="text-xs font-semibold text-white truncate font-[family-name:var(--font-archivo)]">
-                    {turno.cajeroNombre}
-                  </p>
-                  <p className="text-[10px] text-slate-400 font-[family-name:var(--font-archivo)]">
-                    {turno.cajaNumero} &bull; Desde {turno.horaInicio}
-                  </p>
+                {/* Ventas y Conteo */}
+                <div className="text-right shrink-0">
+                  <span className="block text-xs font-mono font-bold text-white tabular-nums">
+                    {turno.totalVentasFormateado}
+                  </span>
+                  <span className="text-[10px] text-slate-400 font-mono">
+                    {turno.cantidadVentas} ventas
+                  </span>
                 </div>
               </div>
-
-              {/* Ventas y Conteo */}
-              <div className="text-right shrink-0">
-                <span className="block text-xs font-mono font-bold text-white tabular-nums">
-                  {turno.totalVentasFormateado}
-                </span>
-                <span className="text-[10px] text-slate-400 font-mono">
-                  {turno.cantidadVentas} ventas
-                </span>
-              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="flex flex-col items-center justify-center py-7 px-4 text-center rounded-xl bg-white/[0.02] border border-white/[0.04] my-2">
+            <div className="w-10 h-10 rounded-xl bg-[#e3b341]/10 border border-[#e3b341]/20 flex items-center justify-center text-[#e3b341] mb-2.5">
+              <UsersRoundIcon size={20} />
             </div>
-          ))}
-        </div>
+            <p className="text-xs font-semibold text-slate-200 font-[family-name:var(--font-archivo)]">
+              Sin turnos abiertos
+            </p>
+            <p className="text-[11px] text-slate-400 mt-1">
+              No hay cajas operando en esta sucursal en este momento.
+            </p>
+          </div>
+        )}
       </div>
 
       {/* 3. Acción Footer */}

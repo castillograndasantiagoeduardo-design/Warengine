@@ -67,16 +67,25 @@ export function middleware(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  // 3. Caso: Cajero intentando entrar al panel administrativo o viceversa
+  // 3. Control de acceso granular por rol (RBAC perimetral)
   if (tieneSesion && payload?.rolId) {
-    if (pathname.startsWith('/dashboard') && payload.rolId === 3) {
-      // Cajero redirigido a su terminal POS
-      return NextResponse.redirect(new URL('/pos', request.url));
+    // El panel de sucursal (/dashboard) es exclusivo para Administradores de Sucursal (rolId: 2)
+    if (pathname.startsWith('/dashboard') && payload.rolId !== 2) {
+      if (payload.rolId === 3) {
+        // Cajero redirigido a su terminal POS
+        return NextResponse.redirect(new URL('/pos', request.url));
+      }
+      // Super-admin (rolId: 1) o cualquier otro rol no autorizado para el panel de sucursal
+      const url = new URL('/acceso', request.url);
+      url.searchParams.set('error', 'acceso_denegado_sucursal');
+      return NextResponse.redirect(url);
     }
 
     if (pathname.startsWith('/pos') && payload.rolId !== 3 && payload.rolId !== 1) {
-      // Administrador que no es cajero ni super-admin redirigido a su panel
-      return NextResponse.redirect(new URL('/dashboard', request.url));
+      // Si un admin-sucursal visita /pos, redirigir a su panel /dashboard
+      if (payload.rolId === 2) {
+        return NextResponse.redirect(new URL('/dashboard', request.url));
+      }
     }
   }
 

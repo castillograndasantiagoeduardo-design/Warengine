@@ -33,6 +33,8 @@ export interface UsuarioSesion {
   email: string;
   rolId: number;
   rolNombre: string;
+  sucursalId?: number;
+  sucursalNombre?: string;
 }
 
 /**

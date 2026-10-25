@@ -18,27 +18,23 @@ interface SalesVelocityChartProps {
   className?: string;
 }
 
-const DEFAULT_PUNTOS: SalesVelocityPoint[] = [
-  { hora: '08:00', ventasHoy: 120000, ventasAyer: 90000 },
-  { hora: '09:00', ventasHoy: 340000, ventasAyer: 280000 },
-  { hora: '10:00', ventasHoy: 510000, ventasAyer: 420000 },
-  { hora: '11:00', ventasHoy: 430000, ventasAyer: 490000 },
-  { hora: '12:00', ventasHoy: 680000, ventasAyer: 580000 },
-  { hora: '13:00', ventasHoy: 590000, ventasAyer: 510000 },
-  { hora: '14:00', ventasHoy: 720000, ventasAyer: 640000 },
-  { hora: '15:00', ventasHoy: 890000, ventasAyer: 710000 },
-  { hora: '16:00', ventasHoy: 980000, ventasAyer: 830000 },
-  { hora: '17:00', ventasHoy: 1250000, ventasAyer: 910000 },
+const DEFAULT_INTERVALOS: SalesVelocityPoint[] = [
+  { hora: '08:00', ventasHoy: 0, ventasAyer: 0 },
+  { hora: '10:00', ventasHoy: 0, ventasAyer: 0 },
+  { hora: '12:00', ventasHoy: 0, ventasAyer: 0 },
+  { hora: '14:00', ventasHoy: 0, ventasAyer: 0 },
+  { hora: '16:00', ventasHoy: 0, ventasAyer: 0 },
+  { hora: '18:00', ventasHoy: 0, ventasAyer: 0 },
 ];
 
 export function SalesVelocityChart({ data, className = '' }: SalesVelocityChartProps) {
   const [hoveredPoint, setHoveredPoint] = useState<SalesVelocityPoint | null>(null);
 
-  const puntos = data?.puntos && data.puntos.length > 0 ? data.puntos : DEFAULT_PUNTOS;
+  const puntos = data?.puntos && data.puntos.length > 0 ? data.puntos : DEFAULT_INTERVALOS;
   const meta = data?.metaDiaria ?? {
-    objetivo: 6000000,
-    actual: 4850000,
-    porcentajeAvance: 80.8,
+    objetivo: 5000000,
+    actual: 0,
+    porcentajeAvance: 0,
   };
 
   // Dimensiones del canvas SVG
@@ -47,10 +43,8 @@ export function SalesVelocityChart({ data, className = '' }: SalesVelocityChartP
   const paddingX = 40;
   const paddingY = 20;
 
-  const maxVal = Math.max(
-    ...puntos.map((p) => Math.max(p.ventasHoy, p.ventasAyer)),
-    1250000
-  );
+  const maxSales = Math.max(...puntos.map((p) => Math.max(p.ventasHoy, p.ventasAyer)), 0);
+  const maxVal = maxSales > 0 ? maxSales * 1.15 : 1000000;
 
   const getY = (val: number) => {
     const usableHeight = height - paddingY * 2;
