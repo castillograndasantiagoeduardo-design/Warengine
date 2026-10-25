@@ -60,22 +60,11 @@ export function middleware(request: NextRequest) {
     pathname.startsWith('/ventas') ||
     pathname.startsWith('/logistica');
 
-  const esRutaAutenticacion = pathname === '/acceso' || pathname === '/iniciar-sesion';
-
   // 1. Caso: Usuario sin sesión intenta entrar a ruta protegida
   if (esRutaProtegida && !tieneSesion) {
     const url = new URL('/acceso', request.url);
     url.searchParams.set('redirect', pathname);
     return NextResponse.redirect(url);
-  }
-
-  // 2. Caso: Usuario con sesión activa intenta visitar la pantalla de acceso/login
-  if (esRutaAutenticacion && tieneSesion) {
-    // Redirigir al POS si es cajero (rolId: 3) o al dashboard si es otro rol
-    if (payload?.rolId === 3) {
-      return NextResponse.redirect(new URL('/pos', request.url));
-    }
-    return NextResponse.redirect(new URL('/dashboard', request.url));
   }
 
   // 3. Caso: Cajero intentando entrar al panel administrativo o viceversa
