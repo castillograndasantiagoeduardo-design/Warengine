@@ -1065,59 +1065,93 @@ Para autorizar peticiones interactivas en esta consola:
     '/administracion/dashboard/metricas': {
       get: {
         tags: ['Administración - Dashboard'],
-        summary: 'Consultar métricas generales de ingresos, ventas y márgenes',
+        summary: 'Métricas consolidadas de ingresos, costo, ganancia neta, margen y ticket promedio',
+        description: 'Requiere `administracion:ver-metricas-globales` (RF-ADM-A1).',
         security: [{ bearerAuth: [] }, { cookieAuth: [] }],
         parameters: [
           { name: 'sucursalId', in: 'query', schema: { type: 'integer' } },
-          { name: 'desde', in: 'query', schema: { type: 'string', format: 'date' } },
-          { name: 'hasta', in: 'query', schema: { type: 'string', format: 'date' } },
+          { name: 'desde', in: 'query', schema: { type: 'string', format: 'date-time' } },
+          { name: 'hasta', in: 'query', schema: { type: 'string', format: 'date-time' } },
         ],
-        responses: { 200: { description: 'Métricas calculadas' } },
+        responses: {
+          200: { description: '{ ingresosTotales, costoTotal, gananciaNeta, margenPorcentaje, totalFacturas, ticketPromedio }' },
+          400: { description: 'VALIDATION_ERROR o RANGO_FECHAS_INVALIDO' },
+          403: { description: 'Sin permiso administracion:ver-metricas-globales' },
+        },
       },
     },
     '/administracion/dashboard/tendencias': {
       get: {
         tags: ['Administración - Dashboard'],
-        summary: 'Tendencias cronológicas de ventas',
+        summary: 'Tendencias cronológicas de ventas y ganancias',
+        description: 'Requiere `administracion:ver-metricas-sucursal`; el alcance se acota a las sedes del usuario (RNF-ADM-04).',
         security: [{ bearerAuth: [] }, { cookieAuth: [] }],
         parameters: [
+          { name: 'agrupacion', in: 'query', schema: { type: 'string', enum: ['dia', 'semana', 'mes'], default: 'dia' } },
           { name: 'sucursalId', in: 'query', schema: { type: 'integer' } },
-          { name: 'periodo', in: 'query', schema: { type: 'string', enum: ['DIARIO', 'SEMANAL', 'MENSUAL'] } },
+          { name: 'desde', in: 'query', schema: { type: 'string', format: 'date-time' } },
+          { name: 'hasta', in: 'query', schema: { type: 'string', format: 'date-time' } },
         ],
-        responses: { 200: { description: 'Serie temporal de ventas' } },
+        responses: {
+          200: { description: '[{ periodo, totalVentas, totalGanancias, cantidadFacturas }]' },
+          403: { description: 'Sin permiso o SUCURSAL_FUERA_DE_ALCANCE' },
+        },
       },
     },
     '/administracion/dashboard/rendimiento': {
       get: {
         tags: ['Administración - Dashboard'],
         summary: 'Rendimiento comparativo entre sucursales',
+        description: 'Requiere `administracion:ver-metricas-globales` (RF-ADM-A3).',
         security: [{ bearerAuth: [] }, { cookieAuth: [] }],
-        responses: { 200: { description: 'Ranking y comparativo de sucursales' } },
+        parameters: [
+          { name: 'sucursalIds', in: 'query', description: 'Lista separada por comas (ej. 1,2,3)', schema: { type: 'string' } },
+          { name: 'desde', in: 'query', schema: { type: 'string', format: 'date-time' } },
+          { name: 'hasta', in: 'query', schema: { type: 'string', format: 'date-time' } },
+        ],
+        responses: {
+          200: { description: '[{ sucursalId, nombreSucursal, totalVentas, totalFacturas, ticketPromedio, gananciaNeta }]' },
+          403: { description: 'Sin permiso administracion:ver-metricas-globales' },
+        },
       },
     },
     '/administracion/dashboard/ranking': {
       get: {
         tags: ['Administración - Dashboard'],
         summary: 'Ranking de productos más y menos vendidos',
+        description: 'Requiere `administracion:ver-metricas-globales` (RF-ADM-A4, A5).',
         security: [{ bearerAuth: [] }, { cookieAuth: [] }],
         parameters: [
+          { name: 'orden', in: 'query', schema: { type: 'string', enum: ['mas_vendidos', 'menos_vendidos'], default: 'mas_vendidos' } },
+          { name: 'limite', in: 'query', schema: { type: 'integer', minimum: 1, maximum: 100, default: 10 } },
           { name: 'sucursalId', in: 'query', schema: { type: 'integer' } },
-          { name: 'limite', in: 'query', schema: { type: 'integer', default: 10 } },
-          { name: 'criterio', in: 'query', schema: { type: 'string', enum: ['CANTIDAD', 'MONTO'] } },
+          { name: 'desde', in: 'query', schema: { type: 'string', format: 'date-time' } },
+          { name: 'hasta', in: 'query', schema: { type: 'string', format: 'date-time' } },
         ],
-        responses: { 200: { description: 'Ranking de productos' } },
+        responses: {
+          200: { description: '[{ productoId, sku, nombre, cantidadVendida, totalRecaudado, gananciaGenerada }]' },
+          403: { description: 'Sin permiso administracion:ver-metricas-globales' },
+        },
       },
     },
     '/administracion/dashboard/inventario': {
       get: {
         tags: ['Administración - Dashboard'],
-        summary: 'Valorización y estado comparativo del inventario',
+        summary: 'Comparativo de existencias de un SKU entre sucursales',
+        description: 'Requiere `administracion:ver-metricas-globales` (RF-ADM-C4).',
         security: [{ bearerAuth: [] }, { cookieAuth: [] }],
-        parameters: [{ name: 'sucursalId', in: 'query', schema: { type: 'integer' } }],
-        responses: { 200: { description: 'Resumen de inventario' } },
+        parameters: [
+          { name: 'productoId', in: 'query', schema: { type: 'string', format: 'uuid' } },
+          { name: 'categoriaId', in: 'query', schema: { type: 'integer' } },
+          { name: 'sucursalIds', in: 'query', description: 'Lista separada por comas', schema: { type: 'string' } },
+          { name: 'soloConStockBajo', in: 'query', schema: { type: 'boolean' } },
+        ],
+        responses: {
+          200: { description: '[{ productoId, sku, nombre, categoriaNombre, existenciasPorSucursal[], stockTotal }]' },
+          403: { description: 'Sin permiso administracion:ver-metricas-globales' },
+        },
       },
     },
-
     '/administracion/dashboard/resumen': {
       get: {
         tags: ['Administración - Dashboard'],

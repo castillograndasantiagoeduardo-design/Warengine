@@ -114,11 +114,13 @@ export function createAdministracionRoutes(container: AppContainer): Hono {
   api.put('/alertas/:id/estado', authMiddleware(container, PERMISO_ALERTAS), cambiarEstadoAlertaAdminController(container));
 
   // Dashboard y Analítica (RF-ADM-A1, RF-ADM-A2, RF-ADM-A3, RF-ADM-A4, RF-ADM-C4, RNF-ADM-01, RNF-ADM-03, RNF-ADM-04)
-  api.get('/dashboard/metricas', authMiddleware(container, PERMISO_METRICAS), consultarMetricasGananciasController(container));
+  // Métricas consolidadas multi-sede: exclusivas del Super Admin (RF-ADM-A1, RF-SA-I3).
+  // Tendencias sigue con el permiso por sucursal: el backend acota el alcance a la sede del admin.
+  api.get('/dashboard/metricas', authMiddleware(container, PERMISO_METRICAS_GLOBALES), consultarMetricasGananciasController(container));
   api.get('/dashboard/tendencias', authMiddleware(container, PERMISO_METRICAS), consultarTendenciasVentasController(container));
-  api.get('/dashboard/rendimiento', authMiddleware(container, PERMISO_METRICAS), consultarRendimientoSucursalesController(container));
-  api.get('/dashboard/ranking', authMiddleware(container, PERMISO_METRICAS), consultarRankingProductosController(container));
-  api.get('/dashboard/inventario', authMiddleware(container, PERMISO_METRICAS), consultarComparativoInventarioController(container));
+  api.get('/dashboard/rendimiento', authMiddleware(container, PERMISO_METRICAS_GLOBALES), consultarRendimientoSucursalesController(container));
+  api.get('/dashboard/ranking', authMiddleware(container, PERMISO_METRICAS_GLOBALES), consultarRankingProductosController(container));
+  api.get('/dashboard/inventario', authMiddleware(container, PERMISO_METRICAS_GLOBALES), consultarComparativoInventarioController(container));
   api.get('/dashboard/resumen', authMiddleware(container, PERMISO_METRICAS_GLOBALES), consultarResumenDashboardController(container));
 
   return api;
