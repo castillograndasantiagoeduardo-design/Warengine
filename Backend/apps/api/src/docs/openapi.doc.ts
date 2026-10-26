@@ -1118,6 +1118,43 @@ Para autorizar peticiones interactivas en esta consola:
       },
     },
 
+    '/administracion/dashboard/resumen': {
+      get: {
+        tags: ['Administración - Dashboard'],
+        summary: 'Resumen global: sucursales operativas, usuarios activos y ventas consolidadas',
+        description: 'Solo Super Admin. Requiere el permiso `administracion:ver-metricas-globales`.',
+        security: [{ bearerAuth: [] }, { cookieAuth: [] }],
+        parameters: [
+          { name: 'desde', in: 'query', schema: { type: 'string', format: 'date-time' } },
+          { name: 'hasta', in: 'query', schema: { type: 'string', format: 'date-time' } },
+        ],
+        responses: {
+          200: {
+            description: 'Resumen consolidado de la plataforma',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    totalSucursales: { type: 'integer' },
+                    sucursalesActivas: { type: 'integer' },
+                    usuariosTotales: { type: 'integer' },
+                    usuariosActivos: { type: 'integer' },
+                    ventasConsolidadas: { type: 'number' },
+                    gananciaNeta: { type: 'number' },
+                    totalFacturas: { type: 'integer' },
+                    ticketPromedio: { type: 'number' },
+                  },
+                },
+              },
+            },
+          },
+          400: { description: 'VALIDATION_ERROR o RANGO_FECHAS_INVALIDO' },
+          403: { description: 'Sin permiso administracion:ver-metricas-globales' },
+        },
+      },
+    },
+
     // ─── Inventario - Categorías ──────────────────────────────────────────────
     '/inventario/categorias': {
       get: {
