@@ -22,7 +22,7 @@ export function PosTurnoModal({
   onAbrirTurno,
   onCerrarTurno,
 }: PosTurnoModalProps) {
-  const estaAbierto = Boolean(turno && turno.estaAbierto);
+  const estaAbierto = Boolean(turno && (turno.estaAbierto === true || turno.fechaCierre === null));
 
   // Estados locales
   const [fondoInicial, setFondoInicial] = useState<string>('50000');

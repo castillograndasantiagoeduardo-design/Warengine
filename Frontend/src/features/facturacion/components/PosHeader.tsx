@@ -31,7 +31,9 @@ export function PosHeader({
   onAbrirHistorial,
   onLogout,
 }: PosHeaderProps) {
-  const tieneTurnoAbierto = Boolean(turno && turno.estaAbierto);
+  const tieneTurnoAbierto = Boolean(
+    turno && (turno.estaAbierto === true || turno.fechaCierre === null),
+  );
 
   const formatoCOP = (monto: number) =>
     new Intl.NumberFormat('es-CO', {

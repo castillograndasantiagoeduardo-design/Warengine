@@ -20,10 +20,26 @@ import type {
 export class PosService implements IPosService {
   constructor(private readonly http: IHttpClient = apiClient) {}
 
+  private mapTurno(raw: any): TurnoCajaDto | null {
+    if (!raw) return null;
+    return {
+      id: String(raw.id),
+      usuarioId: String(raw.usuarioId || raw.usuario_id),
+      sucursalId: Number(raw.sucursalId || raw.sucursal_id || 1),
+      fondoInicial: Number(raw.fondoInicial ?? raw.fondo_inicial ?? 0),
+      fondoFinal: raw.fondoFinal !== null && raw.fondoFinal !== undefined ? Number(raw.fondoFinal) : null,
+      diferencia: raw.diferencia !== null && raw.diferencia !== undefined ? Number(raw.diferencia) : null,
+      fechaApertura: String(raw.fechaApertura || raw.fecha_apertura),
+      fechaCierre: raw.fechaCierre || raw.fecha_cierre || null,
+      estaAbierto: raw.fechaCierre === null || raw.fecha_cierre === null || Boolean(raw.estaAbierto),
+    };
+  }
+
   public async obtenerTurnoActual(): Promise<TurnoCajaDto | null> {
     try {
-      const response = await this.http.get<{ turno: TurnoCajaDto | null }>('/ventas/turnos/actual');
-      return response?.turno || null;
+      const response = await this.http.get<{ turno: any } | any>('/ventas/turnos/actual');
+      const rawTurno = response?.turno !== undefined ? response.turno : response;
+      return this.mapTurno(rawTurno);
     } catch (err: any) {
       if (err?.status === 404) return null;
       throw err;
@@ -31,11 +47,17 @@ export class PosService implements IPosService {
   }
 
   public async abrirTurno(fondoInicial: number): Promise<TurnoCajaDto> {
-    return await this.http.post<TurnoCajaDto>('/ventas/turnos', { fondoInicial });
+    const raw = await this.http.post<any>('/ventas/turnos', { fondoInicial });
+    const turno = this.mapTurno(raw?.turno || raw);
+    if (!turno) throw new Error('No se pudo mapear el turno abierto.');
+    return turno;
   }
 
   public async cerrarTurno(turnoId: string, fondoFinal: number): Promise<TurnoCajaDto> {
-    return await this.http.post<TurnoCajaDto>(`/ventas/turnos/${turnoId}/cerrar`, { fondoFinal });
+    const raw = await this.http.post<any>(`/ventas/turnos/${turnoId}/cerrar`, { fondoFinal });
+    const turno = this.mapTurno(raw?.turno || raw);
+    if (!turno) throw new Error('No se pudo mapear el turno cerrado.');
+    return turno;
   }
 
   public async buscarProductos(query?: string, _sucursalId?: number): Promise<ProductoPos[]> {

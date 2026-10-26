@@ -43,6 +43,10 @@ export function usePosTurno() {
       setTurno(nuevoTurno);
       return nuevoTurno;
     } catch (err: any) {
+      // Si el backend responde que ya tiene un turno abierto, recargar el turno actual
+      if (err?.code === 'TURNO_YA_ABIERTO' || err?.message?.includes('abierto')) {
+        await cargarTurnoActual();
+      }
       const msg = err?.message || 'No se pudo abrir el turno de caja.';
       setError(msg);
       throw err;
@@ -70,9 +74,13 @@ export function usePosTurno() {
     }
   };
 
+  const tieneTurnoAbierto = Boolean(
+    turno && (turno.estaAbierto === true || turno.fechaCierre === null),
+  );
+
   return {
     turno,
-    tieneTurnoAbierto: Boolean(turno && turno.estaAbierto),
+    tieneTurnoAbierto,
     isLoading,
     isSubmitting,
     error,
