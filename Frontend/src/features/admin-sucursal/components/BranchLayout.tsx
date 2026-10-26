@@ -23,6 +23,7 @@ interface BranchLayoutProps {
   sucursalNombre?: string;
   ultimaSincronizacion?: string;
   isOnline?: boolean;
+  onOpenProfile?: () => void;
 }
 
 export function BranchLayout({
@@ -34,6 +35,7 @@ export function BranchLayout({
   sucursalNombre = 'Sede Norte',
   ultimaSincronizacion,
   isOnline = true,
+  onOpenProfile,
 }: BranchLayoutProps) {
   const [searchTerm, setSearchTerm] = useState('');
 
@@ -43,6 +45,7 @@ export function BranchLayout({
       <BranchSidebar
         activeSection={activeSection}
         onSelectSection={onSelectSection}
+        onOpenProfile={onOpenProfile}
         className="hidden md:flex"
       />
 

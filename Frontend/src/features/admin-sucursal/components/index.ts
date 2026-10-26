@@ -24,4 +24,5 @@ export * from './EditEmployeeModal';
 export * from './OpenShiftModal';
 export * from './CloseShiftModal';
 export * from './BranchStaffView';
+export * from './AdminProfileModal';
 export * from './DashboardSkeleton';

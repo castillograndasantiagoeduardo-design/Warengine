@@ -14,7 +14,7 @@ import { useBranchStaff } from '../hooks/useBranchStaff';
 import { GlassCard } from './GlassCard';
 import { Button3D } from '@/components/ui/Button3D';
 import { EditEmployeeModal } from './EditEmployeeModal';
-import { OpenShiftModal } from './OpenShiftModal';
+import { AdminProfileModal } from './AdminProfileModal';
 import { CloseShiftModal } from './CloseShiftModal';
 import {
   UsersRoundIcon,
@@ -54,13 +54,14 @@ export function BranchStaffView({
     recargar,
     editarEmpleado,
     cambiarEstado,
-    abrirTurno,
     cerrarTurno,
+    perfilAdmin,
+    editarPerfilAdmin,
   } = useBranchStaff({ sucursalId });
 
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [empleadoSeleccionado, setEmpleadoSeleccionado] = useState<EmpleadoSede | null>(null);
-  const [isOpenShiftModalOpen, setIsOpenShiftModalOpen] = useState(false);
+  const [isAdminProfileModalOpen, setIsAdminProfileModalOpen] = useState(false);
   const [isCloseShiftModalOpen, setIsCloseShiftModalOpen] = useState(false);
 
   const formatCOP = (num: number) =>
@@ -106,7 +107,7 @@ export function BranchStaffView({
             <RefreshCwIcon size={15} className={isLoading ? 'animate-spin text-[#e3b341]' : ''} />
           </button>
 
-          {turnoActivo ? (
+          {turnoActivo && (
             <button
               onClick={() => setIsCloseShiftModalOpen(true)}
               className="flex items-center gap-1.5 h-9 px-3.5 rounded-xl bg-amber-500/15 border border-amber-500/30 text-amber-300 hover:bg-amber-500/25 transition-colors cursor-pointer text-xs font-semibold font-[family-name:var(--font-archivo)]"
@@ -114,16 +115,16 @@ export function BranchStaffView({
               <DollarSignIcon size={14} />
               <span>Cerrar Turno de Caja</span>
             </button>
-          ) : (
-            <Button3D
-              size="sm"
-              onClick={() => setIsOpenShiftModalOpen(true)}
-              className="font-bold font-[family-name:var(--font-pixelify)] tracking-wide uppercase text-xs h-9"
-            >
-              <DollarSignIcon size={14} className="mr-1" />
-              <span>+ Abrir Turno</span>
-            </Button3D>
           )}
+
+          <Button3D
+            size="sm"
+            onClick={() => setIsAdminProfileModalOpen(true)}
+            className="font-bold font-[family-name:var(--font-pixelify)] tracking-wide uppercase text-xs h-9"
+          >
+            <ShieldIcon size={14} className="mr-1" />
+            <span>Mi Perfil Admin</span>
+          </Button3D>
         </div>
       </div>
 
@@ -226,19 +227,12 @@ export function BranchStaffView({
                 </div>
                 <div>
                   <h4 className="text-xs font-bold text-slate-200 uppercase tracking-wide">
-                    No hay cajas operando en este momento
+                    Cajas en reposo · Sin turnos de venta activos
                   </h4>
                   <p className="text-[11px] text-slate-400 mt-1 max-w-sm mx-auto">
-                    Abre un turno de venta asignando el fondo inicial en efectivo para habilitar la facturación.
+                    Los cajeros abren e inician su turno directamente desde su estación de mostrador en el Punto de Venta (POS).
                   </p>
                 </div>
-                <Button3D
-                  size="sm"
-                  onClick={() => setIsOpenShiftModalOpen(true)}
-                  className="font-bold uppercase text-xs"
-                >
-                  + Abrir Turno de Caja
-                </Button3D>
               </div>
             )}
           </GlassCard>
@@ -519,11 +513,11 @@ export function BranchStaffView({
         onGuardar={editarEmpleado}
       />
 
-      <OpenShiftModal
-        isOpen={isOpenShiftModalOpen}
-        sucursalNombre={sucursalNombre}
-        onClose={() => setIsOpenShiftModalOpen(false)}
-        onAbrir={abrirTurno}
+      <AdminProfileModal
+        isOpen={isAdminProfileModalOpen}
+        perfil={perfilAdmin}
+        onClose={() => setIsAdminProfileModalOpen(false)}
+        onGuardarContacto={editarPerfilAdmin}
       />
 
       <CloseShiftModal

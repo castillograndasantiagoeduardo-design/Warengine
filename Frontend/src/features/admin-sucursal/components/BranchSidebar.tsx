@@ -35,6 +35,7 @@ export type BranchSection =
 interface BranchSidebarProps {
   activeSection?: BranchSection;
   onSelectSection?: (section: BranchSection) => void;
+  onOpenProfile?: () => void;
   className?: string;
 }
 
@@ -62,6 +63,7 @@ const SISTEMA_ITEMS: NavItem[] = [
 export function BranchSidebar({
   activeSection = 'resumen',
   onSelectSection,
+  onOpenProfile,
   className = '',
 }: BranchSidebarProps) {
   const { usuario, logout } = useAuth();
@@ -217,28 +219,33 @@ export function BranchSidebar({
 
       {/* 4. Footer: Perfil del Administrador y Cierre de Sesión */}
       <div className="pt-4 border-t border-white/[0.06]">
-        <div className="flex items-center justify-between p-2 rounded-xl bg-white/[0.02] border border-white/[0.06]">
-          <div className="flex items-center gap-2.5 min-w-0">
-            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gradient-to-tr from-[#b88a1f] to-[#e3b341] text-[#0d1630] font-bold text-xs font-[family-name:var(--font-pixelify)] shadow-sm">
+        <div className="flex items-center justify-between p-2 rounded-xl bg-white/[0.02] border border-white/[0.06] hover:border-white/[0.12] transition-colors">
+          <button
+            type="button"
+            onClick={onOpenProfile}
+            title="Ver y editar mi información de contacto"
+            className="flex items-center gap-2.5 min-w-0 text-left cursor-pointer group flex-1"
+          >
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gradient-to-tr from-[#b88a1f] to-[#e3b341] text-[#0d1630] font-bold text-xs font-[family-name:var(--font-pixelify)] shadow-sm group-hover:scale-105 transition-transform">
               {userInitial}
             </div>
             <div className="min-w-0">
-              <p className="text-xs font-medium text-white truncate font-[family-name:var(--font-archivo)]">
+              <p className="text-xs font-medium text-white truncate font-[family-name:var(--font-archivo)] group-hover:text-[#e3b341] transition-colors">
                 {userDisplayName}
               </p>
               <div className="flex items-center gap-1.5">
                 <span className="h-1.5 w-1.5 rounded-full bg-[#10b981]" />
                 <span className="text-[10px] text-slate-400 truncate">
-                  Sede Norte
+                  Mi Perfil
                 </span>
               </div>
             </div>
-          </div>
+          </button>
 
           <button
             onClick={() => logout()}
             title="Cerrar sesión"
-            className="p-1.5 rounded-lg text-slate-400 hover:text-red-400 hover:bg-red-500/10 transition-colors"
+            className="p-1.5 rounded-lg text-slate-400 hover:text-red-400 hover:bg-red-500/10 transition-colors cursor-pointer shrink-0"
           >
             <LogOutIcon size={16} />
           </button>

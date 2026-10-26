@@ -27,6 +27,7 @@ import {
   BranchInventoryView,
   BranchSuppliersView,
   BranchStaffView,
+  AdminProfileModal,
   DollarSignIcon,
   ReceiptTextIcon,
   PackageIcon,
@@ -35,13 +36,19 @@ import {
   CalendarDaysIcon,
   ShieldIcon,
 } from '@/features/admin-sucursal';
-import { useBranchDashboard } from '@/features/admin-sucursal/hooks';
+import { useBranchDashboard, useBranchStaff } from '@/features/admin-sucursal/hooks';
 
 export default function DashboardPage() {
   const router = useRouter();
   const { isAuthenticated, isLoading: isAuthLoading, logout } = useAuth();
   const { usuario, esAdminSucursal, rolActual } = usePermissions();
   const [activeSection, setActiveSection] = useState<BranchSection>('resumen');
+  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
+
+  // Hook de personal de sede para datos del perfil de administrador
+  const { perfilAdmin, editarPerfilAdmin } = useBranchStaff({
+    sucursalId: usuario?.sucursalId ?? 1,
+  });
 
   // Hook desacoplado para gestión de datos de sede usando la sucursal del usuario
   const {
@@ -130,6 +137,7 @@ export default function DashboardPage() {
       sucursalNombre={data?.sucursalNombre || 'Sede Norte'}
       ultimaSincronizacion={data?.ultimaSincronizacion || '17:42:08'}
       isOnline={isAuthenticated}
+      onOpenProfile={() => setIsProfileModalOpen(true)}
     >
       {activeSection === 'inventario' ? (
         <BranchInventoryView
@@ -256,6 +264,16 @@ export default function DashboardPage() {
           )}
         </div>
       )}
+
+      {/* Modal de Perfil de Administrador de Sucursal */}
+      <AdminProfileModal
+        isOpen={isProfileModalOpen}
+        onClose={() => setIsProfileModalOpen(false)}
+        perfil={perfilAdmin}
+        email={usuario?.email}
+        rolNombre={rolActual || 'admin-sucursal'}
+        onGuardarContacto={editarPerfilAdmin}
+      />
     </BranchLayout>
   );
 }

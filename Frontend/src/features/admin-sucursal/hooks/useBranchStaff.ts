@@ -26,13 +26,14 @@ export function useBranchStaff(
   staffService: IBranchStaffService = branchStaffService,
 ) {
   const { sucursalId } = options;
-  const [empleados, setEmpleados] = useState<EmpleadoSede[]>([]);
+  const [todosLosEmpleados, setTodosLosEmpleados] = useState<EmpleadoSede[]>([]);
+  const [perfilAdmin, setPerfilAdmin] = useState<EmpleadoSede | null>(null);
   const [turnoActivo, setTurnoActivo] = useState<TurnoCajaActivo | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isMutating, setIsMutating] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Filtros
+  // Filtros de búsqueda sobre personal operativo
   const [busqueda, setBusqueda] = useState('');
   const [filtroEstado, setFiltroEstado] = useState<'todos' | 'activos' | 'inactivos'>('todos');
   const [filtroCargo, setFiltroCargo] = useState<string>('todos');
@@ -47,7 +48,18 @@ export function useBranchStaff(
       ]);
 
       if (empsRes.status === 'fulfilled') {
-        setEmpleados(empsRes.value);
+        const rawItems = empsRes.value;
+        setTodosLosEmpleados(rawItems);
+
+        // Identificar el perfil del Administrador de la Sede
+        const adminFound = rawItems.find(
+          (e) =>
+            (e.cargo || '').toLowerCase().includes('administrador de sucursal') ||
+            (e.cargo || '').toLowerCase().includes('admin sede'),
+        );
+        if (adminFound) {
+          setPerfilAdmin(adminFound);
+        }
       } else {
         console.error('[useBranchStaff] Error cargando empleados:', empsRes.reason);
       }
@@ -68,6 +80,22 @@ export function useBranchStaff(
     cargarDatos();
   }, [cargarDatos]);
 
+  // SEGREGACIÓN JERÁRQUICA ESTRICTA (RBAC):
+  // 1. Superadmin (SYS-001 o Administrador del Sistema) queda estrictamente oculto.
+  // 2. Administradores de Sucursal (el propio usuario y cualquier par) quedan fuera del CRUD operativo.
+  // Solo se listan colaboradores operativos subordinados (Cajeros, Bodegueros, Asesores de Ventas).
+  const empleadosOperativos = todosLosEmpleados.filter((emp) => {
+    const cargoLower = (emp.cargo || '').toLowerCase();
+    const esSuperAdmin =
+      emp.numeroDocumento === 'SYS-001' ||
+      cargoLower.includes('sistema') ||
+      cargoLower.includes('super');
+    const esAdminSucursal =
+      cargoLower.includes('administrador') || cargoLower.includes('admin');
+
+    return !esSuperAdmin && !esAdminSucursal;
+  });
+
   const editarEmpleado = async (
     id: string,
     data: EditarEmpleadoDTO,
@@ -75,7 +103,10 @@ export function useBranchStaff(
     setIsMutating(true);
     try {
       const actualizado = await staffService.editarEmpleado(id, data);
-      setEmpleados((prev) => prev.map((e) => (e.id === id ? actualizado : e)));
+      setTodosLosEmpleados((prev) => prev.map((e) => (e.id === id ? actualizado : e)));
+      if (perfilAdmin?.id === id) {
+        setPerfilAdmin(actualizado);
+      }
       return { ok: true };
     } catch (err: any) {
       return { ok: false, error: err?.message || 'No fue posible actualizar los datos del empleado.' };
@@ -84,9 +115,22 @@ export function useBranchStaff(
     }
   };
 
+  const editarPerfilAdmin = async (data: {
+    telefono?: string;
+    direccion?: string;
+  }): Promise<{ ok: boolean; error?: string }> => {
+    if (!perfilAdmin) {
+      return { ok: false, error: 'No se encontró el registro laboral del administrador.' };
+    }
+    return await editarEmpleado(perfilAdmin.id, {
+      telefono: data.telefono,
+      direccion: data.direccion,
+    });
+  };
+
   const cambiarEstado = async (id: string, isActive: boolean) => {
     // Optimistic update
-    setEmpleados((prev) =>
+    setTodosLosEmpleados((prev) =>
       prev.map((e) => (e.id === id ? { ...e, isActive } : e)),
     );
     try {
@@ -94,19 +138,6 @@ export function useBranchStaff(
     } catch (err: any) {
       setError(err?.message || 'Error al cambiar el estado del colaborador.');
       await cargarDatos();
-    }
-  };
-
-  const abrirTurno = async (fondoInicial: number): Promise<{ ok: boolean; error?: string }> => {
-    setIsMutating(true);
-    try {
-      const nuevoTurno = await staffService.abrirTurno({ fondoInicial });
-      setTurnoActivo(nuevoTurno);
-      return { ok: true };
-    } catch (err: any) {
-      return { ok: false, error: err?.message || 'Error al abrir el turno de caja.' };
-    } finally {
-      setIsMutating(false);
     }
   };
 
@@ -124,8 +155,8 @@ export function useBranchStaff(
     }
   };
 
-  // Filtrado reactivo en memoria sobre datos verídicos
-  const empleadosFiltrados = empleados.filter((emp) => {
+  // Filtrado reactivo en memoria sobre personal operativo subordinado
+  const empleadosFiltrados = empleadosOperativos.filter((emp) => {
     if (filtroEstado === 'activos' && !emp.isActive) return false;
     if (filtroEstado === 'inactivos' && emp.isActive) return false;
     if (filtroCargo !== 'todos' && emp.cargo !== filtroCargo) return false;
@@ -142,12 +173,14 @@ export function useBranchStaff(
   });
 
   const cargosDisponibles = Array.from(
-    new Set(empleados.map((e) => e.cargo).filter(Boolean) as string[]),
+    new Set(empleadosOperativos.map((e) => e.cargo).filter(Boolean) as string[]),
   );
 
   return {
     empleados: empleadosFiltrados,
-    totalEmpleados: empleados.length,
+    totalEmpleados: empleadosOperativos.length,
+    perfilAdmin,
+    editarPerfilAdmin,
     turnoActivo,
     cargosDisponibles,
     isLoading,
@@ -162,7 +195,6 @@ export function useBranchStaff(
     recargar: cargarDatos,
     editarEmpleado,
     cambiarEstado,
-    abrirTurno,
     cerrarTurno,
   };
 }

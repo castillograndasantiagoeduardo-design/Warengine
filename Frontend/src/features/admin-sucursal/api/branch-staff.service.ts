@@ -102,7 +102,7 @@ export class BranchStaffService implements IBranchStaffService {
 
   public async obtenerTurnoActual(): Promise<TurnoCajaActivo | null> {
     try {
-      const res = await this.http.get<any>('/facturacion/turnos/actual');
+      const res = await this.http.get<any>('/ventas/turnos/actual');
       if (!res || !res.id) return null;
       return {
         id: String(res.id || res.id_turno_caja),
@@ -124,7 +124,7 @@ export class BranchStaffService implements IBranchStaffService {
   }
 
   public async abrirTurno(dto: AbrirTurnoDTO): Promise<TurnoCajaActivo> {
-    const res = await this.http.post<any>('/facturacion/turnos', {
+    const res = await this.http.post<any>('/ventas/turnos', {
       fondoInicial: Number(dto.fondoInicial),
     });
     return {
@@ -141,7 +141,7 @@ export class BranchStaffService implements IBranchStaffService {
   }
 
   public async cerrarTurno(turnoId: string, dto: CerrarTurnoDTO): Promise<any> {
-    return await this.http.post<any>(`/facturacion/turnos/${turnoId}/cerrar`, {
+    return await this.http.post<any>(`/ventas/turnos/${turnoId}/cerrar`, {
       fondoFinal: Number(dto.fondoFinal),
     });
   }
