@@ -12,7 +12,7 @@ import React, { useState, useEffect } from 'react';
 import { crearProductoSchema } from '@warengine/contracts';
 import { Button3D } from '@/components/ui/Button3D';
 import { apiClient, ApiError } from '@/lib/api';
-import type { CategoriaInventario, ProveedorInventario } from '../types/branch-inventory.types';
+import type { CategoriaInventario } from '../types/branch-inventory.types';
 
 interface CreateProductModalProps {
   isOpen: boolean;
@@ -21,9 +21,6 @@ interface CreateProductModalProps {
   /** Sede de la sesión del admin: el stock mínimo se configura en ella. */
   sucursalId: number;
   categorias?: CategoriaInventario[];
-  proveedores?: ProveedorInventario[];
-  onAbrirNuevaCategoria?: () => void;
-  onAbrirNuevoProveedor?: () => void;
   categoriaPreseleccionadaId?: number | null;
 }
 
@@ -43,15 +40,11 @@ export function CreateProductModal({
   onProductoCreado,
   sucursalId,
   categorias = [],
-  proveedores = [],
-  onAbrirNuevaCategoria,
-  onAbrirNuevoProveedor,
   categoriaPreseleccionadaId,
 }: CreateProductModalProps) {
   const [sku, setSku] = useState('');
   const [nombre, setNombre] = useState('');
   const [categoriaId, setCategoriaId] = useState<number | ''>('');
-  const [proveedorId, setProveedorId] = useState<number | ''>('');
   const [precioVenta, setPrecioVenta] = useState('');
   const [precioCompra, setPrecioCompra] = useState('');
   const [precioCorporativo, setPrecioCorporativo] = useState('');
@@ -78,7 +71,6 @@ export function CreateProductModal({
       sku: sku.trim().toUpperCase(),
       nombre: nombre.trim(),
       categoriaId: categoriaId !== '' ? Number(categoriaId) : null,
-      proveedorId: proveedorId !== '' ? Number(proveedorId) : null,
       precioCompra: aNumeroOpcional(precioCompra),
       precioVenta: aNumeroOpcional(precioVenta),
       precioCorporativo: aNumeroOpcional(precioCorporativo) ?? null,
@@ -244,64 +236,22 @@ export function CreateProductModal({
             />
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div>
-              <div className="flex items-center justify-between mb-1">
-                <label className="text-[11px] font-semibold text-slate-300">
-                  Categoría
-                </label>
-                {onAbrirNuevaCategoria && (
-                  <button
-                    type="button"
-                    onClick={onAbrirNuevaCategoria}
-                    className="text-[10px] text-[#e3b341] hover:underline font-medium cursor-pointer"
-                  >
-                    + Nueva
-                  </button>
-                )}
-              </div>
-              <select
-                value={categoriaId}
-                onChange={(e) => setCategoriaId(e.target.value ? Number(e.target.value) : '')}
-                className="w-full h-9 px-3 rounded-xl bg-[#09132b]/80 border border-white/[0.08] text-white focus:outline-none focus:border-[#e3b341]/60 text-xs cursor-pointer"
-              >
-                <option value="">Sin categoría asignada</option>
-                {categorias.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.nombre}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div>
-              <div className="flex items-center justify-between mb-1">
-                <label className="text-[11px] font-semibold text-slate-300">
-                  Proveedor
-                </label>
-                {onAbrirNuevoProveedor && (
-                  <button
-                    type="button"
-                    onClick={onAbrirNuevoProveedor}
-                    className="text-[10px] text-[#e3b341] hover:underline font-medium cursor-pointer"
-                  >
-                    + Nuevo
-                  </button>
-                )}
-              </div>
-              <select
-                value={proveedorId}
-                onChange={(e) => setProveedorId(e.target.value ? Number(e.target.value) : '')}
-                className="w-full h-9 px-3 rounded-xl bg-[#09132b]/80 border border-white/[0.08] text-white focus:outline-none focus:border-[#e3b341]/60 text-xs cursor-pointer"
-              >
-                <option value="">Sin proveedor asignado</option>
-                {proveedores.map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {p.nombre}
-                  </option>
-                ))}
-              </select>
-            </div>
+          <div>
+            <label className="block text-[11px] font-semibold text-slate-300 mb-1">
+              Categoría
+            </label>
+            <select
+              value={categoriaId}
+              onChange={(e) => setCategoriaId(e.target.value ? Number(e.target.value) : '')}
+              className="w-full h-9 px-3 rounded-xl bg-[#09132b]/80 border border-white/[0.08] text-white focus:outline-none focus:border-[#e3b341]/60 text-xs cursor-pointer"
+            >
+              <option value="">Sin categoría asignada</option>
+              {categorias.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.nombre}
+                </option>
+              ))}
+            </select>
           </div>
 
           <div>

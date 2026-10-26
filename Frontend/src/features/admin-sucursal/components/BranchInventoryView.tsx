@@ -616,9 +616,6 @@ export function BranchInventoryView({
         onProductoCreado={() => recargar()}
         sucursalId={sucursalId}
         categorias={categorias}
-        proveedores={proveedores}
-        onAbrirNuevaCategoria={() => setIsCategoryModalOpen(true)}
-        onAbrirNuevoProveedor={() => setIsSupplierModalOpen(true)}
         categoriaPreseleccionadaId={categoriaPreseleccionadaId}
       />
 
