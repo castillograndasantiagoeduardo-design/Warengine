@@ -8,7 +8,7 @@ export const PLANS: PlanData[] = [
   {
     id: 'almacen',
     name: 'Almacén',
-    price: '59.000',
+    price: '49.000',
     tag: 'Básico',
     desc: 'Control de existencias, punto de venta ágil y facturación básica para 1 sede.',
     features: [
@@ -25,7 +25,7 @@ export const PLANS: PlanData[] = [
   {
     id: 'tienda',
     name: 'Tienda',
-    price: '99.000',
+    price: '89.000',
     tag: 'Más Popular',
     desc: 'Gestión comercial integral: caja, facturación B2B, administración de sucursal y logística.',
     features: [
@@ -43,7 +43,7 @@ export const PLANS: PlanData[] = [
   {
     id: 'empresario',
     name: 'Empresario',
-    price: '179.000',
+    price: '159.000',
     tag: 'Multi-Sede + IA',
     desc: 'Gobierno corporativo total: SuperAdmin multi-sucursal, auditoría forense y Asistente IA MCP.',
     features: [
