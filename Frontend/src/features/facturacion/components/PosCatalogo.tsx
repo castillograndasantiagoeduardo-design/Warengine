@@ -67,12 +67,19 @@ export function PosCatalogo({ onAgregarProducto, inputBuscarRef, sucursalId, ver
     productos.forEach((p) => {
       if (p.categoriaNombre) cats.add(p.categoriaNombre);
     });
-    return Array.from(cats);
+    return Array.from(cats).sort((a, b) => a.localeCompare(b));
+  }, [productos]);
+
+  const tieneSinCategoria = React.useMemo(() => {
+    return productos.some((p) => !p.categoriaNombre);
   }, [productos]);
 
   // Filtrado por categoría
   const productosFiltrados = React.useMemo(() => {
     if (categoriaSeleccionada === 'todas') return productos;
+    if (categoriaSeleccionada === 'sin-categoria') {
+      return productos.filter((p) => !p.categoriaNombre);
+    }
     return productos.filter((p) => p.categoriaNombre === categoriaSeleccionada);
   }, [productos, categoriaSeleccionada]);
 
@@ -149,6 +156,18 @@ export function PosCatalogo({ onAgregarProducto, inputBuscarRef, sucursalId, ver
                 {cat}
               </button>
             ))}
+            {tieneSinCategoria && (
+              <button type="button"
+                onClick={() => setCategoriaSeleccionada('sin-categoria')}
+                className={`px-3 py-1 rounded-lg text-xs font-[family-name:var(--font-ui)] uppercase whitespace-nowrap cursor-pointer transition-all ${
+                  categoriaSeleccionada === 'sin-categoria'
+                    ? 'bg-amber-400 text-black font-bold shadow-sm'
+                    : 'bg-[#14213D] text-amber-300/80 hover:text-amber-200 border border-amber-500/20'
+                }`}
+              >
+                Sin Categoría
+              </button>
+            )}
           </div>
         )}
       </div>

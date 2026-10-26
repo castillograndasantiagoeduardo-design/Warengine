@@ -8,10 +8,11 @@
  * estética Glassmorphism y botón táctil mecánico 3D en oro WarEngine.
  */
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { crearProductoSchema } from '@warengine/contracts';
 import { Button3D } from '@/components/ui/Button3D';
 import { apiClient, ApiError } from '@/lib/api';
+import type { CategoriaInventario } from '../types/branch-inventory.types';
 
 interface CreateProductModalProps {
   isOpen: boolean;
@@ -19,6 +20,8 @@ interface CreateProductModalProps {
   onProductoCreado?: () => void;
   /** Sede de la sesión del admin: el stock mínimo se configura en ella. */
   sucursalId: number;
+  categorias?: CategoriaInventario[];
+  categoriaPreseleccionadaId?: number | null;
 }
 
 /** Mensaje legible de un error de la API (incluye la primera validación de Zod si la hay). */
@@ -36,9 +39,12 @@ export function CreateProductModal({
   onClose,
   onProductoCreado,
   sucursalId,
+  categorias = [],
+  categoriaPreseleccionadaId,
 }: CreateProductModalProps) {
   const [sku, setSku] = useState('');
   const [nombre, setNombre] = useState('');
+  const [categoriaId, setCategoriaId] = useState<number | ''>('');
   const [precioVenta, setPrecioVenta] = useState('');
   const [precioCompra, setPrecioCompra] = useState('');
   const [precioCorporativo, setPrecioCorporativo] = useState('');
@@ -46,6 +52,12 @@ export function CreateProductModal({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (categoriaPreseleccionadaId) {
+      setCategoriaId(categoriaPreseleccionadaId);
+    }
+  }, [categoriaPreseleccionadaId]);
 
   if (!isOpen) return null;
 
@@ -58,6 +70,7 @@ export function CreateProductModal({
     const parsed = crearProductoSchema.safeParse({
       sku: sku.trim().toUpperCase(),
       nombre: nombre.trim(),
+      categoriaId: categoriaId !== '' ? Number(categoriaId) : null,
       precioCompra: aNumeroOpcional(precioCompra),
       precioVenta: aNumeroOpcional(precioVenta),
       precioCorporativo: aNumeroOpcional(precioCorporativo) ?? null,
@@ -221,6 +234,24 @@ export function CreateProductModal({
               className="w-full h-9 px-3 rounded-xl bg-[#09132b]/80 border border-white/[0.08] text-white focus:outline-none focus:border-[#e3b341]/60 text-xs"
               required
             />
+          </div>
+
+          <div>
+            <label className="block text-[11px] font-semibold text-slate-300 mb-1">
+              Categoría
+            </label>
+            <select
+              value={categoriaId}
+              onChange={(e) => setCategoriaId(e.target.value ? Number(e.target.value) : '')}
+              className="w-full h-9 px-3 rounded-xl bg-[#09132b]/80 border border-white/[0.08] text-white focus:outline-none focus:border-[#e3b341]/60 text-xs cursor-pointer"
+            >
+              <option value="">Sin categoría asignada</option>
+              {categorias.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.nombre}
+                </option>
+              ))}
+            </select>
           </div>
 
           <div>

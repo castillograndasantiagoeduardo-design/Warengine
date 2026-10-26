@@ -69,7 +69,7 @@ export class PosService implements IPosService {
    * Si la API falla se lanza el error: el catálogo no inventa existencias.
    */
   public async buscarProductos(query: string | undefined, sucursalId: number): Promise<ProductoPos[]> {
-    const [response, stock] = await Promise.all([
+    const [response, stock, categoriasRes] = await Promise.all([
       this.http.get<{ items?: Array<Record<string, unknown>> } | Array<Record<string, unknown>>>('/inventario/productos', {
         params: {
           texto: query?.trim() || undefined,
@@ -78,23 +78,35 @@ export class PosService implements IPosService {
         },
       }),
       this.http.get<StockSucursalResponseDTO[]>('/inventario/stock', { params: { sucursalId } }),
+      this.http.get<{ items?: Array<Record<string, unknown>> } | Array<Record<string, unknown>>>('/inventario/categorias').catch(() => null),
     ]);
 
     const stockPorProducto = new Map(stock.map((s) => [s.productoId, Number(s.stockActual)]));
+    const catItems: Array<Record<string, unknown>> = Array.isArray(categoriasRes)
+      ? categoriasRes
+      : (categoriasRes?.items || []);
+    const catMap = new Map<number, string>(
+      catItems.map((c: any) => [Number(c.id || c.id_categoria), String(c.nombre)]),
+    );
+
     const items: Array<Record<string, unknown>> = Array.isArray(response)
       ? response
       : (response?.items || []);
-    return items.map((p) => ({
+    return items.map((p) => {
+      const cId = p.categoriaId ? Number(p.categoriaId) : null;
+      const catNombre = (p.categoriaNombre as string) || (cId ? catMap.get(cId) : null) || null;
+      return {
         id: String(p.id),
         sku: String(p.sku || ''),
         nombre: String(p.nombre || ''),
         precioVenta: Number(p.precioVenta ?? p.precio_venta ?? 0),
         precioCorporativo: Number(p.precioCorporativo ?? p.precio_corporativo ?? 0),
-        categoriaId: p.categoriaId ? String(p.categoriaId) : null,
-        categoriaNombre: p.categoriaNombre ? String(p.categoriaNombre) : null,
+        categoriaId: cId ? String(cId) : null,
+        categoriaNombre: catNombre,
         stockActual: stockPorProducto.get(String(p.id)) ?? 0,
         activo: Boolean(p.activo !== false),
-      }));
+      };
+    });
   }
 
   public async buscarClientes(texto?: string): Promise<ClienteDto[]> {

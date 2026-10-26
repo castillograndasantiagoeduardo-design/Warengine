@@ -8,6 +8,7 @@ import type {
   ProductoInventarioSede,
   FiltrosInventarioSede,
   CategoriaInventario,
+  CrearCategoriaDTO,
   ProveedorInventario,
   ActualizarProductoDTO,
   CrearProveedorDTO,
@@ -34,6 +35,7 @@ export interface IBranchInventoryService {
   cambiarEstadoProducto(productoId: string, isActive: boolean): Promise<void>;
   configurarStockMinimo(productoId: string, sucursalId: number, stockMinimo: number): Promise<void>;
   listarCategorias(): Promise<CategoriaInventario[]>;
+  crearCategoria(data: CrearCategoriaDTO | string): Promise<CategoriaInventario>;
   listarProveedores(filtros?: { busqueda?: string; isActive?: boolean }): Promise<ProveedorInventario[]>;
   crearProveedor(data: CrearProveedorDTO): Promise<ProveedorInventario>;
   editarProveedor(id: number, data: { nombre?: string; contacto?: string; isActive?: boolean }): Promise<void>;
