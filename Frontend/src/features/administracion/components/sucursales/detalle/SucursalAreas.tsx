@@ -26,6 +26,7 @@ export function SucursalAreas({ sucursalId }: { sucursalId: number }) {
         subtitle="Estructura organizativa de la sede"
         loading={a.loading}
         error={a.error}
+        denied={a.denegado}
         onRetry={a.recargar}
         isEmpty={a.areas.length === 0}
         emptyTitle="Sin áreas"

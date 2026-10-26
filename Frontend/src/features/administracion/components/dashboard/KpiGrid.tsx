@@ -2,94 +2,85 @@
 
 /**
  * KpiGrid.tsx — Indicadores globales: finanzas del periodo + estado de la organización.
+ *
+ * Cada fila se muestra solo si la sesión tiene el permiso de su endpoint.
  */
 
+import type { ResumenDashboardResponse } from '@warengine/contracts';
 import { formatCOP, formatNumero, formatPorcentaje } from '@/lib/format/moneda';
 import type { MetricasGanancias } from '../../types';
 import { KpiCard } from './KpiCard';
 
-interface KpiGridProps {
-  metricas: MetricasGanancias | null;
-  loadingMetricas: boolean;
-  errorMetricas: string | null;
-  organizacion: {
-    sucursalesActivas: number;
-    sucursalesTotales: number;
-    usuariosActivos: number;
-    usuariosTotales: number;
-  };
-  loadingOrganizacion: boolean;
-  alertasStock: number | null;
-  loadingAlertas: boolean;
+interface Bloque<T> {
+  visible: boolean;
+  data: T | null;
+  loading: boolean;
+  error: string | null;
+  denegado: boolean;
 }
 
-export function KpiGrid({
-  metricas,
-  loadingMetricas,
-  errorMetricas,
-  organizacion,
-  loadingOrganizacion,
-  alertasStock,
-  loadingAlertas,
-}: KpiGridProps) {
-  const sinMetricas = errorMetricas ? 'No disponible' : undefined;
+interface KpiGridProps {
+  metricas: Bloque<MetricasGanancias>;
+  resumen: Bloque<ResumenDashboardResponse>;
+  alertasStock: Bloque<number>;
+}
+
+const estadoError = (b: Bloque<unknown>) => (b.denegado ? 'Acceso restringido' : b.error ? 'No disponible' : undefined);
+
+export function KpiGrid({ metricas, resumen, alertasStock }: KpiGridProps) {
+  const m = metricas.data;
+  const r = resumen.data;
+  const errM = estadoError(metricas);
+  const errR = estadoError(resumen);
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <KpiCard
-          destacado
-          icon="$"
-          label="Ventas del periodo"
-          value={sinMetricas ?? formatCOP(metricas?.ingresosTotales)}
-          hint={metricas ? `${formatNumero(metricas.totalFacturas)} facturas emitidas` : errorMetricas ?? undefined}
-          loading={loadingMetricas}
-        />
-        <KpiCard
-          icon="▲"
-          label="Ganancia neta"
-          value={sinMetricas ?? formatCOP(metricas?.gananciaNeta)}
-          hint={metricas ? `Costo: ${formatCOP(metricas.costoTotal)}` : undefined}
-          loading={loadingMetricas}
-        />
-        <KpiCard
-          icon="%"
-          label="Margen"
-          value={sinMetricas ?? formatPorcentaje(metricas?.margenPorcentaje)}
-          hint="Ganancia neta sobre ingresos"
-          loading={loadingMetricas}
-        />
-        <KpiCard
-          icon="⊡"
-          label="Ticket promedio"
-          value={sinMetricas ?? formatCOP(metricas?.ticketPromedio)}
-          hint="Valor medio por factura"
-          loading={loadingMetricas}
-        />
-      </div>
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-        <KpiCard
-          icon="⌂"
-          label="Sucursales operativas"
-          value={`${organizacion.sucursalesActivas} / ${organizacion.sucursalesTotales}`}
-          hint="Activas sobre registradas"
-          loading={loadingOrganizacion}
-        />
-        <KpiCard
-          icon="☺"
-          label="Usuarios activos"
-          value={`${organizacion.usuariosActivos} / ${organizacion.usuariosTotales}`}
-          hint="Cuentas habilitadas en el sistema"
-          loading={loadingOrganizacion}
-        />
-        <KpiCard
-          icon="⚠"
-          label="Alertas de stock"
-          value={alertasStock === null ? '—' : formatNumero(alertasStock)}
-          hint="Productos en o bajo el stock mínimo"
-          loading={loadingAlertas}
-        />
-      </div>
+      {metricas.visible && (
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          <KpiCard
+            destacado
+            icon="$"
+            label="Ventas del periodo"
+            value={errM ?? formatCOP(m?.ingresosTotales)}
+            hint={m ? `${formatNumero(m.totalFacturas)} facturas emitidas` : metricas.error ?? undefined}
+            loading={metricas.loading}
+          />
+          <KpiCard icon="▲" label="Ganancia neta" value={errM ?? formatCOP(m?.gananciaNeta)} hint={m ? `Costo: ${formatCOP(m.costoTotal)}` : undefined} loading={metricas.loading} />
+          <KpiCard icon="%" label="Margen" value={errM ?? formatPorcentaje(m?.margenPorcentaje)} hint="Ganancia neta sobre ingresos" loading={metricas.loading} />
+          <KpiCard icon="⊡" label="Ticket promedio" value={errM ?? formatCOP(m?.ticketPromedio)} hint="Valor medio por factura" loading={metricas.loading} />
+        </div>
+      )}
+      {(resumen.visible || alertasStock.visible) && (
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+          {resumen.visible && (
+            <>
+              <KpiCard
+                icon="⌂"
+                label="Sucursales operativas"
+                value={errR ?? `${r?.sucursalesActivas ?? 0} / ${r?.totalSucursales ?? 0}`}
+                hint="Activas sobre registradas"
+                loading={resumen.loading}
+              />
+              <KpiCard
+                icon="☺"
+                label="Usuarios activos"
+                value={errR ?? `${r?.usuariosActivos ?? 0} / ${r?.usuariosTotales ?? 0}`}
+                hint="Cuentas habilitadas en el sistema"
+                loading={resumen.loading}
+              />
+            </>
+          )}
+          {alertasStock.visible && (
+            <KpiCard
+              icon="⚠"
+              label="Alertas de stock"
+              value={estadoError(alertasStock) ?? formatNumero(alertasStock.data ?? 0)}
+              hint="Productos en o bajo el stock mínimo"
+              loading={alertasStock.loading}
+            />
+          )}
+        </div>
+      )}
     </div>
   );
 }

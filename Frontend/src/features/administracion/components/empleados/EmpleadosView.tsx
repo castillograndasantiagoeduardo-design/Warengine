@@ -5,8 +5,8 @@
  */
 
 import { useCallback, useMemo, useState } from 'react';
-import { PERMISSIONS } from '@warengine/contracts';
 import { usePermissions } from '@/features/autenticacion';
+import { Forbidden } from '@/components/panel/Forbidden';
 import { PageHeader } from '@/components/panel/PageHeader';
 import { Button3D } from '@/components/ui/Button3D';
 import { DataTable } from '@/components/ui/DataTable';
@@ -14,6 +14,7 @@ import { EmptyState } from '@/components/ui/EmptyState';
 import { SegmentedControl } from '@/components/ui/SegmentedControl';
 import { useToast } from '@/components/ui/Toast';
 import { FILTROS_ESTADO_EMPLEADO, useEmpleados } from '../../hooks/useEmpleados';
+import { PERMISOS_ADMIN } from '../../permisos';
 import type { Empleado } from '../../types';
 import { columnasEmpleados } from './empleadosColumns';
 import { EmpleadoFormModal } from './EmpleadoFormModal';
@@ -26,7 +27,7 @@ export function EmpleadosView() {
   const { recargar } = lista;
   const [enEdicion, setEnEdicion] = useState<Empleado | null>(null);
   const [enSalario, setEnSalario] = useState<Empleado | null>(null);
-  const puedeSalarios = tienePermiso(PERMISSIONS.ADMIN_GESTIONAR_SALARIOS);
+  const puedeSalarios = tienePermiso(PERMISOS_ADMIN.gestionarSalarios);
 
   const onGuardado = useCallback(
     (e: Empleado) => {
@@ -88,7 +89,9 @@ export function EmpleadosView() {
         </div>
       </div>
 
-      {lista.error ? (
+      {lista.denegado ? (
+        <Forbidden />
+      ) : lista.error ? (
         <div className="panel-card">
           <EmptyState
             icon="⚠"

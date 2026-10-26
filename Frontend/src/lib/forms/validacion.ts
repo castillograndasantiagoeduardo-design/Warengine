@@ -33,6 +33,11 @@ export function erroresDesdeIssues(issues: IssueValidacion[]): ErroresCampo {
   return errores;
 }
 
+/** true si la API rechazó la operación por permisos (403 PERMISO_DENEGADO o sede fuera de alcance). */
+export function esAccesoDenegado(error: unknown): boolean {
+  return error instanceof ApiError && error.isPermisoDenegado();
+}
+
 /**
  * Mensaje legible para cualquier error de la API.
  * `mensajesPorCodigo` permite personalizar códigos de dominio (ej. SUCURSAL_DUPLICADA).
@@ -40,7 +45,7 @@ export function erroresDesdeIssues(issues: IssueValidacion[]): ErroresCampo {
 export function mensajeDeError(error: unknown, mensajesPorCodigo: Record<string, string> = {}): string {
   if (error instanceof ApiError) {
     if (mensajesPorCodigo[error.code]) return mensajesPorCodigo[error.code];
-    if (error.isPermisoDenegado()) return 'No tienes permisos para realizar esta acción.';
+    if (error.isPermisoDenegado()) return 'Acceso denegado: tu rol no tiene el permiso que exige esta acción.';
     if (error.status === 0) return error.message;
     if (error.code === 'VALIDATION_ERROR') return 'Revisa los campos marcados.';
     return error.message;

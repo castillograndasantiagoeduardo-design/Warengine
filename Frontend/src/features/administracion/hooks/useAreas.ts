@@ -86,6 +86,7 @@ export function useAreas(sucursalId: number) {
     areas: lista.data ?? [],
     loading: lista.loading,
     error: lista.error,
+    denegado: lista.denegado,
     recargar,
     form,
     formAbierto,

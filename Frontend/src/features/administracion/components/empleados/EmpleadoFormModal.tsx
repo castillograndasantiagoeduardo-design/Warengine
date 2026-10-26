@@ -18,7 +18,7 @@ interface EmpleadoFormModalProps {
 }
 
 export function EmpleadoFormModal({ empleado, onClose, onGuardado }: EmpleadoFormModalProps) {
-  const { valores, errores, errorGeneral, enviando, setCampo, handleSubmit, areas, cargandoAreas } = useEmpleadoForm({
+  const { valores, errores, errorGeneral, enviando, setCampo, handleSubmit, areas, cargandoAreas, puedeVerAreas } = useEmpleadoForm({
     empleado,
     onGuardado,
   });
@@ -59,14 +59,18 @@ export function EmpleadoFormModal({ empleado, onClose, onGuardado }: EmpleadoFor
           maxLength={150}
         />
         <TextField label="Cargo" value={valores.cargo} onChange={(e) => setCampo('cargo', e.target.value)} error={errores.cargo} maxLength={100} />
-        <SelectField
-          label="Área"
-          value={valores.areaId}
-          onChange={(e) => setCampo('areaId', e.target.value)}
-          error={errores.areaId}
-          placeholder={cargandoAreas ? 'Cargando áreas…' : 'Sin área'}
-          options={areas.map((a) => ({ value: a.id, label: a.nombre }))}
-        />
+        {puedeVerAreas ? (
+          <SelectField
+            label="Área"
+            value={valores.areaId}
+            onChange={(e) => setCampo('areaId', e.target.value)}
+            error={errores.areaId}
+            placeholder={cargandoAreas ? 'Cargando áreas…' : 'Sin área'}
+            options={areas.map((a) => ({ value: a.id, label: a.nombre }))}
+          />
+        ) : (
+          <TextField label="Área" value={empleado?.areaNombre ?? 'Sin área'} readOnly hint="Asignar áreas requiere gestionar sucursales." />
+        )}
         <TextField
           label="Teléfono"
           type="tel"

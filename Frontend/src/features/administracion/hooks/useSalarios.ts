@@ -74,5 +74,5 @@ export function useSalarios(empleado: Empleado | null, onAumentoRegistrado: (sue
   // El backend devuelve el historial; se muestra del más reciente al más antiguo
   const registros = [...(historial.data ?? [])].sort((a, b) => b.fechaEfectiva.localeCompare(a.fechaEfectiva));
 
-  return { registros, cargando: historial.loading, error: historial.error, recargar, form, enviar };
+  return { registros, cargando: historial.loading, error: historial.error, denegado: historial.denegado, recargar, form, enviar };
 }

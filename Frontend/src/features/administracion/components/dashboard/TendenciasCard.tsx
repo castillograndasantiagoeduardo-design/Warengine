@@ -25,12 +25,13 @@ interface TendenciasCardProps {
   puntos: PuntoTendenciaVenta[] | null;
   loading: boolean;
   error: string | null;
+  denied?: boolean;
   onRetry: () => void;
   agrupacion: AgrupacionTendencia;
   onAgrupacionChange: (a: AgrupacionTendencia) => void;
 }
 
-export function TendenciasCard({ puntos, loading, error, onRetry, agrupacion, onAgrupacionChange }: TendenciasCardProps) {
+export function TendenciasCard({ puntos, loading, error, denied, onRetry, agrupacion, onAgrupacionChange }: TendenciasCardProps) {
   const datos = puntos ?? [];
   const labels = datos.map((p) => formatPeriodo(p.periodo));
 
@@ -40,6 +41,7 @@ export function TendenciasCard({ puntos, loading, error, onRetry, agrupacion, on
       subtitle="Ventas y ganancia neta por periodo"
       loading={loading}
       error={error}
+      denied={denied}
       onRetry={onRetry}
       isEmpty={datos.length === 0}
       emptyTitle="Sin ventas en el periodo"
