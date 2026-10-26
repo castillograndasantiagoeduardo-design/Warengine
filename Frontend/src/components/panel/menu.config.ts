@@ -26,5 +26,5 @@ export const PANEL_MENU: PanelMenuItem[] = [
   { href: '/dashboard/empleados', label: 'Empleados', icon: '☺', permiso: PERMISSIONS.ADMIN_GESTIONAR_PERSONAL },
   { href: '/dashboard/auditoria', label: 'Auditoría', icon: '☰', permiso: PERMISSIONS.AUTH_VIEW_AUDIT },
   { href: '/dashboard/alertas', label: 'Alertas', icon: '⚠', permiso: PERMISSIONS.ADMIN_GESTIONAR_ALERTAS },
-  { href: '/dashboard/cuenta', label: 'Mi cuenta', icon: '⚙', proximamente: true },
+  { href: '/dashboard/cuenta', label: 'Mi cuenta', icon: '⚙' },
 ];
