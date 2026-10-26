@@ -10,7 +10,8 @@ import {
   UsuarioInactivoError,
   TokenInvalidoError,
 } from '../../domain/errors/AutenticacionErrors.ts';
-import { LoginOutput } from './LoginUseCase.ts';
+import { IPerfilSesionRepository } from '../../domain/repositories/IPerfilSesionRepository.ts';
+import { construirUsuarioSesion, LoginOutput } from './LoginUseCase.ts';
 
 export interface Verificar2FALoginRequest {
   tempToken: string;
@@ -28,6 +29,7 @@ export class Verificar2FALoginUseCase {
     private readonly tokenService: ITokenService,
     private readonly registroIntentosLogin: IRegistroIntentosLogin,
     private readonly rolRepository?: IRolRepository,
+    private readonly perfilSesionRepository?: IPerfilSesionRepository,
   ) {}
 
   public async execute(request: Verificar2FALoginRequest): Promise<Verificar2FALoginResponse> {
@@ -74,22 +76,16 @@ export class Verificar2FALoginUseCase {
       request.recordarme,
     );
 
-    const rolNombre = this.rolRepository?.obtenerNombreDeRol
-      ? (await this.rolRepository.obtenerNombreDeRol(usuario.rolId)) ?? 'usuario'
-      : 'usuario';
-    const permisos = (await this.rolRepository?.obtenerPermisosDeRol(usuario.rolId)) ?? [];
-
+    const sesion = await construirUsuarioSesion(
+      usuario,
+      this.rolRepository,
+      this.perfilSesionRepository,
+    );
 
     return Result.ok({
       accessToken: tokens.accessToken,
       refreshToken: tokens.refreshToken,
-      usuario: {
-        id: usuario.id,
-        email: usuario.email,
-        rolId: usuario.rolId,
-        rolNombre,
-      },
-      permisos,
+      ...sesion,
     });
   }
 }

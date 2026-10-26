@@ -26,7 +26,7 @@ const TONO_ROL: Record<string, BadgeTone> = {
   'vendedor-b2b': 'neutral',
 };
 
-const BTN = 'min-h-[44px] rounded-lg px-2.5 text-xs uppercase tracking-wider font-[family-name:var(--font-pixelify)] cursor-pointer';
+const BTN = 'min-h-[44px] rounded-lg px-2.5 text-xs uppercase tracking-wider font-[family-name:var(--font-ui)] cursor-pointer';
 
 export function columnasUsuarios(o: Opciones): DataTableColumn<UsuarioGestionado>[] {
   return [

@@ -17,7 +17,7 @@ interface BranchStatusBarProps {
 }
 
 export function BranchStatusBar({
-  ultimaSincronizacion = '17:42:08',
+  ultimaSincronizacion,
   isOnline = true,
   className = '',
 }: BranchStatusBarProps) {
@@ -47,7 +47,7 @@ export function BranchStatusBar({
         </span>
         <span className="text-slate-600">&bull;</span>
         <span className="font-mono text-slate-500">
-          Última sincronización: {ultimaSincronizacion}
+          Última sincronización: {ultimaSincronizacion ?? '—'}
         </span>
       </div>
 

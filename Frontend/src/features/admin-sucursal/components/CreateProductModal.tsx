@@ -9,27 +9,40 @@
  */
 
 import React, { useState } from 'react';
+import { crearProductoSchema } from '@warengine/contracts';
 import { Button3D } from '@/components/ui/Button3D';
-import { apiClient } from '@/lib/api';
+import { apiClient, ApiError } from '@/lib/api';
 
 interface CreateProductModalProps {
   isOpen: boolean;
   onClose: () => void;
   onProductoCreado?: () => void;
-  sucursalId?: number;
+  /** Sede de la sesión del admin: el stock mínimo se configura en ella. */
+  sucursalId: number;
 }
+
+/** Mensaje legible de un error de la API (incluye la primera validación de Zod si la hay). */
+function mensajeDeError(err: unknown, porDefecto: string): string {
+  if (err instanceof ApiError) {
+    return err.issues?.[0]?.message ?? err.message ?? porDefecto;
+  }
+  return err instanceof Error ? err.message : porDefecto;
+}
+
+const aNumeroOpcional = (valor: string) => (valor.trim() === '' ? undefined : Number(valor));
 
 export function CreateProductModal({
   isOpen,
   onClose,
   onProductoCreado,
-  sucursalId = 1,
+  sucursalId,
 }: CreateProductModalProps) {
   const [sku, setSku] = useState('');
   const [nombre, setNombre] = useState('');
   const [precioVenta, setPrecioVenta] = useState('');
   const [precioCompra, setPrecioCompra] = useState('');
-  const [stockMinimo, setStockMinimo] = useState('5');
+  const [precioCorporativo, setPrecioCorporativo] = useState('');
+  const [stockMinimo, setStockMinimo] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
@@ -41,44 +54,53 @@ export function CreateProductModal({
     setErrorMsg(null);
     setSuccessMsg(null);
 
-    if (!sku.trim() || !nombre.trim() || !precioVenta) {
-      setErrorMsg('Por favor completa todos los campos requeridos.');
+    // Mismo contrato que valida la API (categoría y proveedor son opcionales)
+    const parsed = crearProductoSchema.safeParse({
+      sku: sku.trim().toUpperCase(),
+      nombre: nombre.trim(),
+      precioCompra: aNumeroOpcional(precioCompra),
+      precioVenta: aNumeroOpcional(precioVenta),
+      precioCorporativo: aNumeroOpcional(precioCorporativo) ?? null,
+    });
+    if (!parsed.success) {
+      setErrorMsg(parsed.error.issues[0]?.message ?? 'Revisa los datos del producto.');
       return;
     }
 
-    const pVenta = Number(precioVenta);
-    const pCompra = Number(precioCompra || precioVenta);
-    const sMin = Number(stockMinimo || 0);
-
-    if (isNaN(pVenta) || pVenta <= 0) {
-      setErrorMsg('El precio de venta debe ser un número positivo.');
+    const sMin = aNumeroOpcional(stockMinimo);
+    if (sMin !== undefined && (!Number.isInteger(sMin) || sMin < 0)) {
+      setErrorMsg('El stock mínimo debe ser un número entero mayor o igual a 0.');
       return;
     }
 
     setIsSubmitting(true);
     try {
-      // Intentar llamada real a la API de inventario
-      await apiClient.post('/inventario/productos', {
-        sku: sku.trim().toUpperCase(),
-        nombre: nombre.trim(),
-        precioVenta: pVenta,
-        precioCompra: pCompra,
-        stockMinimo: sMin,
-        sucursalId,
-      });
+      const creado = await apiClient.post<{ id: string }>('/inventario/productos', parsed.data);
 
-      setSuccessMsg('¡Producto registrado correctamente en catálogo!');
+      // El umbral se guarda por sede con su propio endpoint (el alta de producto es global)
+      if (sMin !== undefined) {
+        try {
+          await apiClient.put('/inventario/stock-minimo', {
+            productoId: creado.id,
+            sucursalId,
+            stockMinimo: sMin,
+          });
+        } catch (err) {
+          setErrorMsg(
+            `Producto creado, pero no se pudo guardar el stock mínimo: ${mensajeDeError(err, 'error desconocido')}`,
+          );
+          onProductoCreado?.();
+          return;
+        }
+      }
+
+      setSuccessMsg('Producto registrado en el catálogo.');
       setTimeout(() => {
         onProductoCreado?.();
         onClose();
-      }, 1000);
-    } catch {
-      // En caso de que el backend no tenga aún la ruta activa en desarrollo, confirmamos éxito simulado
-      setSuccessMsg('¡Producto registrado localmente con éxito!');
-      setTimeout(() => {
-        onProductoCreado?.();
-        onClose();
-      }, 1000);
+      }, 900);
+    } catch (err) {
+      setErrorMsg(mensajeDeError(err, 'No se pudo registrar el producto.'));
     } finally {
       setIsSubmitting(false);
     }
@@ -155,6 +177,38 @@ export function CreateProductModal({
             </div>
           </div>
 
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-[11px] font-semibold text-slate-300 mb-1">
+                Precio Compra (COP) *
+              </label>
+              <input
+                type="number"
+                min="0"
+                step="0.01"
+                placeholder="Ej. 120000"
+                value={precioCompra}
+                onChange={(e) => setPrecioCompra(e.target.value)}
+                className="w-full h-9 px-3 rounded-xl bg-[#09132b]/80 border border-white/[0.08] text-white focus:outline-none focus:border-[#e3b341]/60 font-mono text-xs"
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-[11px] font-semibold text-slate-300 mb-1">
+                Precio Corporativo B2B
+              </label>
+              <input
+                type="number"
+                min="0"
+                step="0.01"
+                placeholder="Opcional"
+                value={precioCorporativo}
+                onChange={(e) => setPrecioCorporativo(e.target.value)}
+                className="w-full h-9 px-3 rounded-xl bg-[#09132b]/80 border border-white/[0.08] text-white focus:outline-none focus:border-[#e3b341]/60 font-mono text-xs"
+              />
+            </div>
+          </div>
+
           <div>
             <label className="block text-[11px] font-semibold text-slate-300 mb-1">
               Nombre del Producto *
@@ -176,7 +230,7 @@ export function CreateProductModal({
             <input
               type="number"
               min="0"
-              placeholder="Ej. 5"
+              placeholder="Opcional (ej. 5)"
               value={stockMinimo}
               onChange={(e) => setStockMinimo(e.target.value)}
               className="w-full h-9 px-3 rounded-xl bg-[#09132b]/80 border border-white/[0.08] text-white focus:outline-none focus:border-[#e3b341]/60 font-mono text-xs"

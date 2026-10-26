@@ -22,7 +22,9 @@ export function usePosVenta() {
       const index = actuales.findIndex((i) => i.productoId === producto.id);
       if (index >= 0) {
         const itemActual = actuales[index];
-        const nuevaCantidad = itemActual.cantidad + cantidad;
+        // Nunca más unidades que las existencias reales de la sede (el trigger de BD también lo valida)
+        const nuevaCantidad = Math.min(itemActual.cantidad + cantidad, itemActual.stockDisponible);
+        if (nuevaCantidad === itemActual.cantidad) return actuales;
         const subtotal = Math.round(nuevaCantidad * itemActual.precioUnitario * 100) / 100;
 
         const copia = [...actuales];
@@ -34,6 +36,8 @@ export function usePosVenta() {
         return copia;
       }
 
+      if (producto.stockActual <= 0) return actuales;
+      cantidad = Math.min(cantidad, producto.stockActual);
       const subtotal = Math.round(cantidad * producto.precioVenta * 100) / 100;
       return [
         ...actuales,
@@ -63,10 +67,11 @@ export function usePosVenta() {
     setItems((actuales) =>
       actuales.map((i) => {
         if (i.productoId !== productoId) return i;
-        const subtotal = Math.round(cantidad * i.precioUnitario * 100) / 100;
+        const cantidadValida = Math.min(cantidad, i.stockDisponible);
+        const subtotal = Math.round(cantidadValida * i.precioUnitario * 100) / 100;
         return {
           ...i,
-          cantidad,
+          cantidad: cantidadValida,
           subtotal,
         };
       }),

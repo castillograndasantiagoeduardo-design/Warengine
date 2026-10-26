@@ -42,7 +42,7 @@ export function columnasAuditoria(onDetalle: (log: LogAuditoria) => void): DataT
         <button
           type="button"
           onClick={() => onDetalle(l)}
-          className="min-h-[44px] rounded-lg px-3 text-xs uppercase tracking-wider text-[#e9b949] hover:bg-[#e3b341]/15 font-[family-name:var(--font-pixelify)] cursor-pointer"
+          className="min-h-[44px] rounded-lg px-3 text-xs uppercase tracking-wider text-[#e9b949] hover:bg-[#e3b341]/15 font-[family-name:var(--font-ui)] cursor-pointer"
         >
           Ver
         </button>

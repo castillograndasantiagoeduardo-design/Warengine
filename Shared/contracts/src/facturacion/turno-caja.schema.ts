@@ -35,3 +35,22 @@ export interface TurnoCajaDto {
 
 export type AbrirTurnoCajaInput = z.infer<typeof abrirTurnoCajaSchema>;
 export type CerrarTurnoCajaInput = z.infer<typeof cerrarTurnoCajaSchema>;
+// GET /ventas/turnos/abiertos — viene por query string, por eso coerce
+export const listarTurnosAbiertosQuerySchema = z.object({
+  sucursalId: z.coerce.number().int().positive().optional(),
+});
+
+/** Cajero en turno para el tablero de la sucursal. */
+export interface TurnoAbiertoDto {
+  id: string;
+  usuarioId: string;
+  cajeroNombre: string | null;
+  cajeroEmail: string;
+  sucursalId: number;
+  fondoInicial: number;
+  fechaApertura: string;
+  cantidadVentas: number;
+  totalVentas: number;
+}
+
+export type ListarTurnosAbiertosQuery = z.infer<typeof listarTurnosAbiertosQuerySchema>;

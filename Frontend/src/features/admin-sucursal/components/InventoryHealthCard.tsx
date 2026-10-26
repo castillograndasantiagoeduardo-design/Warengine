@@ -92,7 +92,7 @@ export function InventoryHealthCard({
 
         {/* 3. Sub-encabezado: Requieren Atención */}
         <div className="flex items-center justify-between pt-3 pb-2 border-t border-white/[0.06]">
-          <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 font-[family-name:var(--font-pixelify)]">
+          <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 font-[family-name:var(--font-ui)]">
             Requieren atención
           </span>
           <span
@@ -169,7 +169,7 @@ export function InventoryHealthCard({
         className="
           mt-3 pt-3 border-t border-white/[0.06] flex items-center justify-between w-full
           text-xs font-semibold text-[#e3b341] hover:text-[#f3d37a] transition-colors
-          group cursor-pointer font-[family-name:var(--font-pixelify)] uppercase tracking-wider
+          group cursor-pointer font-[family-name:var(--font-ui)] uppercase tracking-wider
         "
       >
         <span>Gestionar reposición</span>

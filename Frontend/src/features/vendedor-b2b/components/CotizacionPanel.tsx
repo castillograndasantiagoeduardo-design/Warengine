@@ -194,7 +194,13 @@ export function CotizacionPanel({
               <button
                 type="button"
                 onClick={() => setMedioPago('credito_corporativo')}
-                className={`py-1.5 px-2 rounded-xl text-xs font-medium border transition-colors cursor-pointer ${
+                disabled={!clienteSeleccionado?.creditoHabilitado}
+                title={
+                  clienteSeleccionado?.creditoHabilitado
+                    ? undefined
+                    : 'El cliente no tiene crédito corporativo habilitado por un administrador'
+                }
+                className={`disabled:opacity-40 disabled:cursor-not-allowed py-1.5 px-2 rounded-xl text-xs font-medium border transition-colors cursor-pointer ${
                   medioPago === 'credito_corporativo'
                     ? 'border-[#E9B949] bg-[#E9B949]/20 text-[#E9B949]'
                     : 'border-white/10 text-white/70 hover:bg-white/5'
@@ -234,7 +240,7 @@ export function CotizacionPanel({
               <span className="font-mono">${subtotal.toLocaleString('es-CO')}</span>
             </div>
             <div className="flex justify-between text-white/60">
-              <span>IVA (19%):</span>
+              <span>IVA:</span>
               <span className="font-mono">${iva.toLocaleString('es-CO')}</span>
             </div>
             <div className="flex justify-between text-sm font-bold text-white pt-1 border-t border-white/10">

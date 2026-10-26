@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Anton, Archivo, Pixelify_Sans, Bodoni_Moda } from "next/font/google";
+import { Anton, Archivo, Bodoni_Moda, Outfit } from "next/font/google";
 import { AuthProvider } from "@/features/autenticacion";
 import "./globals.css";
 
@@ -17,10 +17,10 @@ const archivo = Archivo({
   display: "swap",
 });
 
-const pixelify = Pixelify_Sans({
-  weight: ["400", "500", "600", "700"],
+// Fuente base de toda la interfaz (sans geométrica), login incluido.
+const outfit = Outfit({
   subsets: ["latin"],
-  variable: "--font-pixelify",
+  variable: "--font-ui",
   display: "swap",
 });
 
@@ -51,7 +51,7 @@ export default function RootLayout({
   return (
     <html
       lang="es"
-      className={`${anton.variable} ${archivo.variable} ${pixelify.variable} ${bodoni.variable} h-full antialiased`}
+      className={`${anton.variable} ${archivo.variable} ${outfit.variable} ${bodoni.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col bg-[#0d1630] text-white overflow-x-hidden selection:bg-[#e3b341] selection:text-black">
         <AuthProvider>{children}</AuthProvider>

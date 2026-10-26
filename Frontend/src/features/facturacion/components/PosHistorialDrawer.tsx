@@ -85,7 +85,7 @@ export function PosHistorialDrawer({
           {/* Lista de facturas */}
           <div className="flex-1 overflow-y-auto space-y-2.5 pr-1">
             {isLoading ? (
-              <div className="py-12 text-center text-xs text-white/40 font-[family-name:var(--font-pixelify)]">
+              <div className="py-12 text-center text-xs text-white/40 font-[family-name:var(--font-ui)]">
                 Cargando historial de caja...
               </div>
             ) : facturas.length === 0 ? (
@@ -108,7 +108,7 @@ export function PosHistorialDrawer({
                       </p>
                     </div>
                     <span
-                      className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase font-[family-name:var(--font-pixelify)] ${
+                      className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase font-[family-name:var(--font-ui)] ${
                         fac.estado === 'emitida'
                           ? 'bg-emerald-500/20 text-emerald-400'
                           : 'bg-red-500/20 text-red-400'
@@ -131,7 +131,7 @@ export function PosHistorialDrawer({
                     <button
                       type="button"
                       onClick={() => onSeleccionarParaReimprimir(fac)}
-                      className="px-2.5 py-1 rounded-lg bg-[#14213D] hover:bg-[#1a2b50] border border-white/10 text-white/80 hover:text-[#e3b341] text-[10px] font-[family-name:var(--font-pixelify)] uppercase cursor-pointer transition-colors flex items-center gap-1"
+                      className="px-2.5 py-1 rounded-lg bg-[#14213D] hover:bg-[#1a2b50] border border-white/10 text-white/80 hover:text-[#e3b341] text-[10px] font-[family-name:var(--font-ui)] uppercase cursor-pointer transition-colors flex items-center gap-1"
                     >
                       <span>🖨️</span>
                       <span>Ver / Reimprimir</span>

@@ -19,6 +19,7 @@ import type {
   SesionCompleta,
   SolicitarRecuperacionPasswordInput,
   ConfirmarRestablecerPasswordInput,
+  UsuarioSesionDto,
 } from '../types/auth.types';
 
 const ROL_NOMBRES: Record<number, string> = {
@@ -86,6 +87,7 @@ export class AuthService implements IAuthService {
         usuarioId: string;
         rolId: number;
         permisos: string[];
+        usuario?: UsuarioSesionDto;
       }>('/auth/verificar');
 
       if (!res || !res.ok) {
@@ -95,9 +97,12 @@ export class AuthService implements IAuthService {
       return {
         usuario: {
           id: res.usuarioId,
-          email: '',
+          email: res.usuario?.email ?? '',
           rolId: res.rolId,
-          rolNombre: ROL_NOMBRES[res.rolId] || 'usuario',
+          rolNombre: res.usuario?.rolNombre || ROL_NOMBRES[res.rolId] || 'usuario',
+          nombre: res.usuario?.nombre ?? null,
+          sucursalId: res.usuario?.sucursalId ?? null,
+          sucursalNombre: res.usuario?.sucursalNombre ?? null,
         },
         permisos: res.permisos || [],
       };

@@ -33,8 +33,10 @@ export interface UsuarioSesion {
   email: string;
   rolId: number;
   rolNombre: string;
-  sucursalId?: number;
-  sucursalNombre?: string;
+  nombre: string | null;
+  /** Sede del empleado vinculado; null si no tiene sede (nunca se asume la Sede Principal). */
+  sucursalId: number | null;
+  sucursalNombre: string | null;
 }
 
 /**

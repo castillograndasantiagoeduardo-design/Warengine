@@ -88,7 +88,7 @@ export function AdminProfileModal({
         <div className="relative px-6 py-5 bg-gradient-to-b from-[#18264d] to-[#0d1630] border-b border-white/[0.08]">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3.5">
-              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-tr from-[#b88a1f] to-[#e3b341] text-[#0d1630] font-black text-xl font-[family-name:var(--font-pixelify)] shadow-lg shadow-amber-500/20">
+              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-tr from-[#b88a1f] to-[#e3b341] text-[#0d1630] font-black text-xl font-[family-name:var(--font-ui)] shadow-lg shadow-amber-500/20">
                 {inicial}
               </div>
               <div>
@@ -98,7 +98,7 @@ export function AdminProfileModal({
                   </h2>
                 </div>
                 <div className="flex items-center gap-2 mt-0.5">
-                  <span className="px-2 py-0.5 rounded-full bg-[#e3b341]/15 text-[#e3b341] border border-[#e3b341]/30 text-[10px] font-bold uppercase tracking-wider font-[family-name:var(--font-pixelify)]">
+                  <span className="px-2 py-0.5 rounded-full bg-[#e3b341]/15 text-[#e3b341] border border-[#e3b341]/30 text-[10px] font-bold uppercase tracking-wider font-[family-name:var(--font-ui)]">
                     {rolNombre}
                   </span>
                   <span className="text-[11px] text-slate-400 font-[family-name:var(--font-archivo)]">
@@ -135,7 +135,7 @@ export function AdminProfileModal({
           {/* Bloque A: Datos Institucionales Inmutables (Segregación RBAC) */}
           <div className="p-3.5 rounded-xl bg-white/[0.02] border border-white/[0.06] space-y-2.5">
             <div className="flex items-center justify-between">
-              <span className="text-[10px] uppercase font-bold text-slate-400 font-[family-name:var(--font-pixelify)] tracking-wider">
+              <span className="text-[10px] uppercase font-bold text-slate-400 font-[family-name:var(--font-ui)] tracking-wider">
                 Credenciales del Sistema
               </span>
               <span className="flex items-center gap-1 text-[10px] text-amber-400 font-semibold">
@@ -224,7 +224,7 @@ export function AdminProfileModal({
               type="submit"
               size="sm"
               disabled={isSubmitting}
-              className="font-bold font-[family-name:var(--font-pixelify)] tracking-wide uppercase text-xs"
+              className="font-bold font-[family-name:var(--font-ui)] tracking-wide uppercase text-xs"
             >
               {isSubmitting ? 'Guardando...' : 'Guardar Contacto'}
             </Button3D>

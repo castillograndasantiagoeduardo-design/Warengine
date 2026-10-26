@@ -8,47 +8,14 @@ import { useState, useEffect, useCallback } from 'react';
 import { posService } from '../api';
 import type { ClienteDto, CrearClienteInput } from '../types/pos.types';
 
-// Cliente consumidor final por defecto para venta rápida de mostrador
-export const CLIENTE_CONSUMIDOR_FINAL_DEFAULT: ClienteDto = {
-  id: 'CONSUMIDOR_FINAL',
-  tipoDocumento: 'CC',
-  numeroDocumento: '222222222222',
-  nombreRazonSocial: 'Consumidor Final',
-  tipoCliente: 'B2C',
-  email: null,
-  telefono: null,
-  direccion: null,
-  creditoHabilitado: false,
-};
-
 export function usePosClientes() {
-  const [clienteSeleccionado, setClienteSeleccionado] = useState<ClienteDto>(CLIENTE_CONSUMIDOR_FINAL_DEFAULT);
+  // Sin cliente por defecto: el cajero busca o crea el cliente real de cada venta
+  const [clienteSeleccionado, setClienteSeleccionado] = useState<ClienteDto | null>(null);
   const [clientesEncontrados, setClientesEncontrados] = useState<ClienteDto[]>([]);
   const [terminoBusqueda, setTerminoBusqueda] = useState<string>('');
   const [isBuscando, setIsBuscando] = useState<boolean>(false);
   const [isCreando, setIsCreando] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
-
-  /**
-   * Asegura que exista el cliente consumidor final en el backend o selecciona el default
-   */
-  useEffect(() => {
-    let montado = true;
-    async function asegurarConsumidorFinal() {
-      try {
-        const encontrados = await posService.buscarClientes('222222222222');
-        if (montado && encontrados.length > 0) {
-          setClienteSeleccionado(encontrados[0]);
-        }
-      } catch {
-        // Mantiene el fallback local si hay algún problema transitorio
-      }
-    }
-    asegurarConsumidorFinal();
-    return () => {
-      montado = false;
-    };
-  }, []);
 
   /**
    * Búsqueda en tiempo real con debounce
@@ -82,8 +49,8 @@ export function usePosClientes() {
     setClientesEncontrados([]);
   }, []);
 
-  const restablecerConsumidorFinal = useCallback(() => {
-    setClienteSeleccionado(CLIENTE_CONSUMIDOR_FINAL_DEFAULT);
+  const limpiarCliente = useCallback(() => {
+    setClienteSeleccionado(null);
     setTerminoBusqueda('');
     setClientesEncontrados([]);
   }, []);
@@ -115,7 +82,7 @@ export function usePosClientes() {
     isCreando,
     error,
     seleccionarCliente,
-    restablecerConsumidorFinal,
+    limpiarCliente,
     crearClienteRapido,
   };
 }

@@ -41,7 +41,7 @@ export function PanelHeader({ onMenuClick }: { onMenuClick: () => void }) {
       <div className="ml-auto flex items-center gap-3">
         <div className="hidden sm:flex flex-col items-end leading-tight">
           <span className="text-sm text-white">{identidad}</span>
-          <span className="text-[11px] uppercase tracking-wider text-[#e9b949] font-[family-name:var(--font-pixelify)]">{rol}</span>
+          <span className="text-[11px] uppercase tracking-wider text-[#e9b949] font-[family-name:var(--font-ui)]">{rol}</span>
         </div>
         <span
           aria-hidden="true"

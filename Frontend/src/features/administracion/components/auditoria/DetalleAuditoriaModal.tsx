@@ -23,7 +23,7 @@ function TablaCambios({ antes, despues }: { antes: Objeto; despues: Objeto }) {
   return (
     <div className="overflow-x-auto">
       <table className="w-full min-w-[480px] text-sm">
-        <thead className="text-[11px] uppercase tracking-wider text-white/55 font-[family-name:var(--font-pixelify)]">
+        <thead className="text-[11px] uppercase tracking-wider text-white/55 font-[family-name:var(--font-ui)]">
           <tr>
             <th className="py-2 text-left font-medium">Campo</th>
             <th className="py-2 text-left font-medium">Antes</th>
@@ -74,7 +74,7 @@ export function DetalleAuditoriaModal({ log, onClose }: { log: LogAuditoria | nu
 
           {Object.keys(resto).length > 0 && (
             <div>
-              <h3 className="mb-2 text-[11px] uppercase tracking-wider text-white/55 font-[family-name:var(--font-pixelify)]">Información adicional</h3>
+              <h3 className="mb-2 text-[11px] uppercase tracking-wider text-white/55 font-[family-name:var(--font-ui)]">Información adicional</h3>
               <pre className="max-h-60 overflow-auto rounded-xl bg-black/30 p-3 text-xs text-white/75">{JSON.stringify(resto, null, 2)}</pre>
             </div>
           )}

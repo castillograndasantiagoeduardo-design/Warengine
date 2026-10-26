@@ -44,7 +44,7 @@ export function RateLimitNotice({
           </svg>
         </div>
         <div className="flex-1 space-y-1">
-          <h4 className="font-bold text-amber-300 tracking-wide font-[family-name:var(--font-pixelify)] uppercase text-xs">
+          <h4 className="font-bold text-amber-300 tracking-wide font-[family-name:var(--font-ui)] uppercase text-xs">
             Acceso en pausa temporal
           </h4>
           <p className="text-white/80 leading-relaxed text-[11px]">{mensaje}</p>

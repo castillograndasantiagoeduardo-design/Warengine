@@ -11,9 +11,12 @@ interface PosTicketModalProps {
   isOpen: boolean;
   onClose: () => void;
   factura: FacturaDto | null;
-  cliente: ClienteDto;
+  /** null al reimprimir desde el historial (la factura solo trae clienteId). */
+  cliente: ClienteDto | null;
   sucursalNombre: string;
   cambioEntregado: number;
+  /** productoId → nombre, tomado del carrito al cobrar (la factura solo trae productoId). */
+  nombresProducto?: Record<string, string>;
   onNuevaVenta: () => void;
 }
 
@@ -23,6 +26,7 @@ export function PosTicketModal({
   cliente,
   sucursalNombre,
   cambioEntregado,
+  nombresProducto = {},
   onNuevaVenta,
 }: PosTicketModalProps) {
   if (!isOpen || !factura) return null;
@@ -51,7 +55,7 @@ export function PosTicketModal({
             <span className="w-6 h-6 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-xs">
               ✓
             </span>
-            <span className="text-xs font-bold text-emerald-400 font-[family-name:var(--font-pixelify)] uppercase">
+            <span className="text-xs font-bold text-emerald-400 font-[family-name:var(--font-ui)] uppercase">
               Venta Exitosa
             </span>
           </div>
@@ -85,11 +89,11 @@ export function PosTicketModal({
             </div>
             <div className="flex justify-between">
               <span>Cliente:</span>
-              <span className="font-semibold truncate max-w-[150px]">{cliente.nombreRazonSocial}</span>
+              <span className="font-semibold truncate max-w-[150px]">{cliente?.nombreRazonSocial ?? '—'}</span>
             </div>
             <div className="flex justify-between">
               <span>Doc / NIT:</span>
-              <span>{cliente.numeroDocumento}</span>
+              <span>{cliente?.numeroDocumento ?? '—'}</span>
             </div>
           </div>
 
@@ -103,7 +107,7 @@ export function PosTicketModal({
               {factura.items.map((it, idx) => (
                 <div key={idx} className="flex justify-between items-start text-[10px]">
                   <span className="truncate max-w-[190px]">
-                    {it.cantidad}x Prod #{it.productoId.slice(0, 8)}
+                    {it.cantidad}x {nombresProducto[it.productoId] ?? `Prod #${it.productoId.slice(0, 8)}`}
                   </span>
                   <span className="font-semibold">{formatoCOP(it.subtotal)}</span>
                 </div>
@@ -155,7 +159,7 @@ export function PosTicketModal({
           <button
             type="button"
             onClick={handleImprimir}
-            className="w-1/2 py-2.5 rounded-xl bg-[#14213D] hover:bg-[#1a2b50] border border-white/20 text-white font-[family-name:var(--font-pixelify)] text-xs font-bold uppercase cursor-pointer transition-colors flex items-center justify-center gap-1.5"
+            className="w-1/2 py-2.5 rounded-xl bg-[#14213D] hover:bg-[#1a2b50] border border-white/20 text-white font-[family-name:var(--font-ui)] text-xs font-bold uppercase cursor-pointer transition-colors flex items-center justify-center gap-1.5"
           >
             <span>🖨️</span>
             <span>Imprimir</span>
@@ -164,7 +168,7 @@ export function PosTicketModal({
             type="button"
             onClick={onNuevaVenta}
             autoFocus
-            className="w-1/2 py-2.5 rounded-xl bg-[#e3b341] hover:bg-[#e9b949] text-black font-[family-name:var(--font-pixelify)] text-xs font-bold uppercase cursor-pointer shadow-[0_3px_0_#b88a1f] active:translate-y-0.5 active:shadow-none transition-all flex items-center justify-center gap-1.5"
+            className="w-1/2 py-2.5 rounded-xl bg-[#e3b341] hover:bg-[#e9b949] text-black font-[family-name:var(--font-ui)] text-xs font-bold uppercase cursor-pointer shadow-[0_3px_0_#b88a1f] active:translate-y-0.5 active:shadow-none transition-all flex items-center justify-center gap-1.5"
           >
             <span>➕</span>
             <span>Nueva Venta</span>

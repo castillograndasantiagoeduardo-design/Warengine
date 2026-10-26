@@ -1,9 +1,10 @@
-import { and, eq } from 'drizzle-orm';
+import { and, asc, eq } from 'drizzle-orm';
 import { Database } from '../../client.ts';
 import { inventario_sucursal, productos } from '../../schema/inventario.schema.ts';
 import { sucursales } from '../../schema/administracion.schema.ts';
 import {
   DatosDetalleStockSucursal,
+  IConsultaStockSucursalRepository,
   IInventarioSucursalRepository,
   InventarioSucursal,
 } from '@warengine/core';
@@ -12,8 +13,42 @@ import {
  * Implementación Drizzle ORM para el repositorio de inventario por sucursal (RF-ADM-B11).
  * Gestiona el umbral de stock_minimo y existencias en la tabla inventario_sucursal.
  */
-export class DrizzleInventarioSucursalRepository implements IInventarioSucursalRepository {
+export class DrizzleInventarioSucursalRepository
+  implements IInventarioSucursalRepository, IConsultaStockSucursalRepository {
   constructor(private readonly db: Database) {}
+
+  public async listarPorSucursal(sucursalId: number): Promise<DatosDetalleStockSucursal[]> {
+    const filas = await this.db
+      .select({
+        productoId: productos.id_producto,
+        nombreProducto: productos.nombre,
+        sku: productos.sku,
+        sucursalId: sucursales.id_sucursal,
+        nombreSucursal: sucursales.nombre,
+        stockActual: inventario_sucursal.stock_actual,
+        stockMinimo: inventario_sucursal.stock_minimo,
+      })
+      .from(inventario_sucursal)
+      .innerJoin(productos, eq(inventario_sucursal.producto_id, productos.id_producto))
+      .innerJoin(sucursales, eq(inventario_sucursal.sucursal_id, sucursales.id_sucursal))
+      .where(eq(inventario_sucursal.sucursal_id, sucursalId))
+      .orderBy(asc(productos.nombre));
+
+    return filas.map((row) => {
+      const stockActual = Number(row.stockActual);
+      const stockMinimo = Number(row.stockMinimo);
+      return {
+        productoId: row.productoId,
+        nombreProducto: row.nombreProducto,
+        sku: row.sku,
+        sucursalId: Number(row.sucursalId),
+        nombreSucursal: row.nombreSucursal,
+        stockActual,
+        stockMinimo,
+        alertaAbastecimiento: stockActual <= stockMinimo,
+      };
+    });
+  }
 
   public async obtener(
     productoId: string,

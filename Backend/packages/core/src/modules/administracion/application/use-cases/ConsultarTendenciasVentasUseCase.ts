@@ -1,6 +1,9 @@
 import { DomainError, Result } from '@warengine/shared-kernel';
 import { ResolverAlcanceSucursalUseCase } from '../../../autenticacion/application/use-cases/ResolverAlcanceSucursalUseCase.ts';
-import { SucursalFueraDeAlcanceError } from '../../../autenticacion/domain/errors/AlcanceErrors.ts';
+import {
+  SucursalFueraDeAlcanceError,
+  SucursalRequeridaError,
+} from '../../../autenticacion/domain/errors/AlcanceErrors.ts';
 import { RangoFechasInvalidoError } from '../../domain/errors/AdministracionErrors.ts';
 import type {
   IMetricasAdminRepository,
@@ -46,9 +49,11 @@ export class ConsultarTendenciasVentasUseCase {
       if (!permitidas || permitidas.length === 0) {
         return Result.ok([]);
       }
-      if (permitidas.length === 1) {
-        sucursalId = permitidas[0];
+      // Con varias sedes asignadas no se puede elegir por él: sin filtro vería todas
+      if (permitidas.length > 1) {
+        return Result.fail(new SucursalRequeridaError());
       }
+      sucursalId = permitidas[0];
     }
 
     const puntos = await this.metricasRepository.obtenerTendenciasVentas({

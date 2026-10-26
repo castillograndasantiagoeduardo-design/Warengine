@@ -14,7 +14,7 @@ interface Acciones {
   onSalarios?: (e: Empleado) => void;
 }
 
-const BTN = 'min-h-[44px] rounded-lg px-3 text-xs uppercase tracking-wider font-[family-name:var(--font-pixelify)] cursor-pointer';
+const BTN = 'min-h-[44px] rounded-lg px-3 text-xs uppercase tracking-wider font-[family-name:var(--font-ui)] cursor-pointer';
 
 export function columnasEmpleados({ onEditar, onSalarios }: Acciones): DataTableColumn<Empleado>[] {
   return [

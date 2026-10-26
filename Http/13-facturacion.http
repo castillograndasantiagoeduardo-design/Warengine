@@ -154,6 +154,12 @@ Content-Type: application/json
 GET {{baseUrl}}/ventas/turnos/actual
 Authorization: Bearer {{token}}
 
+### 3.4b Cajeros en turno de la sede (tablero del admin de sucursal)
+# Resultado esperado: 200 OK con [{ id, cajeroNombre, cajeroEmail, fechaApertura, cantidadVentas, totalVentas }]
+# Un admin de sucursal que pida ?sucursalId de otra sede recibe 403 SUCURSAL_FUERA_DE_ALCANCE
+GET {{baseUrl}}/ventas/turnos/abiertos
+Authorization: Bearer {{token}}
+
 
 # ==============================================================================
 # PASO 4 — PREPARAR PRODUCTO Y ASIGNAR STOCK A LA SUCURSAL

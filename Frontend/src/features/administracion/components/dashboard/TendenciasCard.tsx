@@ -158,7 +158,7 @@ export function TendenciasCard({ puntos, loading, error, denied, onRetry, agrupa
         ]}
       />
       <details className="mt-3 text-sm">
-        <summary className="inline-flex min-h-[44px] cursor-pointer items-center text-xs uppercase tracking-wider text-white/60 hover:text-white font-[family-name:var(--font-pixelify)]">
+        <summary className="inline-flex min-h-[44px] cursor-pointer items-center text-xs uppercase tracking-wider text-white/60 hover:text-white font-[family-name:var(--font-ui)]">
           Ver tabla de datos
         </summary>
         <div className="overflow-x-auto">

@@ -101,7 +101,7 @@ export function PosCobroModal({
             }`}
           >
             <span className="text-xl">💵</span>
-            <span className="text-xs font-bold font-[family-name:var(--font-pixelify)] uppercase">
+            <span className="text-xs font-bold font-[family-name:var(--font-ui)] uppercase">
               Efectivo
             </span>
           </button>
@@ -116,7 +116,7 @@ export function PosCobroModal({
             }`}
           >
             <span className="text-xl">💳</span>
-            <span className="text-xs font-bold font-[family-name:var(--font-pixelify)] uppercase">
+            <span className="text-xs font-bold font-[family-name:var(--font-ui)] uppercase">
               Tarjeta
             </span>
           </button>
@@ -131,7 +131,7 @@ export function PosCobroModal({
             }`}
           >
             <span className="text-xl">📱</span>
-            <span className="text-xs font-bold font-[family-name:var(--font-pixelify)] uppercase">
+            <span className="text-xs font-bold font-[family-name:var(--font-ui)] uppercase">
               Transferencia
             </span>
           </button>
@@ -142,13 +142,13 @@ export function PosCobroModal({
           <div className="space-y-4 mb-5">
             <div>
               <div className="flex justify-between items-center mb-1.5">
-                <label className="text-xs font-semibold text-white/80 uppercase font-[family-name:var(--font-pixelify)]">
+                <label className="text-xs font-semibold text-white/80 uppercase font-[family-name:var(--font-ui)]">
                   Monto Recibido del Cliente (COP)
                 </label>
                 <button
                   type="button"
                   onClick={() => onCambiarMontoEfectivo(totalVenta)}
-                  className="text-[11px] text-[#e3b341] hover:underline font-[family-name:var(--font-pixelify)] cursor-pointer"
+                  className="text-[11px] text-[#e3b341] hover:underline font-[family-name:var(--font-ui)] cursor-pointer"
                 >
                   Monto Exacto
                 </button>
@@ -175,7 +175,7 @@ export function PosCobroModal({
                     key={billete}
                     type="button"
                     onClick={() => onAgregarDenominacion(billete)}
-                    className="py-1.5 px-2 rounded-lg bg-[#14213D] hover:bg-[#1a2b50] border border-white/10 text-white/80 hover:text-[#e3b341] text-[11px] font-[family-name:var(--font-pixelify)] transition-colors cursor-pointer"
+                    className="py-1.5 px-2 rounded-lg bg-[#14213D] hover:bg-[#1a2b50] border border-white/10 text-white/80 hover:text-[#e3b341] text-[11px] font-[family-name:var(--font-ui)] transition-colors cursor-pointer"
                   >
                     +{formatoCOP(billete)}
                   </button>
@@ -186,7 +186,7 @@ export function PosCobroModal({
             {/* Caja de Devuelta / Cambio */}
             <div className="p-3.5 rounded-2xl bg-[#0a1124] border border-white/10 flex items-center justify-between">
               <div>
-                <span className="text-[11px] uppercase font-bold text-white/50 tracking-wider font-[family-name:var(--font-pixelify)]">
+                <span className="text-[11px] uppercase font-bold text-white/50 tracking-wider font-[family-name:var(--font-ui)]">
                   Cambio / Devuelta a Entregar
                 </span>
                 <p className="text-xs text-white/40">
@@ -209,7 +209,7 @@ export function PosCobroModal({
         {/* Sección Tarjeta */}
         {medioPago === 'tarjeta' && (
           <div className="mb-5 space-y-2">
-            <label className="block text-xs font-semibold text-white/80 uppercase font-[family-name:var(--font-pixelify)]">
+            <label className="block text-xs font-semibold text-white/80 uppercase font-[family-name:var(--font-ui)]">
               Código de Aprobación / Referencia POS (Opcional)
             </label>
             <input
@@ -225,7 +225,7 @@ export function PosCobroModal({
         {/* Sección Transferencia */}
         {medioPago === 'transferencia' && (
           <div className="mb-5 space-y-2">
-            <label className="block text-xs font-semibold text-white/80 uppercase font-[family-name:var(--font-pixelify)]">
+            <label className="block text-xs font-semibold text-white/80 uppercase font-[family-name:var(--font-ui)]">
               Referencia / Comprobante de Transferencia (Nequi, Daviplata, Bancolombia)
             </label>
             <input
@@ -244,7 +244,7 @@ export function PosCobroModal({
             type="button"
             onClick={onClose}
             disabled={isEmitiendo}
-            className="w-1/3 py-3 rounded-xl border border-white/10 text-white/60 hover:text-white text-xs font-[family-name:var(--font-pixelify)] uppercase cursor-pointer"
+            className="w-1/3 py-3 rounded-xl border border-white/10 text-white/60 hover:text-white text-xs font-[family-name:var(--font-ui)] uppercase cursor-pointer"
           >
             Cancelar (ESC)
           </button>
@@ -252,7 +252,7 @@ export function PosCobroModal({
             type="button"
             onClick={onConfirmarCobro}
             disabled={!esPagoValido || isEmitiendo}
-            className={`w-2/3 py-3 rounded-xl font-[family-name:var(--font-pixelify)] text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 cursor-pointer transition-all ${
+            className={`w-2/3 py-3 rounded-xl font-[family-name:var(--font-ui)] text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 cursor-pointer transition-all ${
               !esPagoValido || isEmitiendo
                 ? 'bg-white/10 text-white/40 border border-white/5 cursor-not-allowed'
                 : 'bg-[#e3b341] hover:bg-[#e9b949] text-black shadow-[0_4px_0_#b88a1f] active:translate-y-1 active:shadow-none'

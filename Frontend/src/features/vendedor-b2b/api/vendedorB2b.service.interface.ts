@@ -2,12 +2,15 @@ import type {
   ClienteDto,
   CrearClienteInput,
   FacturaDto,
-  ProductoResponse,
+  ProductoCatalogoB2B,
   CrearOrdenB2BPayload,
 } from '../types';
 
 export interface IVendedorB2bService {
-  obtenerProductos(params?: { texto?: string; categoriaId?: number }): Promise<ProductoResponse[]>;
+  obtenerProductos(
+    sucursalId: number,
+    params?: { texto?: string; categoriaId?: number },
+  ): Promise<ProductoCatalogoB2B[]>;
   obtenerCategorias(): Promise<Array<{ id: number; nombre: string }>>;
   buscarClientes(texto?: string): Promise<ClienteDto[]>;
   crearCliente(cliente: CrearClienteInput): Promise<ClienteDto>;

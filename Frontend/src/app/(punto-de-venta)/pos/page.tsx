@@ -34,6 +34,7 @@ import {
   PosHistorialDrawer,
   PosShortcutsBar,
   type FacturaDto,
+  type ClienteDto,
   type ProductoPos,
 } from '@/features/facturacion';
 
@@ -67,7 +68,7 @@ export default function PosTerminalPage() {
     isBuscando: isBuscandoCliente,
     isCreando: isCreandoCliente,
     seleccionarCliente,
-    restablecerConsumidorFinal,
+    limpiarCliente,
     crearClienteRapido,
   } = usePosClientes();
 
@@ -99,6 +100,12 @@ export default function PosTerminalPage() {
   const [modalAlertaAbierto, setModalAlertaAbierto] = useState<boolean>(false);
   const [drawerHistorialAbierto, setDrawerHistorialAbierto] = useState<boolean>(false);
   const [facturaSeleccionadaTicket, setFacturaSeleccionadaTicket] = useState<FacturaDto | null>(null);
+  // Datos del ticket congelados al cobrar (el carrito y el cliente se limpian para la siguiente venta)
+  const [clienteTicket, setClienteTicket] = useState<ClienteDto | null>(null);
+  const [cambioTicket, setCambioTicket] = useState<number>(0);
+  const [nombresTicket, setNombresTicket] = useState<Record<string, string>>({});
+  // Se incrementa tras cada venta para recargar el stock real de la sede en el catálogo
+  const [versionStock, setVersionStock] = useState<number>(0);
 
   // Referencia al input de búsqueda para el atajo F2
   const inputBuscarRef = useRef<HTMLInputElement | null>(null);
@@ -124,7 +131,7 @@ export default function PosTerminalPage() {
       // F4: Cobrar orden
       if (e.key === 'F4') {
         e.preventDefault();
-        if (totales.tieneItems && tieneTurnoAbierto && !modalCobroAbierto) {
+        if (totales.tieneItems && tieneTurnoAbierto && clienteSeleccionado && !modalCobroAbierto) {
           setModalCobroAbierto(true);
         }
         return;
@@ -157,6 +164,7 @@ export default function PosTerminalPage() {
     [
       totales.tieneItems,
       tieneTurnoAbierto,
+      clienteSeleccionado,
       modalCobroAbierto,
       modalTicketAbierto,
       modalClienteAbierto,
@@ -173,13 +181,19 @@ export default function PosTerminalPage() {
 
   // Manejador de confirmación del cobro
   const handleConfirmarCobro = async () => {
+    if (!clienteSeleccionado) return;
     try {
+      const cambio = calcularCambio(totales.total);
       const factura = await procesarCobro(items, totales.total, clienteSeleccionado);
       setFacturaSeleccionadaTicket(factura);
+      setClienteTicket(clienteSeleccionado);
+      setCambioTicket(cambio);
+      setNombresTicket(Object.fromEntries(items.map((i) => [i.productoId, i.nombre])));
       setModalCobroAbierto(false);
       setModalTicketAbierto(true);
       limpiarCarrito();
-      restablecerConsumidorFinal();
+      limpiarCliente();
+      setVersionStock((v) => v + 1);
     } catch {
       // El hook captura y expone el mensaje de error
     }
@@ -196,6 +210,10 @@ export default function PosTerminalPage() {
   // Manejador para reimpresión de comprobante desde historial
   const handleSeleccionarParaReimprimir = (factura: FacturaDto) => {
     setFacturaSeleccionadaTicket(factura);
+    // El historial no trae los datos del cliente ni el cambio entregado: no se inventan
+    setClienteTicket(null);
+    setCambioTicket(0);
+    setNombresTicket({});
     setDrawerHistorialAbierto(false);
     setModalTicketAbierto(true);
   };
@@ -209,15 +227,26 @@ export default function PosTerminalPage() {
     return (
       <div className="min-h-screen bg-[#0d1630] flex flex-col items-center justify-center text-white gap-3 select-none">
         <div className="w-10 h-10 border-3 border-[#e3b341] border-t-transparent rounded-full animate-spin"></div>
-        <p className="font-[family-name:var(--font-pixelify)] text-sm text-[#e3b341] tracking-wider uppercase">
+        <p className="font-[family-name:var(--font-ui)] text-sm text-[#e3b341] tracking-wider uppercase">
           Iniciando Terminal de Punto de Venta...
         </p>
       </div>
     );
   }
 
-  const sucursalId = usuario?.sucursalId || 1;
-  const sucursalNombre = usuario?.sucursalNombre || 'Sede Principal';
+  // La sede sale de la sesión (empleado vinculado); sin sede no se puede operar la caja
+  if (!usuario?.sucursalId) {
+    return (
+      <div className="min-h-screen bg-[#0d1630] flex flex-col items-center justify-center text-white gap-4 p-6 text-center">
+        <p className="text-lg font-semibold text-rose-300">Tu usuario no tiene una sucursal asignada.</p>
+        <p className="text-sm text-white/60 max-w-md">Pide al administrador que vincule tu cuenta a una sede antes de abrir turno.</p>
+        <button type="button" onClick={handleLogout} className="btn-3d btn-3d-panel px-5 py-2 text-sm">Cerrar sesión</button>
+      </div>
+    );
+  }
+
+  const sucursalId = usuario.sucursalId;
+  const sucursalNombre = usuario.sucursalNombre ?? `Sucursal #${usuario.sucursalId}`;
 
   return (
     <div className="h-screen flex flex-col bg-[#0d1630] text-white overflow-hidden">
@@ -245,6 +274,8 @@ export default function PosTerminalPage() {
             agregarProducto(prod);
           }}
           inputBuscarRef={inputBuscarRef}
+          sucursalId={sucursalId}
+          versionStock={versionStock}
         />
 
         {/* Carrito de Venta y Cobro */}
@@ -309,9 +340,10 @@ export default function PosTerminalPage() {
         isOpen={modalTicketAbierto}
         onClose={() => setModalTicketAbierto(false)}
         factura={facturaSeleccionadaTicket}
-        cliente={clienteSeleccionado}
+        cliente={clienteTicket}
         sucursalNombre={sucursalNombre}
-        cambioEntregado={calcularCambio(totales.total)}
+        cambioEntregado={cambioTicket}
+        nombresProducto={nombresTicket}
         onNuevaVenta={handleNuevaVenta}
       />
 
@@ -322,7 +354,6 @@ export default function PosTerminalPage() {
         clienteActual={clienteSeleccionado}
         onSeleccionarCliente={seleccionarCliente}
         onCrearCliente={crearClienteRapido}
-        onRestablecerConsumidorFinal={restablecerConsumidorFinal}
         clientesEncontrados={clientesEncontrados}
         terminoBusqueda={terminoBusqueda}
         onCambiarTerminoBusqueda={setTerminoBusqueda}

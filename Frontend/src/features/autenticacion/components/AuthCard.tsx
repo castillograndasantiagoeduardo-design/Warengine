@@ -31,7 +31,7 @@ export function AuthCard() {
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      const params = new URLSearchParams(window.location.search);
+      const params = new URLSearchParams(globalThis.location.search);
       if (params.get('error') === 'acceso_denegado_sucursal') {
         setRolError(
           'Acceso restringido: El dashboard actual está reservado exclusivamente para cuentas con rol "admin-sucursal". Inicie sesión con una cuenta de Administrador de Sucursal.'
@@ -78,12 +78,12 @@ export function AuthCard() {
         >
           <span className="text-xl leading-none">⚠️</span>
           <div className="flex-1">
-            <h4 className="font-semibold text-amber-400 uppercase tracking-wider text-xs font-[family-name:var(--font-pixelify)] mb-1">
+            <h4 className="font-semibold text-amber-400 uppercase tracking-wider text-xs font-[family-name:var(--font-ui)] mb-1">
               Restricción de Perfil y Acceso
             </h4>
             <p className="leading-relaxed text-amber-200/90">{rolError}</p>
           </div>
-          <button
+          <button type="button"
             onClick={() => setRolError(null)}
             className="text-amber-400 hover:text-white transition-colors text-xs font-mono px-1.5 py-0.5 rounded cursor-pointer"
             aria-label="Cerrar aviso"
@@ -186,7 +186,7 @@ export function AuthCard() {
                 <button
                   type="button"
                   onClick={toggleMode}
-                  className="min-h-[40px] px-5 py-1.5 rounded-full border border-white/40 text-white font-[family-name:var(--font-pixelify)] text-[11px] uppercase tracking-wider cursor-pointer hover:border-[#E9B949] hover:text-[#E9B949] transition-colors"
+                  className="min-h-[40px] px-5 py-1.5 rounded-full border border-white/40 text-white font-[family-name:var(--font-ui)] text-[11px] uppercase tracking-wider cursor-pointer hover:border-[#E9B949] hover:text-[#E9B949] transition-colors"
                 >
                   Solicitar acceso
                 </button>
@@ -204,7 +204,7 @@ export function AuthCard() {
                 <button
                   type="button"
                   onClick={toggleMode}
-                  className="min-h-[40px] px-5 py-1.5 rounded-full border border-white/40 text-white font-[family-name:var(--font-pixelify)] text-[11px] uppercase tracking-wider cursor-pointer hover:border-[#E9B949] hover:text-[#E9B949] transition-colors"
+                  className="min-h-[40px] px-5 py-1.5 rounded-full border border-white/40 text-white font-[family-name:var(--font-ui)] text-[11px] uppercase tracking-wider cursor-pointer hover:border-[#E9B949] hover:text-[#E9B949] transition-colors"
                 >
                   Iniciar sesión
                 </button>

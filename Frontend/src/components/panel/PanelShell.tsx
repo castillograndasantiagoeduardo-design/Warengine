@@ -31,7 +31,7 @@ export function PanelShell({ children }: { children: React.ReactNode }) {
 
   if (isLoading || !isAuthenticated) {
     return (
-      <div className="min-h-dvh flex flex-col items-center justify-center gap-3 bg-[#0d1630] text-[#e9b949] font-[family-name:var(--font-pixelify)]">
+      <div className="min-h-dvh flex flex-col items-center justify-center gap-3 bg-[#0d1630] text-[#e9b949] font-[family-name:var(--font-ui)]">
         <Spinner size={36} label="Cargando sesión" />
         <span className="text-sm">{isLoading ? 'Verificando sesión…' : 'Redirigiendo al acceso…'}</span>
       </div>

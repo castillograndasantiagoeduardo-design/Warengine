@@ -33,7 +33,7 @@ export function FormField({ label, error, hint, required, className = '', childr
 
   return (
     <div className={`flex flex-col gap-1.5 ${className}`}>
-      <label htmlFor={id} className="text-xs uppercase tracking-wider text-white/70 font-[family-name:var(--font-pixelify)]">
+      <label htmlFor={id} className="text-xs uppercase tracking-wider text-white/70 font-[family-name:var(--font-ui)]">
         {label}
         {required && <span className="text-[#e9b949]"> *</span>}
       </label>

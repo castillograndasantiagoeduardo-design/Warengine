@@ -23,7 +23,7 @@ export function SegmentedControl<V extends string>({ options, value, onChange, a
             role="radio"
             aria-checked={activo}
             onClick={() => onChange(o.value)}
-            className={`min-h-[44px] rounded-lg px-3 text-xs uppercase tracking-wider font-[family-name:var(--font-pixelify)] transition-colors cursor-pointer ${
+            className={`min-h-[44px] rounded-lg px-3 text-xs uppercase tracking-wider font-[family-name:var(--font-ui)] transition-colors cursor-pointer ${
               activo ? 'bg-[#e3b341] text-[#111] shadow-[0_3px_0_#b88a1f]' : 'text-white/65 hover:text-white'
             }`}
           >

@@ -31,7 +31,7 @@ export function BranchAccessDenied({
         </div>
 
         <div>
-          <span className="text-xs uppercase tracking-widest text-amber-400 font-semibold font-[family-name:var(--font-pixelify)]">
+          <span className="text-xs uppercase tracking-widest text-amber-400 font-semibold font-[family-name:var(--font-ui)]">
             Acceso Restringido
           </span>
           <h1 className="text-2xl font-[family-name:var(--font-anton)] text-white tracking-wide uppercase mt-1">
@@ -61,7 +61,7 @@ export function BranchAccessDenied({
 
           <button
             onClick={() => router.push('/')}
-            className="w-full py-2.5 px-4 rounded-xl border border-white/20 text-slate-300 hover:text-white hover:bg-white/[0.05] transition-colors text-xs font-[family-name:var(--font-pixelify)] uppercase cursor-pointer"
+            className="w-full py-2.5 px-4 rounded-xl border border-white/20 text-slate-300 hover:text-white hover:bg-white/[0.05] transition-colors text-xs font-[family-name:var(--font-ui)] uppercase cursor-pointer"
           >
             Volver al Inicio
           </button>

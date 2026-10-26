@@ -14,7 +14,7 @@ interface SucursalFichaProps {
 function Dato({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div>
-      <dt className="text-[11px] uppercase tracking-wider text-white/50 font-[family-name:var(--font-pixelify)]">{label}</dt>
+      <dt className="text-[11px] uppercase tracking-wider text-white/50 font-[family-name:var(--font-ui)]">{label}</dt>
       <dd className="mt-1 text-sm text-white">{children}</dd>
     </div>
   );

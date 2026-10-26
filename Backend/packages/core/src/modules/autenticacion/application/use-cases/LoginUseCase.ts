@@ -3,6 +3,7 @@ import { IUsuarioRepository } from '../../domain/repositories/IUsuarioRepository
 import { IPasswordService } from '../../domain/services/IPasswordService.ts';
 import { ITokenService, AuthTokens } from '../../domain/services/ITokenService.ts';
 import { IRolRepository } from '../../domain/repositories/IRolRepository.ts';
+import { IPerfilSesionRepository } from '../../domain/repositories/IPerfilSesionRepository.ts';
 import {
   CredencialesInvalidasError,
   UsuarioInactivoError,
@@ -23,14 +24,46 @@ export interface LoginRequest {
   recordarme?: boolean;
 }
 
+export interface UsuarioSesion {
+  id: string;
+  email: string;
+  rolId: number;
+  rolNombre: string;
+  nombre: string | null;
+  /** Sede principal del empleado vinculado; null si no tiene (el front avisa, nunca asume id=1). */
+  sucursalId: number | null;
+  sucursalNombre: string | null;
+}
+
 export interface LoginOutput extends AuthTokens {
-  usuario: {
-    id: string;
-    email: string;
-    rolId: number;
-    rolNombre: string;
-  };
+  usuario: UsuarioSesion;
   permisos: string[];
+}
+
+/** Identidad y permisos que recibe el frontend tras el login, el 2FA o /auth/verificar. */
+export async function construirUsuarioSesion(
+  usuario: { id: string; email: string; rolId: number },
+  rolRepository?: IRolRepository,
+  perfilSesionRepository?: IPerfilSesionRepository,
+): Promise<{ usuario: UsuarioSesion; permisos: string[] }> {
+  const rolNombre = rolRepository?.obtenerNombreDeRol
+    ? (await rolRepository.obtenerNombreDeRol(usuario.rolId)) ?? 'usuario'
+    : 'usuario';
+  const permisos = (await rolRepository?.obtenerPermisosDeRol(usuario.rolId)) ?? [];
+  const perfil = (await perfilSesionRepository?.obtenerPerfil(usuario.id)) ?? null;
+
+  return {
+    usuario: {
+      id: usuario.id,
+      email: usuario.email,
+      rolId: usuario.rolId,
+      rolNombre,
+      nombre: perfil?.nombre ?? null,
+      sucursalId: perfil?.sucursalId ?? null,
+      sucursalNombre: perfil?.sucursalNombre ?? null,
+    },
+    permisos,
+  };
 }
 
 export type LoginResponse = Result<LoginOutput, DomainError>;
@@ -44,6 +77,7 @@ export class LoginUseCase {
     private readonly controlIntentosLogin: IControlIntentosLogin,
     private readonly rolRepository?: IRolRepository,
     private readonly politicaBloqueo: PoliticaBloqueoLogin = POLITICA_BLOQUEO_DEFAULT,
+    private readonly perfilSesionRepository?: IPerfilSesionRepository,
   ) {}
 
 
@@ -126,22 +160,16 @@ export class LoginUseCase {
     );
     await this.registroIntentosLogin.registrar({ email: request.email, ip, exitoso: true });
 
-    const rolNombre = this.rolRepository?.obtenerNombreDeRol
-      ? (await this.rolRepository.obtenerNombreDeRol(usuario.rolId)) ?? 'usuario'
-      : 'usuario';
-    const permisos = (await this.rolRepository?.obtenerPermisosDeRol(usuario.rolId)) ?? [];
-
+    const sesion = await construirUsuarioSesion(
+      usuario,
+      this.rolRepository,
+      this.perfilSesionRepository,
+    );
 
     return Result.ok({
       accessToken: tokens.accessToken,
       refreshToken: tokens.refreshToken,
-      usuario: {
-        id: usuario.id,
-        email: usuario.email,
-        rolId: usuario.rolId,
-        rolNombre,
-      },
-      permisos,
+      ...sesion,
     });
   }
 }

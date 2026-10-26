@@ -13,6 +13,7 @@ export * from './src/modules/autenticacion/domain/repositories/IRegistroIntentos
 export * from './src/modules/autenticacion/domain/repositories/IControlIntentosLogin.ts';
 export * from './src/modules/autenticacion/domain/repositories/ISucursalesAutorizadasRepository.ts';
 export * from './src/modules/autenticacion/domain/repositories/IPasswordResetRepository.ts';
+export * from './src/modules/autenticacion/domain/repositories/IPerfilSesionRepository.ts';
 export * from './src/modules/autenticacion/domain/value-objects/PoliticaBloqueoLogin.ts';
 export * from './src/modules/autenticacion/domain/value-objects/AlcanceSucursal.ts';
 export * from './src/modules/autenticacion/domain/services/IPasswordService.ts';
@@ -32,6 +33,7 @@ export * from './src/modules/autenticacion/application/use-cases/Desactivar2FAUs
 export * from './src/modules/autenticacion/application/use-cases/SolicitarRecuperacionPasswordUseCase.ts';
 export * from './src/modules/autenticacion/application/use-cases/ValidarTokenPasswordResetUseCase.ts';
 export * from './src/modules/autenticacion/application/use-cases/RestablecerPasswordUseCase.ts';
+export * from './src/modules/autenticacion/application/use-cases/ObtenerSesionActualUseCase.ts';
 
 
 
@@ -151,8 +153,10 @@ export * from './src/modules/inventario/application/use-cases/AjustarInventarioU
 export * from './src/modules/inventario/application/use-cases/TransferirMercanciaUseCase.ts';
 export * from './src/modules/inventario/domain/entities/InventarioSucursal.ts';
 export * from './src/modules/inventario/domain/repositories/IInventarioSucursalRepository.ts';
+export * from './src/modules/inventario/domain/repositories/IConsultaStockSucursalRepository.ts';
 export * from './src/modules/inventario/application/use-cases/ConfigurarStockMinimoUseCase.ts';
 export * from './src/modules/inventario/application/use-cases/ConsultarStockSucursalUseCase.ts';
+export * from './src/modules/inventario/application/use-cases/ListarStockSucursalUseCase.ts';
 export * from './src/modules/inventario/application/use-cases/ExportarProductosCsvUseCase.ts';
 export * from './src/modules/inventario/application/use-cases/ExportarKardexCsvUseCase.ts';
 export * from './src/modules/inventario/application/utils/csv-generator.ts';
@@ -176,8 +180,10 @@ export * from './src/modules/facturacion/domain/entities/TurnoCaja.ts';
 export * from './src/modules/facturacion/domain/errors/TurnoCajaErrors.ts';
 export * from './src/modules/facturacion/domain/repositories/ITurnoCajaRepository.ts';
 export * from './src/modules/facturacion/domain/repositories/ISucursalOperadorRepository.ts';
+export * from './src/modules/facturacion/domain/repositories/IConsultaTurnosAbiertosRepository.ts';
 export * from './src/modules/facturacion/application/use-cases/AbrirTurnoCajaUseCase.ts';
 export * from './src/modules/facturacion/application/use-cases/ObtenerTurnoActualUseCase.ts';
+export * from './src/modules/facturacion/application/use-cases/ListarTurnosAbiertosUseCase.ts';
 export * from './src/modules/facturacion/application/use-cases/CerrarTurnoCajaUseCase.ts';
 export * from './src/modules/facturacion/domain/entities/Cliente.ts';
 export * from './src/modules/facturacion/domain/entities/Factura.ts';

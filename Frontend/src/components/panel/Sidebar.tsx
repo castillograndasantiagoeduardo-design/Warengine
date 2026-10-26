@@ -44,7 +44,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
             {items.map((item) => {
               const activo = esActivo(pathname, item.href);
               const base =
-                'flex min-h-[44px] items-center gap-3 rounded-xl px-3 text-sm font-[family-name:var(--font-pixelify)] tracking-wide transition-colors';
+                'flex min-h-[44px] items-center gap-3 rounded-xl px-3 text-sm font-[family-name:var(--font-ui)] tracking-wide transition-colors';
 
               if (item.proximamente) {
                 return (

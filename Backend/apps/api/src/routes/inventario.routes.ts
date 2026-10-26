@@ -39,6 +39,7 @@ import {
 import {
   configurarStockMinimoController,
   consultarStockSucursalController,
+  listarStockSucursalController,
 } from '../controllers/inventario/stock-minimo.controller.ts';
 
 import { PERMISSIONS } from '@warengine/contracts';
@@ -202,6 +203,12 @@ export function createInventarioRoutes(container: AppContainer): Hono {
     '/stock-minimo',
     authMiddleware(container, PERMISO_INVENTARIO_ESCRIBIR),
     configurarStockMinimoController(container),
+  );
+  // Existencias de toda una sede para vender (POS / B2B)
+  api.get(
+    '/stock',
+    authMiddleware(container, PERMISO_INVENTARIO_LEER),
+    listarStockSucursalController(container),
   );
   api.get(
     '/stock-minimo/:sucursalId/:productoId',

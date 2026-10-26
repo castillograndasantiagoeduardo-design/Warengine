@@ -12,17 +12,17 @@
  */
 
 import React from 'react';
-import type { ProductoResponse, FiltrosCatalogoB2B } from '../types';
+import type { ProductoCatalogoB2B, FiltrosCatalogoB2B } from '../types';
 
 interface CatalogoMultiBodegaProps {
-  productos: ProductoResponse[];
+  productos: ProductoCatalogoB2B[];
   categorias: Array<{ id: number; nombre: string }>;
   filtros: FiltrosCatalogoB2B;
   setFiltros: React.Dispatch<React.SetStateAction<FiltrosCatalogoB2B>>;
   isLoading: boolean;
   copiadoSku: string | null;
   onCopiarSku: (sku: string) => void;
-  onAgregarAlCarrito: (producto: ProductoResponse) => void;
+  onAgregarAlCarrito: (producto: ProductoCatalogoB2B) => void;
 }
 
 export function CatalogoMultiBodega({
@@ -121,9 +121,14 @@ export function CatalogoMultiBodega({
                   </div>
 
                   {/* Nombre del producto */}
-                  <h3 className="font-semibold text-sm text-white line-clamp-2 mb-2">
+                  <h3 className="font-semibold text-sm text-white line-clamp-2 mb-1">
                     {prod.nombre}
                   </h3>
+                  <span
+                    className={`block text-[11px] mb-2 tabular-nums ${prod.stockSede > 0 ? 'text-white/50' : 'text-rose-300'}`}
+                  >
+                    {prod.stockSede > 0 ? `Stock en tu sede: ${prod.stockSede}` : 'Sin existencias en tu sede'}
+                  </span>
                 </div>
 
                 {/* Precios y Botón de Añadir */}
@@ -148,7 +153,8 @@ export function CatalogoMultiBodega({
                   <button
                     type="button"
                     onClick={() => onAgregarAlCarrito(prod)}
-                    className="w-full py-2 rounded-xl bg-gradient-to-r from-[#E9B949] to-[#b88a1f] hover:brightness-110 text-[#14213D] font-bold text-xs uppercase tracking-wider transition-all cursor-pointer shadow"
+                    disabled={prod.stockSede <= 0}
+                    className="disabled:opacity-40 disabled:cursor-not-allowed w-full py-2 rounded-xl bg-gradient-to-r from-[#E9B949] to-[#b88a1f] hover:brightness-110 text-[#14213D] font-bold text-xs uppercase tracking-wider transition-all cursor-pointer shadow"
                   >
                     + Cotizar Ítem
                   </button>

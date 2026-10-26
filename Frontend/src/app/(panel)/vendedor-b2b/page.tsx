@@ -20,9 +20,13 @@ import {
   useVendedorB2B,
   useClientesB2B,
 } from '@/features/vendedor-b2b';
+import { useAuth } from '@/features/autenticacion';
 
 export default function VendedorB2BPage() {
   const [isHistorialOpen, setIsHistorialOpen] = useState(false);
+  // Las ventas B2B salen del stock de la sede del vendedor (empleado vinculado)
+  const { usuario, isLoading: isAuthLoading } = useAuth();
+  const sucursalId = usuario?.sucursalId ?? null;
 
   // Hook del cotizador y catálogo multi-bodega
   const {
@@ -52,7 +56,8 @@ export default function VendedorB2BPage() {
     removerItem,
     limpiarCotizacion,
     emitirFacturaB2B,
-  } = useVendedorB2B();
+    errorCatalogo,
+  } = useVendedorB2B(sucursalId);
 
   // Hook de directorio y creación de clientes corporativos con Zod
   const {
@@ -73,6 +78,20 @@ export default function VendedorB2BPage() {
       <VendedorB2BHeader onAbrirHistorial={() => setIsHistorialOpen(true)} />
 
       {/* Contenedor Principal: Catálogo a la izquierda + Panel de Cotización a la derecha */}
+      {!isAuthLoading && sucursalId === null && (
+        <div className="max-w-7xl w-full mx-auto mt-4 px-4 sm:px-6">
+          <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-200 text-sm">
+            Tu usuario no tiene una sucursal asignada: no puedes vender hasta que un administrador te vincule a una sede.
+          </div>
+        </div>
+      )}
+      {errorCatalogo && (
+        <div className="max-w-7xl w-full mx-auto mt-4 px-4 sm:px-6">
+          <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-200 text-sm">
+            No se pudo cargar el catálogo: {errorCatalogo}
+          </div>
+        </div>
+      )}
       <main className="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 flex flex-col lg:flex-row gap-6">
         <CatalogoMultiBodega
           productos={productos}

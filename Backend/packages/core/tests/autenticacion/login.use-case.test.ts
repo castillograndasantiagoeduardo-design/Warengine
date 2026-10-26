@@ -561,3 +561,39 @@ Deno.test('RF-SA-G4: Login propaga recordarme: false o undefined por defecto', a
   assertEquals(recordarmeRecibido, undefined);
 });
 
+
+Deno.test('LoginUseCase: la sesión incluye nombre y sucursal del empleado (sin asumir la Sede Principal)', async () => {
+  const { registro, control } = makeRegistroYControlIntentos();
+  const perfiles = {
+    obtenerPerfil: (_id: string) =>
+      Promise.resolve({ nombre: 'Ana Admin', sucursalId: 2, sucursalNombre: 'Sede Norte' }),
+  };
+  const useCase = new LoginUseCase(
+    makeUsuarioRepository(makeUsuario()),
+    makePasswordService(true),
+    makeTokenService(),
+    registro,
+    control,
+    undefined,
+    undefined,
+    perfiles,
+  );
+
+  const result = await useCase.execute({ email: 'test@warengine.local', passwordPlain: 'pass123' });
+
+  assertEquals(result.isSuccess, true);
+  if (result.isSuccess) {
+    assertEquals(result.value.usuario.nombre, 'Ana Admin');
+    assertEquals(result.value.usuario.sucursalId, 2);
+    assertEquals(result.value.usuario.sucursalNombre, 'Sede Norte');
+  }
+
+  const sinPerfil = await new LoginUseCase(
+    makeUsuarioRepository(makeUsuario()),
+    makePasswordService(true),
+    makeTokenService(),
+    registro,
+    control,
+  ).execute({ email: 'test@warengine.local', passwordPlain: 'pass123' });
+  assertEquals(sinPerfil.isSuccess && sinPerfil.value.usuario.sucursalId, null);
+});

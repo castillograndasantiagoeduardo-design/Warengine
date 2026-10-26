@@ -10,10 +10,9 @@ import type { ClienteDto, CrearClienteInput } from '../types/pos.types';
 interface PosClienteModalProps {
   isOpen: boolean;
   onClose: () => void;
-  clienteActual: ClienteDto;
+  clienteActual: ClienteDto | null;
   onSeleccionarCliente: (cliente: ClienteDto) => void;
   onCrearCliente: (input: CrearClienteInput) => Promise<ClienteDto>;
-  onRestablecerConsumidorFinal: () => void;
   clientesEncontrados: ClienteDto[];
   terminoBusqueda: string;
   onCambiarTerminoBusqueda: (termino: string) => void;
@@ -27,7 +26,6 @@ export function PosClienteModal({
   clienteActual,
   onSeleccionarCliente,
   onCrearCliente,
-  onRestablecerConsumidorFinal,
   clientesEncontrados,
   terminoBusqueda,
   onCambiarTerminoBusqueda,
@@ -98,13 +96,13 @@ export function PosClienteModal({
             <p className="text-xs text-white/60">
               {modoCrear
                 ? 'Registra datos del cliente para su factura'
-                : 'Busca por CC / NIT o selecciona Consumidor Final'}
+                : 'Busca por CC / NIT o nombre, o registra un cliente nuevo'}
             </p>
           </div>
           <button
             type="button"
             onClick={() => setModoCrear(!modoCrear)}
-            className="px-3 py-1.5 rounded-xl bg-[#14213D] hover:bg-[#1a2b50] border border-white/10 text-xs font-[family-name:var(--font-pixelify)] text-[#e3b341] uppercase cursor-pointer transition-colors"
+            className="px-3 py-1.5 rounded-xl bg-[#14213D] hover:bg-[#1a2b50] border border-white/10 text-xs font-[family-name:var(--font-ui)] text-[#e3b341] uppercase cursor-pointer transition-colors"
           >
             {modoCrear ? '← Buscar Existente' : '+ Registrar Nuevo'}
           </button>
@@ -115,24 +113,6 @@ export function PosClienteModal({
              BUSCAR CLIENTE
              ======================================================== */
           <div className="space-y-4">
-            {/* Opción rápida: Consumidor Final */}
-            <div className="p-3 rounded-xl bg-[#14213D]/60 border border-white/10 flex items-center justify-between">
-              <div>
-                <span className="text-xs font-bold text-white block">Consumidor Final (Venta Rápida)</span>
-                <span className="text-[11px] text-white/50 font-mono">CC: 222222222222</span>
-              </div>
-              <button
-                type="button"
-                onClick={() => {
-                  onRestablecerConsumidorFinal();
-                  onClose();
-                }}
-                className="px-3 py-1.5 rounded-lg bg-[#e3b341] hover:bg-[#e9b949] text-black text-xs font-bold font-[family-name:var(--font-pixelify)] uppercase cursor-pointer"
-              >
-                Seleccionar
-              </button>
-            </div>
-
             {/* Input de Búsqueda */}
             <div className="relative">
               <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-white/40 text-sm">
@@ -151,7 +131,7 @@ export function PosClienteModal({
             {/* Lista de resultados */}
             <div className="max-h-56 overflow-y-auto space-y-2 pr-1">
               {isBuscando ? (
-                <div className="py-6 text-center text-xs text-white/40 font-[family-name:var(--font-pixelify)]">
+                <div className="py-6 text-center text-xs text-white/40 font-[family-name:var(--font-ui)]">
                   Buscando clientes en el sistema...
                 </div>
               ) : clientesEncontrados.length === 0 && terminoBusqueda.length >= 2 ? (
@@ -167,7 +147,7 @@ export function PosClienteModal({
                       onClose();
                     }}
                     className={`p-2.5 rounded-xl border flex items-center justify-between cursor-pointer transition-all ${
-                      clienteActual.id === cli.id
+                      clienteActual?.id === cli.id
                         ? 'bg-[#e3b341]/10 border-[#e3b341]'
                         : 'bg-[#0a1124] hover:bg-[#14213D] border-white/5'
                     }`}
@@ -178,7 +158,7 @@ export function PosClienteModal({
                         {cli.tipoDocumento}: {cli.numeroDocumento} · {cli.tipoCliente}
                       </p>
                     </div>
-                    <span className="text-xs text-[#e3b341] font-bold font-[family-name:var(--font-pixelify)]">
+                    <span className="text-xs text-[#e3b341] font-bold font-[family-name:var(--font-ui)]">
                       Elegir &rarr;
                     </span>
                   </div>
@@ -199,7 +179,7 @@ export function PosClienteModal({
 
             <div className="grid grid-cols-2 gap-2.5">
               <div>
-                <label className="block text-[11px] font-semibold text-white/70 mb-1 font-[family-name:var(--font-pixelify)] uppercase">
+                <label className="block text-[11px] font-semibold text-white/70 mb-1 font-[family-name:var(--font-ui)] uppercase">
                   Tipo Documento
                 </label>
                 <select
@@ -214,7 +194,7 @@ export function PosClienteModal({
               </div>
 
               <div>
-                <label className="block text-[11px] font-semibold text-white/70 mb-1 font-[family-name:var(--font-pixelify)] uppercase">
+                <label className="block text-[11px] font-semibold text-white/70 mb-1 font-[family-name:var(--font-ui)] uppercase">
                   Número Documento *
                 </label>
                 <input
@@ -229,7 +209,7 @@ export function PosClienteModal({
             </div>
 
             <div>
-              <label className="block text-[11px] font-semibold text-white/70 mb-1 font-[family-name:var(--font-pixelify)] uppercase">
+              <label className="block text-[11px] font-semibold text-white/70 mb-1 font-[family-name:var(--font-ui)] uppercase">
                 Nombre Completo o Razón Social *
               </label>
               <input
@@ -244,7 +224,7 @@ export function PosClienteModal({
 
             <div className="grid grid-cols-2 gap-2.5">
               <div>
-                <label className="block text-[11px] font-semibold text-white/70 mb-1 font-[family-name:var(--font-pixelify)] uppercase">
+                <label className="block text-[11px] font-semibold text-white/70 mb-1 font-[family-name:var(--font-ui)] uppercase">
                   Tipo de Cliente
                 </label>
                 <select
@@ -258,7 +238,7 @@ export function PosClienteModal({
               </div>
 
               <div>
-                <label className="block text-[11px] font-semibold text-white/70 mb-1 font-[family-name:var(--font-pixelify)] uppercase">
+                <label className="block text-[11px] font-semibold text-white/70 mb-1 font-[family-name:var(--font-ui)] uppercase">
                   Teléfono {tipoCliente === 'B2B' && '*'}
                 </label>
                 <input
@@ -274,7 +254,7 @@ export function PosClienteModal({
 
             <div className="grid grid-cols-2 gap-2.5">
               <div>
-                <label className="block text-[11px] font-semibold text-white/70 mb-1 font-[family-name:var(--font-pixelify)] uppercase">
+                <label className="block text-[11px] font-semibold text-white/70 mb-1 font-[family-name:var(--font-ui)] uppercase">
                   Correo Electrónico
                 </label>
                 <input
@@ -287,7 +267,7 @@ export function PosClienteModal({
               </div>
 
               <div>
-                <label className="block text-[11px] font-semibold text-white/70 mb-1 font-[family-name:var(--font-pixelify)] uppercase">
+                <label className="block text-[11px] font-semibold text-white/70 mb-1 font-[family-name:var(--font-ui)] uppercase">
                   Dirección {tipoCliente === 'B2B' && '*'}
                 </label>
                 <input
@@ -305,14 +285,14 @@ export function PosClienteModal({
               <button
                 type="button"
                 onClick={() => setModoCrear(false)}
-                className="w-1/3 py-2.5 rounded-xl border border-white/10 text-white/60 hover:text-white text-xs font-[family-name:var(--font-pixelify)] uppercase cursor-pointer"
+                className="w-1/3 py-2.5 rounded-xl border border-white/10 text-white/60 hover:text-white text-xs font-[family-name:var(--font-ui)] uppercase cursor-pointer"
               >
                 Volver
               </button>
               <button
                 type="submit"
                 disabled={isCreando}
-                className="w-2/3 py-2.5 rounded-xl bg-[#e3b341] hover:bg-[#e9b949] text-black font-[family-name:var(--font-pixelify)] text-xs font-bold uppercase cursor-pointer shadow-[0_3px_0_#b88a1f] active:translate-y-0.5 active:shadow-none"
+                className="w-2/3 py-2.5 rounded-xl bg-[#e3b341] hover:bg-[#e9b949] text-black font-[family-name:var(--font-ui)] text-xs font-bold uppercase cursor-pointer shadow-[0_3px_0_#b88a1f] active:translate-y-0.5 active:shadow-none"
               >
                 {isCreando ? 'Guardando...' : 'Guardar y Asignar'}
               </button>

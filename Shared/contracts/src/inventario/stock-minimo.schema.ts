@@ -49,3 +49,16 @@ export interface StockSucursalResponseDTO {
   stockMinimo: number;
   alertaAbastecimiento: boolean;
 }
+
+/**
+ * GET /inventario/stock?sucursalId= — existencias de toda una sede (POS y vendedor B2B).
+ * Responde StockSucursalResponseDTO[]; los productos sin fila en la sede no aparecen (stock 0).
+ */
+export const stockSucursalQuerySchema = z.object({
+  sucursalId: z.coerce
+    .number({ required_error: 'El id de sucursal es obligatorio.' })
+    .int({ message: 'El id de sucursal debe ser un entero.' })
+    .positive({ message: 'El id de sucursal debe ser positivo.' }),
+});
+
+export type StockSucursalQueryDTO = z.infer<typeof stockSucursalQuerySchema>;

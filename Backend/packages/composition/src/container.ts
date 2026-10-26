@@ -27,6 +27,7 @@ import { DrizzleInventarioSucursalRepository } from '../../database/src/reposito
 import { DrizzleTurnoCajaRepository } from '../../database/src/repositories/facturacion/drizzle-turno-caja.repository.ts';
 import { DrizzleUsuarioSucursalRepository } from '../../database/src/repositories/administracion/drizzle-usuario-sucursal.repository.ts';
 import { DrizzleSucursalesAutorizadasRepository } from '../../database/src/repositories/autenticacion/drizzle-sucursales-autorizadas.repository.ts';
+import { DrizzlePerfilSesionRepository } from '../../database/src/repositories/autenticacion/drizzle-perfil-sesion.repository.ts';
 import { DrizzleAlertaStockRepository } from '../../database/src/repositories/administracion/drizzle-alerta-stock.repository.ts';
 import { DrizzleAreaRepository } from '../../database/src/repositories/administracion/drizzle-area.repository.ts';
 import { DrizzleEmpleadoRepository } from '../../database/src/repositories/administracion/drizzle-empleado.repository.ts';
@@ -71,6 +72,7 @@ import {
   SolicitarRecuperacionPasswordUseCase,
   ValidarTokenPasswordResetUseCase,
   RestablecerPasswordUseCase,
+  ObtenerSesionActualUseCase,
 
   ListarSucursalesUseCase,
   CrearSucursalUseCase,
@@ -119,6 +121,7 @@ import {
   AbrirTurnoCajaUseCase,
   CerrarTurnoCajaUseCase,
   ObtenerTurnoActualUseCase,
+  ListarTurnosAbiertosUseCase,
   AsignarSucursalesUsuarioUseCase,
   ObtenerSucursalesUsuarioUseCase,
   ResolverAlcanceSucursalUseCase,
@@ -144,6 +147,7 @@ import {
   ConsultarKardexUseCase,
   ConfigurarStockMinimoUseCase,
   ConsultarStockSucursalUseCase,
+  ListarStockSucursalUseCase,
   ConsultarHistorialPreciosUseCase,
   ListarEntradasInventarioUseCase,
   ObtenerEntradaInventarioPorIdUseCase,
@@ -190,7 +194,7 @@ export interface AppContainer {
     solicitarRecuperacionPassword: SolicitarRecuperacionPasswordUseCase;
     validarTokenPasswordReset: ValidarTokenPasswordResetUseCase;
     restablecerPassword: RestablecerPasswordUseCase;
-    
+    obtenerSesionActual: ObtenerSesionActualUseCase;
   };
 
   administracion: {
@@ -255,6 +259,7 @@ export interface AppContainer {
     consultarKardex: ConsultarKardexUseCase;
     configurarStockMinimo: ConfigurarStockMinimoUseCase;
     consultarStockSucursal: ConsultarStockSucursalUseCase;
+    listarStockSucursal: ListarStockSucursalUseCase;
     consultarHistorialPrecios: ConsultarHistorialPreciosUseCase;
     listarEntradas: ListarEntradasInventarioUseCase;
     obtenerEntradaPorId: ObtenerEntradaInventarioPorIdUseCase;
@@ -273,6 +278,7 @@ export interface AppContainer {
     abrirTurnoCaja: AbrirTurnoCajaUseCase;
     cerrarTurnoCaja: CerrarTurnoCajaUseCase;
     obtenerTurnoActual: ObtenerTurnoActualUseCase;
+    listarTurnosAbiertos: ListarTurnosAbiertosUseCase;
     crearFactura: CrearFacturaUseCase;
     listarFacturas: ListarFacturasUseCase;
     obtenerFacturaPorId: ObtenerFacturaPorIdUseCase;
@@ -356,6 +362,7 @@ export function createContainer(_env?: Record<string, string>): AppContainer {
   const usuarioSucursalRepository = new DrizzleUsuarioSucursalRepository(db);
   const auditoriaRepository = new DrizzleAuditoriaRepository(db);
   const sucursalesAutorizadasRepository = new DrizzleSucursalesAutorizadasRepository(db);
+  const perfilSesionRepository = new DrizzlePerfilSesionRepository(db);
   const alertaStockRepository = new DrizzleAlertaStockRepository(db);
   const alertaAdminRepository = new DrizzleAlertaAdminRepository(db);
   const metricasAdminRepository = new DrizzleMetricasAdminRepository(db);
@@ -383,6 +390,7 @@ export function createContainer(_env?: Record<string, string>): AppContainer {
     intentoLoginRepository,
     rolRepository,
     politicaBloqueo,
+    perfilSesionRepository,
   );
   const logoutUseCase = new LogoutUseCase(tokenService);
   const configurar2FAUseCase = new Configurar2FAUseCase(usuarioRepository, totpService);
@@ -393,6 +401,12 @@ export function createContainer(_env?: Record<string, string>): AppContainer {
     tokenService,
     intentoLoginRepository,
     rolRepository,
+    perfilSesionRepository,
+  );
+  const obtenerSesionActualUseCase = new ObtenerSesionActualUseCase(
+    usuarioRepository,
+    rolRepository,
+    perfilSesionRepository,
   );
   const desactivar2FAUseCase = new Desactivar2FAUseCase(
     usuarioRepository,
@@ -519,6 +533,10 @@ export function createContainer(_env?: Record<string, string>): AppContainer {
     alertaStockRepository,
   );
   const obtenerTurnoActualUseCase = new ObtenerTurnoActualUseCase(turnoCajaRepository);
+  const listarTurnosAbiertosUseCase = new ListarTurnosAbiertosUseCase(
+    resolverAlcanceSucursalUseCase,
+    turnoCajaRepository,
+  );
   const cerrarTurnoCajaUseCase = new CerrarTurnoCajaUseCase(turnoCajaRepository, auditoriaRepository);
   const crearFacturaUseCase = new CrearFacturaUseCase(
     facturaRepository,
@@ -678,6 +696,10 @@ export function createContainer(_env?: Record<string, string>): AppContainer {
     sucursalRepository,
     resolverAlcanceSucursalUseCase,
   );
+  const listarStockSucursalUseCase = new ListarStockSucursalUseCase(
+    inventarioSucursalRepository,
+    resolverAlcanceSucursalUseCase,
+  );
   const exportarProductosCsvUseCase = new ExportarProductosCsvUseCase(productoRepository);
   const exportarKardexCsvUseCase = new ExportarKardexCsvUseCase(
     movimientoInventarioRepository,
@@ -778,6 +800,7 @@ export function createContainer(_env?: Record<string, string>): AppContainer {
       solicitarRecuperacionPassword: solicitarRecuperacionPasswordUseCase,
       validarTokenPasswordReset: validarTokenPasswordResetUseCase,
       restablecerPassword: restablecerPasswordUseCase,
+      obtenerSesionActual: obtenerSesionActualUseCase,
     },
 
     administracion: {
@@ -860,6 +883,7 @@ export function createContainer(_env?: Record<string, string>): AppContainer {
       consultarKardex: consultarKardexUseCase,
       configurarStockMinimo: configurarStockMinimoUseCase,
       consultarStockSucursal: consultarStockSucursalUseCase,
+      listarStockSucursal: listarStockSucursalUseCase,
       consultarHistorialPrecios: consultarHistorialPreciosUseCase,
       listarEntradas: listarEntradasUseCase,
       obtenerEntradaPorId: obtenerEntradaPorIdUseCase,
@@ -878,6 +902,7 @@ export function createContainer(_env?: Record<string, string>): AppContainer {
       abrirTurnoCaja: abrirTurnoCajaUseCase,
       cerrarTurnoCaja: cerrarTurnoCajaUseCase,
       obtenerTurnoActual: obtenerTurnoActualUseCase,
+      listarTurnosAbiertos: listarTurnosAbiertosUseCase,
       crearFactura: crearFacturaUseCase,
       listarFacturas: listarFacturasUseCase,
       obtenerFacturaPorId: obtenerFacturaPorIdUseCase,

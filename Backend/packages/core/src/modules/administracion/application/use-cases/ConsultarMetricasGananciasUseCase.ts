@@ -1,6 +1,9 @@
 import { DomainError, Result } from '@warengine/shared-kernel';
 import { ResolverAlcanceSucursalUseCase } from '../../../autenticacion/application/use-cases/ResolverAlcanceSucursalUseCase.ts';
-import { SucursalFueraDeAlcanceError } from '../../../autenticacion/domain/errors/AlcanceErrors.ts';
+import {
+  SucursalFueraDeAlcanceError,
+  SucursalRequeridaError,
+} from '../../../autenticacion/domain/errors/AlcanceErrors.ts';
 import { RangoFechasInvalidoError } from '../../domain/errors/AdministracionErrors.ts';
 import type {
   IMetricasAdminRepository,
@@ -52,10 +55,12 @@ export class ConsultarMetricasGananciasUseCase {
           ticketPromedio: 0,
         });
       }
-      // Si el usuario limitado tiene una sola sede asignada, filtra por ella
-      if (permitidas.length === 1) {
-        sucursalId = permitidas[0];
+
+      // Con varias sedes asignadas no se puede elegir por él: sin filtro vería todas
+      if (permitidas.length > 1) {
+        return Result.fail(new SucursalRequeridaError());
       }
+      sucursalId = permitidas[0];
     }
 
     const metricas = await this.metricasRepository.obtenerMetricasGanancias({

@@ -11,14 +11,15 @@ export type DashboardPeriodo = 'hoy' | '7d' | '30d';
 export interface KpiVentas {
   valor: number;
   valorFormateado: string;
-  porcentajeCambio: number;
+  /** Variación real frente a ayer (solo periodo 'hoy'); null si no hay base de comparación. */
+  porcentajeCambio: number | null;
   tendencia: 'sube' | 'baja';
   comparativaTexto: string;
 }
 
 export interface KpiTransacciones {
   total: number;
-  porcentajeCambio: number;
+  porcentajeCambio: number | null;
   ticketPromedio: number;
   ticketPromedioFormateado: string;
 }
@@ -47,18 +48,13 @@ export interface KpisSucursal {
 export interface SalesVelocityPoint {
   hora: string;
   ventasHoy: number;
-  ventasAyer: number;
-}
-
-export interface MetaDiariaSucursal {
-  objetivo: number;
-  actual: number;
-  porcentajeAvance: number;
 }
 
 export interface SalesVelocityData {
   puntos: SalesVelocityPoint[];
-  metaDiaria: MetaDiariaSucursal;
+  totalHoy: number;
+  /** Total facturado ayer según /dashboard/tendencias; null si no se pudo consultar. */
+  totalAyer: number | null;
 }
 
 export interface AlertaStockItem {

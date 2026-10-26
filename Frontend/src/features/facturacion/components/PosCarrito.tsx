@@ -16,7 +16,8 @@ interface PosCarritoProps {
     cantidadItems: number;
     tieneItems: boolean;
   };
-  cliente: ClienteDto;
+  /** null hasta que el cajero busque o cree el cliente de la venta. */
+  cliente: ClienteDto | null;
   tieneTurnoAbierto: boolean;
   onActualizarCantidad: (productoId: string, cantidad: number) => void;
   onEliminarItem: (productoId: string) => void;
@@ -48,12 +49,12 @@ export function PosCarrito({
       {/* 1. Selector de Cliente */}
       <div className="p-3.5 border-b border-white/10 bg-[#0f1b3d]/50">
         <div className="flex items-center justify-between mb-1.5">
-          <span className="text-[10px] uppercase font-bold text-white/50 tracking-wider font-[family-name:var(--font-pixelify)]">
+          <span className="text-[10px] uppercase font-bold text-white/50 tracking-wider font-[family-name:var(--font-ui)]">
             Cliente Asignado
           </span>
-          <button
+          <button type="button"
             onClick={onAbrirModalCliente}
-            className="text-[11px] text-[#e3b341] hover:underline cursor-pointer flex items-center gap-1 font-[family-name:var(--font-pixelify)]"
+            className="text-[11px] text-[#e3b341] hover:underline cursor-pointer flex items-center gap-1 font-[family-name:var(--font-ui)]"
           >
             <span>Cambiar / Crear</span>
             <span>&rarr;</span>
@@ -61,6 +62,7 @@ export function PosCarrito({
         </div>
 
         <div className="p-2.5 rounded-xl bg-[#0a1124] border border-white/10 flex items-center justify-between">
+          {cliente ? (
           <div className="truncate mr-2">
             <h5 className="text-xs font-semibold text-white truncate">
               {cliente.nombreRazonSocial}
@@ -74,6 +76,12 @@ export function PosCarrito({
               )}
             </p>
           </div>
+          ) : (
+          <button type="button" onClick={onAbrirModalCliente} className="truncate mr-2 text-left cursor-pointer">
+            <h5 className="text-xs font-semibold text-amber-300">Sin cliente seleccionado</h5>
+            <p className="text-[11px] text-white/50">Busca o registra el cliente para poder cobrar</p>
+          </button>
+          )}
           <span className="w-7 h-7 rounded-lg bg-[#14213D] flex items-center justify-center text-xs">
             👤
           </span>
@@ -85,7 +93,7 @@ export function PosCarrito({
         <div className="flex items-center justify-between text-xs text-white/50 pb-1 border-b border-white/5">
           <span>Detalle de Artículos ({totales.cantidadItems})</span>
           {totales.tieneItems && (
-            <button
+            <button type="button"
               onClick={onLimpiarCarrito}
               className="text-[10px] text-red-400 hover:text-red-300 hover:underline cursor-pointer"
             >
@@ -115,7 +123,7 @@ export function PosCarrito({
                   </h6>
                   <span className="text-[10px] text-white/40 font-mono">{item.sku}</span>
                 </div>
-                <button
+                <button type="button"
                   onClick={() => onEliminarItem(item.productoId)}
                   className="text-white/40 hover:text-red-400 text-xs px-1 cursor-pointer"
                   title="Eliminar de la orden"
@@ -176,7 +184,7 @@ export function PosCarrito({
 
         {/* Caja de Total Monumental */}
         <div className="p-3 rounded-2xl bg-gradient-to-r from-[#14213d] to-[#0a1124] border border-[#e3b341]/30 flex items-baseline justify-between shadow-inner">
-          <span className="text-xs uppercase font-bold text-white/70 font-[family-name:var(--font-pixelify)] tracking-wider">
+          <span className="text-xs uppercase font-bold text-white/70 font-[family-name:var(--font-ui)] tracking-wider">
             Total a Pagar
           </span>
           <span className="font-[family-name:var(--font-anton)] text-3xl text-[#e3b341] tracking-wider leading-none">
@@ -188,17 +196,17 @@ export function PosCarrito({
         <button
           type="button"
           onClick={onIniciarCobro}
-          disabled={!totales.tieneItems || !tieneTurnoAbierto}
-          className={`w-full py-3.5 rounded-2xl font-[family-name:var(--font-pixelify)] text-sm font-bold uppercase tracking-wider flex items-center justify-center gap-2 cursor-pointer transition-all ${
+          disabled={!totales.tieneItems || !tieneTurnoAbierto || !cliente}
+          className={`w-full py-3.5 rounded-2xl font-[family-name:var(--font-ui)] text-sm font-bold uppercase tracking-wider flex items-center justify-center gap-2 cursor-pointer transition-all ${
             !tieneTurnoAbierto
               ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30 cursor-not-allowed'
-              : !totales.tieneItems
+              : !totales.tieneItems || !cliente
               ? 'bg-white/10 text-white/40 border border-white/5 cursor-not-allowed'
               : 'bg-[#e3b341] hover:bg-[#e9b949] text-black shadow-[0_4px_0_#b88a1f] active:translate-y-1 active:shadow-none hover:shadow-[0_4px_16px_rgba(227,179,65,0.4)]'
           }`}
         >
           <span>💳</span>
-          <span>{!tieneTurnoAbierto ? 'Abre Turno para Cobrar' : 'Cobrar Orden (F4)'}</span>
+          <span>{!tieneTurnoAbierto ? 'Abre Turno para Cobrar' : !cliente ? 'Selecciona un Cliente' : 'Cobrar Orden (F4)'}</span>
         </button>
       </div>
     </aside>

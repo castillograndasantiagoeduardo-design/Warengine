@@ -13,32 +13,38 @@ import type {
   CrearClienteInput,
   FacturaDto,
   ProductoResponse,
+  ProductoCatalogoB2B,
   CrearOrdenB2BPayload,
 } from '../types';
+import type { StockSucursalResponseDTO } from '@warengine/contracts';
 
 export class VendedorB2bService implements IVendedorB2bService {
   constructor(private readonly http: IHttpClient = apiClient) {}
 
-  public async obtenerProductos(params?: {
-    texto?: string;
-    categoriaId?: number;
-  }): Promise<ProductoResponse[]> {
+  /** Catálogo activo con el stock real de la sede del vendedor (las ventas B2B salen de ella). */
+  public async obtenerProductos(
+    sucursalId: number,
+    params?: { texto?: string; categoriaId?: number },
+  ): Promise<ProductoCatalogoB2B[]> {
     const queryParams: Record<string, string | number> = {
       limit: 100,
       page: 1,
+      isActive: 'true',
     };
     if (params?.texto) queryParams.texto = params.texto;
     if (params?.categoriaId) queryParams.categoriaId = params.categoriaId;
 
-    const response = await this.http.get<{
-      items: ProductoResponse[];
-      total: number;
-    } | ProductoResponse[]>('/inventario/productos', { params: queryParams });
+    const [response, stock] = await Promise.all([
+      this.http.get<{
+        items: ProductoResponse[];
+        total: number;
+      } | ProductoResponse[]>('/inventario/productos', { params: queryParams }),
+      this.http.get<StockSucursalResponseDTO[]>('/inventario/stock', { params: { sucursalId } }),
+    ]);
 
-    if (Array.isArray(response)) {
-      return response;
-    }
-    return response.items || [];
+    const stockPorProducto = new Map(stock.map((s) => [s.productoId, Number(s.stockActual)]));
+    const productos = Array.isArray(response) ? response : response.items || [];
+    return productos.map((p) => ({ ...p, stockSede: stockPorProducto.get(p.id) ?? 0 }));
   }
 
   public async obtenerCategorias(): Promise<Array<{ id: number; nombre: string }>> {
@@ -71,7 +77,9 @@ export class VendedorB2bService implements IVendedorB2bService {
   }
 
   public async crearCliente(cliente: CrearClienteInput): Promise<ClienteDto> {
-    return this.http.post<ClienteDto>('/ventas/clientes', cliente);
+    // La API responde { cliente, yaExistia } (200 si el documento ya estaba registrado)
+    const res = await this.http.post<{ cliente: ClienteDto; yaExistia: boolean }>('/ventas/clientes', cliente);
+    return res.cliente;
   }
 
   public async crearFacturaB2B(payload: CrearOrdenB2BPayload): Promise<FacturaDto> {

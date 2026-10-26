@@ -178,3 +178,26 @@ Deno.test('Rendimiento: rechaza si se pide explícitamente una sucursal prohibid
   assertEquals(result.isFailure, true);
   assertEquals(result.error.code, 'SUCURSAL_FUERA_DE_ALCANCE');
 });
+
+// ─── RNF-ADM-04: usuario limitado con varias sedes ─────────────────────────
+
+Deno.test('Ganancias y tendencias: usuario con varias sedes debe indicar sucursalId (no ve datos globales)', async () => {
+  const { useCaseGanancias, useCaseTendencias, llamadasGanancias, llamadasTendencias } = armarContexto({
+    global: false,
+    sucursales: [2, 3],
+  });
+
+  const ganancias = await useCaseGanancias.execute({ usuarioId: 'u-1' });
+  const tendencias = await useCaseTendencias.execute({ usuarioId: 'u-1', agrupacion: 'dia' });
+
+  assertEquals(ganancias.isFailure, true);
+  assertEquals(ganancias.error.code, 'SUCURSAL_REQUERIDA');
+  assertEquals(tendencias.isFailure, true);
+  assertEquals(tendencias.error.code, 'SUCURSAL_REQUERIDA');
+  assertEquals(llamadasGanancias.length, 0);
+  assertEquals(llamadasTendencias.length, 0);
+
+  const conSede = await useCaseGanancias.execute({ usuarioId: 'u-1', sucursalId: 3 });
+  assertEquals(conSede.isSuccess, true);
+  assertEquals((llamadasGanancias[0] as { sucursalId?: number }).sucursalId, 3);
+});

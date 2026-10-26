@@ -163,7 +163,9 @@ export async function limpiarDatosNegocio(): Promise<void> {
   }
 }
 
-// Ejecutar automáticamente si se invoca directo desde la CLI
-limpiarDatosNegocio()
-  .then(() => Deno.exit(0))
-  .catch(() => Deno.exit(1));
+// Ejecutar solo si se invoca directo desde la CLI (importarlo no debe vaciar la BD)
+if (import.meta.main) {
+  limpiarDatosNegocio()
+    .then(() => Deno.exit(0))
+    .catch(() => Deno.exit(1));
+}

@@ -32,6 +32,10 @@ export const usuarioSesionSchema = z.object({
   email: z.string(),
   rolId: z.number(),
   rolNombre: z.string(),
+  nombre: z.string().nullable(),
+  /** Sede principal del empleado vinculado; null si el usuario no tiene sede asignada. */
+  sucursalId: z.number().int().positive().nullable(),
+  sucursalNombre: z.string().nullable(),
 });
 
 export type UsuarioSesionDto = z.infer<typeof usuarioSesionSchema>;

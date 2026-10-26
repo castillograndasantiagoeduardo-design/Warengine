@@ -14,18 +14,20 @@ import { IBranchDashboardService } from '../api/branch-dashboard.interface';
 import { branchDashboardService } from '../api/branch-dashboard.service';
 
 interface UseBranchDashboardOptions {
-  sucursalId?: number;
+  sucursalId: number;
+  sucursalNombre: string;
   periodoInicial?: DashboardPeriodo;
   autoRefreshIntervalMs?: number; // Ej. 60000ms para refresco cada minuto
   service?: IBranchDashboardService;
 }
 
 export function useBranchDashboard({
-  sucursalId = 1,
+  sucursalId,
+  sucursalNombre,
   periodoInicial = 'hoy',
   autoRefreshIntervalMs = 0,
   service = branchDashboardService,
-}: UseBranchDashboardOptions = {}) {
+}: UseBranchDashboardOptions) {
   const [periodo, setPeriodo] = useState<DashboardPeriodo>(periodoInicial);
   const [data, setData] = useState<BranchDashboardData | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
@@ -44,7 +46,7 @@ export function useBranchDashboard({
       setError(null);
 
       try {
-        const resultado = await service.obtenerDashboard({ sucursalId, periodo });
+        const resultado = await service.obtenerDashboard({ sucursalId, sucursalNombre, periodo });
         if (isMountedRef.current) {
           setData(resultado);
         }
@@ -59,7 +61,7 @@ export function useBranchDashboard({
         }
       }
     },
-    [service, sucursalId, periodo]
+    [service, sucursalId, sucursalNombre, periodo]
   );
 
   useEffect(() => {
