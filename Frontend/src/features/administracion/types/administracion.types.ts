@@ -143,6 +143,29 @@ export interface UsuarioGestionado {
   sucursalesAdicionales: { id: number; nombre: string }[];
 }
 
+// ─── Auditoría ─────────────────────────────────────────────────
+/** Registro de logs_auditoria. `detalles` viene sanitizado ({ antes, despues } en mutaciones). */
+export interface LogAuditoria {
+  id: string;
+  usuarioId: string | null;
+  usuarioNombre: string | null;
+  accion: string;
+  entidad: string;
+  entidadId: string | null;
+  detalles: Record<string, unknown> | null;
+  ip: string | null;
+  fecha: string;
+}
+
+/** Filtros de consultarAuditoriaSchema (fechas YYYY-MM-DD: el backend cubre el día completo). */
+export interface FiltrosAuditoria {
+  usuarioId?: string;
+  accion?: string;
+  entidad?: string;
+  desde?: string;
+  hasta?: string;
+}
+
 /** GET /administracion/usuarios/:id/sucursales */
 export interface SucursalesDeUsuario {
   usuarioId: string;
