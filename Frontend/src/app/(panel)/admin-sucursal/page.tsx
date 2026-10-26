@@ -23,9 +23,9 @@ import {
   InventoryHealthCard,
   RecentOperationsTable,
   ActiveCashiersCard,
-  CreateProductModal,
   DashboardSkeleton,
   BranchInventoryView,
+  BranchSuppliersView,
   DollarSignIcon,
   ReceiptTextIcon,
   PackageIcon,
@@ -41,7 +41,6 @@ export default function DashboardPage() {
   const { isAuthenticated, isLoading: isAuthLoading, logout } = useAuth();
   const { usuario, esAdminSucursal, rolActual } = usePermissions();
   const [activeSection, setActiveSection] = useState<BranchSection>('resumen');
-  const [isModalOpen, setIsModalOpen] = useState(false);
 
   // Hook desacoplado para gestión de datos de sede usando la sucursal del usuario
   const {
@@ -127,7 +126,6 @@ export default function DashboardPage() {
       onSelectSection={setActiveSection}
       periodo={periodo}
       onPeriodoChange={cambiarPeriodo}
-      onNuevoProductoClick={() => setIsModalOpen(true)}
       sucursalNombre={data?.sucursalNombre || 'Sede Norte'}
       ultimaSincronizacion={data?.ultimaSincronizacion || '17:42:08'}
       isOnline={isAuthenticated}
@@ -137,6 +135,8 @@ export default function DashboardPage() {
           sucursalId={usuario?.sucursalId ?? 1}
           sucursalNombre={data?.sucursalNombre || 'Sede Norte'}
         />
+      ) : activeSection === 'proveedores' ? (
+        <BranchSuppliersView />
       ) : isDashboardLoading && !data ? (
         <DashboardSkeleton />
       ) : (
@@ -249,13 +249,6 @@ export default function DashboardPage() {
           )}
         </div>
       )}
-
-      {/* 5. Modal de Creación Rápida de Producto */}
-      <CreateProductModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        onProductoCreado={recargar}
-      />
     </BranchLayout>
   );
 }

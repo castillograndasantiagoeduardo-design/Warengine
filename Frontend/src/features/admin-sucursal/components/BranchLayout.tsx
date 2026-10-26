@@ -20,7 +20,6 @@ interface BranchLayoutProps {
   onSelectSection?: (section: BranchSection) => void;
   periodo?: DashboardPeriodo;
   onPeriodoChange?: (periodo: DashboardPeriodo) => void;
-  onNuevoProductoClick?: () => void;
   sucursalNombre?: string;
   ultimaSincronizacion?: string;
   isOnline?: boolean;
@@ -32,7 +31,6 @@ export function BranchLayout({
   onSelectSection,
   periodo = 'hoy',
   onPeriodoChange,
-  onNuevoProductoClick,
   sucursalNombre = 'Sede Norte',
   ultimaSincronizacion,
   isOnline = true,
@@ -54,7 +52,6 @@ export function BranchLayout({
         <BranchHeader
           periodo={periodo}
           onPeriodoChange={onPeriodoChange}
-          onNuevoProductoClick={onNuevoProductoClick}
           searchTerm={searchTerm}
           onSearchChange={setSearchTerm}
           sucursalNombre={sucursalNombre}

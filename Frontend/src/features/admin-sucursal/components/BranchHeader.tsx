@@ -9,14 +9,12 @@
  */
 
 import React from 'react';
-import { SearchIcon, PlusIcon } from './Icons';
-import { Button3D } from '@/components/ui/Button3D';
+import { SearchIcon } from './Icons';
 import type { DashboardPeriodo } from '../types/branch-dashboard.types';
 
 interface BranchHeaderProps {
   periodo?: DashboardPeriodo;
   onPeriodoChange?: (periodo: DashboardPeriodo) => void;
-  onNuevoProductoClick?: () => void;
   searchTerm?: string;
   onSearchChange?: (term: string) => void;
   sucursalNombre?: string;
@@ -32,7 +30,6 @@ const PERIODOS: Array<{ id: DashboardPeriodo; label: string }> = [
 export function BranchHeader({
   periodo = 'hoy',
   onPeriodoChange,
-  onNuevoProductoClick,
   searchTerm = '',
   onSearchChange,
   sucursalNombre = 'Sede Norte',
@@ -102,16 +99,6 @@ export function BranchHeader({
           <span className="font-[family-name:var(--font-archivo)]">{sucursalNombre}</span>
           <span className="text-slate-500 text-[10px]">▾</span>
         </div>
-
-        {/* Botón 3D Mecánico Oficial WarEngine */}
-        <Button3D
-          size="sm"
-          onClick={onNuevoProductoClick}
-          className="flex items-center gap-1.5 whitespace-nowrap cursor-pointer"
-        >
-          <PlusIcon size={14} className="stroke-[3]" />
-          <span>Nuevo Producto</span>
-        </Button3D>
       </div>
     </header>
   );

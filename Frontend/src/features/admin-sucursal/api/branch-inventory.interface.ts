@@ -28,6 +28,8 @@ export interface IBranchInventoryService {
   cambiarEstadoProducto(productoId: string, isActive: boolean): Promise<void>;
   configurarStockMinimo(productoId: string, sucursalId: number, stockMinimo: number): Promise<void>;
   listarCategorias(): Promise<CategoriaInventario[]>;
-  listarProveedores(): Promise<ProveedorInventario[]>;
+  listarProveedores(filtros?: { busqueda?: string; isActive?: boolean }): Promise<ProveedorInventario[]>;
   crearProveedor(data: CrearProveedorDTO): Promise<ProveedorInventario>;
+  editarProveedor(id: number, data: { nombre?: string; contacto?: string; isActive?: boolean }): Promise<void>;
+  cambiarEstadoProveedor(id: number, isActive: boolean): Promise<void>;
 }

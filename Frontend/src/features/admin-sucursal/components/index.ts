@@ -14,4 +14,6 @@ export * from './CreateProductModal';
 export * from './CreateSupplierModal';
 export * from './EditProductModal';
 export * from './BranchInventoryView';
+export * from './EditSupplierModal';
+export * from './BranchSuppliersView';
 export * from './DashboardSkeleton';

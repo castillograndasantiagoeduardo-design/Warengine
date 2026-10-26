@@ -201,8 +201,12 @@ export class BranchInventoryService implements IBranchInventoryService {
     }));
   }
 
-  public async listarProveedores(): Promise<ProveedorInventario[]> {
-    const res = await this.http.get<any>('/inventario/proveedores');
+  public async listarProveedores(filtros?: { busqueda?: string; isActive?: boolean }): Promise<ProveedorInventario[]> {
+    const params: Record<string, any> = {};
+    if (filtros?.busqueda) params.busqueda = filtros.busqueda;
+    if (filtros?.isActive !== undefined) params.isActive = filtros.isActive ? '1' : '0';
+
+    const res = await this.http.get<any>('/inventario/proveedores', { params });
     const items = res?.items || (Array.isArray(res) ? res : []);
     return items.map((p: any) => ({
       id: Number(p.id || p.id_proveedor),
@@ -223,6 +227,22 @@ export class BranchInventoryService implements IBranchInventoryService {
       contacto: res.contacto,
       isActive: true,
     };
+  }
+
+  public async editarProveedor(
+    id: number,
+    data: { nombre?: string; contacto?: string; isActive?: boolean },
+  ): Promise<void> {
+    const payload: Record<string, any> = {};
+    if (data.nombre !== undefined) payload.nombre = data.nombre.trim();
+    if (data.contacto !== undefined) payload.contacto = data.contacto.trim() || null;
+    if (data.isActive !== undefined) payload.isActive = Boolean(data.isActive);
+
+    await this.http.put(`/inventario/proveedores/${id}`, payload);
+  }
+
+  public async cambiarEstadoProveedor(id: number, isActive: boolean): Promise<void> {
+    await this.http.put(`/inventario/proveedores/${id}/estado`, { isActive });
   }
 }
 
