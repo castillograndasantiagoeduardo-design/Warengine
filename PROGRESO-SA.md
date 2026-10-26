@@ -1,7 +1,7 @@
 # PROGRESO-SA.md — Panel del Super Admin (Warengine)
 
 > Demo: lunes 26 de octubre de 2026 · Rama: `feat/sa-base` (sin push)
-> Última actualización: domingo 25/10/2026 — Fases A y B terminadas; Fase C en curso.
+> Última actualización: domingo 25/10/2026 — Fases A, B y C terminadas; Fase D no iniciada.
 
 ## Estado por fase
 
@@ -10,7 +10,7 @@
 | Base (12 commits previos) | Kit UI, shell, selector `/dashboard`, dashboard global, sucursales + detalle + áreas, empleados + salarios | ✅ Hecho |
 | **A — Backend** | roles, resumen, permisos globales, usuarios paginados, auditoría, seed demo, docs | ✅ Hecho (pendiente prueba en vivo, ver Dudas) |
 | **B — P0** | Autorización por permisos en la UI, Usuarios y roles, Auditoría | ✅ Hecho (pendiente prueba en vivo) |
-| **C — P1** | Alertas administrativas y de stock, Cuenta 2FA | 🔄 En curso |
+| **C — P1** | Alertas administrativas y de stock, Cuenta 2FA | ✅ Hecho (pendiente prueba en vivo) |
 | **D — P2** | Inventario global, facturación admin, logística, asistente | ⏳ Solo si queda tiempo |
 
 ## Fase A — Backend
@@ -23,7 +23,7 @@
 | A4 `GET /administracion/usuarios` | `pagina`/`limite`, filtros rol + sucursal + estado + texto, `sucursalesAdicionales`; frontend adaptado | `8c3724b` |
 | A5 Auditoría | Ya cumplía (filtros fecha/actor/acción/entidad, `antes/despues` sanitizado al escribir, CSV/JSON). Sin cambios | — |
 | A6 `deno task seed:demo` | Idempotente, pasa por los triggers reales; contraseña solo desde `SEED_DEMO_PASSWORD` | `3989d85` |
-| A7 Documentación | `Docs/infraestructura/api.md` §6 (contrato real), `Docs/modulos/administracion.md` corregido; 34/34 rutas en OpenAPI y `Http/` | (este commit) |
+| A7 Documentación | `Docs/infraestructura/api.md` §6 (contrato real), `Docs/modulos/administracion.md` corregido; 34/34 rutas en OpenAPI y `Http/` | `b3ddd3f` |
 
 Verificación tras cada paso: `deno task check` ✅ · `lint` sin problemas nuevos (235 preexistentes) ✅ · `deno task test` 381/381 ✅.
 
@@ -37,6 +37,17 @@ Verificación tras cada paso: `deno task check` ✅ · `lint` sin problemas nuev
 
 `npm run build` ✅ tras cada paso. Sin probar contra la API real (ver Dudas 1).
 
+## Fase C — Pantallas P1
+
+| Paso | Resultado | Commit |
+| :--- | :--- | :--- |
+| C3 Alertas | Administrativas (filtro estado/sucursal, urgentes primero, marcar vista/atender) + stock bajo paginado | `3d978b9` |
+| C4 Mi cuenta | 2FA: QR + secreto, activar con código de 6 dígitos, desactivar con contraseña. Dependencia nueva `qrcode-generator@2.0.4` (MIT) | `17991fc` |
+
+## Verificación en vivo realizada (sin credenciales)
+
+API reiniciada con el código de la rama: arranca sin errores, `/health` 200, y `/administracion/roles`, `/dashboard/resumen`, `/usuarios`, `/dashboard/metricas` responden 401 `TOKEN_INVALIDO` sin sesión. Lo que exige login (respuestas con datos, 403 por permiso, seed) sigue sin probar.
+
 ## Dudas y riesgos abiertos
 
 1. **Prueba en vivo pendiente:** faltan `WARENGINE_SA_PASSWORD` y `SEED_DEMO_PASSWORD` en `Backend/.env`. Sin ellas no se ejecutó `seed:demo` ni se probó el login contra la API real.
@@ -46,3 +57,5 @@ Verificación tras cada paso: `deno task check` ✅ · `lint` sin problemas nuev
 5. **Kardex del seed:** las salidas por venta las crea el trigger con `fecha = NOW()`, así que en el kardex aparecen con la fecha de ejecución del seed (las facturas sí tienen su fecha real).
 6. Varios `.http` antiguos tienen la contraseña del super-admin escrita en claro; los escenarios nuevos no. No se tocaron (fuera de alcance), pero conviene limpiarlos.
 7. En `openapi.doc.ts` hay endpoints antiguos con parámetros genéricos (`pagina`, `limite`, `activo`) que no aplican; se corrigieron los de usuarios y dashboard.
+8. **Sin indicador de 2FA en la sesión:** `/auth/verificar` y el login no dicen si la cuenta ya tiene 2FA; la pantalla Mi cuenta ofrece configurar y desactivar sin saber el estado actual.
+9. **Tokens en el cuerpo del login:** `POST /auth/login` devuelve `accessToken` y `refreshToken` en el JSON además de las cookies HttpOnly. El frontend no los guarda, pero quedan expuestos a JS; valorar quitarlos del cuerpo.
