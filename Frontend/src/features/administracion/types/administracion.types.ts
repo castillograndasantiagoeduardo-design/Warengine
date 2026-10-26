@@ -139,4 +139,6 @@ export interface UsuarioGestionado {
   sucursalId: number;
   sucursalNombre: string;
   isActive: boolean;
+  /** Sedes autorizadas además de la principal (RF-ADM-C10). */
+  sucursalesAdicionales: { id: number; nombre: string }[];
 }

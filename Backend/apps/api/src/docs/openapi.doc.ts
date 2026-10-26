@@ -870,17 +870,57 @@ Para autorizar peticiones interactivas en esta consola:
     '/administracion/usuarios': {
       get: {
         tags: ['Administración - Usuarios'],
-        summary: 'Listar usuarios del sistema',
+        summary: 'Listar usuarios (paginado, filtros combinables por rol, sucursal, estado y texto)',
+        description: 'Requiere `autenticacion:gestionar-usuarios`. `sucursalId` incluye usuarios con esa sede como principal o adicional.',
         security: [{ bearerAuth: [] }, { cookieAuth: [] }],
         parameters: [
-          { name: 'pagina', in: 'query', schema: { type: 'integer', default: 1 } },
-          { name: 'limite', in: 'query', schema: { type: 'integer', default: 20 } },
-          { name: 'busqueda', in: 'query', schema: { type: 'string' } },
+          { name: 'pagina', in: 'query', schema: { type: 'integer', minimum: 1, default: 1 } },
+          { name: 'limite', in: 'query', schema: { type: 'integer', minimum: 1, maximum: 100, default: 20 } },
+          { name: 'busqueda', in: 'query', description: 'Coincidencia parcial en nombre o correo', schema: { type: 'string' } },
           { name: 'rolId', in: 'query', schema: { type: 'integer' } },
           { name: 'sucursalId', in: 'query', schema: { type: 'integer' } },
-          { name: 'activo', in: 'query', schema: { type: 'boolean' } },
+          { name: 'isActive', in: 'query', schema: { type: 'string', enum: ['true', 'false'] } },
         ],
-        responses: { 200: { description: 'Listado de usuarios' } },
+        responses: {
+          200: {
+            description: 'Página de usuarios',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    items: {
+                      type: 'array',
+                      items: {
+                        type: 'object',
+                        properties: {
+                          id: { type: 'string', format: 'uuid' },
+                          nombre: { type: 'string' },
+                          email: { type: 'string' },
+                          rolId: { type: 'integer' },
+                          rolNombre: { type: 'string' },
+                          sucursalId: { type: 'integer' },
+                          sucursalNombre: { type: 'string' },
+                          isActive: { type: 'boolean' },
+                          sucursalesAdicionales: {
+                            type: 'array',
+                            items: { type: 'object', properties: { id: { type: 'integer' }, nombre: { type: 'string' } } },
+                          },
+                        },
+                      },
+                    },
+                    total: { type: 'integer' },
+                    pagina: { type: 'integer' },
+                    limite: { type: 'integer' },
+                    totalPaginas: { type: 'integer' },
+                  },
+                },
+              },
+            },
+          },
+          400: { description: 'VALIDATION_ERROR' },
+          403: { description: 'Sin permiso autenticacion:gestionar-usuarios' },
+        },
       },
       post: {
         tags: ['Administración - Usuarios'],
