@@ -57,6 +57,8 @@ export function AuthCard() {
     // Redirección inteligente post-login según el rol
     if (rol === 'cajero') {
       router.push('/pos');
+    } else if (rol === 'vendedor-b2b') {
+      router.push('/vendedor-b2b');
     } else if (rol === 'admin-sucursal') {
       router.push('/admin-sucursal');
     } else if (rol === 'super-admin' || rol === 'superadmin') {

@@ -59,7 +59,7 @@ export function useLoginForm() {
     }
 
     const nuevosErrores: LoginFormErrors = {};
-    parseResult.error.errors.forEach((issue) => {
+    parseResult.error.errors.forEach((issue: { path: (string | number)[]; message: string }) => {
       const campo = issue.path[0] as keyof LoginFormErrors;
       if (campo && !nuevosErrores[campo]) {
         nuevosErrores[campo] = issue.message;

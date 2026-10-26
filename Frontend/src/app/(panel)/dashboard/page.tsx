@@ -15,13 +15,15 @@ import { EmptyState } from '@/components/ui/EmptyState';
 
 export default function DashboardPage() {
   const router = useRouter();
-  const { esSuperAdmin, esAdminSucursal } = usePermissions();
+  const { esSuperAdmin, esAdminSucursal, esVendedorB2B } = usePermissions();
 
   useEffect(() => {
     if (esAdminSucursal) {
       router.replace('/admin-sucursal');
+    } else if (esVendedorB2B) {
+      router.replace('/vendedor-b2b');
     }
-  }, [esAdminSucursal, router]);
+  }, [esAdminSucursal, esVendedorB2B, router]);
 
   if (esSuperAdmin) {
     return <SuperAdminDashboard />;
@@ -35,12 +37,20 @@ export default function DashboardPage() {
     );
   }
 
-  // vendedor-b2b u otros roles sin vista asignada (fuera del alcance de la demo)
+  if (esVendedorB2B) {
+    return (
+      <div className="panel-card flex items-center justify-center p-8 text-white/70">
+        <p>Redirigiendo a la terminal de ventas B2B...</p>
+      </div>
+    );
+  }
+
+  // Otros roles sin vista asignada
   return (
     <div className="panel-card">
       <EmptyState
         title="Módulo en fase de activación"
-        description="El módulo para ventas mayoristas (B2B) estará disponible próximamente."
+        description="No hay una vista asignada para su perfil en este panel."
       />
     </div>
   );

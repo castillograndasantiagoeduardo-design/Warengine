@@ -56,6 +56,7 @@ export function middleware(request: NextRequest) {
     pathname.startsWith('/admin-sucursal') ||
     pathname.startsWith('/dashboard') ||
     pathname.startsWith('/pos') ||
+    pathname.startsWith('/vendedor-b2b') ||
     pathname.startsWith('/administracion') ||
     pathname.startsWith('/inventario') ||
     pathname.startsWith('/ventas') ||
@@ -87,10 +88,24 @@ export function middleware(request: NextRequest) {
         // Super-admin redirigido a su panel general
         return NextResponse.redirect(new URL('/dashboard', request.url));
       }
+      if (payload.rolId === 4) {
+        // Vendedor B2B redirigido a su terminal B2B
+        return NextResponse.redirect(new URL('/vendedor-b2b', request.url));
+      }
       // Cualquier otro rol no autorizado para el panel de sucursal
       const url = new URL('/acceso', request.url);
       url.searchParams.set('error', 'acceso_denegado_sucursal');
       return NextResponse.redirect(url);
+    }
+
+    if ((pathname.startsWith('/dashboard') || pathname.startsWith('/vendedor-b2b')) && payload.rolId === 3) {
+      // Cajero redirigido a su terminal POS
+      return NextResponse.redirect(new URL('/pos', request.url));
+    }
+
+    if (pathname.startsWith('/pos') && payload.rolId === 4) {
+      // Vendedor B2B no usa turno POS físico, redirigido a su terminal B2B
+      return NextResponse.redirect(new URL('/vendedor-b2b', request.url));
     }
 
     if (pathname.startsWith('/pos') && payload.rolId !== 3 && payload.rolId !== 1) {
