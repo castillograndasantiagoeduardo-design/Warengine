@@ -56,11 +56,11 @@ const MENU_ITEMS: NavItem[] = [
   { id: 'proveedores', label: 'Proveedores', icon: <TruckIcon size={18} /> },
   { id: 'cajeros', label: 'Cajeros & Turnos', icon: <UsersRoundIcon size={18} /> },
   { id: 'facturacion', label: 'Facturación & Ventas', icon: <ReceiptTextIcon size={18} /> },
-  { id: 'reportes', label: 'Reportes', icon: <BarChartIcon size={18} /> },
 ];
 
 const SISTEMA_ITEMS: NavItem[] = [
-  { id: 'configuracion', label: 'Configuración Sede', icon: <SettingsIcon size={18} /> },
+  // Por ahora oculto hasta la fase de configuración de sede:
+  // { id: 'configuracion', label: 'Configuración Sede', icon: <SettingsIcon size={18} /> },
 ];
 
 export function BranchSidebar({
@@ -185,39 +185,41 @@ export function BranchSidebar({
           </nav>
         </div>
 
-        {/* 3. Sección SISTEMA */}
-        <div>
-          <span className="block px-3 text-[10px] font-bold uppercase tracking-wider text-slate-500 font-[family-name:var(--font-pixelify)] mb-2">
-            Sistema
-          </span>
-          <nav className="flex flex-col gap-1">
-            {SISTEMA_ITEMS.map((item) => {
-              const isActive = activeSection === item.id;
-              return (
-                <button
-                  key={item.id}
-                  onClick={(e) => handleItemClick(item, e)}
-                  className={`
-                    flex items-center gap-3 w-full px-3 py-2.5 rounded-xl text-xs font-medium
-                    transition-all duration-150 cursor-pointer
-                    ${
-                      isActive
-                        ? 'bg-[#e3b341]/10 text-[#e3b341] border border-[#e3b341]/25 font-semibold'
-                        : 'text-slate-400 hover:text-white hover:bg-white/[0.04]'
-                    }
-                  `}
-                >
-                  <span className={isActive ? 'text-[#e3b341]' : 'text-slate-400'}>
-                    {item.icon}
-                  </span>
-                  <span className="font-[family-name:var(--font-archivo)]">
-                    {item.label}
-                  </span>
-                </button>
-              );
-            })}
-          </nav>
-        </div>
+        {/* 3. Sección SISTEMA (Oculta mientras no tenga items activos) */}
+        {SISTEMA_ITEMS.length > 0 && (
+          <div>
+            <span className="block px-3 text-[10px] font-bold uppercase tracking-wider text-slate-500 font-[family-name:var(--font-pixelify)] mb-2">
+              Sistema
+            </span>
+            <nav className="flex flex-col gap-1">
+              {SISTEMA_ITEMS.map((item) => {
+                const isActive = activeSection === item.id;
+                return (
+                  <button
+                    key={item.id}
+                    onClick={(e) => handleItemClick(item, e)}
+                    className={`
+                      flex items-center gap-3 w-full px-3 py-2.5 rounded-xl text-xs font-medium
+                      transition-all duration-150 cursor-pointer
+                      ${
+                        isActive
+                          ? 'bg-[#e3b341]/10 text-[#e3b341] border border-[#e3b341]/25 font-semibold'
+                          : 'text-slate-400 hover:text-white hover:bg-white/[0.04]'
+                      }
+                    `}
+                  >
+                    <span className={isActive ? 'text-[#e3b341]' : 'text-slate-400'}>
+                      {item.icon}
+                    </span>
+                    <span className="font-[family-name:var(--font-archivo)]">
+                      {item.label}
+                    </span>
+                  </button>
+                );
+              })}
+            </nav>
+          </div>
+        )}
       </div>
 
       {/* 4. Footer: Perfil del Administrador y Cierre de Sesión */}

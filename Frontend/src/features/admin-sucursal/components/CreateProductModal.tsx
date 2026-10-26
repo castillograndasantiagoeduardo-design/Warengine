@@ -29,7 +29,6 @@ export function CreateProductModal({
   const [nombre, setNombre] = useState('');
   const [precioVenta, setPrecioVenta] = useState('');
   const [precioCompra, setPrecioCompra] = useState('');
-  const [stockInicial, setStockInicial] = useState('10');
   const [stockMinimo, setStockMinimo] = useState('5');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -49,7 +48,6 @@ export function CreateProductModal({
 
     const pVenta = Number(precioVenta);
     const pCompra = Number(precioCompra || precioVenta);
-    const sInicial = Number(stockInicial || 0);
     const sMin = Number(stockMinimo || 0);
 
     if (isNaN(pVenta) || pVenta <= 0) {
@@ -65,7 +63,6 @@ export function CreateProductModal({
         nombre: nombre.trim(),
         precioVenta: pVenta,
         precioCompra: pCompra,
-        stockInicial: sInicial,
         stockMinimo: sMin,
         sucursalId,
       });
@@ -145,14 +142,15 @@ export function CreateProductModal({
             </div>
             <div>
               <label className="block text-[11px] font-semibold text-slate-300 mb-1">
-                Stock Inicial
+                Precio Venta (COP) *
               </label>
               <input
                 type="number"
-                min="0"
-                value={stockInicial}
-                onChange={(e) => setStockInicial(e.target.value)}
+                placeholder="Ej. 185000"
+                value={precioVenta}
+                onChange={(e) => setPrecioVenta(e.target.value)}
                 className="w-full h-9 px-3 rounded-xl bg-[#09132b]/80 border border-white/[0.08] text-white focus:outline-none focus:border-[#e3b341]/60 font-mono text-xs"
+                required
               />
             </div>
           </div>
@@ -171,32 +169,21 @@ export function CreateProductModal({
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="block text-[11px] font-semibold text-slate-300 mb-1">
-                Precio Venta (COP) *
-              </label>
-              <input
-                type="number"
-                placeholder="Ej. 185000"
-                value={precioVenta}
-                onChange={(e) => setPrecioVenta(e.target.value)}
-                className="w-full h-9 px-3 rounded-xl bg-[#09132b]/80 border border-white/[0.08] text-white focus:outline-none focus:border-[#e3b341]/60 font-mono text-xs"
-                required
-              />
-            </div>
-            <div>
-              <label className="block text-[11px] font-semibold text-slate-300 mb-1">
-                Stock Mínimo
-              </label>
-              <input
-                type="number"
-                min="1"
-                value={stockMinimo}
-                onChange={(e) => setStockMinimo(e.target.value)}
-                className="w-full h-9 px-3 rounded-xl bg-[#09132b]/80 border border-white/[0.08] text-white focus:outline-none focus:border-[#e3b341]/60 font-mono text-xs"
-              />
-            </div>
+          <div>
+            <label className="block text-[11px] font-semibold text-slate-300 mb-1">
+              Stock Mínimo de Sede (Umbral de alerta)
+            </label>
+            <input
+              type="number"
+              min="0"
+              placeholder="Ej. 5"
+              value={stockMinimo}
+              onChange={(e) => setStockMinimo(e.target.value)}
+              className="w-full h-9 px-3 rounded-xl bg-[#09132b]/80 border border-white/[0.08] text-white focus:outline-none focus:border-[#e3b341]/60 font-mono text-xs"
+            />
+            <p className="text-[10px] text-slate-400 mt-1">
+              Las existencias iniciales se ingresan formalmente desde &quot;Registrar Entrada&quot; con factura o remisión de proveedor.
+            </p>
           </div>
 
           {/* Botones de Acción */}
