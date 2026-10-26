@@ -35,6 +35,7 @@ export interface ProductoInventarioSede {
 export interface FiltrosInventarioSede {
   texto?: string;
   categoriaId?: number;
+  soloSinCategoria?: boolean;
   proveedorId?: number;
   nivelStock?: 'todos' | 'optimo' | 'bajo' | 'agotado';
   isActive?: boolean;
@@ -46,6 +47,10 @@ export interface CategoriaInventario {
   id: number;
   nombre: string;
   isActive: boolean;
+}
+
+export interface CrearCategoriaDTO {
+  nombre: string;
 }
 
 export interface ProveedorInventario {

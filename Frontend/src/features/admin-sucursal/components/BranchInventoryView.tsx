@@ -17,6 +17,7 @@ import { useInventoryMovements } from '../hooks/useInventoryMovements';
 import { GlassCard } from './GlassCard';
 import { Button3D } from '@/components/ui/Button3D';
 import { EditProductModal } from './EditProductModal';
+import { CreateCategoryModal } from './CreateCategoryModal';
 import { CreateSupplierModal } from './CreateSupplierModal';
 import { CreateProductModal } from './CreateProductModal';
 import { RegisterStockEntryModal } from './RegisterStockEntryModal';
@@ -33,8 +34,9 @@ import {
   CheckIcon,
   MinusIcon,
   ScaleIcon,
+  TagIcon,
 } from './Icons';
-import type { ProductoInventarioSede } from '../types/branch-inventory.types';
+import type { ProductoInventarioSede, CategoriaInventario } from '../types/branch-inventory.types';
 
 interface BranchInventoryViewProps {
   sucursalId: number;
@@ -61,6 +63,7 @@ export function BranchInventoryView({
     editarProducto,
     cambiarEstado,
     crearProveedor,
+    crearCategoria,
   } = useBranchInventory({ sucursalId });
 
   // Hook de movimientos operativos y trazabilidad Kardex (Fase 2)
@@ -78,7 +81,9 @@ export function BranchInventoryView({
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [productoSeleccionado, setProductoSeleccionado] = useState<ProductoInventarioSede | null>(null);
   const [isCreateProductOpen, setIsCreateProductOpen] = useState(false);
+  const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
   const [isSupplierModalOpen, setIsSupplierModalOpen] = useState(false);
+  const [categoriaPreseleccionadaId, setCategoriaPreseleccionadaId] = useState<number | null>(null);
   const [copiedSku, setCopiedSku] = useState<string | null>(null);
 
   // Modales Operativos Fase 2
@@ -86,6 +91,11 @@ export function BranchInventoryView({
   const [isExitModalOpen, setIsExitModalOpen] = useState(false);
   const [isAuditModalOpen, setIsAuditModalOpen] = useState(false);
   const [productoMovimiento, setProductoMovimiento] = useState<ProductoInventarioSede | null>(null);
+
+  const handleCategoriaCreada = (nuevaCat: CategoriaInventario) => {
+    setCategoriaPreseleccionadaId(nuevaCat.id);
+    setIsCategoryModalOpen(false);
+  };
 
   const formatCOP = (num: number) =>
     new Intl.NumberFormat('es-CO', {
@@ -172,6 +182,16 @@ export function BranchInventoryView({
             <span>Ajuste Físico</span>
           </button>
 
+          {/* Botón Nueva Categoría */}
+          <button
+            onClick={() => setIsCategoryModalOpen(true)}
+            className="flex items-center gap-1.5 h-9 px-3 rounded-xl bg-[#e3b341]/10 border border-[#e3b341]/30 text-xs font-semibold text-[#e3b341] hover:bg-[#e3b341]/20 transition-colors cursor-pointer font-[family-name:var(--font-archivo)]"
+            title="Crear nueva categoría para organizar productos y filtros del POS"
+          >
+            <TagIcon size={14} />
+            <span>+ Categoría</span>
+          </button>
+
           {/* Botón Nuevo Producto */}
           <Button3D
             size="sm"
@@ -204,15 +224,25 @@ export function BranchInventoryView({
           {/* Filtro por Categoría */}
           <div className="md:col-span-4">
             <select
-              value={filtros.categoriaId || ''}
-              onChange={(e) =>
-                actualizarFiltros({
-                  categoriaId: e.target.value ? Number(e.target.value) : undefined,
-                })
-              }
+              value={filtros.soloSinCategoria || filtros.categoriaId === -1 ? '-1' : filtros.categoriaId || ''}
+              onChange={(e) => {
+                const val = e.target.value;
+                if (val === '-1') {
+                  actualizarFiltros({
+                    categoriaId: -1,
+                    soloSinCategoria: true,
+                  });
+                } else {
+                  actualizarFiltros({
+                    categoriaId: val ? Number(val) : undefined,
+                    soloSinCategoria: false,
+                  });
+                }
+              }}
               className="w-full h-10 px-3 rounded-xl bg-[#09132b]/80 border border-white/[0.08] text-slate-300 focus:outline-none focus:border-[#e3b341]/60 text-xs font-[family-name:var(--font-archivo)] cursor-pointer"
             >
               <option value="">Todas las categorías ({categorias.length})</option>
+              <option value="-1">⚠️ Sin categoría asignada (Sueltos)</option>
               {categorias.map((c) => (
                 <option key={c.id} value={c.id}>
                   {c.nombre}
@@ -397,9 +427,21 @@ export function BranchInventoryView({
                         <p className="font-semibold text-white truncate" title={prod.nombre}>
                           {prod.nombre}
                         </p>
-                        <span className="inline-block text-[10px] text-slate-400 mt-0.5 font-sans">
-                          {prod.categoriaNombre || 'Sin categoría'}
-                        </span>
+                        {prod.categoriaNombre ? (
+                          <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-[#e3b341]/10 text-[#e3b341] border border-[#e3b341]/20 mt-0.5 font-sans">
+                            {prod.categoriaNombre}
+                          </span>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => handleAbrirEdicion(prod)}
+                            className="inline-flex items-center gap-1 text-[10px] text-amber-400/80 hover:text-amber-300 mt-0.5 font-sans cursor-pointer hover:underline"
+                            title="Haz clic para asignar una categoría a este producto"
+                          >
+                            <span>⚠️ Sin categoría</span>
+                            <span className="text-[9px] underline">(Asignar)</span>
+                          </button>
+                        )}
                       </td>
 
                       {/* Proveedor */}
@@ -543,9 +585,19 @@ export function BranchInventoryView({
         onClose={() => {
           setIsEditModalOpen(false);
           setProductoSeleccionado(null);
+          setCategoriaPreseleccionadaId(null);
         }}
         onGuardar={editarProducto}
         onAbrirNuevoProveedor={() => setIsSupplierModalOpen(true)}
+        onAbrirNuevaCategoria={() => setIsCategoryModalOpen(true)}
+        categoriaPreseleccionadaId={categoriaPreseleccionadaId}
+      />
+
+      <CreateCategoryModal
+        isOpen={isCategoryModalOpen}
+        onClose={() => setIsCategoryModalOpen(false)}
+        onCategoriaCreada={handleCategoriaCreada}
+        crearCategoriaFn={crearCategoria}
       />
 
       <CreateSupplierModal
@@ -557,9 +609,17 @@ export function BranchInventoryView({
 
       <CreateProductModal
         isOpen={isCreateProductOpen}
-        onClose={() => setIsCreateProductOpen(false)}
+        onClose={() => {
+          setIsCreateProductOpen(false);
+          setCategoriaPreseleccionadaId(null);
+        }}
         onProductoCreado={() => recargar()}
         sucursalId={sucursalId}
+        categorias={categorias}
+        proveedores={proveedores}
+        onAbrirNuevaCategoria={() => setIsCategoryModalOpen(true)}
+        onAbrirNuevoProveedor={() => setIsSupplierModalOpen(true)}
+        categoriaPreseleccionadaId={categoriaPreseleccionadaId}
       />
 
       {/* 6. Modales Operativos Fase 2 (Entradas, Salidas, Ajustes, Kardex) */}

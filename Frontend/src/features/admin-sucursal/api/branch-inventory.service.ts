@@ -13,6 +13,7 @@ import type {
   ProductoInventarioSede,
   FiltrosInventarioSede,
   CategoriaInventario,
+  CrearCategoriaDTO,
   ProveedorInventario,
   ActualizarProductoDTO,
   CrearProveedorDTO,
@@ -45,7 +46,7 @@ export class BranchInventoryService implements IBranchInventoryService {
       this.http.get<any>('/inventario/productos', {
         params: {
           texto: filtros?.texto || undefined,
-          categoriaId: filtros?.categoriaId || undefined,
+          categoriaId: filtros?.categoriaId && filtros.categoriaId !== -1 ? filtros.categoriaId : undefined,
           proveedorId: filtros?.proveedorId || undefined,
           isActive: filtros?.isActive !== undefined ? filtros.isActive : undefined,
           page,
@@ -139,7 +140,11 @@ export class BranchInventoryService implements IBranchInventoryService {
       };
     });
 
-    // 3. Filtro en memoria por nivel de stock si aplica
+    // 3. Filtro en memoria por sin categoría o nivel de stock si aplica
+    if (filtros?.soloSinCategoria || filtros?.categoriaId === -1) {
+      items = items.filter((i) => !i.categoriaId);
+    }
+
     if (filtros?.nivelStock && filtros.nivelStock !== 'todos') {
       if (filtros.nivelStock === 'optimo') {
         items = items.filter((i) => i.estadoStock === 'optimo');
@@ -208,6 +213,18 @@ export class BranchInventoryService implements IBranchInventoryService {
       nombre: c.nombre,
       isActive: Boolean(c.isActive ?? c.is_active ?? true),
     }));
+  }
+
+  public async crearCategoria(data: CrearCategoriaDTO | string): Promise<CategoriaInventario> {
+    const nombre = typeof data === 'string' ? data : data.nombre;
+    const res = await this.http.post<any>('/inventario/categorias', {
+      nombre: nombre.trim(),
+    });
+    return {
+      id: Number(res.id || res.id_categoria),
+      nombre: res.nombre,
+      isActive: Boolean(res.isActive ?? res.is_active ?? true),
+    };
   }
 
   public async listarProveedores(filtros?: { busqueda?: string; isActive?: boolean }): Promise<ProveedorInventario[]> {

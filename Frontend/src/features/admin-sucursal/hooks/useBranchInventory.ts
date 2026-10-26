@@ -17,6 +17,7 @@ import type {
   ProductoInventarioSede,
   FiltrosInventarioSede,
   CategoriaInventario,
+  CrearCategoriaDTO,
   ProveedorInventario,
   ActualizarProductoDTO,
   CrearProveedorDTO,
@@ -170,6 +171,25 @@ export function useBranchInventory({
     }
   };
 
+  // 7. Mutación: Crear nueva categoría en vivo
+  const crearCategoria = async (nombreOData: string | CrearCategoriaDTO) => {
+    setIsMutating(true);
+    try {
+      const nuevaCat = await inventoryService.crearCategoria(nombreOData);
+      setCategorias((prev) => {
+        const existe = prev.some((c) => c.id === nuevaCat.id);
+        if (existe) return prev;
+        return [...prev, nuevaCat].sort((a, b) => a.nombre.localeCompare(b.nombre));
+      });
+      return { ok: true, data: nuevaCat };
+    } catch (err: any) {
+      console.error('[useBranchInventory] Error al crear categoría:', err);
+      return { ok: false, error: err?.message || 'Error al crear categoría.' };
+    } finally {
+      setIsMutating(false);
+    }
+  };
+
   const actualizarFiltros = (nuevosFiltros: Partial<FiltrosInventarioSede>) => {
     setFiltros((prev) => ({ ...prev, ...nuevosFiltros }));
     setPage(1); // Regresar a la página 1 ante cualquier cambio de filtro
@@ -194,5 +214,6 @@ export function useBranchInventory({
     cambiarEstado,
     actualizarStockMinimo,
     crearProveedor,
+    crearCategoria,
   };
 }

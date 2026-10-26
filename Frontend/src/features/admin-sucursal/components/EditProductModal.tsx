@@ -25,6 +25,8 @@ interface EditProductModalProps {
   onClose: () => void;
   onGuardar: (productoId: string, data: ActualizarProductoDTO) => Promise<{ ok: boolean; error?: string }>;
   onAbrirNuevoProveedor: () => void;
+  onAbrirNuevaCategoria?: () => void;
+  categoriaPreseleccionadaId?: number | null;
 }
 
 export function EditProductModal({
@@ -35,6 +37,8 @@ export function EditProductModal({
   onClose,
   onGuardar,
   onAbrirNuevoProveedor,
+  onAbrirNuevaCategoria,
+  categoriaPreseleccionadaId,
 }: EditProductModalProps) {
   const [sku, setSku] = useState('');
   const [nombre, setNombre] = useState('');
@@ -61,6 +65,12 @@ export function EditProductModal({
       setErrorMsg(null);
     }
   }, [producto]);
+
+  useEffect(() => {
+    if (categoriaPreseleccionadaId) {
+      setCategoriaId(categoriaPreseleccionadaId);
+    }
+  }, [categoriaPreseleccionadaId]);
 
   if (!isOpen || !producto) return null;
 
@@ -182,9 +192,20 @@ export function EditProductModal({
           {/* Fila 2: Categoría y Proveedor */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <label className="block text-[11px] font-semibold text-slate-300 mb-1">
-                Categoría
-              </label>
+              <div className="flex items-center justify-between mb-1">
+                <label className="text-[11px] font-semibold text-slate-300">
+                  Categoría
+                </label>
+                {onAbrirNuevaCategoria && (
+                  <button
+                    type="button"
+                    onClick={onAbrirNuevaCategoria}
+                    className="text-[10px] text-[#e3b341] hover:underline font-medium cursor-pointer"
+                  >
+                    + Nueva
+                  </button>
+                )}
+              </div>
               <select
                 value={categoriaId}
                 onChange={(e) => setCategoriaId(e.target.value ? Number(e.target.value) : '')}
