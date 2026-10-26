@@ -45,6 +45,8 @@ export function AuthCard() {
     // Redirección inteligente post-login según el rol del empleado
     if (rol === 'cajero') {
       router.push('/pos');
+    } else if (rol === 'vendedor-b2b') {
+      router.push('/vendedor-b2b');
     } else {
       router.push('/dashboard');
     }

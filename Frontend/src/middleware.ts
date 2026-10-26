@@ -55,6 +55,7 @@ export function middleware(request: NextRequest) {
   const esRutaProtegida =
     pathname.startsWith('/dashboard') ||
     pathname.startsWith('/pos') ||
+    pathname.startsWith('/vendedor-b2b') ||
     pathname.startsWith('/administracion') ||
     pathname.startsWith('/inventario') ||
     pathname.startsWith('/ventas') ||
@@ -69,9 +70,14 @@ export function middleware(request: NextRequest) {
 
   // 3. Caso: Cajero intentando entrar al panel administrativo o viceversa
   if (tieneSesion && payload?.rolId) {
-    if (pathname.startsWith('/dashboard') && payload.rolId === 3) {
+    if ((pathname.startsWith('/dashboard') || pathname.startsWith('/vendedor-b2b')) && payload.rolId === 3) {
       // Cajero redirigido a su terminal POS
       return NextResponse.redirect(new URL('/pos', request.url));
+    }
+
+    if (pathname.startsWith('/pos') && payload.rolId === 4) {
+      // Vendedor B2B no usa turno POS físico, redirigido a su terminal B2B
+      return NextResponse.redirect(new URL('/vendedor-b2b', request.url));
     }
 
     if (pathname.startsWith('/pos') && payload.rolId !== 3 && payload.rolId !== 1) {
