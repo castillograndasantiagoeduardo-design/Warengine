@@ -45,6 +45,13 @@ export function getDatabase(config?: DatabaseConfig): Database {
     queueLimit: 0,
   });
 
+  // La app lee y escribe DATETIME como UTC (timezone 'Z'), pero el servidor MySQL puede estar en
+  // otra zona (time_zone=SYSTEM). Fijar la sesión en UTC hace que NOW()/CURRENT_TIMESTAMP de
+  // defaults y triggers coincidan con lo que la app escribe y compara.
+  pool.on('connection', (conexion) => {
+    conexion.query("SET time_zone = '+00:00'");
+  });
+
   dbInstance = drizzle(pool, { schema, mode: 'default' });
   return dbInstance;
 }

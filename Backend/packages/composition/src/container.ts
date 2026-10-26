@@ -121,6 +121,7 @@ import {
   AbrirTurnoCajaUseCase,
   CerrarTurnoCajaUseCase,
   ObtenerTurnoActualUseCase,
+  ListarTurnosAbiertosUseCase,
   AsignarSucursalesUsuarioUseCase,
   ObtenerSucursalesUsuarioUseCase,
   ResolverAlcanceSucursalUseCase,
@@ -275,6 +276,7 @@ export interface AppContainer {
     abrirTurnoCaja: AbrirTurnoCajaUseCase;
     cerrarTurnoCaja: CerrarTurnoCajaUseCase;
     obtenerTurnoActual: ObtenerTurnoActualUseCase;
+    listarTurnosAbiertos: ListarTurnosAbiertosUseCase;
     crearFactura: CrearFacturaUseCase;
     listarFacturas: ListarFacturasUseCase;
     obtenerFacturaPorId: ObtenerFacturaPorIdUseCase;
@@ -529,6 +531,10 @@ export function createContainer(_env?: Record<string, string>): AppContainer {
     alertaStockRepository,
   );
   const obtenerTurnoActualUseCase = new ObtenerTurnoActualUseCase(turnoCajaRepository);
+  const listarTurnosAbiertosUseCase = new ListarTurnosAbiertosUseCase(
+    resolverAlcanceSucursalUseCase,
+    turnoCajaRepository,
+  );
   const cerrarTurnoCajaUseCase = new CerrarTurnoCajaUseCase(turnoCajaRepository, auditoriaRepository);
   const crearFacturaUseCase = new CrearFacturaUseCase(
     facturaRepository,
@@ -889,6 +895,7 @@ export function createContainer(_env?: Record<string, string>): AppContainer {
       abrirTurnoCaja: abrirTurnoCajaUseCase,
       cerrarTurnoCaja: cerrarTurnoCajaUseCase,
       obtenerTurnoActual: obtenerTurnoActualUseCase,
+      listarTurnosAbiertos: listarTurnosAbiertosUseCase,
       crearFactura: crearFacturaUseCase,
       listarFacturas: listarFacturasUseCase,
       obtenerFacturaPorId: obtenerFacturaPorIdUseCase,

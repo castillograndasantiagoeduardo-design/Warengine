@@ -1,7 +1,16 @@
-import { and, eq, isNull } from 'drizzle-orm';
+import { and, asc, eq, inArray, isNull, sql } from 'drizzle-orm';
 import { Database } from '../../client.ts';
 import { turnos_caja } from '../../schema/turnos-caja.schema.ts';
-import { DatosAperturaTurno, ITurnoCajaRepository, TurnoCaja } from '@warengine/core';
+import { usuarios } from '../../schema/autenticacion.schema.ts';
+import { empleados } from '../../schema/administracion.schema.ts';
+import { facturas } from '../../schema/facturacion.schema.ts';
+import {
+    DatosAperturaTurno,
+    IConsultaTurnosAbiertosRepository,
+    ITurnoCajaRepository,
+    TurnoAbiertoResumen,
+    TurnoCaja,
+} from '@warengine/core';
 import { turnoCajaFromRow } from '../../mappers/facturacion/turno-caja.mapper.ts';
 
 const MYSQL_CLAVE_DUPLICADA = 1062;
@@ -12,8 +21,56 @@ function esClaveDuplicada(error: unknown): boolean {
     return e?.errno === MYSQL_CLAVE_DUPLICADA || e?.cause?.errno === MYSQL_CLAVE_DUPLICADA;
 }
 
-export class DrizzleTurnoCajaRepository implements ITurnoCajaRepository {
+export class DrizzleTurnoCajaRepository implements ITurnoCajaRepository, IConsultaTurnosAbiertosRepository {
     constructor(private readonly db: Database) { }
+
+    public async listarAbiertos(sucursalIds?: number[]): Promise<TurnoAbiertoResumen[]> {
+        const condiciones = [isNull(turnos_caja.fecha_cierre), isNull(turnos_caja.deleted_at)];
+        if (sucursalIds) condiciones.push(inArray(turnos_caja.sucursal_id, sucursalIds));
+
+        const filas = await this.db
+            .select({
+                id: turnos_caja.id_turno_caja,
+                usuarioId: turnos_caja.usuario_id,
+                cajeroNombre: empleados.nombre,
+                cajeroEmail: usuarios.email,
+                sucursalId: turnos_caja.sucursal_id,
+                fondoInicial: turnos_caja.fondo_inicial,
+                fechaApertura: turnos_caja.fecha_apertura,
+                cantidadVentas: sql<number>`COUNT(${facturas.id_factura})`,
+                totalVentas: sql<string>`COALESCE(SUM(${facturas.total}), 0)`,
+            })
+            .from(turnos_caja)
+            .innerJoin(usuarios, eq(turnos_caja.usuario_id, usuarios.id_usuario))
+            .leftJoin(empleados, eq(usuarios.empleado_id, empleados.id_empleado))
+            .leftJoin(
+                facturas,
+                and(eq(facturas.turno_caja_id, turnos_caja.id_turno_caja), eq(facturas.estado, 'emitida')),
+            )
+            .where(and(...condiciones))
+            .groupBy(
+                turnos_caja.id_turno_caja,
+                turnos_caja.usuario_id,
+                empleados.nombre,
+                usuarios.email,
+                turnos_caja.sucursal_id,
+                turnos_caja.fondo_inicial,
+                turnos_caja.fecha_apertura,
+            )
+            .orderBy(asc(turnos_caja.fecha_apertura));
+
+        return filas.map((f) => ({
+            id: f.id,
+            usuarioId: f.usuarioId,
+            cajeroNombre: f.cajeroNombre ?? null,
+            cajeroEmail: f.cajeroEmail,
+            sucursalId: f.sucursalId,
+            fondoInicial: Number(f.fondoInicial),
+            fechaApertura: f.fechaApertura,
+            cantidadVentas: Number(f.cantidadVentas),
+            totalVentas: Number(f.totalVentas),
+        }));
+    }
 
     public async buscarAbiertoDeUsuario(usuarioId: string): Promise<TurnoCaja | null> {
         const [row] = await this.db

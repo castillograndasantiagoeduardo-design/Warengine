@@ -31,6 +31,12 @@ interface BranchOverviewViewProps {
   className?: string;
 }
 
+/** '+12.5%' / '-3%' solo cuando hay comparación real; sin base no se muestra insignia. */
+function textoVariacion(porcentaje: number | null): string | undefined {
+  if (porcentaje === null) return undefined;
+  return `${porcentaje >= 0 ? '+' : ''}${porcentaje}% vs ayer`;
+}
+
 export function BranchOverviewView({
   data,
   onNavigateSection,
@@ -55,7 +61,7 @@ export function BranchOverviewView({
             <CalendarDaysIcon size={15} />
           </span>
           <span className="font-[family-name:var(--font-archivo)]">
-            {data.fechaOperacion || 'Domingo, 25 de octubre de 2026'}
+            {data.fechaOperacion}
           </span>
         </div>
       </div>
@@ -67,8 +73,8 @@ export function BranchOverviewView({
           title="Ventas del Día"
           value={data.kpis.ventas.valorFormateado}
           icon={<DollarSignIcon size={18} />}
-          trendText={`+${data.kpis.ventas.porcentajeCambio}%`}
-          trendVariant="success"
+          trendText={textoVariacion(data.kpis.ventas.porcentajeCambio)}
+          trendVariant={(data.kpis.ventas.porcentajeCambio ?? 0) >= 0 ? 'success' : 'warning'}
           trendIcon={<TrendingUpIcon size={12} />}
           contextText={data.kpis.ventas.comparativaTexto}
         />
@@ -78,15 +84,15 @@ export function BranchOverviewView({
           title="Transacciones"
           value={data.kpis.transacciones.total}
           icon={<ReceiptTextIcon size={18} />}
-          trendText={`+${data.kpis.transacciones.porcentajeCambio}%`}
-          trendVariant="success"
+          trendText={textoVariacion(data.kpis.transacciones.porcentajeCambio)}
+          trendVariant={(data.kpis.transacciones.porcentajeCambio ?? 0) >= 0 ? 'success' : 'warning'}
           trendIcon={<TrendingUpIcon size={12} />}
           contextText={`Ticket promedio: ${data.kpis.transacciones.ticketPromedioFormateado}`}
         />
 
         {/* KPI 3: Productos en Catálogo */}
         <KpiMetricCard
-          title="Productos en catálogo"
+          title="Productos en la sede"
           value={data.kpis.stock.totalProductos.toLocaleString('es-CO')}
           icon={<PackageIcon size={18} />}
           trendText={`${data.kpis.stock.totalAlertas} alertas`}
@@ -96,13 +102,13 @@ export function BranchOverviewView({
 
         {/* KPI 4: Cajeros Activos */}
         <KpiMetricCard
-          title="Cajeros activos"
-          value={`${data.kpis.cajeros.activos} / ${data.kpis.cajeros.total}`}
+          title="Cajeros en turno"
+          value={data.kpis.cajeros.turnosAbiertos}
           icon={<UsersRoundIcon size={18} />}
-          trendText="En línea"
+          trendText={data.kpis.cajeros.turnosAbiertos > 0 ? 'En línea' : undefined}
           trendVariant="success"
-          pulseDot
-          contextText={`${data.kpis.cajeros.turnosAbiertos} turnos abiertos · ${data.kpis.cajeros.disponibles} disponible`}
+          pulseDot={data.kpis.cajeros.turnosAbiertos > 0}
+          contextText={`${data.kpis.cajeros.total} empleados en la sede`}
         />
       </section>
 
