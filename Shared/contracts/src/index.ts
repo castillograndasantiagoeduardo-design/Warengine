@@ -42,6 +42,7 @@ export * from './administracion/alerta-stock.schema.ts';
 export * from './administracion/historial-salario.schema.ts';
 export * from './administracion/alerta-admin.schema.ts';
 export * from './administracion/dashboard.schema.ts';
+export * from './administracion/rol.schema.ts';
 
 // ─── Módulo: logistica ─────────────────────────────────────────
 export * from './logistica/categoria-activo.schema.ts';

@@ -84,6 +84,7 @@ import {
   ObtenerEmpleadoPorIdUseCase,
   EditarEmpleadoUseCase,
   ListarUsuariosUseCase,
+  ListarRolesUseCase,
   CrearUsuarioUseCase,
   CambiarRolUsuarioUseCase,
   CambiarEstadoUsuarioUseCase,
@@ -204,6 +205,7 @@ export interface AppContainer {
     obtenerEmpleadoPorId: ObtenerEmpleadoPorIdUseCase;
     editarEmpleado: EditarEmpleadoUseCase;
     listarUsuarios: ListarUsuariosUseCase;
+    listarRoles: ListarRolesUseCase;
     crearUsuario: CrearUsuarioUseCase;
     cambiarRolUsuario: CambiarRolUsuarioUseCase;
     cambiarEstadoUsuario: CambiarEstadoUsuarioUseCase;
@@ -473,6 +475,7 @@ export function createContainer(_env?: Record<string, string>): AppContainer {
   );
 
   const listarUsuariosUseCase = new ListarUsuariosUseCase(gestionUsuarioRepository);
+  const listarRolesUseCase = new ListarRolesUseCase(rolRepository);
   const crearUsuarioUseCase = new CrearUsuarioUseCase(
     gestionUsuarioRepository,
     sucursalRepository,
@@ -787,6 +790,7 @@ export function createContainer(_env?: Record<string, string>): AppContainer {
       obtenerEmpleadoPorId: obtenerEmpleadoPorIdUseCase,
       editarEmpleado: editarEmpleadoUseCase,
       listarUsuarios: listarUsuariosUseCase,
+      listarRoles: listarRolesUseCase,
       crearUsuario: crearUsuarioUseCase,
       cambiarRolUsuario: cambiarRolUsuarioUseCase,
       cambiarEstadoUsuario: cambiarEstadoUsuarioUseCase,

@@ -893,6 +893,36 @@ Para autorizar peticiones interactivas en esta consola:
         responses: { 201: { description: 'Usuario creado' } },
       },
     },
+    '/administracion/roles': {
+      get: {
+        tags: ['Administración - Usuarios'],
+        summary: 'Catálogo de roles (id, nombre, descripción) para el selector de cambio de rol',
+        description: 'Requiere el permiso `autenticacion:asignar-roles`.',
+        security: [{ bearerAuth: [] }, { cookieAuth: [] }],
+        responses: {
+          200: {
+            description: 'Listado de roles ordenado por id',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'array',
+                  items: {
+                    type: 'object',
+                    properties: {
+                      id: { type: 'integer', example: 2 },
+                      nombre: { type: 'string', example: 'admin-sucursal' },
+                      descripcion: { type: 'string', nullable: true },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          401: { description: 'Sin sesión' },
+          403: { description: 'Sin permiso autenticacion:asignar-roles' },
+        },
+      },
+    },
     '/administracion/usuarios/{id}/rol': {
       put: {
         tags: ['Administración - Usuarios'],
