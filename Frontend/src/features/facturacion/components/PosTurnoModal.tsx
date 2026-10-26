@@ -25,10 +25,12 @@ export function PosTurnoModal({
   const estaAbierto = Boolean(turno && (turno.estaAbierto === true || turno.fechaCierre === null));
 
   // Estados locales
-  const [fondoInicial, setFondoInicial] = useState<string>('50000');
+  const [fondoInicial, setFondoInicial] = useState<string>('');
   const [fondoFinal, setFondoFinal] = useState<string>('');
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [errorLocal, setErrorLocal] = useState<string | null>(null);
+  // Resultado del cierre (diferencia calculada por el trigger de BD) para mostrar el cuadre
+  const [turnoCerrado, setTurnoCerrado] = useState<TurnoCajaDto | null>(null);
 
   if (!isOpen) return null;
 
@@ -70,8 +72,9 @@ export function PosTurnoModal({
     setIsSubmitting(true);
     setErrorLocal(null);
     try {
-      await onCerrarTurno(monto);
-      onClose();
+      const cerrado = await onCerrarTurno(monto);
+      setFondoFinal('');
+      setTurnoCerrado(cerrado);
     } catch (err: unknown) {
       setErrorLocal(err instanceof Error ? err.message : 'Error al cerrar el turno de caja.');
     } finally {
@@ -90,7 +93,59 @@ export function PosTurnoModal({
           &times;
         </button>
 
-        {!estaAbierto ? (
+        {turnoCerrado ? (
+          /* ========================================================
+             RESUMEN DEL CIERRE (cuadre de caja)
+             ======================================================== */
+          <div>
+            <h3 className="font-[family-name:var(--font-anton)] text-xl text-white tracking-wide uppercase mb-1">
+              Turno cerrado
+            </h3>
+            <p className="text-xs text-white/60 mb-4">Cuadre calculado por el sistema contra las ventas en efectivo del turno.</p>
+            <div className="p-3 rounded-xl bg-[#0a1124] border border-white/10 mb-4 space-y-1.5 text-xs tabular-nums">
+              <div className="flex justify-between text-white/60">
+                <span>Fondo inicial:</span>
+                <span className="text-white">{formatoCOP(turnoCerrado.fondoInicial)}</span>
+              </div>
+              <div className="flex justify-between text-white/60">
+                <span>Efectivo contado:</span>
+                <span className="text-white">{formatoCOP(turnoCerrado.fondoFinal ?? 0)}</span>
+              </div>
+              <div className="flex justify-between font-semibold pt-1 border-t border-white/10">
+                <span className="text-white/80">Diferencia:</span>
+                <span
+                  className={
+                    (turnoCerrado.diferencia ?? 0) === 0
+                      ? 'text-emerald-300'
+                      : (turnoCerrado.diferencia ?? 0) > 0
+                        ? 'text-amber-300'
+                        : 'text-rose-300'
+                  }
+                >
+                  {turnoCerrado.diferencia === null || turnoCerrado.diferencia === undefined
+                    ? '—'
+                    : `${formatoCOP(turnoCerrado.diferencia)} · ${
+                        turnoCerrado.diferencia === 0
+                          ? 'Cuadrado'
+                          : turnoCerrado.diferencia > 0
+                            ? 'Sobrante'
+                            : 'Faltante'
+                      }`}
+                </span>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                setTurnoCerrado(null);
+                onClose();
+              }}
+              className="w-full py-2.5 rounded-xl bg-[#e3b341] hover:bg-[#e9b949] text-black text-xs font-bold uppercase cursor-pointer"
+            >
+              Entendido
+            </button>
+          </div>
+        ) : !estaAbierto ? (
           /* ========================================================
              MODAL: APERTURA DE TURNO
              ======================================================== */

@@ -172,3 +172,13 @@ Content-Type: {{contentType}}
   "sucursalId": 99999,
   "stockMinimo": 10
 }
+
+### 10.1 Existencias de toda una sede (POS / vendedor B2B)
+# Resultado esperado: 200 OK con [{ productoId, sku, nombreProducto, sucursalId, stockActual, stockMinimo, alertaAbastecimiento }]
+# Un usuario limitado que pida una sede fuera de su alcance recibe 403 SUCURSAL_FUERA_DE_ALCANCE
+GET {{baseUrl}}/inventario/stock?sucursalId=1
+Authorization: Bearer {{tokenAdmin}}
+
+### 10.2 Rechazo sin sucursalId (esperado 400 VALIDATION_ERROR)
+GET {{baseUrl}}/inventario/stock
+Authorization: Bearer {{tokenAdmin}}

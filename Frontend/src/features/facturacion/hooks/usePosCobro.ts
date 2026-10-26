@@ -83,17 +83,8 @@ export function usePosCobro() {
     setErrorEmision(null);
 
     try {
-      // Si el cliente seleccionado es el consumidor final local provisional, asegurar ID válido
-      let clienteId = cliente.id;
-      if (clienteId === 'CONSUMIDOR_FINAL') {
-        const clienteRegistrado = await posService.crearCliente({
-          tipoDocumento: 'CC',
-          numeroDocumento: '222222222222',
-          nombreRazonSocial: 'Consumidor Final',
-          tipoCliente: 'B2C',
-        });
-        clienteId = clienteRegistrado.cliente.id;
-      }
+      // El cliente es siempre uno real (buscado o creado por el cajero); nunca se crea uno implícito
+      const clienteId = cliente.id;
 
       // Estructura de pagos: la API exige que la suma de pagos sea exactamente igual al total
       const pagos: PagoFacturaInput[] = [];

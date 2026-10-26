@@ -49,7 +49,7 @@ export interface IPosService {
   /**
    * Busca productos en el catálogo maestro y su stock para la sucursal actual.
    */
-  buscarProductos(query?: string, sucursalId?: number): Promise<ProductoPos[]>;
+  buscarProductos(query: string | undefined, sucursalId: number): Promise<ProductoPos[]>;
 
   /**
    * Busca clientes en el directorio (por documento, nombre o email).

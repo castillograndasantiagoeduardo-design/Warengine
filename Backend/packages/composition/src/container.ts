@@ -147,6 +147,7 @@ import {
   ConsultarKardexUseCase,
   ConfigurarStockMinimoUseCase,
   ConsultarStockSucursalUseCase,
+  ListarStockSucursalUseCase,
   ConsultarHistorialPreciosUseCase,
   ListarEntradasInventarioUseCase,
   ObtenerEntradaInventarioPorIdUseCase,
@@ -258,6 +259,7 @@ export interface AppContainer {
     consultarKardex: ConsultarKardexUseCase;
     configurarStockMinimo: ConfigurarStockMinimoUseCase;
     consultarStockSucursal: ConsultarStockSucursalUseCase;
+    listarStockSucursal: ListarStockSucursalUseCase;
     consultarHistorialPrecios: ConsultarHistorialPreciosUseCase;
     listarEntradas: ListarEntradasInventarioUseCase;
     obtenerEntradaPorId: ObtenerEntradaInventarioPorIdUseCase;
@@ -694,6 +696,10 @@ export function createContainer(_env?: Record<string, string>): AppContainer {
     sucursalRepository,
     resolverAlcanceSucursalUseCase,
   );
+  const listarStockSucursalUseCase = new ListarStockSucursalUseCase(
+    inventarioSucursalRepository,
+    resolverAlcanceSucursalUseCase,
+  );
   const exportarProductosCsvUseCase = new ExportarProductosCsvUseCase(productoRepository);
   const exportarKardexCsvUseCase = new ExportarKardexCsvUseCase(
     movimientoInventarioRepository,
@@ -877,6 +883,7 @@ export function createContainer(_env?: Record<string, string>): AppContainer {
       consultarKardex: consultarKardexUseCase,
       configurarStockMinimo: configurarStockMinimoUseCase,
       consultarStockSucursal: consultarStockSucursalUseCase,
+      listarStockSucursal: listarStockSucursalUseCase,
       consultarHistorialPrecios: consultarHistorialPreciosUseCase,
       listarEntradas: listarEntradasUseCase,
       obtenerEntradaPorId: obtenerEntradaPorIdUseCase,

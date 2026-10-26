@@ -153,8 +153,10 @@ export * from './src/modules/inventario/application/use-cases/AjustarInventarioU
 export * from './src/modules/inventario/application/use-cases/TransferirMercanciaUseCase.ts';
 export * from './src/modules/inventario/domain/entities/InventarioSucursal.ts';
 export * from './src/modules/inventario/domain/repositories/IInventarioSucursalRepository.ts';
+export * from './src/modules/inventario/domain/repositories/IConsultaStockSucursalRepository.ts';
 export * from './src/modules/inventario/application/use-cases/ConfigurarStockMinimoUseCase.ts';
 export * from './src/modules/inventario/application/use-cases/ConsultarStockSucursalUseCase.ts';
+export * from './src/modules/inventario/application/use-cases/ListarStockSucursalUseCase.ts';
 export * from './src/modules/inventario/application/use-cases/ExportarProductosCsvUseCase.ts';
 export * from './src/modules/inventario/application/use-cases/ExportarKardexCsvUseCase.ts';
 export * from './src/modules/inventario/application/utils/csv-generator.ts';

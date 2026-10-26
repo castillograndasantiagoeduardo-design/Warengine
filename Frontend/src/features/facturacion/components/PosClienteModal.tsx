@@ -10,10 +10,9 @@ import type { ClienteDto, CrearClienteInput } from '../types/pos.types';
 interface PosClienteModalProps {
   isOpen: boolean;
   onClose: () => void;
-  clienteActual: ClienteDto;
+  clienteActual: ClienteDto | null;
   onSeleccionarCliente: (cliente: ClienteDto) => void;
   onCrearCliente: (input: CrearClienteInput) => Promise<ClienteDto>;
-  onRestablecerConsumidorFinal: () => void;
   clientesEncontrados: ClienteDto[];
   terminoBusqueda: string;
   onCambiarTerminoBusqueda: (termino: string) => void;
@@ -27,7 +26,6 @@ export function PosClienteModal({
   clienteActual,
   onSeleccionarCliente,
   onCrearCliente,
-  onRestablecerConsumidorFinal,
   clientesEncontrados,
   terminoBusqueda,
   onCambiarTerminoBusqueda,
@@ -98,7 +96,7 @@ export function PosClienteModal({
             <p className="text-xs text-white/60">
               {modoCrear
                 ? 'Registra datos del cliente para su factura'
-                : 'Busca por CC / NIT o selecciona Consumidor Final'}
+                : 'Busca por CC / NIT o nombre, o registra un cliente nuevo'}
             </p>
           </div>
           <button
@@ -115,24 +113,6 @@ export function PosClienteModal({
              BUSCAR CLIENTE
              ======================================================== */
           <div className="space-y-4">
-            {/* Opción rápida: Consumidor Final */}
-            <div className="p-3 rounded-xl bg-[#14213D]/60 border border-white/10 flex items-center justify-between">
-              <div>
-                <span className="text-xs font-bold text-white block">Consumidor Final (Venta Rápida)</span>
-                <span className="text-[11px] text-white/50 font-mono">CC: 222222222222</span>
-              </div>
-              <button
-                type="button"
-                onClick={() => {
-                  onRestablecerConsumidorFinal();
-                  onClose();
-                }}
-                className="px-3 py-1.5 rounded-lg bg-[#e3b341] hover:bg-[#e9b949] text-black text-xs font-bold font-[family-name:var(--font-pixelify)] uppercase cursor-pointer"
-              >
-                Seleccionar
-              </button>
-            </div>
-
             {/* Input de Búsqueda */}
             <div className="relative">
               <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-white/40 text-sm">
@@ -167,7 +147,7 @@ export function PosClienteModal({
                       onClose();
                     }}
                     className={`p-2.5 rounded-xl border flex items-center justify-between cursor-pointer transition-all ${
-                      clienteActual.id === cli.id
+                      clienteActual?.id === cli.id
                         ? 'bg-[#e3b341]/10 border-[#e3b341]'
                         : 'bg-[#0a1124] hover:bg-[#14213D] border-white/5'
                     }`}

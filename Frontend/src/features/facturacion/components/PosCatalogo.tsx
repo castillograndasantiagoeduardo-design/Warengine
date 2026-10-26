@@ -11,12 +11,17 @@ import type { ProductoPos } from '../types/pos.types';
 interface PosCatalogoProps {
   onAgregarProducto: (producto: ProductoPos) => void;
   inputBuscarRef?: React.RefObject<HTMLInputElement | null>;
+  /** Sede de la sesión: el stock mostrado es el de esta sucursal. */
+  sucursalId: number;
+  /** Cambia tras cada venta para recargar las existencias. */
+  versionStock?: number;
 }
 
-export function PosCatalogo({ onAgregarProducto, inputBuscarRef }: PosCatalogoProps) {
+export function PosCatalogo({ onAgregarProducto, inputBuscarRef, sucursalId, versionStock = 0 }: PosCatalogoProps) {
   const [query, setQuery] = useState<string>('');
   const [productos, setProductos] = useState<ProductoPos[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [errorCarga, setErrorCarga] = useState<string | null>(null);
   const [categoriaSeleccionada, setCategoriaSeleccionada] = useState<string>('todas');
 
   const localInputRef = useRef<HTMLInputElement | null>(null);
@@ -34,13 +39,17 @@ export function PosCatalogo({ onAgregarProducto, inputBuscarRef }: PosCatalogoPr
     let cancelado = false;
     const timer = setTimeout(async () => {
       setIsLoading(true);
+      setErrorCarga(null);
       try {
-        const data = await posService.buscarProductos(query);
+        const data = await posService.buscarProductos(query, sucursalId);
         if (!cancelado) {
           setProductos(data);
         }
-      } catch {
-        if (!cancelado) setProductos([]);
+      } catch (err: unknown) {
+        if (!cancelado) {
+          setProductos([]);
+          setErrorCarga(err instanceof Error ? err.message : 'No se pudo consultar el catálogo.');
+        }
       } finally {
         if (!cancelado) setIsLoading(false);
       }
@@ -50,7 +59,7 @@ export function PosCatalogo({ onAgregarProducto, inputBuscarRef }: PosCatalogoPr
       cancelado = true;
       clearTimeout(timer);
     };
-  }, [query]);
+  }, [query, sucursalId, versionStock]);
 
   // Lista de categorías únicas extraídas de los productos
   const categorias = React.useMemo(() => {
@@ -78,14 +87,14 @@ export function PosCatalogo({ onAgregarProducto, inputBuscarRef }: PosCatalogoPr
       const coincidenciaSku = productos.find(
         (p) => p.sku.toLowerCase() === limpio,
       );
-      if (coincidenciaSku) {
+      if (coincidenciaSku && coincidenciaSku.stockActual > 0) {
         onAgregarProducto(coincidenciaSku);
         setQuery('');
         return;
       }
 
       // O si hay solo 1 resultado visible, añadirlo
-      if (productosFiltrados.length === 1) {
+      if (productosFiltrados.length === 1 && productosFiltrados[0].stockActual > 0) {
         onAgregarProducto(productosFiltrados[0]);
         setQuery('');
       }
@@ -151,6 +160,11 @@ export function PosCatalogo({ onAgregarProducto, inputBuscarRef }: PosCatalogoPr
             <div className="w-6 h-6 border-2 border-[#e3b341] border-t-transparent rounded-full animate-spin"></div>
             <span className="text-xs font-[family-name:var(--font-pixelify)]">Consultando catálogo...</span>
           </div>
+        ) : errorCarga ? (
+          <div className="h-64 flex flex-col items-center justify-center text-rose-200 border border-dashed border-rose-500/30 rounded-2xl p-6 text-center">
+            <p className="text-sm font-medium">No se pudo cargar el catálogo</p>
+            <p className="text-xs text-rose-200/70 mt-1">{errorCarga}</p>
+          </div>
         ) : productosFiltrados.length === 0 ? (
           <div className="h-64 flex flex-col items-center justify-center text-white/40 border border-dashed border-white/10 rounded-2xl p-6 text-center">
             <span className="text-3xl mb-2">📦</span>
@@ -159,11 +173,19 @@ export function PosCatalogo({ onAgregarProducto, inputBuscarRef }: PosCatalogoPr
           </div>
         ) : (
           <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-2.5">
-            {productosFiltrados.map((prod) => (
+            {productosFiltrados.map((prod) => {
+              const agotado = prod.stockActual <= 0;
+              return (
               <div
                 key={prod.id}
-                onClick={() => onAgregarProducto(prod)}
-                className="group relative p-3 rounded-2xl bg-[#0f1b3d] hover:bg-[#15234d] border border-white/10 hover:border-[#e3b341]/40 flex flex-col justify-between transition-all duration-150 cursor-pointer select-none active:scale-[0.98] shadow-md hover:shadow-[#e3b341]/10"
+                onClick={() => !agotado && onAgregarProducto(prod)}
+                aria-disabled={agotado}
+                title={agotado ? 'Sin existencias en esta sede' : undefined}
+                className={`group relative p-3 rounded-2xl bg-[#0f1b3d] border border-white/10 flex flex-col justify-between transition-all duration-150 select-none shadow-md ${
+                  agotado
+                    ? 'opacity-45 cursor-not-allowed'
+                    : 'hover:bg-[#15234d] hover:border-[#e3b341]/40 cursor-pointer active:scale-[0.98] hover:shadow-[#e3b341]/10'
+                }`}
               >
                 <div>
                   <div className="flex items-center justify-between gap-1 mb-1.5">
@@ -179,6 +201,9 @@ export function PosCatalogo({ onAgregarProducto, inputBuscarRef }: PosCatalogoPr
                   <h4 className="text-xs font-semibold text-white/90 group-hover:text-[#e3b341] line-clamp-2 leading-snug transition-colors">
                     {prod.nombre}
                   </h4>
+                  <span className={`mt-1 block text-[10px] tabular-nums ${agotado ? 'text-rose-300' : 'text-white/50'}`}>
+                    {agotado ? 'Agotado en esta sede' : `Stock: ${prod.stockActual}`}
+                  </span>
                 </div>
 
                 <div className="mt-3 pt-2 border-t border-white/5 flex items-baseline justify-between">
@@ -190,6 +215,7 @@ export function PosCatalogo({ onAgregarProducto, inputBuscarRef }: PosCatalogoPr
                   </div>
                   <button
                     type="button"
+                    disabled={agotado}
                     className="w-7 h-7 rounded-xl bg-[#e3b341]/20 group-hover:bg-[#e3b341] text-[#e3b341] group-hover:text-black flex items-center justify-center font-bold text-sm transition-colors shadow-sm"
                     title="Añadir al carrito"
                   >
@@ -197,7 +223,8 @@ export function PosCatalogo({ onAgregarProducto, inputBuscarRef }: PosCatalogoPr
                   </button>
                 </div>
               </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>

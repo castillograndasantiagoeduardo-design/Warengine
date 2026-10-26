@@ -16,7 +16,8 @@ interface PosCarritoProps {
     cantidadItems: number;
     tieneItems: boolean;
   };
-  cliente: ClienteDto;
+  /** null hasta que el cajero busque o cree el cliente de la venta. */
+  cliente: ClienteDto | null;
   tieneTurnoAbierto: boolean;
   onActualizarCantidad: (productoId: string, cantidad: number) => void;
   onEliminarItem: (productoId: string) => void;
@@ -61,6 +62,7 @@ export function PosCarrito({
         </div>
 
         <div className="p-2.5 rounded-xl bg-[#0a1124] border border-white/10 flex items-center justify-between">
+          {cliente ? (
           <div className="truncate mr-2">
             <h5 className="text-xs font-semibold text-white truncate">
               {cliente.nombreRazonSocial}
@@ -74,6 +76,12 @@ export function PosCarrito({
               )}
             </p>
           </div>
+          ) : (
+          <button type="button" onClick={onAbrirModalCliente} className="truncate mr-2 text-left cursor-pointer">
+            <h5 className="text-xs font-semibold text-amber-300">Sin cliente seleccionado</h5>
+            <p className="text-[11px] text-white/50">Busca o registra el cliente para poder cobrar</p>
+          </button>
+          )}
           <span className="w-7 h-7 rounded-lg bg-[#14213D] flex items-center justify-center text-xs">
             👤
           </span>
@@ -188,17 +196,17 @@ export function PosCarrito({
         <button
           type="button"
           onClick={onIniciarCobro}
-          disabled={!totales.tieneItems || !tieneTurnoAbierto}
+          disabled={!totales.tieneItems || !tieneTurnoAbierto || !cliente}
           className={`w-full py-3.5 rounded-2xl font-[family-name:var(--font-pixelify)] text-sm font-bold uppercase tracking-wider flex items-center justify-center gap-2 cursor-pointer transition-all ${
             !tieneTurnoAbierto
               ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30 cursor-not-allowed'
-              : !totales.tieneItems
+              : !totales.tieneItems || !cliente
               ? 'bg-white/10 text-white/40 border border-white/5 cursor-not-allowed'
               : 'bg-[#e3b341] hover:bg-[#e9b949] text-black shadow-[0_4px_0_#b88a1f] active:translate-y-1 active:shadow-none hover:shadow-[0_4px_16px_rgba(227,179,65,0.4)]'
           }`}
         >
           <span>💳</span>
-          <span>{!tieneTurnoAbierto ? 'Abre Turno para Cobrar' : 'Cobrar Orden (F4)'}</span>
+          <span>{!tieneTurnoAbierto ? 'Abre Turno para Cobrar' : !cliente ? 'Selecciona un Cliente' : 'Cobrar Orden (F4)'}</span>
         </button>
       </div>
     </aside>

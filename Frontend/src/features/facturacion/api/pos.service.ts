@@ -8,6 +8,7 @@
  */
 
 import { IHttpClient, apiClient } from '@/lib/api';
+import type { StockSucursalResponseDTO } from '@warengine/contracts';
 import type { IPosService, EmitirFacturaInput, EnviarAlertaAdminInput } from './pos.interface';
 import type {
   TurnoCajaDto,
@@ -62,20 +63,28 @@ export class PosService implements IPosService {
     return turno;
   }
 
-  public async buscarProductos(query?: string, _sucursalId?: number): Promise<ProductoPos[]> {
-    try {
-      const response = await this.http.get<{ items?: Array<Record<string, unknown>> } | Array<Record<string, unknown>>>('/inventario/productos', {
+  /**
+   * Catálogo activo cruzado con las existencias REALES de la sede del cajero
+   * (GET /inventario/stock). Un producto sin fila en la sede tiene stock 0.
+   * Si la API falla se lanza el error: el catálogo no inventa existencias.
+   */
+  public async buscarProductos(query: string | undefined, sucursalId: number): Promise<ProductoPos[]> {
+    const [response, stock] = await Promise.all([
+      this.http.get<{ items?: Array<Record<string, unknown>> } | Array<Record<string, unknown>>>('/inventario/productos', {
         params: {
           texto: query?.trim() || undefined,
-          limit: 50,
+          limit: 100,
           isActive: true,
         },
-      });
+      }),
+      this.http.get<StockSucursalResponseDTO[]>('/inventario/stock', { params: { sucursalId } }),
+    ]);
 
-      const items: Array<Record<string, unknown>> = Array.isArray(response)
-        ? response
-        : (response?.items || []);
-      return items.map((p) => ({
+    const stockPorProducto = new Map(stock.map((s) => [s.productoId, Number(s.stockActual)]));
+    const items: Array<Record<string, unknown>> = Array.isArray(response)
+      ? response
+      : (response?.items || []);
+    return items.map((p) => ({
         id: String(p.id),
         sku: String(p.sku || ''),
         nombre: String(p.nombre || ''),
@@ -83,12 +92,9 @@ export class PosService implements IPosService {
         precioCorporativo: Number(p.precioCorporativo ?? p.precio_corporativo ?? 0),
         categoriaId: p.categoriaId ? String(p.categoriaId) : null,
         categoriaNombre: p.categoriaNombre ? String(p.categoriaNombre) : null,
-        stockActual: Number(p.stockActual ?? p.stock_actual ?? 100),
+        stockActual: stockPorProducto.get(String(p.id)) ?? 0,
         activo: Boolean(p.activo !== false),
       }));
-    } catch {
-      return [];
-    }
   }
 
   public async buscarClientes(texto?: string): Promise<ClienteDto[]> {

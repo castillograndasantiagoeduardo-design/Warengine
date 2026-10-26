@@ -34,6 +34,7 @@ import {
   PosHistorialDrawer,
   PosShortcutsBar,
   type FacturaDto,
+  type ClienteDto,
   type ProductoPos,
 } from '@/features/facturacion';
 
@@ -67,7 +68,7 @@ export default function PosTerminalPage() {
     isBuscando: isBuscandoCliente,
     isCreando: isCreandoCliente,
     seleccionarCliente,
-    restablecerConsumidorFinal,
+    limpiarCliente,
     crearClienteRapido,
   } = usePosClientes();
 
@@ -99,6 +100,12 @@ export default function PosTerminalPage() {
   const [modalAlertaAbierto, setModalAlertaAbierto] = useState<boolean>(false);
   const [drawerHistorialAbierto, setDrawerHistorialAbierto] = useState<boolean>(false);
   const [facturaSeleccionadaTicket, setFacturaSeleccionadaTicket] = useState<FacturaDto | null>(null);
+  // Datos del ticket congelados al cobrar (el carrito y el cliente se limpian para la siguiente venta)
+  const [clienteTicket, setClienteTicket] = useState<ClienteDto | null>(null);
+  const [cambioTicket, setCambioTicket] = useState<number>(0);
+  const [nombresTicket, setNombresTicket] = useState<Record<string, string>>({});
+  // Se incrementa tras cada venta para recargar el stock real de la sede en el catálogo
+  const [versionStock, setVersionStock] = useState<number>(0);
 
   // Referencia al input de búsqueda para el atajo F2
   const inputBuscarRef = useRef<HTMLInputElement | null>(null);
@@ -124,7 +131,7 @@ export default function PosTerminalPage() {
       // F4: Cobrar orden
       if (e.key === 'F4') {
         e.preventDefault();
-        if (totales.tieneItems && tieneTurnoAbierto && !modalCobroAbierto) {
+        if (totales.tieneItems && tieneTurnoAbierto && clienteSeleccionado && !modalCobroAbierto) {
           setModalCobroAbierto(true);
         }
         return;
@@ -157,6 +164,7 @@ export default function PosTerminalPage() {
     [
       totales.tieneItems,
       tieneTurnoAbierto,
+      clienteSeleccionado,
       modalCobroAbierto,
       modalTicketAbierto,
       modalClienteAbierto,
@@ -173,13 +181,19 @@ export default function PosTerminalPage() {
 
   // Manejador de confirmación del cobro
   const handleConfirmarCobro = async () => {
+    if (!clienteSeleccionado) return;
     try {
+      const cambio = calcularCambio(totales.total);
       const factura = await procesarCobro(items, totales.total, clienteSeleccionado);
       setFacturaSeleccionadaTicket(factura);
+      setClienteTicket(clienteSeleccionado);
+      setCambioTicket(cambio);
+      setNombresTicket(Object.fromEntries(items.map((i) => [i.productoId, i.nombre])));
       setModalCobroAbierto(false);
       setModalTicketAbierto(true);
       limpiarCarrito();
-      restablecerConsumidorFinal();
+      limpiarCliente();
+      setVersionStock((v) => v + 1);
     } catch {
       // El hook captura y expone el mensaje de error
     }
@@ -196,6 +210,10 @@ export default function PosTerminalPage() {
   // Manejador para reimpresión de comprobante desde historial
   const handleSeleccionarParaReimprimir = (factura: FacturaDto) => {
     setFacturaSeleccionadaTicket(factura);
+    // El historial no trae los datos del cliente ni el cambio entregado: no se inventan
+    setClienteTicket(null);
+    setCambioTicket(0);
+    setNombresTicket({});
     setDrawerHistorialAbierto(false);
     setModalTicketAbierto(true);
   };
@@ -256,6 +274,8 @@ export default function PosTerminalPage() {
             agregarProducto(prod);
           }}
           inputBuscarRef={inputBuscarRef}
+          sucursalId={sucursalId}
+          versionStock={versionStock}
         />
 
         {/* Carrito de Venta y Cobro */}
@@ -320,9 +340,10 @@ export default function PosTerminalPage() {
         isOpen={modalTicketAbierto}
         onClose={() => setModalTicketAbierto(false)}
         factura={facturaSeleccionadaTicket}
-        cliente={clienteSeleccionado}
+        cliente={clienteTicket}
         sucursalNombre={sucursalNombre}
-        cambioEntregado={calcularCambio(totales.total)}
+        cambioEntregado={cambioTicket}
+        nombresProducto={nombresTicket}
         onNuevaVenta={handleNuevaVenta}
       />
 
@@ -333,7 +354,6 @@ export default function PosTerminalPage() {
         clienteActual={clienteSeleccionado}
         onSeleccionarCliente={seleccionarCliente}
         onCrearCliente={crearClienteRapido}
-        onRestablecerConsumidorFinal={restablecerConsumidorFinal}
         clientesEncontrados={clientesEncontrados}
         terminoBusqueda={terminoBusqueda}
         onCambiarTerminoBusqueda={setTerminoBusqueda}

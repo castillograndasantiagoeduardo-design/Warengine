@@ -11,9 +11,12 @@ interface PosTicketModalProps {
   isOpen: boolean;
   onClose: () => void;
   factura: FacturaDto | null;
-  cliente: ClienteDto;
+  /** null al reimprimir desde el historial (la factura solo trae clienteId). */
+  cliente: ClienteDto | null;
   sucursalNombre: string;
   cambioEntregado: number;
+  /** productoId → nombre, tomado del carrito al cobrar (la factura solo trae productoId). */
+  nombresProducto?: Record<string, string>;
   onNuevaVenta: () => void;
 }
 
@@ -23,6 +26,7 @@ export function PosTicketModal({
   cliente,
   sucursalNombre,
   cambioEntregado,
+  nombresProducto = {},
   onNuevaVenta,
 }: PosTicketModalProps) {
   if (!isOpen || !factura) return null;
@@ -85,11 +89,11 @@ export function PosTicketModal({
             </div>
             <div className="flex justify-between">
               <span>Cliente:</span>
-              <span className="font-semibold truncate max-w-[150px]">{cliente.nombreRazonSocial}</span>
+              <span className="font-semibold truncate max-w-[150px]">{cliente?.nombreRazonSocial ?? '—'}</span>
             </div>
             <div className="flex justify-between">
               <span>Doc / NIT:</span>
-              <span>{cliente.numeroDocumento}</span>
+              <span>{cliente?.numeroDocumento ?? '—'}</span>
             </div>
           </div>
 
@@ -103,7 +107,7 @@ export function PosTicketModal({
               {factura.items.map((it, idx) => (
                 <div key={idx} className="flex justify-between items-start text-[10px]">
                   <span className="truncate max-w-[190px]">
-                    {it.cantidad}x Prod #{it.productoId.slice(0, 8)}
+                    {it.cantidad}x {nombresProducto[it.productoId] ?? `Prod #${it.productoId.slice(0, 8)}`}
                   </span>
                   <span className="font-semibold">{formatoCOP(it.subtotal)}</span>
                 </div>
