@@ -39,8 +39,24 @@ export default function DashboardPage() {
 
   if (esVendedorB2B) {
     return (
-      <div className="panel-card flex items-center justify-center p-8 text-white/70">
-        <p>Redirigiendo a la terminal de ventas B2B...</p>
+      <div className="panel-card max-w-lg mx-auto p-8 text-center space-y-4">
+        <div className="w-14 h-14 mx-auto rounded-2xl bg-[#E9B949]/20 border border-[#E9B949]/40 text-[#E9B949] flex items-center justify-center text-3xl shadow-lg">
+          💼
+        </div>
+        <div>
+          <h2 className="text-xl font-bold text-white uppercase tracking-wider font-[family-name:var(--font-anton)]">
+            Terminal de Ventas B2B
+          </h2>
+          <p className="text-xs text-white/70 mt-1">
+            Redirigiendo a tu estación de cotizaciones y facturación corporativa...
+          </p>
+        </div>
+        <button
+          onClick={() => router.push('/vendedor-b2b')}
+          className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-[#E9B949] to-[#b88a1f] text-[#14213D] font-bold text-xs uppercase tracking-wider hover:brightness-110 cursor-pointer shadow transition-all"
+        >
+          Abrir Terminal de Ventas B2B &rarr;
+        </button>
       </div>
     );
   }

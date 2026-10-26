@@ -21,6 +21,7 @@ export interface PanelMenuItem {
 
 export const PANEL_MENU: PanelMenuItem[] = [
   { href: '/dashboard', label: 'Inicio', icon: '◆' },
+  { href: '/vendedor-b2b', label: 'Ventas B2B', icon: '💼', permiso: PERMISSIONS.FACTURACION_VENDER_B2B },
   { href: '/dashboard/sucursales', label: 'Sucursales', icon: '⌂', permiso: PERMISSIONS.ADMIN_GESTIONAR_SUCURSALES },
   { href: '/dashboard/usuarios', label: 'Usuarios y roles', icon: '⚿', permiso: PERMISSIONS.AUTH_MANAGE_USERS },
   { href: '/dashboard/empleados', label: 'Empleados', icon: '☺', permiso: PERMISSIONS.ADMIN_GESTIONAR_PERSONAL },
