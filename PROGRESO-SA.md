@@ -1,16 +1,16 @@
 # PROGRESO-SA.md — Panel del Super Admin (Warengine)
 
 > Demo: lunes 26 de octubre de 2026 · Rama: `feat/sa-base` (sin push)
-> Última actualización: domingo 25/10/2026 — Fases A, B y C terminadas; Fase D no iniciada.
+> Última actualización: domingo 25/10/2026 — Fases A, B y C terminadas y probadas en vivo; Fase D no iniciada.
 
 ## Estado por fase
 
 | Fase | Alcance | Estado |
 | :--- | :--- | :--- |
 | Base (12 commits previos) | Kit UI, shell, selector `/dashboard`, dashboard global, sucursales + detalle + áreas, empleados + salarios | ✅ Hecho |
-| **A — Backend** | roles, resumen, permisos globales, usuarios paginados, auditoría, seed demo, docs | ✅ Hecho (pendiente prueba en vivo, ver Dudas) |
-| **B — P0** | Autorización por permisos en la UI, Usuarios y roles, Auditoría | ✅ Hecho (pendiente prueba en vivo) |
-| **C — P1** | Alertas administrativas y de stock, Cuenta 2FA | ✅ Hecho (pendiente prueba en vivo) |
+| **A — Backend** | roles, resumen, permisos globales, usuarios paginados, auditoría, seed demo, docs | ✅ Hecho y probado en vivo |
+| **B — P0** | Autorización por permisos en la UI, Usuarios y roles, Auditoría | ✅ Hecho (API probada en vivo; UI sin revisión visual) |
+| **C — P1** | Alertas administrativas y de stock, Cuenta 2FA | ✅ Hecho (API probada en vivo; UI sin revisión visual) |
 | **D — P2** | Inventario global, facturación admin, logística, asistente | ⏳ Solo si queda tiempo |
 
 ## Fase A — Backend
@@ -44,13 +44,18 @@ Verificación tras cada paso: `deno task check` ✅ · `lint` sin problemas nuev
 | C3 Alertas | Administrativas (filtro estado/sucursal, urgentes primero, marcar vista/atender) + stock bajo paginado | `3d978b9` |
 | C4 Mi cuenta | 2FA: QR + secreto, activar con código de 6 dígitos, desactivar con contraseña. Dependencia nueva `qrcode-generator@2.0.4` (MIT) | `17991fc` |
 
-## Verificación en vivo realizada (sin credenciales)
+## Prueba en vivo (25/10/2026, API y BD reales)
 
-API reiniciada con el código de la rama: arranca sin errores, `/health` 200, y `/administracion/roles`, `/dashboard/resumen`, `/usuarios`, `/dashboard/metricas` responden 401 `TOKEN_INVALIDO` sin sesión. Lo que exige login (respuestas con datos, 403 por permiso, seed) sigue sin probar.
+- `seed:demo` ejecutado: 3 sedes, 6 áreas, 11 empleados, 5 usuarios, 20 productos, 151 facturas en 21 días, 3 alertas. Segunda ejecución sin duplicados (idempotente). Integridad: 0 turnos abiertos o descuadrados, 0 stock negativo, pagos = totales, sueldos sincronizados, 5 productos bajo mínimo.
+- **API: 67/67 pruebas** (script con login real, sin imprimir secretos): dashboard (resumen, métricas, tendencias día/semana, rendimiento, ranking), sucursales (editar/revertir, reglas de sede principal y usuarios activos, duplicado), áreas (crear/renombrar/eliminar, área con empleados), empleados y salarios, usuarios (paginación, filtros, búsqueda, último super-admin, rol, estado, contraseña, multisede, correo duplicado), alertas, auditoría (antes/después, filtros fecha/actor, CSV sin contraseñas), 403 por permiso con `admin.norte`, y 2FA completo (configurar → código TOTP → login 428 → verificar → desactivar).
+- **Flujo de navegador: 14/14**: CORS desde `localhost:3000`, cookies HttpOnly, API autenticada solo con cookie, middleware redirige sin sesión, y las 8 páginas del panel responden 200.
+- Mutaciones irreversibles (crear sucursal/usuario, registrar salario, cambiar estado de alertas) se probaron solo por sus rutas de error para no ensuciar la demo.
+- **Bugs encontrados y corregidos:** CSV salía como `text/plain` (`3aec13c`); empleados no respetaban el alcance por sede: un admin de sucursal veía empleados y sueldos de todas las sedes (`afcb632`).
+- **No verificado:** la apariencia y la interacción de las pantallas (no hay navegador automatizable en la sesión).
 
 ## Dudas y riesgos abiertos
 
-1. **Prueba en vivo pendiente:** faltan `WARENGINE_SA_PASSWORD` y `SEED_DEMO_PASSWORD` en `Backend/.env`. Sin ellas no se ejecutó `seed:demo` ni se probó el login contra la API real.
+1. **Variables en el `.env` de la raíz:** `WARENGINE_SA_PASSWORD` y `SEED_DEMO_PASSWORD` están en `Warengine/.env`, que ninguna tarea carga. Para repetir el seed: `deno run -A --env-file=.env --env-file=../.env packages/database/src/seeds/demo.seed.ts` desde `Backend/` (o moverlas a `Backend/.env` y usar `deno task seed:demo`).
 2. **Impacto en la vista del admin de sucursal (A3):** el admin de sucursal ya no puede pedir `/dashboard/metricas`, `/rendimiento`, `/ranking` ni `/inventario` (403). Su vista debe usar `/dashboard/tendencias` u otras fuentes. Avisar a quien construye esa vista.
 3. **GEMINI.md** pide `Result.err(...)`; la API real de `Result` es `Result.fail(...)`. Se usa `fail`.
 4. **Códigos 400 vs 422:** `SEDE_PRINCIPAL_NO_INACTIVABLE`, `SUCURSAL_TIENE_USUARIOS_ACTIVOS`, `AREA_TIENE_EMPLEADOS`, `ULTIMO_SUPER_ADMIN` llegan como 400 (no están en el presenter). El frontend decide por código.
@@ -59,3 +64,4 @@ API reiniciada con el código de la rama: arranca sin errores, `/health` 200, y 
 7. En `openapi.doc.ts` hay endpoints antiguos con parámetros genéricos (`pagina`, `limite`, `activo`) que no aplican; se corrigieron los de usuarios y dashboard.
 8. **Sin indicador de 2FA en la sesión:** `/auth/verificar` y el login no dicen si la cuenta ya tiene 2FA; la pantalla Mi cuenta ofrece configurar y desactivar sin saber el estado actual.
 9. **Tokens en el cuerpo del login:** `POST /auth/login` devuelve `accessToken` y `refreshToken` en el JSON además de las cookies HttpOnly. El frontend no los guarda, pero quedan expuestos a JS; valorar quitarlos del cuerpo.
+10. **Bug preexistente de zona horaria (BD):** los triggers que marcan `tokens_invalidados_en` usan `NOW()` con la zona del servidor MySQL (UTC-5), y la app compara en UTC. Resultado: al cambiar rol/estado de un usuario, sus sesiones abiertas no se cortan hasta ~5 h después. No se tocó (triggers/configuración de BD); solución sugerida: `default-time-zone=+00:00` en MySQL o `UTC_TIMESTAMP()` en los triggers.
