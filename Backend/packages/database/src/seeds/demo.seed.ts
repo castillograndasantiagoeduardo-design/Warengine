@@ -42,6 +42,8 @@ import {
 
 const DIAS_DE_VENTAS = 21;
 const SUPER_ADMIN_EMAIL = 'superadmin@warengine.local';
+/** Misma longitud mínima que exige crearUsuarioSchema para cualquier usuario del sistema. */
+const MIN_PASSWORD = 8;
 
 type Sede = SucursalDemo['clave'] | 'principal';
 
@@ -63,11 +65,11 @@ function leerPassword(): string {
   const password = Deno.env.get('SEED_DEMO_PASSWORD');
   if (!password) {
     throw new Error(
-      '❌ SEED_DEMO_PASSWORD no está definida. Defínela (mín. 12 caracteres) antes de ejecutar seed:demo.',
+      `❌ SEED_DEMO_PASSWORD no está definida. Defínela (mín. ${MIN_PASSWORD} caracteres) antes de ejecutar seed:demo.`,
     );
   }
-  if (password.length < 12) {
-    throw new Error('❌ SEED_DEMO_PASSWORD debe tener al menos 12 caracteres.');
+  if (password.length < MIN_PASSWORD) {
+    throw new Error(`❌ SEED_DEMO_PASSWORD debe tener al menos ${MIN_PASSWORD} caracteres.`);
   }
   return password;
 }
