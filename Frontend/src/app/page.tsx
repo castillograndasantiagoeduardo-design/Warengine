@@ -89,8 +89,8 @@ export default function Home() {
         handleNavigate('inicio');
       }
     };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    addEventListener('keydown', handleKeyDown);
+    return () => removeEventListener('keydown', handleKeyDown);
   }, [activeTab]);
 
   return (
