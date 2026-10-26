@@ -54,16 +54,15 @@ export function AuthCard() {
 
     const rol = resultado?.tipo === 'EXITO' ? resultado.data.usuario.rolNombre : usuario?.rolNombre;
 
-    // Redirección inteligente post-login según el rol estricto
+    // Redirección inteligente post-login según el rol
     if (rol === 'cajero') {
       router.push('/pos');
     } else if (rol === 'admin-sucursal') {
       router.push('/admin-sucursal');
+    } else if (rol === 'super-admin' || rol === 'superadmin') {
+      router.push('/dashboard');
     } else {
-      // Superadministrador u otros roles: No permitir entrar al panel de sucursal
-      setRolError(
-        'Acceso restringido: Has iniciado sesión como Superadministrador. El panel /admin-sucursal está reservado exclusivamente para Administradores de Sucursal (admin-sucursal).'
-      );
+      router.push('/dashboard');
     }
   };
 

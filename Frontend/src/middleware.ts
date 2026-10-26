@@ -83,7 +83,11 @@ export function middleware(request: NextRequest) {
         // Cajero redirigido a su terminal POS
         return NextResponse.redirect(new URL('/pos', request.url));
       }
-      // Super-admin (rolId: 1) o cualquier otro rol no autorizado para el panel de sucursal
+      if (payload.rolId === 1) {
+        // Super-admin redirigido a su panel general
+        return NextResponse.redirect(new URL('/dashboard', request.url));
+      }
+      // Cualquier otro rol no autorizado para el panel de sucursal
       const url = new URL('/acceso', request.url);
       url.searchParams.set('error', 'acceso_denegado_sucursal');
       return NextResponse.redirect(url);
