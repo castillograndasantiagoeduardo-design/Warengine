@@ -22,7 +22,7 @@ export interface PanelMenuItem {
 export const PANEL_MENU: PanelMenuItem[] = [
   { href: '/dashboard', label: 'Inicio', icon: '◆' },
   { href: '/dashboard/sucursales', label: 'Sucursales', icon: '⌂', permiso: PERMISSIONS.ADMIN_GESTIONAR_SUCURSALES },
-  { href: '/dashboard/usuarios', label: 'Usuarios y roles', icon: '⚿', permiso: PERMISSIONS.AUTH_MANAGE_USERS, proximamente: true },
+  { href: '/dashboard/usuarios', label: 'Usuarios y roles', icon: '⚿', permiso: PERMISSIONS.AUTH_MANAGE_USERS },
   { href: '/dashboard/empleados', label: 'Empleados', icon: '☺', permiso: PERMISSIONS.ADMIN_GESTIONAR_PERSONAL },
   { href: '/dashboard/auditoria', label: 'Auditoría', icon: '☰', permiso: PERMISSIONS.AUTH_VIEW_AUDIT, proximamente: true },
   { href: '/dashboard/alertas', label: 'Alertas', icon: '⚠', permiso: PERMISSIONS.ADMIN_GESTIONAR_ALERTAS, proximamente: true },

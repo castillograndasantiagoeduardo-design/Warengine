@@ -142,3 +142,11 @@ export interface UsuarioGestionado {
   /** Sedes autorizadas además de la principal (RF-ADM-C10). */
   sucursalesAdicionales: { id: number; nombre: string }[];
 }
+
+/** GET /administracion/usuarios/:id/sucursales */
+export interface SucursalesDeUsuario {
+  usuarioId: string;
+  principal: { id: number; nombre: string };
+  adicionales: { id: number; nombre: string }[];
+  autorizadas: { id: number; nombre: string }[];
+}
