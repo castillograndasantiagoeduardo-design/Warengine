@@ -84,6 +84,7 @@ import {
   ObtenerEmpleadoPorIdUseCase,
   EditarEmpleadoUseCase,
   ListarUsuariosUseCase,
+  ListarRolesUseCase,
   CrearUsuarioUseCase,
   CambiarRolUsuarioUseCase,
   CambiarEstadoUsuarioUseCase,
@@ -132,6 +133,7 @@ import {
   ConsultarRendimientoSucursalesUseCase,
   ConsultarRankingProductosUseCase,
   ConsultarComparativoInventarioUseCase,
+  ConsultarResumenDashboardUseCase,
   CrearFacturaUseCase,
   ListarFacturasUseCase,
   ObtenerFacturaPorIdUseCase,
@@ -204,6 +206,7 @@ export interface AppContainer {
     obtenerEmpleadoPorId: ObtenerEmpleadoPorIdUseCase;
     editarEmpleado: EditarEmpleadoUseCase;
     listarUsuarios: ListarUsuariosUseCase;
+    listarRoles: ListarRolesUseCase;
     crearUsuario: CrearUsuarioUseCase;
     cambiarRolUsuario: CambiarRolUsuarioUseCase;
     cambiarEstadoUsuario: CambiarEstadoUsuarioUseCase;
@@ -223,6 +226,7 @@ export interface AppContainer {
     consultarRendimientoSucursales: ConsultarRendimientoSucursalesUseCase;
     consultarRankingProductos: ConsultarRankingProductosUseCase;
     consultarComparativoInventario: ConsultarComparativoInventarioUseCase;
+    consultarResumenDashboard: ConsultarResumenDashboardUseCase;
   };
   inventario: {
     listarCategorias: ListarCategoriasUseCase;
@@ -442,12 +446,13 @@ export function createContainer(_env?: Record<string, string>): AppContainer {
   const editarAreaUseCase = new EditarAreaUseCase(areaRepository, auditoriaRepository);
   const eliminarAreaUseCase = new EliminarAreaUseCase(areaRepository, auditoriaRepository);
 
-  const listarEmpleadosUseCase = new ListarEmpleadosUseCase(empleadoRepository);
-  const obtenerEmpleadoPorIdUseCase = new ObtenerEmpleadoPorIdUseCase(empleadoRepository);
+  const listarEmpleadosUseCase = new ListarEmpleadosUseCase(empleadoRepository, resolverAlcanceSucursalUseCase);
+  const obtenerEmpleadoPorIdUseCase = new ObtenerEmpleadoPorIdUseCase(empleadoRepository, resolverAlcanceSucursalUseCase);
   const editarEmpleadoUseCase = new EditarEmpleadoUseCase(
     empleadoRepository,
     areaRepository,
     auditoriaRepository,
+    resolverAlcanceSucursalUseCase,
   );
   const registrarAumentoSalarioUseCase = new RegistrarAumentoSalarioUseCase(
     empleadoRepository,
@@ -473,6 +478,7 @@ export function createContainer(_env?: Record<string, string>): AppContainer {
   );
 
   const listarUsuariosUseCase = new ListarUsuariosUseCase(gestionUsuarioRepository);
+  const listarRolesUseCase = new ListarRolesUseCase(rolRepository);
   const crearUsuarioUseCase = new CrearUsuarioUseCase(
     gestionUsuarioRepository,
     sucursalRepository,
@@ -787,6 +793,7 @@ export function createContainer(_env?: Record<string, string>): AppContainer {
       obtenerEmpleadoPorId: obtenerEmpleadoPorIdUseCase,
       editarEmpleado: editarEmpleadoUseCase,
       listarUsuarios: listarUsuariosUseCase,
+      listarRoles: listarRolesUseCase,
       crearUsuario: crearUsuarioUseCase,
       cambiarRolUsuario: cambiarRolUsuarioUseCase,
       cambiarEstadoUsuario: cambiarEstadoUsuarioUseCase,
@@ -819,6 +826,10 @@ export function createContainer(_env?: Record<string, string>): AppContainer {
       ),
       consultarComparativoInventario: new ConsultarComparativoInventarioUseCase(
         resolverAlcanceSucursalUseCase,
+        metricasAdminRepository,
+      ),
+      consultarResumenDashboard: new ConsultarResumenDashboardUseCase(
+        metricasAdminRepository,
         metricasAdminRepository,
       ),
     },

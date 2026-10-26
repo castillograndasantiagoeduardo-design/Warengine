@@ -44,3 +44,8 @@ Thumbs.db
 
 # Drizzle cache
 Backend/packages/database/.drizzle/
+
+# Claude / Anthropic (contexto local de IA)
+CLAUDE.md
+claude.md
+.claude/

@@ -48,15 +48,20 @@ export function AlcanceSection({
     }, 700);
   };
 
+  const onThemeChangeRef = useRef(onThemeChange);
+  useEffect(() => {
+    onThemeChangeRef.current = onThemeChange;
+  }, [onThemeChange]);
+
   useEffect(() => {
     if (isVisible) {
-      onThemeChange(SLIDES[index]);
+      onThemeChangeRef.current(SLIDES[index]);
       const timer = setTimeout(() => {
         triggerBurst(SLIDES[index].c);
       }, 120);
       return () => clearTimeout(timer);
     }
-  }, [isVisible, index, onThemeChange]);
+  }, [isVisible, index]);
 
   const handlePointerDown = (e: React.PointerEvent) => {
     const target = e.target as HTMLElement;

@@ -3,6 +3,8 @@ import {
   FiltrosUsuarios,
   IGestionUsuarioRepository,
   ListarUsuariosUseCase,
+  PaginacionUsuarios,
+  ResultadoPaginaUsuarios,
   UsuarioGestionado,
 } from '../../mod.ts';
 
@@ -20,6 +22,10 @@ class FakeGestionUsuarioRepository implements Partial<IGestionUsuarioRepository>
       resultado = resultado.filter((u) => u.sucursalId === filtros.sucursalId);
     }
 
+    if (filtros.isActive !== undefined) {
+      resultado = resultado.filter((u) => u.isActive === filtros.isActive);
+    }
+
     const termino = (filtros.busqueda ?? filtros.texto)?.trim().toLowerCase();
     if (termino) {
       resultado = resultado.filter(
@@ -30,6 +36,15 @@ class FakeGestionUsuarioRepository implements Partial<IGestionUsuarioRepository>
     }
 
     return Promise.resolve(resultado);
+  }
+
+  public async listarPaginado(
+    filtros: FiltrosUsuarios,
+    paginacion: PaginacionUsuarios,
+  ): Promise<ResultadoPaginaUsuarios> {
+    const todos = await this.listar(filtros);
+    const inicio = (paginacion.pagina - 1) * paginacion.limite;
+    return { items: todos.slice(inicio, inicio + paginacion.limite), total: todos.length };
   }
 }
 
@@ -48,7 +63,7 @@ Deno.test('RF-ADM-C16: Listar usuarios sin filtros retorna la totalidad', async 
   const result = await useCase.execute({});
 
   assertEquals(result.isSuccess, true);
-  assertEquals(result.value.length, 4);
+  assertEquals(result.value.items.length, 4);
 });
 
 Deno.test('RF-ADM-C16: Buscar usuarios por coincidencia en el nombre', async () => {
@@ -59,8 +74,8 @@ Deno.test('RF-ADM-C16: Buscar usuarios por coincidencia en el nombre', async () 
   const result = await useCase.execute({ busqueda: 'castillo' });
 
   assertEquals(result.isSuccess, true);
-  assertEquals(result.value.length, 1);
-  assertEquals(result.value[0].nombre, 'Santiago Castillo');
+  assertEquals(result.value.items.length, 1);
+  assertEquals(result.value.items[0].nombre, 'Santiago Castillo');
 });
 
 Deno.test('RF-ADM-C16: Buscar usuarios por coincidencia en el correo electrónico', async () => {
@@ -71,8 +86,8 @@ Deno.test('RF-ADM-C16: Buscar usuarios por coincidencia en el correo electrónic
   const result = await useCase.execute({ texto: 'carlos.ventas' });
 
   assertEquals(result.isSuccess, true);
-  assertEquals(result.value.length, 1);
-  assertEquals(result.value[0].email, 'carlos.ventas@warengine.local');
+  assertEquals(result.value.items.length, 1);
+  assertEquals(result.value.items[0].email, 'carlos.ventas@warengine.local');
 });
 
 Deno.test('RF-ADM-C16: Combinar búsqueda textual con filtro de rol', async () => {
@@ -88,8 +103,8 @@ Deno.test('RF-ADM-C16: Combinar búsqueda textual con filtro de rol', async () =
   });
 
   assertEquals(result.isSuccess, true);
-  assertEquals(result.value.length, 1);
-  assertEquals(result.value[0].email, 'ana.gomez@warengine.local');
+  assertEquals(result.value.items.length, 1);
+  assertEquals(result.value.items[0].email, 'ana.gomez@warengine.local');
 });
 
 Deno.test('RF-ADM-C16: Combinar búsqueda textual con filtro de sucursal', async () => {
@@ -105,8 +120,8 @@ Deno.test('RF-ADM-C16: Combinar búsqueda textual con filtro de sucursal', async
   });
 
   assertEquals(result.isSuccess, true);
-  assertEquals(result.value.length, 2);
-  assertEquals(result.value.map((u) => u.nombre), ['Santiago Castillo', 'Carlos Cajero']);
+  assertEquals(result.value.items.length, 2);
+  assertEquals(result.value.items.map((u) => u.nombre), ['Santiago Castillo', 'Carlos Cajero']);
 });
 
 Deno.test('RF-ADM-C16: Búsqueda sin coincidencias retorna lista vacía', async () => {
@@ -117,5 +132,51 @@ Deno.test('RF-ADM-C16: Búsqueda sin coincidencias retorna lista vacía', async 
   const result = await useCase.execute({ busqueda: 'no-existe-xyz' });
 
   assertEquals(result.isSuccess, true);
-  assertEquals(result.value.length, 0);
+  assertEquals(result.value.items.length, 0);
+});
+
+Deno.test('RF-ADM-C5: Paginación devuelve la página pedida y metadatos { total, pagina, limite, totalPaginas }', async () => {
+  const repo = new FakeGestionUsuarioRepository();
+  repo.usuarios = [...mockUsuarios];
+
+  const useCase = new ListarUsuariosUseCase(repo as unknown as IGestionUsuarioRepository);
+  const result = await useCase.execute({ pagina: 2, limite: 3 });
+
+  assertEquals(result.isSuccess, true);
+  assertEquals(result.value.items.length, 1);
+  assertEquals(result.value.items[0].id, 'u-4');
+  assertEquals(result.value.total, 4);
+  assertEquals(result.value.pagina, 2);
+  assertEquals(result.value.limite, 3);
+  assertEquals(result.value.totalPaginas, 2);
+});
+
+Deno.test('RF-ADM-C5: Sin paginación explícita usa página 1 y límite 20', async () => {
+  const repo = new FakeGestionUsuarioRepository();
+  repo.usuarios = [...mockUsuarios];
+
+  const useCase = new ListarUsuariosUseCase(repo as unknown as IGestionUsuarioRepository);
+  const result = await useCase.execute();
+
+  assertEquals(result.value.pagina, 1);
+  assertEquals(result.value.limite, 20);
+  assertEquals(result.value.totalPaginas, 1);
+});
+
+Deno.test('RF-ADM-C5: Filtro por estado combinable con rol y sucursal', async () => {
+  const repo = new FakeGestionUsuarioRepository();
+  repo.usuarios = [...mockUsuarios];
+
+  const useCase = new ListarUsuariosUseCase(repo as unknown as IGestionUsuarioRepository);
+  const result = await useCase.execute({ isActive: false, sucursalId: 2 });
+
+  assertEquals(result.value.items.map((u) => u.id), ['u-4']);
+  assertEquals(result.value.total, 1);
+});
+
+Deno.test('RF-ADM-C10: El usuario expone sus sedes adicionales', () => {
+  const usuario = new UsuarioGestionado('u-9', 'Multi Sede', 'multi@warengine.local', 2, 'admin-sucursal', 1, 'Sede Principal', true, [
+    { id: 2, nombre: 'Sede Norte' },
+  ]);
+  assertEquals(usuario.sucursalesAdicionales, [{ id: 2, nombre: 'Sede Norte' }]);
 });

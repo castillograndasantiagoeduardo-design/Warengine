@@ -212,8 +212,8 @@ export function AuthProvider({
   const tienePermiso = useCallback(
     (permiso: string): boolean => {
       if (!usuario) return false;
-      // SuperAdmin posee acceso universal
-      if (usuario.rolNombre === 'super-admin' || usuario.rolId === 1) return true;
+      // Autorización por permisos reales de la sesión para todos los roles (RF-SA-E4):
+      // el super-admin recibe del backend la lista completa, no hay atajo por rol.
       return permisos.includes(permiso);
     },
     [usuario, permisos],

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Navbar, type TabType } from '@/components/ui/Navbar';
 import { NoiseOverlay } from '@/components/ui/NoiseOverlay';
 import {
@@ -26,31 +26,56 @@ export default function Home() {
   const [selectedPlanIndex, setSelectedPlanIndex] = useState<number>(-1);
   const [theme, setTheme] = useState<ThemeColors>(INITIAL_THEME);
 
-  const handleNavigate = (tab: TabType) => {
+  const handleNavigate = useCallback((tab: TabType) => {
     setActiveTab(tab);
     if (tab === 'inicio' || tab === 'planes') {
-      setTheme(INITIAL_THEME);
+      setTheme((prev) =>
+        prev.c === INITIAL_THEME.c &&
+        prev.k === INITIAL_THEME.k &&
+        prev.tc === INITIAL_THEME.tc &&
+        prev.fg === INITIAL_THEME.fg
+          ? prev
+          : INITIAL_THEME
+      );
     } else if (tab === 'alcance') {
       const first = SLIDES[0];
-      setTheme({
-        c: first.c,
-        k: first.k,
-        tc: first.tc,
-        fg: first.fg,
+      setTheme((prev) => {
+        if (
+          prev.c === first.c &&
+          prev.k === first.k &&
+          prev.tc === first.tc &&
+          prev.fg === first.fg
+        ) {
+          return prev;
+        }
+        return {
+          c: first.c,
+          k: first.k,
+          tc: first.tc,
+          fg: first.fg,
+        };
       });
     }
-  };
+  }, []);
 
-  const handleSlideThemeChange = (slide: SlideData) => {
-    if (activeTab === 'alcance') {
-      setTheme({
+  const handleSlideThemeChange = useCallback((slide: SlideData) => {
+    setTheme((prev) => {
+      if (
+        prev.c === slide.c &&
+        prev.k === slide.k &&
+        prev.tc === slide.tc &&
+        prev.fg === slide.fg
+      ) {
+        return prev;
+      }
+      return {
         c: slide.c,
         k: slide.k,
         tc: slide.tc,
         fg: slide.fg,
-      });
-    }
-  };
+      };
+    });
+  }, []);
 
   const handleSelectPlanFromAlcance = (slideIndex: number) => {
     setSelectedPlanIndex(slideIndex);

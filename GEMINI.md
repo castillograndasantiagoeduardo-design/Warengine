@@ -89,6 +89,9 @@ Cualquier cambio de código debe respetar estrictamente estas directrices:
 * No intentar "borrar" o "modificar" movimientos de inventario: siempre se inserta un `ajuste_entrada` o `ajuste_salida`.
 * La Sede Principal tiene `id_sucursal: 1` y está reservada para el sistema.
 
+### Regla 7: Mantenimiento Continuo de Contexto (`CLAUDE.md`)
+* Al implementar cualquier nuevo módulo, endpoint, migración de BD, variable de entorno, comando en `deno.json`/`package.json` o pantalla en el frontend, **es OBLIGATORIO actualizar `CLAUDE.md`** para mantenerlo siempre sincronizado con el estado real del proyecto antes de finalizar la tarea.
+
 ---
 
 ## 4. Tareas y Comandos del Proyecto

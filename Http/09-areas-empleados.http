@@ -311,3 +311,33 @@ Authorization: Bearer {{login.response.body.accessToken}}
 # Resultado esperado: 200 OK con eventos 'editar' de empleados
 GET {{baseUrl}}/administracion/auditoria?entidad=empleados
 Authorization: Bearer {{login.response.body.accessToken}}
+
+###
+
+# ------------------------------------------------------------------------------
+# ALCANCE POR SUCURSAL (RNF-ADM-04)
+# Un admin de sucursal solo lista, consulta y edita empleados de sus sedes;
+# el Super Admin (permiso administracion:ver-metricas-globales) ve todas.
+# ------------------------------------------------------------------------------
+
+### Login admin de sucursal (seed demo)
+# @name loginAdminNorte
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "admin.norte@warengine.local",
+  "password": "{{$processEnv SEED_DEMO_PASSWORD}}"
+}
+
+###
+
+### Empleados vistos por el admin de Sede Norte (esperado: solo empleados de Sede Norte)
+GET {{baseUrl}}/administracion/empleados
+Authorization: Bearer {{loginAdminNorte.response.body.accessToken}}
+
+###
+
+### Pedir otra sede (esperado: 403 SUCURSAL_FUERA_DE_ALCANCE)
+GET {{baseUrl}}/administracion/empleados?sucursalId=1
+Authorization: Bearer {{loginAdminNorte.response.body.accessToken}}

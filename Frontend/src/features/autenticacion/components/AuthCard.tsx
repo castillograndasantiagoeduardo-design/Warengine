@@ -12,7 +12,7 @@
  * Mantiene intacto el 100% del diseño neumórfico original, colores corporativos y animaciones.
  */
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '../hooks/useAuth';
 import { LoginForm } from './LoginForm';
@@ -27,6 +27,18 @@ export function AuthCard() {
   const router = useRouter();
   const { paso2FA, usuario } = useAuth();
   const [mode, setMode] = useState<AuthMode>('login');
+  const [rolError, setRolError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('error') === 'acceso_denegado_sucursal') {
+        setRolError(
+          'Acceso restringido: El dashboard actual está reservado exclusivamente para cuentas con rol "admin-sucursal". Inicie sesión con una cuenta de Administrador de Sucursal.'
+        );
+      }
+    }
+  }, []);
 
   const isLogin = mode === 'login';
 
@@ -42,11 +54,15 @@ export function AuthCard() {
 
     const rol = resultado?.tipo === 'EXITO' ? resultado.data.usuario.rolNombre : usuario?.rolNombre;
 
-    // Redirección inteligente post-login según el rol del empleado
+    // Redirección inteligente post-login según el rol
     if (rol === 'cajero') {
       router.push('/pos');
     } else if (rol === 'vendedor-b2b') {
       router.push('/vendedor-b2b');
+    } else if (rol === 'admin-sucursal') {
+      router.push('/admin-sucursal');
+    } else if (rol === 'super-admin' || rol === 'superadmin') {
+      router.push('/dashboard');
     } else {
       router.push('/dashboard');
     }
@@ -54,6 +70,29 @@ export function AuthCard() {
 
   return (
     <div className="relative w-full max-w-[780px] mx-auto px-3 sm:px-4">
+      {/* Banner de restricción de rol */}
+      {rolError && (
+        <div
+          role="alert"
+          className="mb-4 p-4 rounded-2xl bg-amber-950/80 border border-amber-500/40 text-amber-200 text-xs font-[family-name:var(--font-archivo)] shadow-2xl flex items-start gap-3 backdrop-blur-md animate-in fade-in duration-300"
+        >
+          <span className="text-xl leading-none">⚠️</span>
+          <div className="flex-1">
+            <h4 className="font-semibold text-amber-400 uppercase tracking-wider text-xs font-[family-name:var(--font-pixelify)] mb-1">
+              Restricción de Perfil y Acceso
+            </h4>
+            <p className="leading-relaxed text-amber-200/90">{rolError}</p>
+          </div>
+          <button
+            onClick={() => setRolError(null)}
+            className="text-amber-400 hover:text-white transition-colors text-xs font-mono px-1.5 py-0.5 rounded cursor-pointer"
+            aria-label="Cerrar aviso"
+          >
+            ✕
+          </button>
+        </div>
+      )}
+
       {/* Anunciador aria-live para accesibilidad de lectores de pantalla */}
       <div className="sr-only" aria-live="polite">
         {paso2FA

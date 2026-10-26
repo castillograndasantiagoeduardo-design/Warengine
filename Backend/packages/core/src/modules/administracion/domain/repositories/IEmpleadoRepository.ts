@@ -17,6 +17,8 @@ import { Empleado } from '../entities/Empleado.ts';
 
 export interface FiltrosEmpleados {
   sucursalId?: number;
+  /** Acota a estas sedes (alcance del usuario, RNF-ADM-04). */
+  sucursalIds?: number[];
   areaId?: number;
   isActive?: boolean;
 }

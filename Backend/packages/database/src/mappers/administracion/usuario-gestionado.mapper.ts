@@ -1,4 +1,4 @@
-import { UsuarioGestionado } from '@warengine/core';
+import { SedeAdicional, UsuarioGestionado } from '@warengine/core';
 
 export interface FilaUsuarioGestionado {
   id: string;
@@ -11,7 +11,10 @@ export interface FilaUsuarioGestionado {
   isActive: number;
 }
 
-export function usuarioGestionadoFromRow(row: FilaUsuarioGestionado): UsuarioGestionado {
+export function usuarioGestionadoFromRow(
+  row: FilaUsuarioGestionado,
+  sucursalesAdicionales: SedeAdicional[] = [],
+): UsuarioGestionado {
   return new UsuarioGestionado(
     row.id,
     row.nombre,
@@ -21,5 +24,6 @@ export function usuarioGestionadoFromRow(row: FilaUsuarioGestionado): UsuarioGes
     row.sucursalId,
     row.sucursalNombre,
     row.isActive === 1,
+    sucursalesAdicionales,
   );
 }

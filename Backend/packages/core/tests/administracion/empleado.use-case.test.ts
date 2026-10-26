@@ -14,8 +14,10 @@
  */
 
 import { assertEquals } from 'jsr:@std/assert@^1';
+import { Result } from '@warengine/shared-kernel';
 import {
   ActorAuditoria,
+  AlcanceSucursal,
   Area,
   AreaNoEncontradaError,
   AreaNoPerteneceASucursalError,
@@ -28,9 +30,16 @@ import {
   IEmpleadoRepository,
   ListarEmpleadosUseCase,
   ObtenerEmpleadoPorIdUseCase,
+  ResolverAlcanceSucursalUseCase,
 } from '../../mod.ts';
 
 const actor: ActorAuditoria = { usuarioId: 'admin-1', ip: '192.168.1.1' };
+
+/** Resolver de alcance falso: global (Super Admin) o limitado a ciertas sedes. */
+function alcance(sedes?: number[]): ResolverAlcanceSucursalUseCase {
+  const valor = sedes ? AlcanceSucursal.limitado(sedes) : AlcanceSucursal.global();
+  return { execute: () => Promise.resolve(Result.ok(valor)) } as unknown as ResolverAlcanceSucursalUseCase;
+}
 
 function crearAuditorFalso() {
   const eventos: EventoAuditoria[] = [];
@@ -92,6 +101,9 @@ function crearEmpleadoRepoFalso(empleadosIniciales: Empleado[] = [crearEmpleadoE
       if (filtros?.sucursalId !== undefined) {
         res = res.filter((e) => e.sucursalId === filtros.sucursalId);
       }
+      if (filtros?.sucursalIds !== undefined) {
+        res = res.filter((e) => filtros.sucursalIds!.includes(e.sucursalId));
+      }
       if (filtros?.areaId !== undefined) {
         res = res.filter((e) => e.areaId === filtros.areaId);
       }
@@ -131,13 +143,13 @@ Deno.test('ListarEmpleadosUseCase - lista con y sin filtros', async () => {
     crearEmpleadoEjemplo('emp-1', 1, 1),
     crearEmpleadoEjemplo('emp-2', 2, 3),
   ]);
-  const useCase = new ListarEmpleadosUseCase(repo);
+  const useCase = new ListarEmpleadosUseCase(repo, alcance());
 
-  const resTodos = await useCase.execute();
+  const resTodos = await useCase.execute({ usuarioId: 'sa' });
   assertEquals(resTodos.isSuccess, true);
   assertEquals(resTodos.value.length, 2);
 
-  const resSucursal = await useCase.execute({ sucursalId: 1 });
+  const resSucursal = await useCase.execute({ sucursalId: 1, usuarioId: 'sa' });
   assertEquals(resSucursal.isSuccess, true);
   assertEquals(resSucursal.value.length, 1);
   assertEquals(resSucursal.value[0].id, 'emp-1');
@@ -145,13 +157,13 @@ Deno.test('ListarEmpleadosUseCase - lista con y sin filtros', async () => {
 
 Deno.test('ObtenerEmpleadoPorIdUseCase - consulta por ID y valida inexistente', async () => {
   const repo = crearEmpleadoRepoFalso();
-  const useCase = new ObtenerEmpleadoPorIdUseCase(repo);
+  const useCase = new ObtenerEmpleadoPorIdUseCase(repo, alcance());
 
-  const resOk = await useCase.execute({ id: 'emp-1' });
+  const resOk = await useCase.execute({ id: 'emp-1', usuarioId: 'sa' });
   assertEquals(resOk.isSuccess, true);
   assertEquals(resOk.value.nombre, 'Carlos Rodriguez');
 
-  const resNoExiste = await useCase.execute({ id: 'inexistente' });
+  const resNoExiste = await useCase.execute({ id: 'inexistente', usuarioId: 'sa' });
   assertEquals(resNoExiste.isFailure, true);
   assertEquals(resNoExiste.error instanceof EmpleadoNoEncontradoError, true);
 });
@@ -160,7 +172,7 @@ Deno.test('EditarEmpleadoUseCase - rechaza si el empleado no existe', async () =
   const empleadoRepo = crearEmpleadoRepoFalso();
   const areaRepo = crearAreaRepoFalso();
   const { auditor } = crearAuditorFalso();
-  const useCase = new EditarEmpleadoUseCase(empleadoRepo, areaRepo, auditor);
+  const useCase = new EditarEmpleadoUseCase(empleadoRepo, areaRepo, auditor, alcance());
 
   const res = await useCase.execute({ id: 'no-existe', cargo: 'Jefe', actor });
   assertEquals(res.isFailure, true);
@@ -171,7 +183,7 @@ Deno.test('EditarEmpleadoUseCase - rechaza si el área no existe o es de otra su
   const empleadoRepo = crearEmpleadoRepoFalso(); // empleado está en sucursal 1
   const areaRepo = crearAreaRepoFalso();
   const { auditor } = crearAuditorFalso();
-  const useCase = new EditarEmpleadoUseCase(empleadoRepo, areaRepo, auditor);
+  const useCase = new EditarEmpleadoUseCase(empleadoRepo, areaRepo, auditor, alcance());
 
   // Área inexistente
   const resAreaNoExiste = await useCase.execute({ id: 'emp-1', areaId: 999, actor });
@@ -188,7 +200,7 @@ Deno.test('EditarEmpleadoUseCase - edita datos válidos y emite auditoría difer
   const empleadoRepo = crearEmpleadoRepoFalso();
   const areaRepo = crearAreaRepoFalso();
   const { auditor, eventos } = crearAuditorFalso();
-  const useCase = new EditarEmpleadoUseCase(empleadoRepo, areaRepo, auditor);
+  const useCase = new EditarEmpleadoUseCase(empleadoRepo, areaRepo, auditor, alcance());
 
   const res = await useCase.execute({
     id: 'emp-1',
@@ -215,4 +227,35 @@ Deno.test('EditarEmpleadoUseCase - edita datos válidos y emite auditoría difer
   assertEquals(detalles.despues.telefono, '3119998877');
   assertEquals(detalles.antes.areaId, 1);
   assertEquals(detalles.despues.areaId, 2);
+});
+
+Deno.test('RNF-ADM-04: un admin de sucursal solo lista empleados de sus sedes', async () => {
+  const repo = crearEmpleadoRepoFalso([crearEmpleadoEjemplo('emp-1', 1, 1), crearEmpleadoEjemplo('emp-2', 2, 3)]);
+  const useCase = new ListarEmpleadosUseCase(repo, alcance([2]));
+
+  const res = await useCase.execute({ usuarioId: 'admin-norte' });
+  assertEquals(res.value.map((e) => e.id), ['emp-2']);
+
+  const fuera = await useCase.execute({ usuarioId: 'admin-norte', sucursalId: 1 });
+  assertEquals(fuera.isFailure, true);
+  assertEquals(fuera.error.code, 'SUCURSAL_FUERA_DE_ALCANCE');
+});
+
+Deno.test('RNF-ADM-04: sin sedes asignadas la lista es vacía', async () => {
+  const useCase = new ListarEmpleadosUseCase(crearEmpleadoRepoFalso(), alcance([]));
+  const res = await useCase.execute({ usuarioId: 'sin-sede' });
+  assertEquals(res.value, []);
+});
+
+Deno.test('RNF-ADM-04: no se puede ver ni editar un empleado de otra sede', async () => {
+  const { auditor, eventos } = crearAuditorFalso();
+  const obtener = new ObtenerEmpleadoPorIdUseCase(crearEmpleadoRepoFalso(), alcance([2]));
+  const editar = new EditarEmpleadoUseCase(crearEmpleadoRepoFalso(), crearAreaRepoFalso(), auditor, alcance([2]));
+
+  const ver = await obtener.execute({ id: 'emp-1', usuarioId: 'admin-norte' });
+  assertEquals(ver.error.code, 'SUCURSAL_FUERA_DE_ALCANCE');
+
+  const cambio = await editar.execute({ id: 'emp-1', cargo: 'Intruso', actor: { usuarioId: 'admin-norte', ip: null } });
+  assertEquals(cambio.error.code, 'SUCURSAL_FUERA_DE_ALCANCE');
+  assertEquals(eventos.length, 0);
 });
