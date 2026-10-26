@@ -1,3 +1,9 @@
+/** Sede autorizada adicional a la principal (RF-ADM-C10). */
+export interface SedeAdicional {
+  id: number;
+  nombre: string;
+}
+
 /** Modelo de lectura para que el Super Admin gestione usuarios (nunca expone el hash). */
 export class UsuarioGestionado {
   constructor(
@@ -9,6 +15,7 @@ export class UsuarioGestionado {
     public readonly sucursalId: number,
     public readonly sucursalNombre: string,
     public readonly isActive: boolean,
+    public readonly sucursalesAdicionales: SedeAdicional[] = [],
   ) {}
 
   /** Debe coincidir con ROLES.SUPER_ADMIN de @warengine/contracts. */

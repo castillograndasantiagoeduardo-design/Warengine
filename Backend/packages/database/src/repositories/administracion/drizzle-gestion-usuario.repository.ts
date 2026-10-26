@@ -1,4 +1,4 @@
-import { and, count, eq, exists, like, or, type SQL } from 'drizzle-orm';
+import { and, count, eq, exists, inArray, like, or, type SQL } from 'drizzle-orm';
 import { Database } from '../../client.ts';
 import { empleados, sucursales } from '../../schema/administracion.schema.ts';
 import { refresh_tokens, roles, usuario_sucursales, usuarios } from '../../schema/autenticacion.schema.ts';
@@ -6,6 +6,9 @@ import {
   FiltrosUsuarios,
   IGestionUsuarioRepository,
   NuevoUsuarioData,
+  PaginacionUsuarios,
+  ResultadoPaginaUsuarios,
+  SedeAdicional,
   UsuarioGestionado,
 } from '@warengine/core';
 import { usuarioGestionadoFromRow } from '../../mappers/administracion/usuario-gestionado.mapper.ts';
@@ -35,8 +38,62 @@ export class DrizzleGestionUsuarioRepository implements IGestionUsuarioRepositor
   }
 
   public async listar(filtros: FiltrosUsuarios): Promise<UsuarioGestionado[]> {
+    const condiciones = this.condiciones(filtros);
+    const rows = await this.consulta()
+      .where(condiciones.length > 0 ? and(...condiciones) : undefined)
+      .orderBy(empleados.nombre);
+    return rows.map((row) => usuarioGestionadoFromRow(row));
+  }
+
+  public async listarPaginado(
+    filtros: FiltrosUsuarios,
+    paginacion: PaginacionUsuarios,
+  ): Promise<ResultadoPaginaUsuarios> {
+    const condiciones = this.condiciones(filtros);
+    const where = condiciones.length > 0 ? and(...condiciones) : undefined;
+
+    const [conteo] = await this.db
+      .select({ total: count() })
+      .from(usuarios)
+      .innerJoin(empleados, eq(usuarios.empleado_id, empleados.id_empleado))
+      .where(where);
+
+    const rows = await this.consulta()
+      .where(where)
+      .orderBy(empleados.nombre)
+      .limit(paginacion.limite)
+      .offset((paginacion.pagina - 1) * paginacion.limite);
+
+    const adicionales = await this.sucursalesAdicionalesDe(rows.map((r) => r.id));
+    // La principal se muestra aparte: aquí solo van las sedes extra autorizadas
+    const items = rows.map((row) =>
+      usuarioGestionadoFromRow(row, (adicionales.get(row.id) ?? []).filter((s) => s.id !== row.sucursalId))
+    );
+
+    return { items, total: Number(conteo?.total ?? 0) };
+  }
+
+  private async sucursalesAdicionalesDe(ids: string[]): Promise<Map<string, SedeAdicional[]>> {
+    const mapa = new Map<string, SedeAdicional[]>();
+    if (ids.length === 0) return mapa;
+    const filas = await this.db
+      .select({ usuarioId: usuario_sucursales.usuario_id, id: sucursales.id_sucursal, nombre: sucursales.nombre })
+      .from(usuario_sucursales)
+      .innerJoin(sucursales, eq(usuario_sucursales.sucursal_id, sucursales.id_sucursal))
+      .where(inArray(usuario_sucursales.usuario_id, ids));
+    for (const f of filas) {
+      const lista = mapa.get(f.usuarioId) ?? [];
+      lista.push({ id: f.id, nombre: f.nombre });
+      mapa.set(f.usuarioId, lista);
+    }
+    return mapa;
+  }
+
+  /** Filtros combinables (RF-ADM-C5, C16): rol, sucursal (principal o adicional), estado y texto. */
+  private condiciones(filtros: FiltrosUsuarios): SQL[] {
     const condiciones: SQL[] = [];
     if (filtros.rolId) condiciones.push(eq(usuarios.rol_id, filtros.rolId));
+    if (filtros.isActive !== undefined) condiciones.push(eq(usuarios.is_active, filtros.isActive ? 1 : 0));
     if (filtros.sucursalId) {
       // Pertenece a la sucursal si es su principal O si la tiene entre las adicionales (RF-ADM-C10).
       const enAdicionales = exists(
@@ -64,10 +121,7 @@ export class DrizzleGestionUsuarioRepository implements IGestionUsuarioRepositor
       );
     }
 
-    const rows = await this.consulta()
-      .where(condiciones.length > 0 ? and(...condiciones) : undefined)
-      .orderBy(empleados.nombre);
-    return rows.map(usuarioGestionadoFromRow);
+    return condiciones;
   }
 
   public async findById(id: string): Promise<UsuarioGestionado | null> {

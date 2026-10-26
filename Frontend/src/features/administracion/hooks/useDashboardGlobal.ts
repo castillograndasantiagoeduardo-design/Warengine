@@ -54,17 +54,23 @@ export function useDashboardGlobal() {
 
   // Datos de contexto que no dependen del rango de fechas
   const sucursales = useRecurso(() => sucursalesService.listar(), []);
-  const usuarios = useRecurso(() => usuariosService.listar(), []);
+  // Solo se necesitan los totales: se piden páginas de 1 elemento
+  const usuarios = useRecurso(async () => {
+    const [todos, activos] = await Promise.all([
+      usuariosService.listar({ limite: 1 }),
+      usuariosService.listar({ limite: 1, isActive: 'true' }),
+    ]);
+    return { totales: todos.total, activos: activos.total };
+  }, []);
   const alertasStock = useRecurso(() => dashboardService.contarAlertasStock(sucursalId), [sucursalId]);
 
   const resumenOrganizacion = useMemo(() => {
     const listaSucursales = sucursales.data ?? [];
-    const listaUsuarios = usuarios.data ?? [];
     return {
       sucursalesActivas: listaSucursales.filter((s) => s.isActive).length,
       sucursalesTotales: listaSucursales.length,
-      usuariosActivos: listaUsuarios.filter((u) => u.isActive).length,
-      usuariosTotales: listaUsuarios.length,
+      usuariosActivos: usuarios.data?.activos ?? 0,
+      usuariosTotales: usuarios.data?.totales ?? 0,
     };
   }, [sucursales.data, usuarios.data]);
 

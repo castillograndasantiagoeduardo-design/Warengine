@@ -24,15 +24,24 @@ export const restablecerPasswordSchema = z.object({
     .max(128, { message: 'La contraseña no puede superar los 128 caracteres.' }),
 });
 // Vienen por query string, por eso coerce
+// RF-ADM-C5 / C16: filtros combinables + paginación (respuesta { items, total, pagina, limite, totalPaginas })
 export const filtrosUsuariosSchema = z.object({
   rolId: z.coerce.number().int().positive().optional(),
   sucursalId: z.coerce.number().int().positive().optional(),
   busqueda: z.string().trim().optional(),
   texto: z.string().trim().optional(),
+  isActive: z
+    .enum(['true', 'false', '1', '0'])
+    .transform((val) => val === 'true' || val === '1')
+    .optional(),
+  pagina: z.coerce.number().int().min(1).default(1),
+  limite: z.coerce.number().int().min(1).max(100).default(20),
 });
 
 export type CrearUsuarioInput = z.infer<typeof crearUsuarioSchema>;
 export type CambiarRolInput = z.infer<typeof cambiarRolSchema>;
 export type CambiarEstadoInput = z.infer<typeof cambiarEstadoSchema>;
 export type FiltrosUsuariosInput = z.infer<typeof filtrosUsuariosSchema>;
+/** Forma de los query params antes de aplicar defaults (lo que envía el cliente). */
+export type FiltrosUsuariosQuery = z.input<typeof filtrosUsuariosSchema>;
 export type RestablecerPasswordInput = z.infer<typeof restablecerPasswordSchema>;
