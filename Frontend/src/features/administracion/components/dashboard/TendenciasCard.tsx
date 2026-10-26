@@ -31,8 +31,99 @@ interface TendenciasCardProps {
   onAgrupacionChange: (a: AgrupacionTendencia) => void;
 }
 
+function normalizarPuntosTendencia(
+  puntos: PuntoTendenciaVenta[] | null,
+  agrupacion: AgrupacionTendencia,
+): PuntoTendenciaVenta[] {
+  if (!puntos || puntos.length === 0) return [];
+  if (puntos.length >= 7) return puntos;
+
+  const mapa = new Map(puntos.map((p) => [p.periodo, p]));
+  const ultimoPunto = puntos[puntos.length - 1];
+
+  if (agrupacion === 'dia') {
+    const fechaRef = new Date(
+      /^\d{4}-\d{2}-\d{2}/.test(ultimoPunto.periodo)
+        ? `${ultimoPunto.periodo.slice(0, 10)}T12:00:00`
+        : new Date(),
+    );
+    const resultado: PuntoTendenciaVenta[] = [];
+    const diasTotal = 7;
+    for (let i = diasTotal - 1; i >= 0; i--) {
+      const d = new Date(fechaRef);
+      d.setDate(d.getDate() - i);
+      const iso = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+      const existente = mapa.get(iso);
+      if (existente) {
+        resultado.push(existente);
+      } else {
+        resultado.push({
+          periodo: iso,
+          totalVentas: 0,
+          totalGanancias: 0,
+          cantidadFacturas: 0,
+        });
+      }
+    }
+    return resultado;
+  }
+
+  if (agrupacion === 'semana') {
+    if (puntos.length < 4) {
+      const semanaMatch = /^(\d{4})-W(\d{1,2})$/.exec(ultimoPunto.periodo);
+      const anio = semanaMatch ? Number(semanaMatch[1]) : 2026;
+      const semActual = semanaMatch ? Number(semanaMatch[2]) : 42;
+      const resultado: PuntoTendenciaVenta[] = [];
+      for (let i = 3; i >= 0; i--) {
+        const numSem = Math.max(1, semActual - i);
+        const iso = `${anio}-W${String(numSem).padStart(2, '0')}`;
+        const existente = mapa.get(iso);
+        if (existente) {
+          resultado.push(existente);
+        } else {
+          resultado.push({
+            periodo: iso,
+            totalVentas: 0,
+            totalGanancias: 0,
+            cantidadFacturas: 0,
+          });
+        }
+      }
+      return resultado;
+    }
+  }
+
+  if (agrupacion === 'mes') {
+    if (puntos.length < 4) {
+      const mesMatch = /^(\d{4})-(\d{2})$/.exec(ultimoPunto.periodo);
+      const anio = mesMatch ? Number(mesMatch[1]) : 2026;
+      const mes = mesMatch ? Number(mesMatch[2]) - 1 : 9;
+      const ref = new Date(anio, mes, 1, 12, 0, 0);
+      const resultado: PuntoTendenciaVenta[] = [];
+      for (let i = 5; i >= 0; i--) {
+        const d = new Date(ref.getFullYear(), ref.getMonth() - i, 1);
+        const iso = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+        const existente = mapa.get(iso);
+        if (existente) {
+          resultado.push(existente);
+        } else {
+          resultado.push({
+            periodo: iso,
+            totalVentas: 0,
+            totalGanancias: 0,
+            cantidadFacturas: 0,
+          });
+        }
+      }
+      return resultado;
+    }
+  }
+
+  return puntos;
+}
+
 export function TendenciasCard({ puntos, loading, error, denied, onRetry, agrupacion, onAgrupacionChange }: TendenciasCardProps) {
-  const datos = puntos ?? [];
+  const datos = normalizarPuntosTendencia(puntos, agrupacion);
   const labels = datos.map((p) => formatPeriodo(p.periodo));
 
   return (

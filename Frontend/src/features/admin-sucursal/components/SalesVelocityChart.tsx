@@ -25,6 +25,7 @@ const DEFAULT_INTERVALOS: SalesVelocityPoint[] = [
   { hora: '14:00', ventasHoy: 0, ventasAyer: 0 },
   { hora: '16:00', ventasHoy: 0, ventasAyer: 0 },
   { hora: '18:00', ventasHoy: 0, ventasAyer: 0 },
+  { hora: '20:00', ventasHoy: 0, ventasAyer: 0 },
 ];
 
 export function SalesVelocityChart({ data, className = '' }: SalesVelocityChartProps) {
@@ -37,10 +38,11 @@ export function SalesVelocityChart({ data, className = '' }: SalesVelocityChartP
     porcentajeAvance: 0,
   };
 
-  // Dimensiones del canvas SVG: altura ampliada a 220 para curvas esbeltas y pronunciadas
+  // Dimensiones del canvas SVG
   const width = 640;
   const height = 220;
-  const paddingX = 40;
+  const paddingLeft = 58;
+  const paddingRight = 24;
   const paddingY = 20;
 
   const maxSales = Math.max(...puntos.map((p) => Math.max(p.ventasHoy, p.ventasAyer)), 0);
@@ -51,14 +53,17 @@ export function SalesVelocityChart({ data, className = '' }: SalesVelocityChartP
     return height - paddingY - (val / maxVal) * usableHeight;
   };
 
+  const divisor = Math.max(puntos.length - 1, 1);
   const getX = (idx: number) => {
-    const usableWidth = width - paddingX * 2;
-    return paddingX + (idx / (puntos.length - 1)) * usableWidth;
+    if (puntos.length <= 1) return width / 2;
+    const usableWidth = width - paddingLeft - paddingRight;
+    return paddingLeft + (idx / divisor) * usableWidth;
   };
 
   // Generación de trayectoria Bezier suave para 'Hoy'
   const buildSmoothPath = (points: Array<{ x: number; y: number }>) => {
     if (points.length === 0) return '';
+    if (points.length === 1) return `M ${points[0].x} ${points[0].y}`;
     let d = `M ${points[0].x} ${points[0].y}`;
     for (let i = 0; i < points.length - 1; i++) {
       const p0 = points[i === 0 ? 0 : i - 1];
@@ -81,7 +86,10 @@ export function SalesVelocityChart({ data, className = '' }: SalesVelocityChartP
 
   const linePathHoy = buildSmoothPath(ptsHoy);
   const linePathAyer = buildSmoothPath(ptsAyer);
-  const areaPathHoy = `${linePathHoy} L ${getX(puntos.length - 1)} ${height - paddingY} L ${getX(0)} ${height - paddingY} Z`;
+  const areaPathHoy =
+    puntos.length > 1
+      ? `${linePathHoy} L ${getX(puntos.length - 1)} ${height - paddingY} L ${getX(0)} ${height - paddingY} Z`
+      : '';
 
   const formatCOP = (num: number) =>
     new Intl.NumberFormat('es-CO', {
@@ -89,6 +97,18 @@ export function SalesVelocityChart({ data, className = '' }: SalesVelocityChartP
       currency: 'COP',
       maximumFractionDigits: 0,
     }).format(num);
+
+  const formatCOPCompacto = (val: number) => {
+    if (val === 0) return '0';
+    if (val >= 1000000) {
+      const m = val / 1000000;
+      return `$ ${m % 1 === 0 ? m.toFixed(0) : m.toFixed(1)}M`;
+    }
+    if (val >= 1000) {
+      return `$ ${(val / 1000).toFixed(0)}k`;
+    }
+    return `$ ${val}`;
+  };
 
   return (
     <GlassCard padding="lg" className={`flex flex-col justify-between ${className}`}>
@@ -139,51 +159,54 @@ export function SalesVelocityChart({ data, className = '' }: SalesVelocityChartP
           {/* Líneas de Escala Horizontal */}
           {[0, 0.33, 0.66, 1].map((pct, i) => {
             const y = height - paddingY - pct * (height - paddingY * 2);
-            const labelVal = Math.round((pct * maxVal) / 1000);
             return (
               <g key={i}>
                 <line
-                  x1={paddingX}
+                  x1={paddingLeft}
                   y1={y}
-                  x2={width - paddingX}
+                  x2={width - paddingRight}
                   y2={y}
                   stroke="rgba(255, 255, 255, 0.05)"
                   strokeWidth="1"
                 />
                 <text
-                  x={paddingX - 8}
+                  x={paddingLeft - 10}
                   y={y + 3}
                   textAnchor="end"
                   fill="#657796"
                   className="text-[9px] font-mono select-none"
                 >
-                  {labelVal === 0 ? '0' : `${labelVal} mil`}
+                  {formatCOPCompacto(pct * maxVal)}
                 </text>
               </g>
             );
           })}
 
           {/* Área con Degradado 'Hoy' */}
-          <path d={areaPathHoy} fill="url(#goldGradient)" />
+          {areaPathHoy && <path d={areaPathHoy} fill="url(#goldGradient)" />}
 
           {/* Línea comparativa 'Ayer' (Punteada gris) */}
-          <path
-            d={linePathAyer}
-            fill="none"
-            stroke="#657796"
-            strokeWidth="1.5"
-            strokeDasharray="4 4"
-            opacity="0.8"
-          />
+          {linePathAyer && (
+            <path
+              d={linePathAyer}
+              fill="none"
+              stroke="#657796"
+              strokeWidth="1.5"
+              strokeDasharray="4 4"
+              opacity="0.8"
+            />
+          )}
 
           {/* Línea principal 'Hoy' (Dorado luminiscente) */}
-          <path
-            d={linePathHoy}
-            fill="none"
-            stroke="#e3b341"
-            strokeWidth="2.5"
-            filter="url(#goldGlow)"
-          />
+          {linePathHoy && (
+            <path
+              d={linePathHoy}
+              fill="none"
+              stroke="#e3b341"
+              strokeWidth="2.5"
+              filter="url(#goldGlow)"
+            />
+          )}
 
           {/* Nodos de datos interactivos */}
           {ptsHoy.map((pt, idx) => {
@@ -194,7 +217,7 @@ export function SalesVelocityChart({ data, className = '' }: SalesVelocityChartP
                 <circle
                   cx={pt.x}
                   cy={pt.y}
-                  r={isHovered ? 5 : 3.5}
+                  r={isHovered ? 5.5 : 3.5}
                   fill="#e3b341"
                   stroke="#ffffff"
                   strokeWidth={isHovered ? 2 : 1}
@@ -219,7 +242,7 @@ export function SalesVelocityChart({ data, className = '' }: SalesVelocityChartP
 
         {/* Tooltip Dinámico Flotante */}
         {hoveredPoint && (
-          <div className="absolute top-2 right-4 bg-[#09132b]/95 border border-white/20 p-2 rounded-xl shadow-xl backdrop-blur-md pointer-events-none text-xs font-mono">
+          <div className="absolute top-2 right-4 bg-[#09132b]/95 border border-white/20 p-2.5 rounded-xl shadow-xl backdrop-blur-md pointer-events-none text-xs font-mono">
             <span className="text-slate-400 block text-[10px] uppercase font-sans">
               Hora: {hoveredPoint.hora}
             </span>
