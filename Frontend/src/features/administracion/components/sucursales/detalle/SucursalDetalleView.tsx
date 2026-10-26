@@ -6,6 +6,7 @@
 
 import { useCallback, useState } from 'react';
 import Link from 'next/link';
+import { Forbidden } from '@/components/panel/Forbidden';
 import { PageHeader } from '@/components/panel/PageHeader';
 import { Badge } from '@/components/ui/Badge';
 import { Button3D } from '@/components/ui/Button3D';
@@ -30,7 +31,7 @@ const VOLVER = (
 
 export function SucursalDetalleView({ id }: { id: number }) {
   const toast = useToast();
-  const { data: detalle, loading, error, recargar, valido, sucursal, encargados } = useSucursalDetalle(id);
+  const { data: detalle, loading, error, denegado, recargar, valido, sucursal, encargados } = useSucursalDetalle(id);
   const [editando, setEditando] = useState(false);
   const estado = useCambiarEstadoSucursal(useCallback(() => recargar(), [recargar]));
 
@@ -42,6 +43,8 @@ export function SucursalDetalleView({ id }: { id: number }) {
     },
     [toast, recargar],
   );
+
+  if (denegado) return <Forbidden />;
 
   if (!valido || (error && !detalle)) {
     return (

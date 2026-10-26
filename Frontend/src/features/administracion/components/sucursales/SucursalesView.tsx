@@ -5,6 +5,7 @@
  */
 
 import { useCallback, useMemo, useState } from 'react';
+import { Forbidden } from '@/components/panel/Forbidden';
 import { PageHeader } from '@/components/panel/PageHeader';
 import { Button3D } from '@/components/ui/Button3D';
 import { DataTable } from '@/components/ui/DataTable';
@@ -82,7 +83,9 @@ export function SucursalesView() {
         />
       </div>
 
-      {lista.error ? (
+      {lista.denegado ? (
+        <Forbidden />
+      ) : lista.error ? (
         <div className="panel-card">
           <EmptyState
             icon="⚠"

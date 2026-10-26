@@ -3,14 +3,17 @@
 /**
  * useDashboardGlobal.ts — Estado y datos del dashboard del Super Admin.
  *
- * Cada bloque (KPIs, tendencias, rendimiento, ranking) se carga por separado:
- * si uno falla, los demás siguen visibles con su propio estado de error.
+ * Cada bloque se pide solo si la sesión tiene el permiso que exige su ruta
+ * (PERMISOS_ADMIN) y se carga por separado: si uno falla o da 403, los demás
+ * siguen visibles con su propio estado.
  */
 
 import { useMemo, useState } from 'react';
+import { usePermissions } from '@/features/autenticacion';
 import { useRecurso } from '@/lib/hooks/useRecurso';
 import { rangoMesActual, rangoUltimosDias, type RangoFechas } from '@/lib/format/fecha';
-import { dashboardService, sucursalesService, usuariosService } from '../api';
+import { dashboardService, sucursalesService } from '../api';
+import { PERMISOS_ADMIN } from '../permisos';
 import type { AgrupacionTendencia, FiltrosDashboard, OrdenRanking } from '../types';
 
 export type RangoPreset = '7d' | '30d' | 'mes' | '90d';
@@ -28,6 +31,14 @@ function resolverRango(preset: RangoPreset): RangoFechas {
 }
 
 export function useDashboardGlobal() {
+  const { tienePermiso } = usePermissions();
+  const puede = {
+    metricas: tienePermiso(PERMISOS_ADMIN.verMetricasGlobales),
+    tendencias: tienePermiso(PERMISOS_ADMIN.verTendencias),
+    sucursales: tienePermiso(PERMISOS_ADMIN.gestionarSucursales),
+    alertas: tienePermiso(PERMISOS_ADMIN.gestionarAlertas),
+  };
+
   const [rango, setRango] = useState<RangoPreset>('30d');
   const [sucursalId, setSucursalId] = useState<number | undefined>(undefined);
   const [agrupacion, setAgrupacion] = useState<AgrupacionTendencia>('dia');
@@ -38,43 +49,34 @@ export function useDashboardGlobal() {
   const filtros: FiltrosDashboard = { ...fechas, sucursalId };
   const claveFiltros = [fechas.desde, fechas.hasta, sucursalId];
 
-  const metricas = useRecurso(() => dashboardService.obtenerMetricas(filtros), claveFiltros);
+  const metricas = useRecurso(() => dashboardService.obtenerMetricas(filtros), claveFiltros, { habilitado: puede.metricas });
   const tendencias = useRecurso(
     () => dashboardService.obtenerTendencias({ ...filtros, agrupacion }),
     [...claveFiltros, agrupacion],
+    { habilitado: puede.tendencias },
   );
   const rendimiento = useRecurso(
     () => dashboardService.obtenerRendimiento({ ...fechas, sucursalIds: sucursalId ? [sucursalId] : undefined }),
     claveFiltros,
+    { habilitado: puede.metricas },
   );
   const ranking = useRecurso(
     () => dashboardService.obtenerRanking({ ...filtros, orden: ordenRanking, limite: 5 }),
     [...claveFiltros, ordenRanking],
+    { habilitado: puede.metricas },
   );
 
-  // Datos de contexto que no dependen del rango de fechas
-  const sucursales = useRecurso(() => sucursalesService.listar(), []);
-  // Solo se necesitan los totales: se piden páginas de 1 elemento
-  const usuarios = useRecurso(async () => {
-    const [todos, activos] = await Promise.all([
-      usuariosService.listar({ limite: 1 }),
-      usuariosService.listar({ limite: 1, isActive: 'true' }),
-    ]);
-    return { totales: todos.total, activos: activos.total };
-  }, []);
-  const alertasStock = useRecurso(() => dashboardService.contarAlertasStock(sucursalId), [sucursalId]);
-
-  const resumenOrganizacion = useMemo(() => {
-    const listaSucursales = sucursales.data ?? [];
-    return {
-      sucursalesActivas: listaSucursales.filter((s) => s.isActive).length,
-      sucursalesTotales: listaSucursales.length,
-      usuariosActivos: usuarios.data?.activos ?? 0,
-      usuariosTotales: usuarios.data?.totales ?? 0,
-    };
-  }, [sucursales.data, usuarios.data]);
+  // Contexto de la organización: el resumen global no depende del filtro de sucursal
+  const resumen = useRecurso(() => dashboardService.obtenerResumen(fechas), [fechas.desde, fechas.hasta], {
+    habilitado: puede.metricas,
+  });
+  const sucursales = useRecurso(() => sucursalesService.listar(), [], { habilitado: puede.sucursales });
+  const alertasStock = useRecurso(() => dashboardService.contarAlertasStock(sucursalId), [sucursalId], {
+    habilitado: puede.alertas,
+  });
 
   return {
+    puede,
     rango,
     setRango,
     sucursalId,
@@ -87,9 +89,8 @@ export function useDashboardGlobal() {
     tendencias,
     rendimiento,
     ranking,
+    resumen,
     sucursales,
-    usuarios,
     alertasStock,
-    resumenOrganizacion,
   };
 }

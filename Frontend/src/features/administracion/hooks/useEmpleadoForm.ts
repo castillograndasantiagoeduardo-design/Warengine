@@ -7,12 +7,13 @@
  * Las áreas disponibles son las de la sucursal del empleado.
  */
 
-import { useCallback, useEffect } from 'react';
-import { editarEmpleadoSchema, PERMISSIONS } from '@warengine/contracts';
+import { useCallback, useEffect, useMemo } from 'react';
+import { editarEmpleadoSchema } from '@warengine/contracts';
 import { usePermissions } from '@/features/autenticacion';
 import { useFormulario } from '@/lib/hooks/useFormulario';
 import { useRecurso } from '@/lib/hooks/useRecurso';
 import { areasService, empleadosService } from '../api';
+import { PERMISOS_ADMIN } from '../permisos';
 import type { EditarEmpleadoInput, Empleado } from '../types';
 
 export interface EmpleadoFormValues {
@@ -37,12 +38,13 @@ function valoresDe(e: Empleado | null): EmpleadoFormValues {
 
 const vacioANull = (v: string) => (v.trim() === '' ? null : v.trim());
 
-const aPayload = (v: EmpleadoFormValues) => ({
+/** Sin permiso para listar áreas el campo es de solo lectura: no se envía para no borrarla. */
+const crearPayload = (incluirArea: boolean) => (v: EmpleadoFormValues) => ({
   nombre: v.nombre,
   telefono: vacioANull(v.telefono),
   direccion: vacioANull(v.direccion),
   cargo: vacioANull(v.cargo),
-  areaId: v.areaId ? Number(v.areaId) : null,
+  ...(incluirArea ? { areaId: v.areaId ? Number(v.areaId) : null } : {}),
   isActive: v.isActive,
 });
 
@@ -53,7 +55,8 @@ interface Opciones {
 
 export function useEmpleadoForm({ empleado, onGuardado }: Opciones) {
   const { tienePermiso } = usePermissions();
-  const puedeVerAreas = tienePermiso(PERMISSIONS.ADMIN_GESTIONAR_SUCURSALES);
+  const puedeVerAreas = tienePermiso(PERMISOS_ADMIN.gestionarSucursales);
+  const aPayload = useMemo(() => crearPayload(puedeVerAreas), [puedeVerAreas]);
 
   const onSubmit = useCallback(
     async (data: EditarEmpleadoInput) => {
@@ -81,5 +84,5 @@ export function useEmpleadoForm({ empleado, onGuardado }: Opciones) {
     { habilitado: Boolean(empleado) && puedeVerAreas },
   );
 
-  return { ...form, areas: areas.data ?? [], cargandoAreas: areas.loading };
+  return { ...form, areas: areas.data ?? [], cargandoAreas: areas.loading, puedeVerAreas };
 }

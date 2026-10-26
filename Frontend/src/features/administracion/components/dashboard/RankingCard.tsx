@@ -19,12 +19,13 @@ interface RankingCardProps {
   items: ItemRankingProducto[] | null;
   loading: boolean;
   error: string | null;
+  denied?: boolean;
   onRetry: () => void;
   orden: OrdenRanking;
   onOrdenChange: (o: OrdenRanking) => void;
 }
 
-export function RankingCard({ items, loading, error, onRetry, orden, onOrdenChange }: RankingCardProps) {
+export function RankingCard({ items, loading, error, denied, onRetry, orden, onOrdenChange }: RankingCardProps) {
   const datos = items ?? [];
 
   return (
@@ -33,6 +34,7 @@ export function RankingCard({ items, loading, error, onRetry, orden, onOrdenChan
       subtitle="Por unidades vendidas en el periodo"
       loading={loading}
       error={error}
+      denied={denied}
       onRetry={onRetry}
       isEmpty={datos.length === 0}
       emptyTitle="Sin productos vendidos"

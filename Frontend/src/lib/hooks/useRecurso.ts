@@ -12,13 +12,15 @@
  */
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { mensajeDeError } from '@/lib/forms/validacion';
+import { esAccesoDenegado, mensajeDeError } from '@/lib/forms/validacion';
 
 export function useRecurso<T>(cargar: () => Promise<T>, deps: unknown[], opciones: { habilitado?: boolean } = {}) {
   const { habilitado = true } = opciones;
   const [data, setData] = useState<T | null>(null);
   const [loading, setLoading] = useState(habilitado);
   const [error, setError] = useState<string | null>(null);
+  /** true cuando la API respondió 403: la vista debe mostrar el estado de acceso denegado. */
+  const [denegado, setDenegado] = useState(false);
   const [recarga, setRecarga] = useState(0);
   const cargarRef = useRef(cargar);
   const peticionActual = useRef(0);
@@ -35,6 +37,7 @@ export function useRecurso<T>(cargar: () => Promise<T>, deps: unknown[], opcione
     const id = ++peticionActual.current;
     setLoading(true);
     setError(null);
+    setDenegado(false);
 
     cargarRef
       .current()
@@ -42,7 +45,9 @@ export function useRecurso<T>(cargar: () => Promise<T>, deps: unknown[], opcione
         if (id === peticionActual.current) setData(res);
       })
       .catch((err) => {
-        if (id === peticionActual.current) setError(mensajeDeError(err));
+        if (id !== peticionActual.current) return;
+        setError(mensajeDeError(err));
+        setDenegado(esAccesoDenegado(err));
       })
       .finally(() => {
         if (id === peticionActual.current) setLoading(false);
@@ -53,5 +58,5 @@ export function useRecurso<T>(cargar: () => Promise<T>, deps: unknown[], opcione
 
   const recargar = useCallback(() => setRecarga((n) => n + 1), []);
 
-  return { data, loading, error, recargar, setData };
+  return { data, loading, error, denegado, recargar, setData };
 }

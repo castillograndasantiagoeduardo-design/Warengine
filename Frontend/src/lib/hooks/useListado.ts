@@ -22,7 +22,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { SortState } from '@/components/ui/DataTable';
 import { normalizarPaginado, type RespuestaListado } from '@/lib/types/paginacion';
-import { mensajeDeError } from '@/lib/forms/validacion';
+import { esAccesoDenegado, mensajeDeError } from '@/lib/forms/validacion';
 
 export interface ContextoCarga<F> {
   filtros: F;
@@ -62,6 +62,7 @@ export function useListado<T, F extends object>({
   const [paginasServidor, setPaginasServidor] = useState(1);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [denegado, setDenegado] = useState(false);
   const [recarga, setRecarga] = useState(0);
 
   const esServidor = paginacion === 'servidor';
@@ -81,6 +82,7 @@ export function useListado<T, F extends object>({
     const id = ++peticionActual.current;
     setLoading(true);
     setError(null);
+    setDenegado(false);
 
     cargarRef
       .current({ filtros, page, limit, sort, busqueda })
@@ -92,7 +94,9 @@ export function useListado<T, F extends object>({
         setPaginasServidor(Math.max(1, pag.totalPages));
       })
       .catch((err) => {
-        if (id === peticionActual.current) setError(mensajeDeError(err));
+        if (id !== peticionActual.current) return;
+        setError(mensajeDeError(err));
+        setDenegado(esAccesoDenegado(err));
       })
       .finally(() => {
         if (id === peticionActual.current) setLoading(false);
@@ -157,6 +161,7 @@ export function useListado<T, F extends object>({
     setBusqueda: cambiarBusqueda,
     loading,
     error,
+    denegado,
     recargar,
   };
 }

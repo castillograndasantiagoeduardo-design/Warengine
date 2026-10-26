@@ -17,6 +17,8 @@ interface SectionCardProps {
   actions?: React.ReactNode;
   loading?: boolean;
   error?: string | null;
+  /** La API respondió 403: se muestra acceso restringido en lugar de "reintentar". */
+  denied?: boolean;
   onRetry?: () => void;
   isEmpty?: boolean;
   emptyTitle?: string;
@@ -31,6 +33,7 @@ export function SectionCard({
   actions,
   loading,
   error,
+  denied,
   onRetry,
   isEmpty,
   emptyTitle = 'Sin datos',
@@ -41,6 +44,10 @@ export function SectionCard({
   let contenido: React.ReactNode = children;
   if (loading) {
     contenido = <Skeleton className="h-6 w-full" lines={5} />;
+  } else if (denied) {
+    contenido = (
+      <EmptyState icon="⛔" title="Acceso restringido" description="Tu rol no tiene el permiso que exige esta información." />
+    );
   } else if (error) {
     contenido = (
       <EmptyState

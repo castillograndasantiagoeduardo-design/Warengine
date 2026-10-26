@@ -7,11 +7,11 @@
  * Sucursal y estado se envían como query (listarEmpleadosQuerySchema).
  */
 
-import { PERMISSIONS } from '@warengine/contracts';
 import { usePermissions } from '@/features/autenticacion';
 import { useListado } from '@/lib/hooks/useListado';
 import { useRecurso } from '@/lib/hooks/useRecurso';
 import { empleadosService, sucursalesService } from '../api';
+import { PERMISOS_ADMIN } from '../permisos';
 import type { Empleado } from '../types';
 
 export type FiltroEstadoEmpleado = 'todos' | 'activos' | 'inactivos';
@@ -32,7 +32,7 @@ const buscarEmpleado = (e: Empleado, texto: string) =>
 
 export function useEmpleados() {
   const { tienePermiso } = usePermissions();
-  const puedeVerSucursales = tienePermiso(PERMISSIONS.ADMIN_GESTIONAR_SUCURSALES);
+  const puedeVerSucursales = tienePermiso(PERMISOS_ADMIN.gestionarSucursales);
 
   const lista = useListado<Empleado, FiltrosVista>({
     cargar: ({ filtros }) =>

@@ -6,6 +6,7 @@
  * (RNF-ADM-04): el Super Admin ve global; el admin de sucursal, solo su sede.
  */
 
+import type { ResumenDashboardResponse } from '@warengine/contracts';
 import { IHttpClient, apiClient } from '@/lib/api';
 import type { Paginado } from '@/lib/types/paginacion';
 import type {
@@ -24,6 +25,7 @@ export interface IDashboardService {
   obtenerRendimiento(filtros: Omit<FiltrosDashboard, 'sucursalId'> & { sucursalIds?: number[] }): Promise<RendimientoSucursal[]>;
   obtenerRanking(filtros: FiltrosDashboard & { orden: OrdenRanking; limite?: number }): Promise<ItemRankingProducto[]>;
   contarAlertasStock(sucursalId?: number): Promise<number>;
+  obtenerResumen(filtros: Omit<FiltrosDashboard, 'sucursalId'>): Promise<ResumenDashboardResponse>;
 }
 
 const BASE = '/administracion/dashboard';
@@ -58,6 +60,11 @@ export class DashboardService implements IDashboardService {
       params: { sucursalId, page: 1, limit: 1 },
     });
     return res.total;
+  }
+
+  /** GET /dashboard/resumen: sucursales operativas, usuarios activos y ventas consolidadas (solo Super Admin). */
+  public obtenerResumen(filtros: Omit<FiltrosDashboard, 'sucursalId'>): Promise<ResumenDashboardResponse> {
+    return this.http.get<ResumenDashboardResponse>(`${BASE}/resumen`, { params: { ...filtros } });
   }
 }
 

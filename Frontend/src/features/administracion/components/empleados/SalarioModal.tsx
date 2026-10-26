@@ -21,7 +21,7 @@ interface SalarioModalProps {
 }
 
 export function SalarioModal({ empleado, onClose, onAumentoRegistrado }: SalarioModalProps) {
-  const { registros, cargando, error, form, enviar } = useSalarios(empleado, onAumentoRegistrado);
+  const { registros, cargando, error, denegado, form, enviar } = useSalarios(empleado, onAumentoRegistrado);
   const { valores, errores, errorGeneral, enviando, setCampo } = form;
 
   return (
@@ -74,7 +74,8 @@ export function SalarioModal({ empleado, onClose, onAumentoRegistrado }: Salario
         <section aria-label="Historial salarial">
           <h3 className="mb-3 font-[family-name:var(--font-anton)] uppercase tracking-wider text-white">Historial</h3>
           {cargando && <Skeleton className="h-12 w-full" lines={3} />}
-          {!cargando && error && <p className="text-sm text-red-300">{error}</p>}
+          {!cargando && denegado && <p className="text-sm text-amber-200">Acceso restringido: tu rol no puede ver el historial salarial.</p>}
+          {!cargando && error && !denegado && <p className="text-sm text-red-300">{error}</p>}
           {!cargando && !error && registros.length === 0 && <p className="text-sm text-white/50">Aún no hay registros salariales.</p>}
           <ol className="flex flex-col gap-2">
             {registros.map((r, i) => (
