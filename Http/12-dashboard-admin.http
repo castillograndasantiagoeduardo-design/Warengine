@@ -151,3 +151,36 @@ Authorization: Bearer {{loginSuperAdmin.response.body.accessToken}}
 GET {{baseUrl}}/administracion/dashboard/metricas
 
 ###
+
+# ------------------------------------------------------------------------------
+# RESUMEN GLOBAL DEL SUPER ADMIN (RF-ADM-A1, RF-SA-I3)
+# Permiso: administracion:ver-metricas-globales (solo super-admin)
+# ------------------------------------------------------------------------------
+
+### UC-DASH-14: Resumen global sin filtros
+# Resultado esperado: 200 { totalSucursales, sucursalesActivas, usuariosTotales, usuariosActivos,
+#                           ventasConsolidadas, gananciaNeta, totalFacturas, ticketPromedio }
+GET {{baseUrl}}/administracion/dashboard/resumen
+Authorization: Bearer {{loginSuperAdmin.response.body.accessToken}}
+
+###
+
+### UC-DASH-15: Resumen global acotado por rango de fechas
+GET {{baseUrl}}/administracion/dashboard/resumen?desde=2026-10-01T00:00:00Z&hasta=2026-10-31T23:59:59Z
+Authorization: Bearer {{loginSuperAdmin.response.body.accessToken}}
+
+###
+
+### UC-DASH-16: Rango invertido
+# Resultado esperado: 400 VALIDATION_ERROR (la fecha final no puede ser anterior a la inicial)
+GET {{baseUrl}}/administracion/dashboard/resumen?desde=2026-10-31&hasta=2026-10-01
+Authorization: Bearer {{loginSuperAdmin.response.body.accessToken}}
+
+###
+
+### UC-DASH-17: Admin de sucursal sin permiso global
+# Resultado esperado: 403 PERMISO_DENEGADO
+GET {{baseUrl}}/administracion/dashboard/resumen
+Authorization: Bearer {{loginAdminSucursal.response.body.accessToken}}
+
+###

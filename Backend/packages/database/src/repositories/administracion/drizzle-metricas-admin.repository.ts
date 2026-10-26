@@ -3,6 +3,7 @@ import { Database } from '../../client.ts';
 import { sucursales } from '../../schema/administracion.schema.ts';
 import { facturas, factura_items } from '../../schema/facturacion.schema.ts';
 import { categorias, inventario_sucursal, productos } from '../../schema/inventario.schema.ts';
+import { usuarios } from '../../schema/autenticacion.schema.ts';
 import type {
   ExistenciaSucursalItem,
   FiltroComparativoInventario,
@@ -11,14 +12,17 @@ import type {
   FiltroRendimientoSucursales,
   FiltroTendenciasVentas,
   IMetricasAdminRepository,
+  IResumenOrganizacionRepository,
   ItemComparativoInventario,
   ItemRankingProducto,
   MetricasGanancias,
   PuntoTendenciaVenta,
   RendimientoSucursal,
+  ResumenOrganizacion,
 } from '@warengine/core';
 
-export class DrizzleMetricasAdminRepository implements IMetricasAdminRepository {
+export class DrizzleMetricasAdminRepository
+  implements IMetricasAdminRepository, IResumenOrganizacionRepository {
   constructor(private readonly db: Database) {}
 
   public async obtenerMetricasGanancias(filtro: FiltroMetricasGanancias): Promise<MetricasGanancias> {
@@ -376,5 +380,28 @@ export class DrizzleMetricasAdminRepository implements IMetricasAdminRepository 
     }
 
     return resultado;
+  }
+
+  public async obtenerResumenOrganizacion(): Promise<ResumenOrganizacion> {
+    const [sedes] = await this.db
+      .select({
+        total: sql<number>`COUNT(*)`,
+        activas: sql<number>`COALESCE(SUM(${sucursales.is_active} = 1), 0)`,
+      })
+      .from(sucursales);
+
+    const [cuentas] = await this.db
+      .select({
+        total: sql<number>`COUNT(*)`,
+        activas: sql<number>`COALESCE(SUM(${usuarios.is_active} = 1), 0)`,
+      })
+      .from(usuarios);
+
+    return {
+      totalSucursales: Number(sedes?.total ?? 0),
+      sucursalesActivas: Number(sedes?.activas ?? 0),
+      usuariosTotales: Number(cuentas?.total ?? 0),
+      usuariosActivos: Number(cuentas?.activas ?? 0),
+    };
   }
 }

@@ -55,6 +55,7 @@ import {
   consultarMetricasGananciasController,
   consultarRankingProductosController,
   consultarRendimientoSucursalesController,
+  consultarResumenDashboardController,
   consultarTendenciasVentasController,
 } from '../controllers/administracion/dashboard.controller.ts';
 
@@ -67,6 +68,7 @@ const PERMISO_AUDITORIA = 'autenticacion:ver-auditoria';
 const PERMISO_ALERTAS = 'administracion:gestionar-alertas';
 const PERMISO_SALARIOS = 'administracion:gestionar-salarios';
 const PERMISO_METRICAS = 'administracion:ver-metricas-sucursal';
+const PERMISO_METRICAS_GLOBALES = 'administracion:ver-metricas-globales';
 
 export function createAdministracionRoutes(container: AppContainer): Hono {
   const api = new Hono();
@@ -117,6 +119,7 @@ export function createAdministracionRoutes(container: AppContainer): Hono {
   api.get('/dashboard/rendimiento', authMiddleware(container, PERMISO_METRICAS), consultarRendimientoSucursalesController(container));
   api.get('/dashboard/ranking', authMiddleware(container, PERMISO_METRICAS), consultarRankingProductosController(container));
   api.get('/dashboard/inventario', authMiddleware(container, PERMISO_METRICAS), consultarComparativoInventarioController(container));
+  api.get('/dashboard/resumen', authMiddleware(container, PERMISO_METRICAS_GLOBALES), consultarResumenDashboardController(container));
 
   return api;
 }

@@ -133,6 +133,7 @@ import {
   ConsultarRendimientoSucursalesUseCase,
   ConsultarRankingProductosUseCase,
   ConsultarComparativoInventarioUseCase,
+  ConsultarResumenDashboardUseCase,
   CrearFacturaUseCase,
   ListarFacturasUseCase,
   ObtenerFacturaPorIdUseCase,
@@ -225,6 +226,7 @@ export interface AppContainer {
     consultarRendimientoSucursales: ConsultarRendimientoSucursalesUseCase;
     consultarRankingProductos: ConsultarRankingProductosUseCase;
     consultarComparativoInventario: ConsultarComparativoInventarioUseCase;
+    consultarResumenDashboard: ConsultarResumenDashboardUseCase;
   };
   inventario: {
     listarCategorias: ListarCategoriasUseCase;
@@ -823,6 +825,10 @@ export function createContainer(_env?: Record<string, string>): AppContainer {
       ),
       consultarComparativoInventario: new ConsultarComparativoInventarioUseCase(
         resolverAlcanceSucursalUseCase,
+        metricasAdminRepository,
+      ),
+      consultarResumenDashboard: new ConsultarResumenDashboardUseCase(
+        metricasAdminRepository,
         metricasAdminRepository,
       ),
     },

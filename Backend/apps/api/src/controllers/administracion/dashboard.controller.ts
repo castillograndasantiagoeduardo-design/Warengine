@@ -3,6 +3,7 @@ import {
   metricasGananciasQuerySchema,
   rankingProductosQuerySchema,
   rendimientoSucursalesQuerySchema,
+  resumenDashboardQuerySchema,
   tendenciasVentasQuerySchema,
 } from '@warengine/contracts';
 import { AppContainer } from '@warengine/composition';
@@ -87,5 +88,18 @@ export function consultarComparativoInventarioController(container: AppContainer
         ...parsed.data,
       }),
     );
+  });
+}
+
+/**
+ * RF-ADM-A1 / RF-SA-I3: resumen global (sucursales operativas, usuarios activos, ventas consolidadas).
+ */
+export function consultarResumenDashboardController(container: AppContainer) {
+  return safeHandler(async (c) => {
+    const parsed = resumenDashboardQuerySchema.safeParse(c.req.query());
+    if (!parsed.success) {
+      return c.json({ error: 'VALIDATION_ERROR', issues: parsed.error.errors }, 400);
+    }
+    return presentResult(c, await container.administracion.consultarResumenDashboard.execute(parsed.data));
   });
 }

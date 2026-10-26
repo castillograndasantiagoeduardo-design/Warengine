@@ -56,6 +56,7 @@ export * from './src/modules/administracion/domain/repositories/IUsuarioSucursal
 export * from './src/modules/administracion/domain/repositories/IAlertaStockRepository.ts';
 export * from './src/modules/administracion/domain/repositories/IMetricasAdminRepository.ts';
 export * from './src/modules/administracion/domain/repositories/IRolCatalogoRepository.ts';
+export * from './src/modules/administracion/domain/repositories/IResumenOrganizacionRepository.ts';
 export * from './src/modules/administracion/application/use-cases/CrearSucursalUseCase.ts';
 export * from './src/modules/administracion/application/use-cases/EditarSucursalUseCase.ts';
 export * from './src/modules/administracion/application/use-cases/ListarSucursalesUseCase.ts';
@@ -86,6 +87,7 @@ export * from './src/modules/administracion/application/use-cases/ConsultarTende
 export * from './src/modules/administracion/application/use-cases/ConsultarRendimientoSucursalesUseCase.ts';
 export * from './src/modules/administracion/application/use-cases/ConsultarRankingProductosUseCase.ts';
 export * from './src/modules/administracion/application/use-cases/ConsultarComparativoInventarioUseCase.ts';
+export * from './src/modules/administracion/application/use-cases/ConsultarResumenDashboardUseCase.ts';
 
 
 
