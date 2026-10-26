@@ -54,6 +54,9 @@ export class BranchInventoryService implements IBranchInventoryService {
       }),
       this.http.get<any>('/administracion/dashboard/inventario', {
         params: { sucursalIds: sucursalId },
+      }).catch((err) => {
+        console.warn('[branchInventoryService] No se pudieron obtener existencias consolidadas:', err?.message);
+        return [];
       }),
       this.listarCategorias().catch(() => [] as CategoriaInventario[]),
       this.listarProveedores().catch(() => [] as ProveedorInventario[]),
