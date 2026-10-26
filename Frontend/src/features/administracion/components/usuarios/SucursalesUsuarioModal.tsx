@@ -46,7 +46,7 @@ export function SucursalesUsuarioModal({ usuario, sucursales, onClose, onHecho }
       {!s.cargando && !s.error && (
         <div className="flex flex-col gap-5">
           <fieldset>
-            <legend className="mb-2 text-xs uppercase tracking-wider text-white/70 font-[family-name:var(--font-pixelify)]">
+            <legend className="mb-2 text-xs uppercase tracking-wider text-white/70 font-[family-name:var(--font-ui)]">
               Sede principal <span className="text-[#e9b949]">*</span>
             </legend>
             <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
@@ -61,7 +61,7 @@ export function SucursalesUsuarioModal({ usuario, sucursales, onClose, onHecho }
           </fieldset>
 
           <fieldset>
-            <legend className="mb-2 text-xs uppercase tracking-wider text-white/70 font-[family-name:var(--font-pixelify)]">Sedes adicionales</legend>
+            <legend className="mb-2 text-xs uppercase tracking-wider text-white/70 font-[family-name:var(--font-ui)]">Sedes adicionales</legend>
             <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
               {activas
                 .filter((suc) => suc.id !== s.principal)

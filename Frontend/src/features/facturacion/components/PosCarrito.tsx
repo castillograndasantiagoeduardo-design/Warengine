@@ -49,12 +49,12 @@ export function PosCarrito({
       {/* 1. Selector de Cliente */}
       <div className="p-3.5 border-b border-white/10 bg-[#0f1b3d]/50">
         <div className="flex items-center justify-between mb-1.5">
-          <span className="text-[10px] uppercase font-bold text-white/50 tracking-wider font-[family-name:var(--font-pixelify)]">
+          <span className="text-[10px] uppercase font-bold text-white/50 tracking-wider font-[family-name:var(--font-ui)]">
             Cliente Asignado
           </span>
           <button
             onClick={onAbrirModalCliente}
-            className="text-[11px] text-[#e3b341] hover:underline cursor-pointer flex items-center gap-1 font-[family-name:var(--font-pixelify)]"
+            className="text-[11px] text-[#e3b341] hover:underline cursor-pointer flex items-center gap-1 font-[family-name:var(--font-ui)]"
           >
             <span>Cambiar / Crear</span>
             <span>&rarr;</span>
@@ -184,7 +184,7 @@ export function PosCarrito({
 
         {/* Caja de Total Monumental */}
         <div className="p-3 rounded-2xl bg-gradient-to-r from-[#14213d] to-[#0a1124] border border-[#e3b341]/30 flex items-baseline justify-between shadow-inner">
-          <span className="text-xs uppercase font-bold text-white/70 font-[family-name:var(--font-pixelify)] tracking-wider">
+          <span className="text-xs uppercase font-bold text-white/70 font-[family-name:var(--font-ui)] tracking-wider">
             Total a Pagar
           </span>
           <span className="font-[family-name:var(--font-anton)] text-3xl text-[#e3b341] tracking-wider leading-none">
@@ -197,7 +197,7 @@ export function PosCarrito({
           type="button"
           onClick={onIniciarCobro}
           disabled={!totales.tieneItems || !tieneTurnoAbierto || !cliente}
-          className={`w-full py-3.5 rounded-2xl font-[family-name:var(--font-pixelify)] text-sm font-bold uppercase tracking-wider flex items-center justify-center gap-2 cursor-pointer transition-all ${
+          className={`w-full py-3.5 rounded-2xl font-[family-name:var(--font-ui)] text-sm font-bold uppercase tracking-wider flex items-center justify-center gap-2 cursor-pointer transition-all ${
             !tieneTurnoAbierto
               ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30 cursor-not-allowed'
               : !totales.tieneItems || !cliente

@@ -16,7 +16,7 @@ interface KpiCardProps {
 export function KpiCard({ label, value, hint, icon, loading, destacado }: KpiCardProps) {
   return (
     <div className={`panel-card p-4 flex flex-col gap-2 ${destacado ? 'ring-1 ring-[#e3b341]/50' : ''}`}>
-      <div className="flex items-center justify-between text-[11px] uppercase tracking-wider text-white/60 font-[family-name:var(--font-pixelify)]">
+      <div className="flex items-center justify-between text-[11px] uppercase tracking-wider text-white/60 font-[family-name:var(--font-ui)]">
         <span>{label}</span>
         {icon && (
           <span aria-hidden="true" className="text-[#e9b949]">

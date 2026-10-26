@@ -113,7 +113,7 @@ export function BranchSidebar({
             <span className="font-[family-name:var(--font-anton)] text-xl tracking-wider text-white uppercase leading-none">
               WarEngine
             </span>
-            <span className="text-[10px] uppercase font-bold tracking-widest text-[#e3b341] font-[family-name:var(--font-pixelify)]">
+            <span className="text-[10px] uppercase font-bold tracking-widest text-[#e3b341] font-[family-name:var(--font-ui)]">
               Admin Sucursal
             </span>
           </div>
@@ -121,7 +121,7 @@ export function BranchSidebar({
 
         {/* 2. Sección MENU */}
         <div className="mb-6">
-          <span className="block px-3 text-[10px] font-bold uppercase tracking-wider text-slate-500 font-[family-name:var(--font-pixelify)] mb-2">
+          <span className="block px-3 text-[10px] font-bold uppercase tracking-wider text-slate-500 font-[family-name:var(--font-ui)] mb-2">
             Menu
           </span>
           <nav className="flex flex-col gap-1">
@@ -188,7 +188,7 @@ export function BranchSidebar({
         {/* 3. Sección SISTEMA (Oculta mientras no tenga items activos) */}
         {SISTEMA_ITEMS.length > 0 && (
           <div>
-            <span className="block px-3 text-[10px] font-bold uppercase tracking-wider text-slate-500 font-[family-name:var(--font-pixelify)] mb-2">
+            <span className="block px-3 text-[10px] font-bold uppercase tracking-wider text-slate-500 font-[family-name:var(--font-ui)] mb-2">
               Sistema
             </span>
             <nav className="flex flex-col gap-1">
@@ -231,7 +231,7 @@ export function BranchSidebar({
             title="Ver y editar mi información de contacto"
             className="flex items-center gap-2.5 min-w-0 text-left cursor-pointer group flex-1"
           >
-            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gradient-to-tr from-[#b88a1f] to-[#e3b341] text-[#0d1630] font-bold text-xs font-[family-name:var(--font-pixelify)] shadow-sm group-hover:scale-105 transition-transform">
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gradient-to-tr from-[#b88a1f] to-[#e3b341] text-[#0d1630] font-bold text-xs font-[family-name:var(--font-ui)] shadow-sm group-hover:scale-105 transition-transform">
               {userInitial}
             </div>
             <div className="min-w-0">

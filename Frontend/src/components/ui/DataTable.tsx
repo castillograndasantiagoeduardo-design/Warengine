@@ -69,7 +69,7 @@ export function DataTable<T>({
       <div className="overflow-x-auto">
         <table className="w-full min-w-[640px] text-sm">
           {caption && <caption className="sr-only">{caption}</caption>}
-          <thead className="bg-white/[0.03] text-[11px] uppercase tracking-wider text-white/60 font-[family-name:var(--font-pixelify)]">
+          <thead className="bg-white/[0.03] text-[11px] uppercase tracking-wider text-white/60 font-[family-name:var(--font-ui)]">
             <tr>
               {columns.map((col) => {
                 const activo = sort?.key === col.key;

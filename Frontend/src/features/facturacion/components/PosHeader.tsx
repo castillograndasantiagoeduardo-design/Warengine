@@ -82,7 +82,7 @@ export function PosHeader({
             </span>
             <div className="text-left">
               <div className="flex items-center gap-2">
-                <span className="text-xs font-bold text-emerald-400 font-[family-name:var(--font-pixelify)] uppercase tracking-wide">
+                <span className="text-xs font-bold text-emerald-400 font-[family-name:var(--font-ui)] uppercase tracking-wide">
                   Caja Abierta
                 </span>
                 <span className="text-[10px] text-white/50">desde {horaApertura}</span>
@@ -93,7 +93,7 @@ export function PosHeader({
             </div>
             <button
               onClick={onAbrirModalTurno}
-              className="ml-2 px-2.5 py-1 rounded-lg bg-red-500/20 hover:bg-red-500/30 border border-red-500/30 text-red-300 text-[11px] font-[family-name:var(--font-pixelify)] uppercase cursor-pointer transition-colors"
+              className="ml-2 px-2.5 py-1 rounded-lg bg-red-500/20 hover:bg-red-500/30 border border-red-500/30 text-red-300 text-[11px] font-[family-name:var(--font-ui)] uppercase cursor-pointer transition-colors"
               title="Cerrar turno de caja y realizar arqueo"
             >
               Cerrar Turno
@@ -102,12 +102,12 @@ export function PosHeader({
         ) : (
           <div className="flex items-center gap-3 px-3 py-1.5 rounded-xl bg-amber-500/10 border border-amber-500/30">
             <span className="h-2.5 w-2.5 rounded-full bg-amber-500"></span>
-            <span className="text-xs font-bold text-amber-400 font-[family-name:var(--font-pixelify)] uppercase tracking-wide">
+            <span className="text-xs font-bold text-amber-400 font-[family-name:var(--font-ui)] uppercase tracking-wide">
               Turno No Iniciado
             </span>
             <button
               onClick={onAbrirModalTurno}
-              className="px-3 py-1 rounded-lg bg-[#e3b341] hover:bg-[#e9b949] text-black text-xs font-bold font-[family-name:var(--font-pixelify)] uppercase cursor-pointer transition-all shadow-[0_2px_0_#b88a1f] active:translate-y-0.5 active:shadow-none"
+              className="px-3 py-1 rounded-lg bg-[#e3b341] hover:bg-[#e9b949] text-black text-xs font-bold font-[family-name:var(--font-ui)] uppercase cursor-pointer transition-all shadow-[0_2px_0_#b88a1f] active:translate-y-0.5 active:shadow-none"
             >
               Abrir Turno
             </button>
@@ -119,7 +119,7 @@ export function PosHeader({
       <div className="flex items-center gap-2">
         <button
           onClick={onAbrirHistorial}
-          className="px-3 py-1.5 rounded-xl bg-[#14213D] hover:bg-[#1a2b50] border border-white/10 text-white/80 hover:text-white text-xs font-[family-name:var(--font-pixelify)] uppercase cursor-pointer transition-colors flex items-center gap-1.5"
+          className="px-3 py-1.5 rounded-xl bg-[#14213D] hover:bg-[#1a2b50] border border-white/10 text-white/80 hover:text-white text-xs font-[family-name:var(--font-ui)] uppercase cursor-pointer transition-colors flex items-center gap-1.5"
           title="Historial de comprobantes emitidos en el turno [F8]"
         >
           <span>📜</span>
@@ -129,7 +129,7 @@ export function PosHeader({
 
         <button
           onClick={onAbrirModalAlerta}
-          className="px-3 py-1.5 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 text-amber-300 text-xs font-[family-name:var(--font-pixelify)] uppercase cursor-pointer transition-colors flex items-center gap-1.5"
+          className="px-3 py-1.5 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 text-amber-300 text-xs font-[family-name:var(--font-ui)] uppercase cursor-pointer transition-colors flex items-center gap-1.5"
           title="Emitir alerta operativa al Administrador de Sucursal [F9]"
         >
           <span>🔔</span>
@@ -139,7 +139,7 @@ export function PosHeader({
 
         <button
           onClick={onLogout}
-          className="px-3 py-1.5 rounded-xl border border-red-500/30 text-red-300 hover:bg-red-500/10 text-xs font-[family-name:var(--font-pixelify)] uppercase cursor-pointer transition-colors ml-1"
+          className="px-3 py-1.5 rounded-xl border border-red-500/30 text-red-300 hover:bg-red-500/10 text-xs font-[family-name:var(--font-ui)] uppercase cursor-pointer transition-colors ml-1"
           title="Cerrar sesión del cajero"
         >
           Salir

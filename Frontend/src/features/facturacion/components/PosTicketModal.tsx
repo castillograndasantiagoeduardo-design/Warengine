@@ -55,7 +55,7 @@ export function PosTicketModal({
             <span className="w-6 h-6 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-xs">
               ✓
             </span>
-            <span className="text-xs font-bold text-emerald-400 font-[family-name:var(--font-pixelify)] uppercase">
+            <span className="text-xs font-bold text-emerald-400 font-[family-name:var(--font-ui)] uppercase">
               Venta Exitosa
             </span>
           </div>
@@ -159,7 +159,7 @@ export function PosTicketModal({
           <button
             type="button"
             onClick={handleImprimir}
-            className="w-1/2 py-2.5 rounded-xl bg-[#14213D] hover:bg-[#1a2b50] border border-white/20 text-white font-[family-name:var(--font-pixelify)] text-xs font-bold uppercase cursor-pointer transition-colors flex items-center justify-center gap-1.5"
+            className="w-1/2 py-2.5 rounded-xl bg-[#14213D] hover:bg-[#1a2b50] border border-white/20 text-white font-[family-name:var(--font-ui)] text-xs font-bold uppercase cursor-pointer transition-colors flex items-center justify-center gap-1.5"
           >
             <span>🖨️</span>
             <span>Imprimir</span>
@@ -168,7 +168,7 @@ export function PosTicketModal({
             type="button"
             onClick={onNuevaVenta}
             autoFocus
-            className="w-1/2 py-2.5 rounded-xl bg-[#e3b341] hover:bg-[#e9b949] text-black font-[family-name:var(--font-pixelify)] text-xs font-bold uppercase cursor-pointer shadow-[0_3px_0_#b88a1f] active:translate-y-0.5 active:shadow-none transition-all flex items-center justify-center gap-1.5"
+            className="w-1/2 py-2.5 rounded-xl bg-[#e3b341] hover:bg-[#e9b949] text-black font-[family-name:var(--font-ui)] text-xs font-bold uppercase cursor-pointer shadow-[0_3px_0_#b88a1f] active:translate-y-0.5 active:shadow-none transition-all flex items-center justify-center gap-1.5"
           >
             <span>➕</span>
             <span>Nueva Venta</span>

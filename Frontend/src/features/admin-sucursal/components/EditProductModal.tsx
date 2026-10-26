@@ -327,7 +327,7 @@ export function EditProductModal({
               type="button"
               onClick={onClose}
               disabled={isSubmitting}
-              className="py-2.5 px-4 rounded-xl border border-white/10 text-slate-300 hover:text-white hover:bg-white/[0.05] transition-colors text-xs font-[family-name:var(--font-pixelify)] uppercase cursor-pointer"
+              className="py-2.5 px-4 rounded-xl border border-white/10 text-slate-300 hover:text-white hover:bg-white/[0.05] transition-colors text-xs font-[family-name:var(--font-ui)] uppercase cursor-pointer"
             >
               Cancelar
             </button>

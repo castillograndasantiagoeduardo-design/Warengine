@@ -155,7 +155,7 @@ export function AlcanceSection({
 
       {/* Título del Slide */}
       <h2
-        className="absolute left-0 right-0 top-[74%] text-center font-[family-name:var(--font-pixelify)] text-[clamp(24px,2.4vw,48px)] tracking-wide transition-colors duration-500 z-20"
+        className="absolute left-0 right-0 top-[74%] text-center font-[family-name:var(--font-ui)] text-[clamp(24px,2.4vw,48px)] tracking-wide transition-colors duration-500 z-20"
         style={{ color: currentSlide.tc }}
       >
         {currentSlide.title}

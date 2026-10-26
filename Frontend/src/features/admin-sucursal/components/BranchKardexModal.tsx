@@ -213,7 +213,7 @@ export function BranchKardexModal({
           ) : (
             <table className="w-full text-left text-xs border-collapse">
               <thead className="sticky top-0 bg-[#0d1630] border-b border-white/[0.08] z-10">
-                <tr className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider font-[family-name:var(--font-pixelify)]">
+                <tr className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider font-[family-name:var(--font-ui)]">
                   <th className="py-2.5 px-4 w-36">Fecha / Hora</th>
                   <th className="py-2.5 px-4 w-28 text-center">Tipo</th>
                   <th className="py-2.5 px-4">Producto & SKU</th>

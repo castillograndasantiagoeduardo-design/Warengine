@@ -89,7 +89,7 @@ export function BranchInvoicingView({
             <h1 className="text-2xl font-[family-name:var(--font-anton)] tracking-wider text-white uppercase">
               Supervisión de Facturación & Alertas
             </h1>
-            <span className="text-[10px] uppercase font-bold tracking-widest px-2.5 py-0.5 rounded-full bg-[#e3b341]/10 text-[#e3b341] border border-[#e3b341]/25 font-[family-name:var(--font-pixelify)]">
+            <span className="text-[10px] uppercase font-bold tracking-widest px-2.5 py-0.5 rounded-full bg-[#e3b341]/10 text-[#e3b341] border border-[#e3b341]/25 font-[family-name:var(--font-ui)]">
               {sucursalNombre}
             </span>
           </div>

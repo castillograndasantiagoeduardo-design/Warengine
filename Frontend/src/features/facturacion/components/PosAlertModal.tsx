@@ -89,7 +89,7 @@ export function PosAlertModal({ isOpen, onClose, sucursalId }: PosAlertModalProp
             )}
 
             <div>
-              <label className="block text-[11px] font-semibold text-white/70 mb-1.5 font-[family-name:var(--font-pixelify)] uppercase">
+              <label className="block text-[11px] font-semibold text-white/70 mb-1.5 font-[family-name:var(--font-ui)] uppercase">
                 Motivo / Asunto
               </label>
               <select
@@ -106,14 +106,14 @@ export function PosAlertModal({ isOpen, onClose, sucursalId }: PosAlertModalProp
             </div>
 
             <div>
-              <label className="block text-[11px] font-semibold text-white/70 mb-1.5 font-[family-name:var(--font-pixelify)] uppercase">
+              <label className="block text-[11px] font-semibold text-white/70 mb-1.5 font-[family-name:var(--font-ui)] uppercase">
                 Nivel de Prioridad
               </label>
               <div className="grid grid-cols-2 gap-2">
                 <button
                   type="button"
                   onClick={() => setPrioridad('normal')}
-                  className={`py-2 rounded-xl text-xs font-[family-name:var(--font-pixelify)] uppercase border cursor-pointer transition-all ${
+                  className={`py-2 rounded-xl text-xs font-[family-name:var(--font-ui)] uppercase border cursor-pointer transition-all ${
                     prioridad === 'normal'
                       ? 'bg-blue-500/20 border-blue-400 text-blue-300 font-bold'
                       : 'bg-[#14213D] border-white/10 text-white/60'
@@ -124,7 +124,7 @@ export function PosAlertModal({ isOpen, onClose, sucursalId }: PosAlertModalProp
                 <button
                   type="button"
                   onClick={() => setPrioridad('urgente')}
-                  className={`py-2 rounded-xl text-xs font-[family-name:var(--font-pixelify)] uppercase border cursor-pointer transition-all ${
+                  className={`py-2 rounded-xl text-xs font-[family-name:var(--font-ui)] uppercase border cursor-pointer transition-all ${
                     prioridad === 'urgente'
                       ? 'bg-amber-500/20 border-amber-400 text-amber-300 font-bold'
                       : 'bg-[#14213D] border-white/10 text-white/60'
@@ -136,7 +136,7 @@ export function PosAlertModal({ isOpen, onClose, sucursalId }: PosAlertModalProp
             </div>
 
             <div>
-              <label className="block text-[11px] font-semibold text-white/70 mb-1.5 font-[family-name:var(--font-pixelify)] uppercase">
+              <label className="block text-[11px] font-semibold text-white/70 mb-1.5 font-[family-name:var(--font-ui)] uppercase">
                 Detalle del Mensaje *
               </label>
               <textarea
@@ -154,14 +154,14 @@ export function PosAlertModal({ isOpen, onClose, sucursalId }: PosAlertModalProp
                 type="button"
                 onClick={onClose}
                 disabled={isEnviando}
-                className="w-1/3 py-2.5 rounded-xl border border-white/10 text-white/60 hover:text-white text-xs font-[family-name:var(--font-pixelify)] uppercase cursor-pointer"
+                className="w-1/3 py-2.5 rounded-xl border border-white/10 text-white/60 hover:text-white text-xs font-[family-name:var(--font-ui)] uppercase cursor-pointer"
               >
                 Cerrar
               </button>
               <button
                 type="submit"
                 disabled={isEnviando}
-                className="w-2/3 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-black font-[family-name:var(--font-pixelify)] text-xs font-bold uppercase cursor-pointer shadow-[0_3px_0_#b45309] active:translate-y-0.5 active:shadow-none transition-all flex items-center justify-center gap-2"
+                className="w-2/3 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-black font-[family-name:var(--font-ui)] text-xs font-bold uppercase cursor-pointer shadow-[0_3px_0_#b45309] active:translate-y-0.5 active:shadow-none transition-all flex items-center justify-center gap-2"
               >
                 {isEnviando ? 'Enviando Alerta...' : 'Enviar Alerta al Admin'}
               </button>

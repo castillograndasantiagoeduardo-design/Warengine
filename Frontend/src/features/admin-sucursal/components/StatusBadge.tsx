@@ -63,7 +63,7 @@ export function StatusBadge({
     <span
       className={`
         inline-flex items-center font-medium rounded-full border
-        tracking-wider uppercase font-[family-name:var(--font-pixelify)]
+        tracking-wider uppercase font-[family-name:var(--font-ui)]
         ${styles.container}
         ${sizeClasses}
         ${className}

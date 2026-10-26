@@ -15,7 +15,7 @@ interface Acciones {
 }
 
 const BTN_ACCION =
-  'min-h-[44px] rounded-lg px-3 text-xs uppercase tracking-wider font-[family-name:var(--font-pixelify)] transition-colors cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed';
+  'min-h-[44px] rounded-lg px-3 text-xs uppercase tracking-wider font-[family-name:var(--font-ui)] transition-colors cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed';
 
 export function columnasSucursales({ onEditar, onCambiarEstado }: Acciones): DataTableColumn<Sucursal>[] {
   return [

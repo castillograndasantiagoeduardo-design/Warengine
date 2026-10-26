@@ -135,7 +135,7 @@ export function BranchInventoryView({
             <h1 className="text-2xl font-[family-name:var(--font-anton)] tracking-wider text-white uppercase">
               Inventario & Stock de Sede
             </h1>
-            <span className="text-[10px] uppercase font-bold tracking-widest px-2.5 py-0.5 rounded-full bg-[#e3b341]/10 text-[#e3b341] border border-[#e3b341]/25 font-[family-name:var(--font-pixelify)]">
+            <span className="text-[10px] uppercase font-bold tracking-widest px-2.5 py-0.5 rounded-full bg-[#e3b341]/10 text-[#e3b341] border border-[#e3b341]/25 font-[family-name:var(--font-ui)]">
               {sucursalNombre}
             </span>
           </div>
@@ -176,7 +176,7 @@ export function BranchInventoryView({
           <Button3D
             size="sm"
             onClick={() => setIsCreateProductOpen(true)}
-            className="font-bold font-[family-name:var(--font-pixelify)] tracking-wide uppercase text-xs h-9"
+            className="font-bold font-[family-name:var(--font-ui)] tracking-wide uppercase text-xs h-9"
           >
             <PlusIcon size={14} className="mr-1" />
             <span>Nuevo Producto</span>
@@ -351,7 +351,7 @@ export function BranchInventoryView({
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs border-collapse">
               <thead>
-                <tr className="border-b border-white/[0.08] bg-white/[0.02] text-[11px] font-semibold text-slate-400 uppercase tracking-wider font-[family-name:var(--font-pixelify)]">
+                <tr className="border-b border-white/[0.08] bg-white/[0.02] text-[11px] font-semibold text-slate-400 uppercase tracking-wider font-[family-name:var(--font-ui)]">
                   <th className="py-3 px-4">SKU</th>
                   <th className="py-3 px-4">Producto & Categoría</th>
                   <th className="py-3 px-4">Proveedor</th>

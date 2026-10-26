@@ -102,7 +102,7 @@ export function PosClienteModal({
           <button
             type="button"
             onClick={() => setModoCrear(!modoCrear)}
-            className="px-3 py-1.5 rounded-xl bg-[#14213D] hover:bg-[#1a2b50] border border-white/10 text-xs font-[family-name:var(--font-pixelify)] text-[#e3b341] uppercase cursor-pointer transition-colors"
+            className="px-3 py-1.5 rounded-xl bg-[#14213D] hover:bg-[#1a2b50] border border-white/10 text-xs font-[family-name:var(--font-ui)] text-[#e3b341] uppercase cursor-pointer transition-colors"
           >
             {modoCrear ? '← Buscar Existente' : '+ Registrar Nuevo'}
           </button>
@@ -131,7 +131,7 @@ export function PosClienteModal({
             {/* Lista de resultados */}
             <div className="max-h-56 overflow-y-auto space-y-2 pr-1">
               {isBuscando ? (
-                <div className="py-6 text-center text-xs text-white/40 font-[family-name:var(--font-pixelify)]">
+                <div className="py-6 text-center text-xs text-white/40 font-[family-name:var(--font-ui)]">
                   Buscando clientes en el sistema...
                 </div>
               ) : clientesEncontrados.length === 0 && terminoBusqueda.length >= 2 ? (
@@ -158,7 +158,7 @@ export function PosClienteModal({
                         {cli.tipoDocumento}: {cli.numeroDocumento} · {cli.tipoCliente}
                       </p>
                     </div>
-                    <span className="text-xs text-[#e3b341] font-bold font-[family-name:var(--font-pixelify)]">
+                    <span className="text-xs text-[#e3b341] font-bold font-[family-name:var(--font-ui)]">
                       Elegir &rarr;
                     </span>
                   </div>
@@ -179,7 +179,7 @@ export function PosClienteModal({
 
             <div className="grid grid-cols-2 gap-2.5">
               <div>
-                <label className="block text-[11px] font-semibold text-white/70 mb-1 font-[family-name:var(--font-pixelify)] uppercase">
+                <label className="block text-[11px] font-semibold text-white/70 mb-1 font-[family-name:var(--font-ui)] uppercase">
                   Tipo Documento
                 </label>
                 <select
@@ -194,7 +194,7 @@ export function PosClienteModal({
               </div>
 
               <div>
-                <label className="block text-[11px] font-semibold text-white/70 mb-1 font-[family-name:var(--font-pixelify)] uppercase">
+                <label className="block text-[11px] font-semibold text-white/70 mb-1 font-[family-name:var(--font-ui)] uppercase">
                   Número Documento *
                 </label>
                 <input
@@ -209,7 +209,7 @@ export function PosClienteModal({
             </div>
 
             <div>
-              <label className="block text-[11px] font-semibold text-white/70 mb-1 font-[family-name:var(--font-pixelify)] uppercase">
+              <label className="block text-[11px] font-semibold text-white/70 mb-1 font-[family-name:var(--font-ui)] uppercase">
                 Nombre Completo o Razón Social *
               </label>
               <input
@@ -224,7 +224,7 @@ export function PosClienteModal({
 
             <div className="grid grid-cols-2 gap-2.5">
               <div>
-                <label className="block text-[11px] font-semibold text-white/70 mb-1 font-[family-name:var(--font-pixelify)] uppercase">
+                <label className="block text-[11px] font-semibold text-white/70 mb-1 font-[family-name:var(--font-ui)] uppercase">
                   Tipo de Cliente
                 </label>
                 <select
@@ -238,7 +238,7 @@ export function PosClienteModal({
               </div>
 
               <div>
-                <label className="block text-[11px] font-semibold text-white/70 mb-1 font-[family-name:var(--font-pixelify)] uppercase">
+                <label className="block text-[11px] font-semibold text-white/70 mb-1 font-[family-name:var(--font-ui)] uppercase">
                   Teléfono {tipoCliente === 'B2B' && '*'}
                 </label>
                 <input
@@ -254,7 +254,7 @@ export function PosClienteModal({
 
             <div className="grid grid-cols-2 gap-2.5">
               <div>
-                <label className="block text-[11px] font-semibold text-white/70 mb-1 font-[family-name:var(--font-pixelify)] uppercase">
+                <label className="block text-[11px] font-semibold text-white/70 mb-1 font-[family-name:var(--font-ui)] uppercase">
                   Correo Electrónico
                 </label>
                 <input
@@ -267,7 +267,7 @@ export function PosClienteModal({
               </div>
 
               <div>
-                <label className="block text-[11px] font-semibold text-white/70 mb-1 font-[family-name:var(--font-pixelify)] uppercase">
+                <label className="block text-[11px] font-semibold text-white/70 mb-1 font-[family-name:var(--font-ui)] uppercase">
                   Dirección {tipoCliente === 'B2B' && '*'}
                 </label>
                 <input
@@ -285,14 +285,14 @@ export function PosClienteModal({
               <button
                 type="button"
                 onClick={() => setModoCrear(false)}
-                className="w-1/3 py-2.5 rounded-xl border border-white/10 text-white/60 hover:text-white text-xs font-[family-name:var(--font-pixelify)] uppercase cursor-pointer"
+                className="w-1/3 py-2.5 rounded-xl border border-white/10 text-white/60 hover:text-white text-xs font-[family-name:var(--font-ui)] uppercase cursor-pointer"
               >
                 Volver
               </button>
               <button
                 type="submit"
                 disabled={isCreando}
-                className="w-2/3 py-2.5 rounded-xl bg-[#e3b341] hover:bg-[#e9b949] text-black font-[family-name:var(--font-pixelify)] text-xs font-bold uppercase cursor-pointer shadow-[0_3px_0_#b88a1f] active:translate-y-0.5 active:shadow-none"
+                className="w-2/3 py-2.5 rounded-xl bg-[#e3b341] hover:bg-[#e9b949] text-black font-[family-name:var(--font-ui)] text-xs font-bold uppercase cursor-pointer shadow-[0_3px_0_#b88a1f] active:translate-y-0.5 active:shadow-none"
               >
                 {isCreando ? 'Guardando...' : 'Guardar y Asignar'}
               </button>

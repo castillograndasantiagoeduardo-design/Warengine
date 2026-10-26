@@ -20,7 +20,7 @@ export function PosShortcutsBar() {
       <div className="flex items-center gap-4 overflow-x-auto no-scrollbar">
         {shortcuts.map((sc) => (
           <div key={sc.key} className="flex items-center gap-1.5 whitespace-nowrap">
-            <kbd className="px-1.5 py-0.5 rounded bg-[#14213D] border border-white/10 text-white font-[family-name:var(--font-pixelify)] text-[10px] font-bold shadow-xs">
+            <kbd className="px-1.5 py-0.5 rounded bg-[#14213D] border border-white/10 text-white font-[family-name:var(--font-ui)] text-[10px] font-bold shadow-xs">
               {sc.key}
             </kbd>
             <span className="text-white/60">{sc.action}</span>

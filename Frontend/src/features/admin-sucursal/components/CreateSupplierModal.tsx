@@ -130,7 +130,7 @@ export function CreateSupplierModal({
               type="button"
               onClick={onClose}
               disabled={isSubmitting}
-              className="flex-1 py-2 px-3 rounded-xl border border-white/10 text-slate-400 hover:text-white hover:bg-white/[0.05] transition-colors text-xs font-[family-name:var(--font-pixelify)] uppercase cursor-pointer"
+              className="flex-1 py-2 px-3 rounded-xl border border-white/10 text-slate-400 hover:text-white hover:bg-white/[0.05] transition-colors text-xs font-[family-name:var(--font-ui)] uppercase cursor-pointer"
             >
               Cancelar
             </button>

@@ -79,7 +79,7 @@ export function BranchHeader({
                 onClick={() => onPeriodoChange?.(p.id)}
                 className={`
                   px-3 py-1 rounded-lg text-xs font-semibold transition-all duration-150 cursor-pointer
-                  font-[family-name:var(--font-pixelify)]
+                  font-[family-name:var(--font-ui)]
                   ${
                     isActive
                       ? 'bg-[#e3b341]/15 text-[#e3b341] border border-[#e3b341]/30 shadow-sm'

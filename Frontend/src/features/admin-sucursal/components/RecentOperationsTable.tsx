@@ -44,7 +44,7 @@ export function RecentOperationsTable({
         {onVerTodasClick ? (
           <button
             onClick={onVerTodasClick}
-            className="flex items-center gap-1 text-xs font-semibold text-[#e3b341] hover:text-[#f3d37a] transition-colors cursor-pointer font-[family-name:var(--font-pixelify)] uppercase"
+            className="flex items-center gap-1 text-xs font-semibold text-[#e3b341] hover:text-[#f3d37a] transition-colors cursor-pointer font-[family-name:var(--font-ui)] uppercase"
           >
             <span>Ver todas</span>
             <ArrowUpRightIcon size={14} />
@@ -52,7 +52,7 @@ export function RecentOperationsTable({
         ) : (
           <Link
             href="/pos"
-            className="flex items-center gap-1 text-xs font-semibold text-[#e3b341] hover:text-[#f3d37a] transition-colors cursor-pointer font-[family-name:var(--font-pixelify)] uppercase"
+            className="flex items-center gap-1 text-xs font-semibold text-[#e3b341] hover:text-[#f3d37a] transition-colors cursor-pointer font-[family-name:var(--font-ui)] uppercase"
           >
             <span>Ver todas</span>
             <ArrowUpRightIcon size={14} />
@@ -65,7 +65,7 @@ export function RecentOperationsTable({
         <div className="w-full overflow-x-auto">
           <table className="w-full text-left border-collapse select-none">
             <thead>
-              <tr className="border-b border-white/[0.08] text-[10px] font-bold uppercase tracking-wider text-slate-400 font-[family-name:var(--font-pixelify)]">
+              <tr className="border-b border-white/[0.08] text-[10px] font-bold uppercase tracking-wider text-slate-400 font-[family-name:var(--font-ui)]">
                 <th className="py-2 pr-3">Factura / Hora</th>
                 <th className="py-2 px-3">Cliente</th>
                 <th className="py-2 px-3">Cajero</th>

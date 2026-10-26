@@ -48,7 +48,7 @@ export function Navbar({ activeTab, onNavigate }: NavbarProps) {
           <li>
             <button
               onClick={() => onNavigate('inicio')}
-              className={`font-[family-name:var(--font-pixelify)] text-[clamp(12px,1.5vw,26px)] tracking-wider pb-1 transition-colors border-b-2 cursor-pointer ${
+              className={`font-[family-name:var(--font-ui)] text-[clamp(12px,1.5vw,26px)] tracking-wider pb-1 transition-colors border-b-2 cursor-pointer ${
                 activeTab === 'inicio'
                   ? 'text-[var(--ac,var(--gold))] border-[var(--ac,var(--gold))]'
                   : 'text-white/90 border-transparent hover:text-[var(--gold)]'
@@ -60,7 +60,7 @@ export function Navbar({ activeTab, onNavigate }: NavbarProps) {
           <li>
             <button
               onClick={() => onNavigate('alcance')}
-              className={`font-[family-name:var(--font-pixelify)] text-[clamp(12px,1.5vw,26px)] tracking-wider pb-1 transition-colors border-b-2 cursor-pointer ${
+              className={`font-[family-name:var(--font-ui)] text-[clamp(12px,1.5vw,26px)] tracking-wider pb-1 transition-colors border-b-2 cursor-pointer ${
                 activeTab === 'alcance'
                   ? 'text-[var(--ac,var(--gold))] border-[var(--ac,var(--gold))]'
                   : 'text-white/90 border-transparent hover:text-[var(--gold)]'
@@ -72,7 +72,7 @@ export function Navbar({ activeTab, onNavigate }: NavbarProps) {
           <li>
             <button
               onClick={() => onNavigate('planes')}
-              className={`font-[family-name:var(--font-pixelify)] text-[clamp(12px,1.5vw,26px)] tracking-wider pb-1 transition-colors border-b-2 cursor-pointer ${
+              className={`font-[family-name:var(--font-ui)] text-[clamp(12px,1.5vw,26px)] tracking-wider pb-1 transition-colors border-b-2 cursor-pointer ${
                 activeTab === 'planes'
                   ? 'text-[var(--ac,var(--gold))] border-[var(--ac,var(--gold))]'
                   : 'text-white/90 border-transparent hover:text-[var(--gold)]'
@@ -84,7 +84,7 @@ export function Navbar({ activeTab, onNavigate }: NavbarProps) {
           <li>
             <button
               onClick={() => onNavigate('nosotros')}
-              className={`font-[family-name:var(--font-pixelify)] text-[clamp(12px,1.5vw,26px)] tracking-wider pb-1 transition-colors border-b-2 cursor-pointer ${
+              className={`font-[family-name:var(--font-ui)] text-[clamp(12px,1.5vw,26px)] tracking-wider pb-1 transition-colors border-b-2 cursor-pointer ${
                 activeTab === 'nosotros'
                   ? 'text-[var(--ac,var(--gold))] border-[var(--ac,var(--gold))]'
                   : 'text-white/90 border-transparent hover:text-[var(--gold)]'

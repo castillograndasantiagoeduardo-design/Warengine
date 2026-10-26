@@ -118,7 +118,7 @@ export function PosCatalogo({ onAgregarProducto, inputBuscarRef, sucursalId, ver
             placeholder="Buscar por nombre o escanear código de barras / SKU (F2)..."
             className="w-full pl-10 pr-16 py-2.5 rounded-xl bg-[#0f1b3d] border border-white/10 text-white placeholder:text-white/40 text-sm focus:outline-none focus:border-[#e3b341] transition-colors"
           />
-          <span className="absolute right-3 top-1/2 -translate-y-1/2 px-2 py-0.5 rounded bg-white/5 border border-white/10 text-[10px] text-white/40 font-[family-name:var(--font-pixelify)]">
+          <span className="absolute right-3 top-1/2 -translate-y-1/2 px-2 py-0.5 rounded bg-white/5 border border-white/10 text-[10px] text-white/40 font-[family-name:var(--font-ui)]">
             F2
           </span>
         </div>
@@ -128,7 +128,7 @@ export function PosCatalogo({ onAgregarProducto, inputBuscarRef, sucursalId, ver
           <div className="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar">
             <button
               onClick={() => setCategoriaSeleccionada('todas')}
-              className={`px-3 py-1 rounded-lg text-xs font-[family-name:var(--font-pixelify)] uppercase whitespace-nowrap cursor-pointer transition-all ${
+              className={`px-3 py-1 rounded-lg text-xs font-[family-name:var(--font-ui)] uppercase whitespace-nowrap cursor-pointer transition-all ${
                 categoriaSeleccionada === 'todas'
                   ? 'bg-[#e3b341] text-black font-bold shadow-sm'
                   : 'bg-[#14213D] text-white/70 hover:text-white border border-white/5'
@@ -140,7 +140,7 @@ export function PosCatalogo({ onAgregarProducto, inputBuscarRef, sucursalId, ver
               <button
                 key={cat}
                 onClick={() => setCategoriaSeleccionada(cat)}
-                className={`px-3 py-1 rounded-lg text-xs font-[family-name:var(--font-pixelify)] uppercase whitespace-nowrap cursor-pointer transition-all ${
+                className={`px-3 py-1 rounded-lg text-xs font-[family-name:var(--font-ui)] uppercase whitespace-nowrap cursor-pointer transition-all ${
                   categoriaSeleccionada === cat
                     ? 'bg-[#e3b341] text-black font-bold shadow-sm'
                     : 'bg-[#14213D] text-white/70 hover:text-white border border-white/5'
@@ -158,7 +158,7 @@ export function PosCatalogo({ onAgregarProducto, inputBuscarRef, sucursalId, ver
         {isLoading ? (
           <div className="h-64 flex flex-col items-center justify-center text-white/40 gap-2">
             <div className="w-6 h-6 border-2 border-[#e3b341] border-t-transparent rounded-full animate-spin"></div>
-            <span className="text-xs font-[family-name:var(--font-pixelify)]">Consultando catálogo...</span>
+            <span className="text-xs font-[family-name:var(--font-ui)]">Consultando catálogo...</span>
           </div>
         ) : errorCarga ? (
           <div className="h-64 flex flex-col items-center justify-center text-rose-200 border border-dashed border-rose-500/30 rounded-2xl p-6 text-center">
@@ -189,7 +189,7 @@ export function PosCatalogo({ onAgregarProducto, inputBuscarRef, sucursalId, ver
               >
                 <div>
                   <div className="flex items-center justify-between gap-1 mb-1.5">
-                    <span className="text-[10px] font-[family-name:var(--font-pixelify)] px-1.5 py-0.5 rounded bg-black/40 text-white/60 tracking-wider">
+                    <span className="text-[10px] font-[family-name:var(--font-ui)] px-1.5 py-0.5 rounded bg-black/40 text-white/60 tracking-wider">
                       {prod.sku}
                     </span>
                     {prod.categoriaNombre && (

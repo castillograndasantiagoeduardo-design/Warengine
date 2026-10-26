@@ -62,7 +62,7 @@ export function PlanesSection({
 
               {/* Nombre del Plan */}
               <h3
-                className="font-[family-name:var(--font-pixelify)] text-[clamp(18px,2vw,30px)] tracking-wider"
+                className="font-[family-name:var(--font-ui)] text-[clamp(18px,2vw,30px)] tracking-wider"
                 style={{ color: plan.textColor }}
               >
                 {plan.name}
@@ -71,7 +71,7 @@ export function PlanesSection({
               {/* Etiqueta especial si existe */}
               {plan.tag && (
                 <span
-                  className="font-[family-name:var(--font-pixelify)] font-medium text-[clamp(10px,0.95vw,14px)] text-[#111111] rounded-full px-[0.8vw] py-[0.2vw]"
+                  className="font-[family-name:var(--font-ui)] font-medium text-[clamp(10px,0.95vw,14px)] text-[#111111] rounded-full px-[0.8vw] py-[0.2vw]"
                   style={{ backgroundColor: plan.textColor }}
                 >
                   {plan.tag}
@@ -83,7 +83,7 @@ export function PlanesSection({
                 <b className="font-[family-name:var(--font-anton)] text-[clamp(28px,3.3vw,52px)] text-white">
                   ${plan.price}
                 </b>
-                <span className="font-[family-name:var(--font-pixelify)] text-[clamp(12px,1.1vw,16px)] text-[#a0a5b1]">
+                <span className="font-[family-name:var(--font-ui)] text-[clamp(12px,1.1vw,16px)] text-[#a0a5b1]">
                   /mes
                 </span>
               </div>
@@ -124,7 +124,7 @@ export function PlanesSection({
                   e.stopPropagation();
                   handlePick(idx);
                 }}
-                className="mt-auto text-[#111111] font-[family-name:var(--font-pixelify)] font-medium text-[clamp(13px,1.3vw,18px)] tracking-wider rounded-[0.9vw] px-[2vw] py-[0.4vw] shadow-[0_0.25vw_0_rgba(0,0,0,0.6)] hover:translate-y-[2px] transition-all duration-100 cursor-pointer"
+                className="mt-auto text-[#111111] font-[family-name:var(--font-ui)] font-medium text-[clamp(13px,1.3vw,18px)] tracking-wider rounded-[0.9vw] px-[2vw] py-[0.4vw] shadow-[0_0.25vw_0_rgba(0,0,0,0.6)] hover:translate-y-[2px] transition-all duration-100 cursor-pointer"
                 style={{ backgroundColor: plan.textColor }}
                 aria-label={`Comprar plan ${plan.name}`}
               >

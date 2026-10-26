@@ -54,7 +54,7 @@ export function ActiveCashiersCard({
               >
                 <div className="flex items-center gap-3 min-w-0">
                   {/* Avatar circular del Cajero */}
-                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gradient-to-tr from-[#1b2b54] to-[#2a3f78] border border-white/[0.08] text-[#e3b341] font-bold text-xs font-[family-name:var(--font-pixelify)]">
+                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gradient-to-tr from-[#1b2b54] to-[#2a3f78] border border-white/[0.08] text-[#e3b341] font-bold text-xs font-[family-name:var(--font-ui)]">
                     {turno.cajeroIniciales}
                   </div>
 
@@ -101,7 +101,7 @@ export function ActiveCashiersCard({
         className="
           mt-3 pt-3 border-t border-white/[0.06] flex items-center justify-between w-full
           text-xs font-semibold text-[#e3b341] hover:text-[#f3d37a] transition-colors
-          group cursor-pointer font-[family-name:var(--font-pixelify)] uppercase tracking-wider
+          group cursor-pointer font-[family-name:var(--font-ui)] uppercase tracking-wider
         "
       >
         <span>Administrar cajas y turnos</span>

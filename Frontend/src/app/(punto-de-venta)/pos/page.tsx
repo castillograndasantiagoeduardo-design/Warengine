@@ -227,7 +227,7 @@ export default function PosTerminalPage() {
     return (
       <div className="min-h-screen bg-[#0d1630] flex flex-col items-center justify-center text-white gap-3 select-none">
         <div className="w-10 h-10 border-3 border-[#e3b341] border-t-transparent rounded-full animate-spin"></div>
-        <p className="font-[family-name:var(--font-pixelify)] text-sm text-[#e3b341] tracking-wider uppercase">
+        <p className="font-[family-name:var(--font-ui)] text-sm text-[#e3b341] tracking-wider uppercase">
           Iniciando Terminal de Punto de Venta...
         </p>
       </div>

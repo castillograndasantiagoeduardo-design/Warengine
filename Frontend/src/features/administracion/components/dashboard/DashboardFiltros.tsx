@@ -23,7 +23,7 @@ export function DashboardFiltros({ rango, onRangoChange, sucursalId, onSucursalC
     <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
       <SegmentedControl ariaLabel="Rango de fechas" options={RANGOS} value={rango} onChange={onRangoChange} />
       {mostrarSucursal && (
-        <label className="flex items-center gap-2 text-xs uppercase tracking-wider text-white/60 font-[family-name:var(--font-pixelify)]">
+        <label className="flex items-center gap-2 text-xs uppercase tracking-wider text-white/60 font-[family-name:var(--font-ui)]">
           Sucursal
           <select
             className="panel-input w-auto min-w-[200px] cursor-pointer normal-case tracking-normal"

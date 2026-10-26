@@ -12,7 +12,7 @@ import { SectionCard } from '@/components/ui/SectionCard';
 import { Spinner } from '@/components/ui/Spinner';
 import { useAreas } from '../../../hooks/useAreas';
 
-const BTN = 'min-h-[44px] min-w-[44px] rounded-lg px-2 text-xs uppercase tracking-wider font-[family-name:var(--font-pixelify)] cursor-pointer';
+const BTN = 'min-h-[44px] min-w-[44px] rounded-lg px-2 text-xs uppercase tracking-wider font-[family-name:var(--font-ui)] cursor-pointer';
 
 export function SucursalAreas({ sucursalId }: { sucursalId: number }) {
   const a = useAreas(sucursalId);
