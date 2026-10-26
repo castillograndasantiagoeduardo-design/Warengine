@@ -16,6 +16,12 @@ import type {
   ProveedorInventario,
   ActualizarProductoDTO,
   CrearProveedorDTO,
+  RegistrarEntradaDTO,
+  RegistrarSalidaDTO,
+  AjustarInventarioDTO,
+  FiltrosKardexDTO,
+  ResultadoKardexPaginado,
+  ResultadoEntradasPaginado,
 } from '../types/branch-inventory.types';
 
 export class BranchInventoryService implements IBranchInventoryService {
@@ -243,6 +249,148 @@ export class BranchInventoryService implements IBranchInventoryService {
 
   public async cambiarEstadoProveedor(id: number, isActive: boolean): Promise<void> {
     await this.http.put(`/inventario/proveedores/${id}/estado`, { isActive });
+  }
+
+  // ───────────────────────────────────────────────────────────────────────────
+  // FASE 2: Movimientos Operativos, Ajustes y Kardex
+  // ───────────────────────────────────────────────────────────────────────────
+
+  public async registrarEntrada(dto: RegistrarEntradaDTO): Promise<{ id?: string; mensaje?: string }> {
+    return await this.http.post<{ id?: string; mensaje?: string }>('/inventario/entradas', {
+      productoId: dto.productoId,
+      sucursalId: Number(dto.sucursalId),
+      cantidad: Number(dto.cantidad),
+      proveedorId: dto.proveedorId ? Number(dto.proveedorId) : null,
+      motivo: dto.motivo?.trim() || null,
+    });
+  }
+
+  public async registrarSalida(dto: RegistrarSalidaDTO): Promise<{ mensaje?: string }> {
+    return await this.http.post<{ mensaje?: string }>('/inventario/salidas', {
+      productoId: dto.productoId,
+      sucursalId: Number(dto.sucursalId),
+      cantidad: Number(dto.cantidad),
+      motivo: dto.motivo.trim(),
+    });
+  }
+
+  public async ajustarInventario(dto: AjustarInventarioDTO): Promise<{
+    mensaje?: string;
+    ajusteRealizado: boolean;
+    diferencia: number;
+    tipoAjuste: string;
+    stockPrevio?: number;
+    stockFisico?: number;
+  }> {
+    return await this.http.post<any>('/inventario/ajustes', {
+      productoId: dto.productoId,
+      sucursalId: Number(dto.sucursalId),
+      stockFisico: Number(dto.stockFisico),
+      motivo: dto.motivo.trim(),
+    });
+  }
+
+  public async consultarKardex(filtros: FiltrosKardexDTO): Promise<ResultadoKardexPaginado> {
+    const params: Record<string, any> = {};
+    if (filtros.productoId) params.productoId = filtros.productoId;
+    if (filtros.sucursalId) params.sucursalId = filtros.sucursalId;
+    if (filtros.tipo) params.tipo = filtros.tipo;
+    if (filtros.desde) params.desde = filtros.desde;
+    if (filtros.hasta) params.hasta = filtros.hasta;
+    if (filtros.limit) params.limit = filtros.limit;
+    if (filtros.offset !== undefined) params.offset = filtros.offset;
+
+    const res = await this.http.get<any>('/inventario/kardex', { params });
+    return {
+      items: (res?.items || []).map((m: any) => ({
+        id: m.id,
+        productoId: m.productoId || m.producto_id,
+        productoNombre: m.productoNombre || m.producto_nombre,
+        productoSku: m.productoSku || m.producto_sku,
+        sucursalId: Number(m.sucursalId || m.sucursal_id),
+        sucursalNombre: m.sucursalNombre || m.sucursal_nombre,
+        tipo: m.tipo,
+        cantidad: Number(m.cantidad),
+        motivo: m.motivo,
+        proveedorId: m.proveedorId ? Number(m.proveedorId) : null,
+        proveedorNombre: m.proveedorNombre,
+        facturaId: m.facturaId,
+        devolucionId: m.devolucionId,
+        usuarioId: m.usuarioId,
+        usuarioNombre: m.usuarioNombre,
+        fecha: m.fecha,
+        stockResultante: m.stockResultante !== undefined ? Number(m.stockResultante) : undefined,
+      })),
+      total: res?.total ?? 0,
+      limit: res?.limit ?? filtros.limit ?? 20,
+      offset: res?.offset ?? filtros.offset ?? 0,
+    };
+  }
+
+  public async listarEntradas(filtros?: {
+    sucursalId?: number;
+    proveedorId?: number;
+    productoId?: string;
+    limit?: number;
+    offset?: number;
+  }): Promise<ResultadoEntradasPaginado> {
+    const params: Record<string, any> = {};
+    if (filtros?.sucursalId) params.sucursalId = filtros.sucursalId;
+    if (filtros?.proveedorId) params.proveedorId = filtros.proveedorId;
+    if (filtros?.productoId) params.productoId = filtros.productoId;
+    if (filtros?.limit) params.limit = filtros.limit;
+    if (filtros?.offset !== undefined) params.offset = filtros.offset;
+
+    const res = await this.http.get<any>('/inventario/entradas', { params });
+    return {
+      items: (res?.items || []).map((e: any) => ({
+        id: e.id,
+        productoId: e.productoId,
+        productoNombre: e.productoNombre,
+        productoSku: e.productoSku,
+        sucursalId: Number(e.sucursalId),
+        sucursalNombre: e.sucursalNombre,
+        tipo: 'entrada',
+        cantidad: Number(e.cantidad),
+        motivo: e.motivo,
+        proveedorId: e.proveedorId ? Number(e.proveedorId) : null,
+        proveedorNombre: e.proveedorNombre,
+        usuarioId: e.usuarioId,
+        usuarioNombre: e.usuarioNombre,
+        fecha: e.fecha,
+      })),
+      total: res?.total ?? 0,
+      limit: res?.limit ?? 20,
+      offset: res?.offset ?? 0,
+    };
+  }
+
+  public async anularEntrada(id: string, motivo: string): Promise<{ mensaje: string }> {
+    return await this.http.post<any>(`/inventario/entradas/${id}/anular`, { motivo });
+  }
+
+  public async descargarKardexCsv(filtros?: {
+    productoId?: string;
+    sucursalId?: number;
+    tipo?: string;
+    desde?: string;
+    hasta?: string;
+  }): Promise<Blob> {
+    const params: Record<string, any> = {};
+    if (filtros?.productoId) params.productoId = filtros.productoId;
+    if (filtros?.sucursalId) params.sucursalId = filtros.sucursalId;
+    if (filtros?.tipo) params.tipo = filtros.tipo;
+    if (filtros?.desde) params.desde = filtros.desde;
+    if (filtros?.hasta) params.hasta = filtros.hasta;
+
+    const queryString = new URLSearchParams(params).toString();
+    const url = `/inventario/kardex/exportar-csv${queryString ? `?${queryString}` : ''}`;
+    
+    const token = typeof window !== 'undefined' ? localStorage.getItem('warengine_token') : null;
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8017'}${url}`, {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    });
+    return await response.blob();
   }
 }
 

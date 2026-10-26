@@ -11,6 +11,12 @@ import type {
   ProveedorInventario,
   ActualizarProductoDTO,
   CrearProveedorDTO,
+  RegistrarEntradaDTO,
+  RegistrarSalidaDTO,
+  AjustarInventarioDTO,
+  FiltrosKardexDTO,
+  ResultadoKardexPaginado,
+  ResultadoEntradasPaginado,
 } from '../types/branch-inventory.types';
 
 export interface IBranchInventoryService {
@@ -32,4 +38,32 @@ export interface IBranchInventoryService {
   crearProveedor(data: CrearProveedorDTO): Promise<ProveedorInventario>;
   editarProveedor(id: number, data: { nombre?: string; contacto?: string; isActive?: boolean }): Promise<void>;
   cambiarEstadoProveedor(id: number, isActive: boolean): Promise<void>;
+
+  // Fase 2: Movimientos de inventario, ajustes y kardex
+  registrarEntrada(dto: RegistrarEntradaDTO): Promise<{ id?: string; mensaje?: string }>;
+  registrarSalida(dto: RegistrarSalidaDTO): Promise<{ mensaje?: string }>;
+  ajustarInventario(dto: AjustarInventarioDTO): Promise<{
+    mensaje?: string;
+    ajusteRealizado: boolean;
+    diferencia: number;
+    tipoAjuste: string;
+    stockPrevio?: number;
+    stockFisico?: number;
+  }>;
+  consultarKardex(filtros: FiltrosKardexDTO): Promise<ResultadoKardexPaginado>;
+  listarEntradas(filtros?: {
+    sucursalId?: number;
+    proveedorId?: number;
+    productoId?: string;
+    limit?: number;
+    offset?: number;
+  }): Promise<ResultadoEntradasPaginado>;
+  anularEntrada(id: string, motivo: string): Promise<{ mensaje: string }>;
+  descargarKardexCsv(filtros?: {
+    productoId?: string;
+    sucursalId?: number;
+    tipo?: string;
+    desde?: string;
+    hasta?: string;
+  }): Promise<Blob>;
 }

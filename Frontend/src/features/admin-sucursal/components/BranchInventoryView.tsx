@@ -13,11 +13,16 @@
 
 import React, { useState } from 'react';
 import { useBranchInventory } from '../hooks/useBranchInventory';
+import { useInventoryMovements } from '../hooks/useInventoryMovements';
 import { GlassCard } from './GlassCard';
 import { Button3D } from '@/components/ui/Button3D';
 import { EditProductModal } from './EditProductModal';
 import { CreateSupplierModal } from './CreateSupplierModal';
 import { CreateProductModal } from './CreateProductModal';
+import { RegisterStockEntryModal } from './RegisterStockEntryModal';
+import { ManualExitModal } from './ManualExitModal';
+import { StockCountAuditModal } from './StockCountAuditModal';
+import { BranchKardexModal } from './BranchKardexModal';
 import {
   SearchIcon,
   PlusIcon,
@@ -27,6 +32,9 @@ import {
   TruckIcon,
   CopyIcon,
   CheckIcon,
+  MinusIcon,
+  ScaleIcon,
+  BoxesIcon,
 } from './Icons';
 import type { ProductoInventarioSede } from '../types/branch-inventory.types';
 
@@ -57,12 +65,30 @@ export function BranchInventoryView({
     crearProveedor,
   } = useBranchInventory({ sucursalId });
 
+  // Hook de movimientos operativos y trazabilidad Kardex (Fase 2)
+  const {
+    registrarEntrada,
+    registrarSalida,
+    ajustarInventario,
+    consultarKardex,
+    exportarCsv,
+    isKardexLoading,
+    kardexData,
+  } = useInventoryMovements();
+
   // Modales
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [productoSeleccionado, setProductoSeleccionado] = useState<ProductoInventarioSede | null>(null);
   const [isCreateProductOpen, setIsCreateProductOpen] = useState(false);
   const [isSupplierModalOpen, setIsSupplierModalOpen] = useState(false);
   const [copiedSku, setCopiedSku] = useState<string | null>(null);
+
+  // Modales Operativos Fase 2
+  const [isEntryModalOpen, setIsEntryModalOpen] = useState(false);
+  const [isExitModalOpen, setIsExitModalOpen] = useState(false);
+  const [isAuditModalOpen, setIsAuditModalOpen] = useState(false);
+  const [isKardexModalOpen, setIsKardexModalOpen] = useState(false);
+  const [productoMovimiento, setProductoMovimiento] = useState<ProductoInventarioSede | null>(null);
 
   const formatCOP = (num: number) =>
     new Intl.NumberFormat('es-CO', {
@@ -81,6 +107,26 @@ export function BranchInventoryView({
   const handleAbrirEdicion = (p: ProductoInventarioSede) => {
     setProductoSeleccionado(p);
     setIsEditModalOpen(true);
+  };
+
+  const handleAbrirEntrada = (p?: ProductoInventarioSede) => {
+    setProductoMovimiento(p || null);
+    setIsEntryModalOpen(true);
+  };
+
+  const handleAbrirSalida = (p: ProductoInventarioSede) => {
+    setProductoMovimiento(p);
+    setIsExitModalOpen(true);
+  };
+
+  const handleAbrirAjuste = (p?: ProductoInventarioSede) => {
+    setProductoMovimiento(p || null);
+    setIsAuditModalOpen(true);
+  };
+
+  const handleAbrirKardex = (p?: ProductoInventarioSede) => {
+    setProductoMovimiento(p || null);
+    setIsKardexModalOpen(true);
   };
 
   // Contadores para chips de filtrado
@@ -106,8 +152,8 @@ export function BranchInventoryView({
           </p>
         </div>
 
-        {/* Acciones Rápidas */}
-        <div className="flex items-center gap-2.5">
+        {/* Acciones Rápidas de Almacén */}
+        <div className="flex flex-wrap items-center gap-2">
           <button
             onClick={() => recargar()}
             title="Refrescar catálogo"
@@ -116,14 +162,34 @@ export function BranchInventoryView({
             <RefreshCwIcon size={15} className={isLoading ? 'animate-spin text-[#e3b341]' : ''} />
           </button>
 
+          {/* Botón Asentar Entrada */}
           <button
-            onClick={() => setIsSupplierModalOpen(true)}
-            className="flex items-center gap-1.5 h-9 px-3 rounded-xl bg-white/[0.04] border border-white/[0.1] text-xs font-semibold text-slate-200 hover:text-white hover:bg-white/[0.08] transition-colors cursor-pointer font-[family-name:var(--font-archivo)]"
+            onClick={() => handleAbrirEntrada()}
+            className="flex items-center gap-1.5 h-9 px-3 rounded-xl bg-[#10b981]/10 border border-[#10b981]/30 text-xs font-semibold text-[#10b981] hover:bg-[#10b981]/20 transition-colors cursor-pointer font-[family-name:var(--font-archivo)]"
           >
-            <TruckIcon size={14} className="text-[#e3b341]" />
-            <span>+ Proveedor</span>
+            <PlusIcon size={14} />
+            <span>+ Entrada</span>
           </button>
 
+          {/* Botón Ajuste por Conteo Físico */}
+          <button
+            onClick={() => handleAbrirAjuste()}
+            className="flex items-center gap-1.5 h-9 px-3 rounded-xl bg-white/[0.04] border border-white/[0.1] text-xs font-semibold text-slate-200 hover:text-white hover:bg-white/[0.08] transition-colors cursor-pointer font-[family-name:var(--font-archivo)]"
+          >
+            <ScaleIcon size={14} className="text-[#e3b341]" />
+            <span>Ajuste Físico</span>
+          </button>
+
+          {/* Botón Historial Kardex */}
+          <button
+            onClick={() => handleAbrirKardex()}
+            className="flex items-center gap-1.5 h-9 px-3 rounded-xl bg-white/[0.04] border border-white/[0.1] text-xs font-semibold text-slate-200 hover:text-white hover:bg-white/[0.08] transition-colors cursor-pointer font-[family-name:var(--font-archivo)]"
+          >
+            <BoxesIcon size={14} className="text-amber-400" />
+            <span>Kardex</span>
+          </button>
+
+          {/* Botón Nuevo Producto */}
           <Button3D
             size="sm"
             onClick={() => setIsCreateProductOpen(true)}
@@ -312,7 +378,7 @@ export function BranchInventoryView({
                   <th className="py-3 px-4 text-right">Precio Venta</th>
                   <th className="py-3 px-4 text-center">Margen</th>
                   <th className="py-3 px-4 text-center">Estado</th>
-                  <th className="py-3 px-4 text-center">Acciones</th>
+                  <th className="py-3 px-4 text-center min-w-[140px]">Operaciones</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-white/[0.04]">
@@ -436,15 +502,54 @@ export function BranchInventoryView({
                         </button>
                       </td>
 
-                      {/* Acciones */}
+                      {/* Operaciones y Acciones Rápidas */}
                       <td className="py-3 px-4 text-center">
-                        <button
-                          onClick={() => handleAbrirEdicion(prod)}
-                          title="Editar producto y umbrales"
-                          className="p-1.5 rounded-lg text-slate-400 hover:text-[#e3b341] hover:bg-[#e3b341]/10 transition-colors cursor-pointer"
-                        >
-                          <EditIcon size={15} />
-                        </button>
+                        <div className="flex items-center justify-center gap-1">
+                          {/* Entrada rápida */}
+                          <button
+                            onClick={() => handleAbrirEntrada(prod)}
+                            title="Registrar entrada de mercancía"
+                            className="p-1.5 rounded-lg text-slate-400 hover:text-[#10b981] hover:bg-[#10b981]/15 transition-colors cursor-pointer"
+                          >
+                            <PlusIcon size={14} />
+                          </button>
+
+                          {/* Salida manual */}
+                          <button
+                            onClick={() => handleAbrirSalida(prod)}
+                            title="Registrar salida / merma"
+                            className="p-1.5 rounded-lg text-slate-400 hover:text-red-400 hover:bg-red-500/15 transition-colors cursor-pointer"
+                          >
+                            <MinusIcon size={14} />
+                          </button>
+
+                          {/* Ajuste por conteo físico */}
+                          <button
+                            onClick={() => handleAbrirAjuste(prod)}
+                            title="Ajuste por conteo físico"
+                            className="p-1.5 rounded-lg text-slate-400 hover:text-[#e3b341] hover:bg-[#e3b341]/15 transition-colors cursor-pointer"
+                          >
+                            <ScaleIcon size={14} />
+                          </button>
+
+                          {/* Ver Kardex del producto */}
+                          <button
+                            onClick={() => handleAbrirKardex(prod)}
+                            title="Ver movimientos Kardex de este artículo"
+                            className="p-1.5 rounded-lg text-slate-400 hover:text-amber-400 hover:bg-amber-400/15 transition-colors cursor-pointer"
+                          >
+                            <BoxesIcon size={14} />
+                          </button>
+
+                          {/* Editar producto */}
+                          <button
+                            onClick={() => handleAbrirEdicion(prod)}
+                            title="Editar datos y umbral de stock mínimo"
+                            className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/[0.08] transition-colors cursor-pointer"
+                          >
+                            <EditIcon size={14} />
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   );
@@ -455,7 +560,7 @@ export function BranchInventoryView({
         )}
       </GlassCard>
 
-      {/* 5. Modales Funcionales */}
+      {/* 5. Modales Funcionales Fase 1 */}
       <EditProductModal
         isOpen={isEditModalOpen}
         producto={productoSeleccionado}
@@ -481,6 +586,72 @@ export function BranchInventoryView({
         onClose={() => setIsCreateProductOpen(false)}
         onProductoCreado={() => recargar()}
         sucursalId={sucursalId}
+      />
+
+      {/* 6. Modales Operativos Fase 2 (Entradas, Salidas, Ajustes, Kardex) */}
+      <RegisterStockEntryModal
+        isOpen={isEntryModalOpen}
+        sucursalId={sucursalId}
+        productos={productos}
+        proveedores={proveedores}
+        productoInicial={productoMovimiento}
+        onClose={() => {
+          setIsEntryModalOpen(false);
+          setProductoMovimiento(null);
+        }}
+        onRegistrar={async (dto) => {
+          const res = await registrarEntrada(dto);
+          if (res.ok) recargar();
+          return res;
+        }}
+      />
+
+      <ManualExitModal
+        isOpen={isExitModalOpen}
+        sucursalId={sucursalId}
+        productos={productos}
+        productoInicial={productoMovimiento}
+        onClose={() => {
+          setIsExitModalOpen(false);
+          setProductoMovimiento(null);
+        }}
+        onRegistrar={async (dto) => {
+          const res = await registrarSalida(dto);
+          if (res.ok) recargar();
+          return res;
+        }}
+      />
+
+      <StockCountAuditModal
+        isOpen={isAuditModalOpen}
+        sucursalId={sucursalId}
+        productos={productos}
+        productoInicial={productoMovimiento}
+        onClose={() => {
+          setIsAuditModalOpen(false);
+          setProductoMovimiento(null);
+        }}
+        onAjustar={async (dto) => {
+          const res = await ajustarInventario(dto);
+          if (res.ok) recargar();
+          return res;
+        }}
+      />
+
+      <BranchKardexModal
+        isOpen={isKardexModalOpen}
+        sucursalId={sucursalId}
+        sucursalNombre={sucursalNombre}
+        productos={productos}
+        productoInicial={productoMovimiento}
+        onClose={() => {
+          setIsKardexModalOpen(false);
+          setProductoMovimiento(null);
+        }}
+        onConsultarKardex={consultarKardex}
+        onExportarCsv={exportarCsv}
+        isLoading={isKardexLoading}
+        movimientos={kardexData.items}
       />
     </div>
   );
