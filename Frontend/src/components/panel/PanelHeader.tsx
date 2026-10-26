@@ -9,13 +9,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/features/autenticacion';
 import { Button3D } from '@/components/ui/Button3D';
 import { Spinner } from '@/components/ui/Spinner';
-
-const ROL_ETIQUETA: Record<string, string> = {
-  'super-admin': 'Super Admin',
-  'admin-sucursal': 'Admin de sucursal',
-  cajero: 'Cajero',
-  'vendedor-b2b': 'Vendedor B2B',
-};
+import { etiquetaRol } from '@/lib/format/rol';
 
 export function PanelHeader({ onMenuClick }: { onMenuClick: () => void }) {
   const router = useRouter();
@@ -28,7 +22,7 @@ export function PanelHeader({ onMenuClick }: { onMenuClick: () => void }) {
     router.replace('/acceso');
   };
 
-  const rol = usuario ? (ROL_ETIQUETA[usuario.rolNombre] ?? usuario.rolNombre) : '';
+  const rol = etiquetaRol(usuario?.rolNombre);
   // /auth/verificar no devuelve el correo: tras recargar solo se conoce el rol
   const identidad = usuario?.email || rol;
   const inicial = (usuario?.email || rol || '?').charAt(0).toUpperCase();
