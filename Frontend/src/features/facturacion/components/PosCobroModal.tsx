@@ -55,12 +55,7 @@ export function PosCobroModal({
       maximumFractionDigits: 0,
     }).format(monto);
 
-  // Al abrir en efectivo, preconfigurar con el total exacto si está en 0
-  useEffect(() => {
-    if (medioPago === 'efectivo' && montoEfectivoRecibido === 0) {
-      onCambiarMontoEfectivo(totalVenta);
-    }
-  }, [medioPago, montoEfectivoRecibido, onCambiarMontoEfectivo, totalVenta]);
+  // Nota: Se eliminó el auto-relleno forzado para permitir al cajero dejar el monto en 0 libremente.
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
@@ -150,13 +145,22 @@ export function PosCobroModal({
                 <label className="text-xs font-semibold text-white/80 uppercase font-[family-name:var(--font-pixelify)]">
                   Monto Recibido del Cliente (COP)
                 </label>
-                <button
-                  type="button"
-                  onClick={() => onCambiarMontoEfectivo(totalVenta)}
-                  className="text-[11px] text-[#e3b341] hover:underline font-[family-name:var(--font-pixelify)] cursor-pointer"
-                >
-                  Monto Exacto
-                </button>
+                <div className="flex items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={() => onCambiarMontoEfectivo(0)}
+                    className="text-[11px] text-white/50 hover:text-white hover:underline font-[family-name:var(--font-pixelify)] cursor-pointer"
+                  >
+                    Dejar en $0
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => onCambiarMontoEfectivo(totalVenta)}
+                    className="text-[11px] text-[#e3b341] hover:underline font-[family-name:var(--font-pixelify)] font-bold cursor-pointer"
+                  >
+                    ⚡ Monto Exacto ({formatoCOP(totalVenta)})
+                  </button>
+                </div>
               </div>
 
               <div className="relative">
@@ -165,9 +169,17 @@ export function PosCobroModal({
                   type="number"
                   min={0}
                   step={500}
-                  value={montoEfectivoRecibido || ''}
-                  onChange={(e) => onCambiarMontoEfectivo(parseFloat(e.target.value) || 0)}
-                  placeholder="0"
+                  value={montoEfectivoRecibido === 0 ? '' : montoEfectivoRecibido}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    if (val === '') {
+                      onCambiarMontoEfectivo(0);
+                    } else {
+                      const num = parseFloat(val);
+                      onCambiarMontoEfectivo(isNaN(num) || num < 0 ? 0 : num);
+                    }
+                  }}
+                  placeholder="0 (Ingresa el efectivo recibido)"
                   autoFocus
                   className="w-full pl-8 pr-4 py-3 rounded-xl bg-[#0a1124] border border-white/20 text-white font-[family-name:var(--font-anton)] text-2xl tracking-wider focus:outline-none focus:border-[#e3b341]"
                 />
@@ -195,14 +207,18 @@ export function PosCobroModal({
                   Cambio / Devuelta a Entregar
                 </span>
                 <p className="text-xs text-white/40">
-                  {montoEfectivoRecibido < totalVenta
-                    ? `Faltan ${formatoCOP(totalVenta - montoEfectivoRecibido)}`
+                  {montoEfectivoRecibido === 0
+                    ? 'Monto en $0 · Pulsa "Monto Exacto" o ingresa el efectivo'
+                    : montoEfectivoRecibido < totalVenta
+                    ? `Faltan ${formatoCOP(totalVenta - montoEfectivoRecibido)} para cubrir la venta`
                     : 'Monto cubierto'}
                 </p>
               </div>
               <span
                 className={`font-[family-name:var(--font-anton)] text-2xl tracking-wider ${
-                  montoEfectivoRecibido >= totalVenta ? 'text-emerald-400' : 'text-red-400'
+                  montoEfectivoRecibido >= totalVenta && montoEfectivoRecibido > 0
+                    ? 'text-emerald-400'
+                    : 'text-white/40'
                 }`}
               >
                 {formatoCOP(cambioDevuelta)}
