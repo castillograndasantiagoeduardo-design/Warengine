@@ -1,3 +1,4 @@
+export * from './alertas.service';
 export * from './areas.service';
 export * from './auditoria.service';
 export * from './dashboard.service';
