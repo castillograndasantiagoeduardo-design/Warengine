@@ -32,7 +32,7 @@ export function BranchLayout({
   onSelectSection,
   periodo = 'hoy',
   onPeriodoChange,
-  sucursalNombre = 'Sede Norte',
+  sucursalNombre,
   ultimaSincronizacion,
   isOnline = true,
   onOpenProfile,

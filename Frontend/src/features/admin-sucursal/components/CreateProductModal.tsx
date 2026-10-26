@@ -16,14 +16,15 @@ interface CreateProductModalProps {
   isOpen: boolean;
   onClose: () => void;
   onProductoCreado?: () => void;
-  sucursalId?: number;
+  /** Sede de la sesión del admin: el stock mínimo se configura en ella. */
+  sucursalId: number;
 }
 
 export function CreateProductModal({
   isOpen,
   onClose,
   onProductoCreado,
-  sucursalId = 1,
+  sucursalId,
 }: CreateProductModalProps) {
   const [sku, setSku] = useState('');
   const [nombre, setNombre] = useState('');

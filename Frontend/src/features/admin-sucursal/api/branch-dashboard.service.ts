@@ -34,9 +34,9 @@ import type {
 export class BranchDashboardService implements IBranchDashboardService {
   constructor(private readonly http: IHttpClient = apiClient) {}
 
-  public async obtenerDashboard(params?: ObtenerDashboardParams): Promise<BranchDashboardData> {
-    const sucursalId = params?.sucursalId ?? 1;
-    const periodo = params?.periodo ?? 'hoy';
+  public async obtenerDashboard(params: ObtenerDashboardParams): Promise<BranchDashboardData> {
+    const { sucursalId, sucursalNombre } = params;
+    const periodo = params.periodo ?? 'hoy';
 
     try {
       // 1. Peticiones paralelas a los endpoints reales del backend de Warengine

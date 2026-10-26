@@ -9,7 +9,9 @@
 import type { BranchDashboardData, DashboardPeriodo } from '../types/branch-dashboard.types';
 
 export interface ObtenerDashboardParams {
-  sucursalId?: number;
+  /** Sede de la sesión del usuario (nunca un valor por defecto). */
+  sucursalId: number;
+  sucursalNombre: string;
   periodo?: DashboardPeriodo;
 }
 
@@ -18,5 +20,5 @@ export interface IBranchDashboardService {
    * Obtiene la agregación completa de métricas, tendencias, inventario y personal
    * para la sucursal activa.
    */
-  obtenerDashboard(params?: ObtenerDashboardParams): Promise<BranchDashboardData>;
+  obtenerDashboard(params: ObtenerDashboardParams): Promise<BranchDashboardData>;
 }

@@ -13,6 +13,7 @@ export * from './src/modules/autenticacion/domain/repositories/IRegistroIntentos
 export * from './src/modules/autenticacion/domain/repositories/IControlIntentosLogin.ts';
 export * from './src/modules/autenticacion/domain/repositories/ISucursalesAutorizadasRepository.ts';
 export * from './src/modules/autenticacion/domain/repositories/IPasswordResetRepository.ts';
+export * from './src/modules/autenticacion/domain/repositories/IPerfilSesionRepository.ts';
 export * from './src/modules/autenticacion/domain/value-objects/PoliticaBloqueoLogin.ts';
 export * from './src/modules/autenticacion/domain/value-objects/AlcanceSucursal.ts';
 export * from './src/modules/autenticacion/domain/services/IPasswordService.ts';
@@ -32,6 +33,7 @@ export * from './src/modules/autenticacion/application/use-cases/Desactivar2FAUs
 export * from './src/modules/autenticacion/application/use-cases/SolicitarRecuperacionPasswordUseCase.ts';
 export * from './src/modules/autenticacion/application/use-cases/ValidarTokenPasswordResetUseCase.ts';
 export * from './src/modules/autenticacion/application/use-cases/RestablecerPasswordUseCase.ts';
+export * from './src/modules/autenticacion/application/use-cases/ObtenerSesionActualUseCase.ts';
 
 
 

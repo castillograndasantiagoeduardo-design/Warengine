@@ -25,7 +25,7 @@ export class PosService implements IPosService {
     return {
       id: String(raw.id),
       usuarioId: String(raw.usuarioId || raw.usuario_id),
-      sucursalId: Number(raw.sucursalId || raw.sucursal_id || 1),
+      sucursalId: Number(raw.sucursalId || raw.sucursal_id || 0),
       fondoInicial: Number(raw.fondoInicial ?? raw.fondo_inicial ?? 0),
       fondoFinal: raw.fondoFinal !== null && raw.fondoFinal !== undefined ? Number(raw.fondoFinal) : null,
       diferencia: raw.diferencia !== null && raw.diferencia !== undefined ? Number(raw.diferencia) : null,

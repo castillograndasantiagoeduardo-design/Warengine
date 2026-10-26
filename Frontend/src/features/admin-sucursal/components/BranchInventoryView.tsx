@@ -44,7 +44,7 @@ interface BranchInventoryViewProps {
 
 export function BranchInventoryView({
   sucursalId,
-  sucursalNombre = 'Sede Norte',
+  sucursalNombre,
   className = '',
 }: BranchInventoryViewProps) {
   const {

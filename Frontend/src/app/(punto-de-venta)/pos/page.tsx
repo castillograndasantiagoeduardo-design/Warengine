@@ -216,8 +216,19 @@ export default function PosTerminalPage() {
     );
   }
 
-  const sucursalId = usuario?.sucursalId || 1;
-  const sucursalNombre = usuario?.sucursalNombre || 'Sede Principal';
+  // La sede sale de la sesión (empleado vinculado); sin sede no se puede operar la caja
+  if (!usuario?.sucursalId) {
+    return (
+      <div className="min-h-screen bg-[#0d1630] flex flex-col items-center justify-center text-white gap-4 p-6 text-center">
+        <p className="text-lg font-semibold text-rose-300">Tu usuario no tiene una sucursal asignada.</p>
+        <p className="text-sm text-white/60 max-w-md">Pide al administrador que vincule tu cuenta a una sede antes de abrir turno.</p>
+        <button type="button" onClick={handleLogout} className="btn-3d btn-3d-panel px-5 py-2 text-sm">Cerrar sesión</button>
+      </div>
+    );
+  }
+
+  const sucursalId = usuario.sucursalId;
+  const sucursalNombre = usuario.sucursalNombre ?? `Sucursal #${usuario.sucursalId}`;
 
   return (
     <div className="h-screen flex flex-col bg-[#0d1630] text-white overflow-hidden">

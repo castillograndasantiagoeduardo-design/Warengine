@@ -12,6 +12,8 @@ import { validarTokenController } from '../controllers/autenticacion/recuperar-p
 import { restablecerPasswordController } from '../controllers/autenticacion/recuperar-password/restablecer-password.controller.ts';
 import { authMiddleware } from '../middlewares/auth.middleware.ts';
 import { obtenerIdentidad } from '../utils/identidad.ts';
+import { safeHandler } from '../utils/handler.ts';
+import { presentResult } from '../presenters/result.presenter.ts';
 
 export function createAutenticacionRoutes(container: AppContainer): Hono {
   const api = new Hono();
@@ -22,16 +24,22 @@ export function createAutenticacionRoutes(container: AppContainer): Hono {
   api.post('/logout', logoutController(container));
 
   // Verificación de sesión e identidad (RF-SA-D5)
-  api.get('/verificar', authMiddleware(container), (c) => {
+  api.get('/verificar', authMiddleware(container), safeHandler(async (c) => {
     const identidad = obtenerIdentidad(c);
+    const sesion = await container.autenticacion.obtenerSesionActual.execute({
+      usuarioId: identidad.usuarioId,
+    });
+    if (sesion.isFailure) return presentResult(c, sesion);
+
     return c.json({
       ok: true,
       message: 'Sesión activa y autenticada correctamente',
       usuarioId: identidad.usuarioId,
       rolId: identidad.rolId,
       permisos: identidad.permisos,
+      usuario: sesion.value.usuario,
     });
-  });
+  }));
 
   // Doble factor de autenticación (2FA TOTP - RF-SA-D12)
   api.post('/2fa/configurar', authMiddleware(container), configurar2faController(container));

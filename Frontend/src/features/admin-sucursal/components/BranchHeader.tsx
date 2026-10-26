@@ -32,7 +32,7 @@ export function BranchHeader({
   onPeriodoChange,
   searchTerm = '',
   onSearchChange,
-  sucursalNombre = 'Sede Norte',
+  sucursalNombre,
   className = '',
 }: BranchHeaderProps) {
   return (

@@ -47,7 +47,7 @@ export class BranchInvoicingService implements IBranchInvoicingService {
       id: String(it.id),
       productoId: String(it.productoId || it.producto_id),
       productoNombre: it.productoNombre || 'Producto en catálogo',
-      cantidad: Number(it.cantidad || 1),
+      cantidad: Number(it.cantidad || 0),
       precioUnitario: Number(it.precioUnitario ?? it.precio_unitario ?? 0),
       descuento: Number(it.descuento || 0),
       subtotal: Number(it.subtotal || 0),
@@ -70,7 +70,7 @@ export class BranchInvoicingService implements IBranchInvoicingService {
       clienteDocumento: f.clienteDocumento || '2222222222',
       usuarioId: String(f.usuarioId || f.usuario_id || ''),
       cajeroNombre: f.cajeroNombre || 'Cajero de Turno',
-      sucursalId: Number(f.sucursalId || f.sucursal_id || 1),
+      sucursalId: Number(f.sucursalId || f.sucursal_id || 0),
       turnoCajaId: f.turnoCajaId ? String(f.turnoCajaId) : null,
       subtotal,
       iva,
@@ -153,7 +153,7 @@ export class BranchInvoicingService implements IBranchInvoicingService {
     });
     return {
       id: String(res.id || id),
-      sucursalId: Number(res.sucursalId || 1),
+      sucursalId: Number(res.sucursalId || 0),
       sucursalNombre: res.sucursalNombre,
       usuarioId: String(res.usuarioId || ''),
       usuarioEmail: res.usuarioEmail,

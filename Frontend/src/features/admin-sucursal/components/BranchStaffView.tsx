@@ -34,7 +34,7 @@ interface BranchStaffViewProps {
 
 export function BranchStaffView({
   sucursalId,
-  sucursalNombre = 'Sede Norte',
+  sucursalNombre,
   className = '',
 }: BranchStaffViewProps) {
   const {

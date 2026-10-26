@@ -74,6 +74,10 @@ export function middleware(request: NextRequest) {
     if (payload?.rolId === 2) {
       return NextResponse.redirect(new URL('/admin-sucursal', request.url));
     }
+    // El vendedor B2B no tiene panel administrativo: su zona es /vendedor-b2b
+    if (payload?.rolId === 4) {
+      return NextResponse.redirect(new URL('/vendedor-b2b', request.url));
+    }
   }
 
   // 3. Control de acceso granular por rol (RBAC perimetral)

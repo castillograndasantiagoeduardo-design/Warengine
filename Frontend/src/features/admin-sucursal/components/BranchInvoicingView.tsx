@@ -32,7 +32,7 @@ interface BranchInvoicingViewProps {
 
 export function BranchInvoicingView({
   sucursalId,
-  sucursalNombre = 'Sede Norte',
+  sucursalNombre,
   className = '',
 }: BranchInvoicingViewProps) {
   const {

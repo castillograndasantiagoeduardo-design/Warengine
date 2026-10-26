@@ -40,7 +40,7 @@ interface BranchMovementsViewProps {
 
 export function BranchMovementsView({
   sucursalId,
-  sucursalNombre = 'Sede Norte',
+  sucursalNombre,
   className = '',
 }: BranchMovementsViewProps) {
   const { productos, proveedores, recargar: recargarInventario } = useBranchInventory({ sucursalId });
