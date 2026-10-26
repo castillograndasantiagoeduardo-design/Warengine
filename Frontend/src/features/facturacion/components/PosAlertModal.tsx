@@ -5,7 +5,17 @@
  */
 
 import React, { useState } from 'react';
+import { ApiError } from '@/lib/api';
+import { mensajeDeError } from '@/lib/forms/validacion';
 import { posService } from '../api';
+
+const OPCIONES_ALERTA = [
+  { id: 'caja_falta_cambio', motivo: 'Falta de Cambio en Gaveta (Monedas / Billetes)' },
+  { id: 'caja_autorizacion', motivo: 'Solicitud de Autorización Especial' },
+  { id: 'caja_falla_tecnica', motivo: 'Falla Técnica de Datáfono o Impresora' },
+  { id: 'caja_cliente_disconforme', motivo: 'Asistencia en Mostrador' },
+  { id: 'otro', motivo: 'Otro incidente operativo' },
+] as const;
 
 interface PosAlertModalProps {
   isOpen: boolean;
@@ -33,12 +43,17 @@ export function PosAlertModal({ isOpen, onClose, sucursalId }: PosAlertModalProp
     setIsEnviando(true);
     setErrorLocal(null);
 
+    const opcion = OPCIONES_ALERTA.find((o) => o.id === tipo);
+    const motivoFinal = opcion ? opcion.motivo : tipo;
+
     try {
       await posService.enviarAlertaAdmin({
         sucursalId,
+        motivo: motivoFinal,
+        descripcion: mensaje.trim(),
+        prioridad,
         tipo,
         mensaje: mensaje.trim(),
-        prioridad,
       });
       setEnviadoExitoso(true);
       setTimeout(() => {
@@ -47,7 +62,17 @@ export function PosAlertModal({ isOpen, onClose, sucursalId }: PosAlertModalProp
         onClose();
       }, 1500);
     } catch (err: unknown) {
-      setErrorLocal(err instanceof Error ? err.message : 'Error al enviar alerta a la administración.');
+      let msg = 'Error al enviar alerta a la administración.';
+      if (err instanceof ApiError) {
+        if (err.issues && err.issues.length > 0) {
+          msg = err.issues.map((i) => i.message).join('. ');
+        } else {
+          msg = mensajeDeError(err);
+        }
+      } else if (err instanceof Error) {
+        msg = err.message;
+      }
+      setErrorLocal(msg);
     } finally {
       setIsEnviando(false);
     }

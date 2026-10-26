@@ -151,9 +151,11 @@ export class PosService implements IPosService {
   public async enviarAlertaAdmin(input: EnviarAlertaAdminInput): Promise<void> {
     await this.http.post('/ventas/alertas', {
       sucursalId: input.sucursalId,
+      motivo: input.motivo ?? input.tipo,
+      descripcion: input.descripcion ?? input.mensaje ?? null,
+      prioridad: input.prioridad || 'normal',
       tipo: input.tipo,
       mensaje: input.mensaje,
-      prioridad: input.prioridad || 'normal',
     });
   }
 }

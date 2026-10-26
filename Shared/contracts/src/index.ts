@@ -28,6 +28,7 @@ export * from './facturacion/cliente.schema.ts';
 export * from './facturacion/turno-caja.schema.ts';
 export * from './facturacion/factura.schema.ts';
 export * from './facturacion/devolucion-venta.schema.ts';
+export * from './facturacion/alerta-facturacion.schema.ts';
 
 
 // ─── Módulo: administracion ────────────────────────────────────
