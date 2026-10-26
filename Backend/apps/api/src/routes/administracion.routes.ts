@@ -23,6 +23,7 @@ import {
 } from '../controllers/administracion/auditoria.controller.ts';
 import { consultarAlertasStockController } from '../controllers/administracion/alerta-stock.controller.ts';
   // Usuarios (RF-ADM-C5, C6, C7, C8, C9, C10)
+import { listarRolesController } from '../controllers/administracion/rol.controller.ts';
 import {
   asignarSucursalesUsuarioController,
   obtenerSucursalesUsuarioController,
@@ -98,6 +99,9 @@ export function createAdministracionRoutes(container: AppContainer): Hono {
   api.put('/usuarios/:id/password', authMiddleware(container, PERMISO_USUARIOS), restablecerPasswordUsuarioController(container));
   api.get('/usuarios/:id/sucursales', authMiddleware(container, PERMISO_USUARIOS), obtenerSucursalesUsuarioController(container));
   api.put('/usuarios/:id/sucursales', authMiddleware(container, PERMISO_USUARIOS), asignarSucursalesUsuarioController(container));
+
+  // Catálogo de roles para el selector de cambio de rol (RF-ADM-C7)
+  api.get('/roles', authMiddleware(container, PERMISO_ROLES), listarRolesController(container));
 
   // Auditoría (RF-ADM-C11, RF-ADM-C20) y Alertas
   api.get('/auditoria/exportar', authMiddleware(container, PERMISO_AUDITORIA), exportarAuditoriaCsvController(container));

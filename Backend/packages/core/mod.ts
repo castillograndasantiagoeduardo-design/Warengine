@@ -44,6 +44,7 @@ export * from './src/modules/administracion/domain/entities/Area.ts';
 export * from './src/modules/administracion/domain/entities/Empleado.ts';
 export * from './src/modules/administracion/domain/entities/HistorialSalario.ts';
 export * from './src/modules/administracion/domain/entities/AlertaAdmin.ts';
+export * from './src/modules/administracion/domain/entities/RolResumen.ts';
 export * from './src/modules/administracion/domain/errors/AdministracionErrors.ts';
 export * from './src/modules/administracion/domain/repositories/ISucursalRepository.ts';
 export * from './src/modules/administracion/domain/repositories/IAreaRepository.ts';
@@ -54,6 +55,7 @@ export * from './src/modules/administracion/domain/repositories/IGestionUsuarioR
 export * from './src/modules/administracion/domain/repositories/IUsuarioSucursalRepository.ts';
 export * from './src/modules/administracion/domain/repositories/IAlertaStockRepository.ts';
 export * from './src/modules/administracion/domain/repositories/IMetricasAdminRepository.ts';
+export * from './src/modules/administracion/domain/repositories/IRolCatalogoRepository.ts';
 export * from './src/modules/administracion/application/use-cases/CrearSucursalUseCase.ts';
 export * from './src/modules/administracion/application/use-cases/EditarSucursalUseCase.ts';
 export * from './src/modules/administracion/application/use-cases/ListarSucursalesUseCase.ts';
@@ -72,6 +74,7 @@ export * from './src/modules/administracion/application/use-cases/RestablecerPas
 export * from './src/modules/administracion/application/use-cases/AsignarSucursalesUsuarioUseCase.ts';
 export * from './src/modules/administracion/application/use-cases/ObtenerSucursalesUsuarioUseCase.ts';
 export * from './src/modules/administracion/application/use-cases/ListarUsuariosUseCase.ts';
+export * from './src/modules/administracion/application/use-cases/ListarRolesUseCase.ts';
 export * from './src/modules/administracion/application/use-cases/ConsultarAlertasStockUseCase.ts';
 export * from './src/modules/administracion/application/use-cases/RegistrarAumentoSalarioUseCase.ts';
 export * from './src/modules/administracion/application/use-cases/ConsultarHistorialSalariosUseCase.ts';
