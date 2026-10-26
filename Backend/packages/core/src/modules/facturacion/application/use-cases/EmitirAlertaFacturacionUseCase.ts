@@ -11,6 +11,7 @@ import {
 } from '../../../auditoria/domain/entities/LogAuditoria.ts';
 
 export interface EmitirAlertaFacturacionRequest {
+    sucursalId?: number;
     motivo: string;
     prioridad?: PrioridadAlerta;
     descripcion?: string | null;
@@ -27,7 +28,10 @@ export class EmitirAlertaFacturacionUseCase {
     ) { }
 
     public async execute(request: EmitirAlertaFacturacionRequest): Promise<EmitirAlertaFacturacionResponse> {
-        const sucursalId = await this.sucursalOperadorRepository.obtenerSucursalId(request.actor.usuarioId);
+        let sucursalId = await this.sucursalOperadorRepository.obtenerSucursalId(request.actor.usuarioId);
+        if (sucursalId === null && request.sucursalId) {
+            sucursalId = request.sucursalId;
+        }
         if (sucursalId === null) {
             return Result.fail(new OperadorSinSucursalError());
         }

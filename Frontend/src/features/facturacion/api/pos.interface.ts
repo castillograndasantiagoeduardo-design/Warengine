@@ -24,10 +24,12 @@ export interface EmitirFacturaInput {
 }
 
 export interface EnviarAlertaAdminInput {
-  sucursalId: number;
-  tipo: string;
-  mensaje: string;
+  sucursalId?: number;
+  motivo?: string;
+  descripcion?: string | null;
   prioridad?: 'normal' | 'urgente';
+  tipo?: string;
+  mensaje?: string;
 }
 
 export interface IPosService {

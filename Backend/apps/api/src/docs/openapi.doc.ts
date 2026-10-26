@@ -533,11 +533,12 @@ Para autorizar peticiones interactivas en esta consola:
       },
       EmitirAlertaFacturacionRequest: {
         type: 'object',
-        required: ['tipo', 'mensaje'],
+        required: ['motivo'],
         properties: {
-          tipo: { type: 'string', example: 'ERROR_SISTEMA_FACTURACION' },
-          mensaje: { type: 'string', example: 'Error al emitir comprobante' },
-          severidad: { type: 'string', enum: ['BAJA', 'MEDIA', 'ALTA', 'CRITICA'], example: 'MEDIA' },
+          motivo: { type: 'string', example: 'Solicitud de Autorización Especial' },
+          prioridad: { type: 'string', enum: ['normal', 'urgente'], example: 'urgente' },
+          descripcion: { type: 'string', example: 'Se requiere autorización para anulación de comprobante' },
+          sucursalId: { type: 'integer', example: 1 },
         },
       },
     },
