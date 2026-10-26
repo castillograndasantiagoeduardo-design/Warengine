@@ -14,6 +14,8 @@
  */
 
 import { DomainError, Result } from '@warengine/shared-kernel';
+import { ResolverAlcanceSucursalUseCase } from '../../../autenticacion/application/use-cases/ResolverAlcanceSucursalUseCase.ts';
+import { SucursalFueraDeAlcanceError } from '../../../autenticacion/domain/errors/AlcanceErrors.ts';
 import { Empleado } from '../../domain/entities/Empleado.ts';
 import { IEmpleadoRepository } from '../../domain/repositories/IEmpleadoRepository.ts';
 import { IAreaRepository } from '../../domain/repositories/IAreaRepository.ts';
@@ -47,6 +49,7 @@ export class EditarEmpleadoUseCase {
     private readonly empleadoRepository: IEmpleadoRepository,
     private readonly areaRepository: IAreaRepository,
     private readonly auditor: IAuditor,
+    private readonly resolverAlcance: ResolverAlcanceSucursalUseCase,
   ) {}
 
   public async execute(request: EditarEmpleadoRequest): Promise<EditarEmpleadoResponse> {
@@ -54,6 +57,11 @@ export class EditarEmpleadoUseCase {
     if (!empleadoActual) {
       return Result.fail(new EmpleadoNoEncontradoError());
     }
+
+    // RNF-ADM-04: solo se editan empleados de sedes dentro del alcance del actor
+    const alcance = await this.resolverAlcance.execute({ usuarioId: request.actor.usuarioId });
+    if (alcance.isFailure) return Result.fail(alcance.error);
+    if (!alcance.value.permite(empleadoActual.sucursalId)) return Result.fail(new SucursalFueraDeAlcanceError());
 
     // Regla de negocio: Si se asigna un área, debe pertenecer a la misma sucursal del empleado
     if (request.areaId !== undefined && request.areaId !== null) {

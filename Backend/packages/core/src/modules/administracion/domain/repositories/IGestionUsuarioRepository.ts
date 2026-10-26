@@ -5,6 +5,17 @@ export interface FiltrosUsuarios {
   sucursalId?: number;
   busqueda?: string;
   texto?: string;
+  isActive?: boolean;
+}
+
+export interface PaginacionUsuarios {
+  pagina: number;
+  limite: number;
+}
+
+export interface ResultadoPaginaUsuarios {
+  items: UsuarioGestionado[];
+  total: number;
 }
 
 export interface NuevoUsuarioData {
@@ -20,6 +31,11 @@ export interface NuevoUsuarioData {
 
 export interface IGestionUsuarioRepository {
   listar(filtros: FiltrosUsuarios): Promise<UsuarioGestionado[]>;
+  /**
+   * Página de usuarios con filtros combinables y el total sin paginar.
+   * Cada usuario incluye sus sedes adicionales (RF-ADM-C10).
+   */
+  listarPaginado(filtros: FiltrosUsuarios, paginacion: PaginacionUsuarios): Promise<ResultadoPaginaUsuarios>;
   findById(id: string): Promise<UsuarioGestionado | null>;
   existeEmail(email: string): Promise<boolean>;
   existeDocumento(tipo: string, numero: string): Promise<boolean>;

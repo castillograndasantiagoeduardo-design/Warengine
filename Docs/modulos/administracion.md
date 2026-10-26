@@ -142,13 +142,13 @@ Representa una sede física operativa:
   - `id: number` (identificador autoincremental)
   - `nombre: string` (nombre comercial único)
   - `direccion: string` (ubicación física)
-  - `telefono: string` (contacto de la sede)
+  - `contacto: string | null` (teléfono o correo de la sede, texto libre ≤ 100)
   - `isActive: boolean` (indicador operativo activo/inactivo)
   - `creadoEn: Date`
 - **Métodos de negocio:**
   - `activar(): void`: asigna `isActive = true`.
   - `inactivar(): void`: asigna `isActive = false`.
-  - `actualizarDatos(nombre, direccion, telefono): void`: actualiza los datos básicos.
+  - `actualizarDatos(nombre, direccion, contacto): void`: actualiza los datos básicos.
 
 #### `UsuarioGestionado` ([UsuarioGestionado.ts](../../Backend/packages/core/src/modules/administracion/domain/entities/UsuarioGestionado.ts))
 Representa la vista agregada de una cuenta de usuario junto con su empleado vinculado y sus sedes:
@@ -228,18 +228,18 @@ Representa la vista agregada de una cuenta de usuario junto con su empleado vinc
 ### 5.2 `CrearSucursalUseCase`
 - **Archivo:** [CrearSucursalUseCase.ts](../../Backend/packages/core/src/modules/administracion/application/use-cases/CrearSucursalUseCase.ts)
 - **Dependencias:** `ISucursalRepository`, `IAuditor`
-- **Entrada:** `{ nombre: string; direccion: string; telefono: string; actor: ActorAuditoria }`
+- **Entrada:** `{ nombre: string; direccion?: string; contacto?: string; actor: ActorAuditoria }`
 - **Salida:** `Result<Sucursal, DomainError>`
 - **Reglas:**
   1. Verifica que no exista otra sucursal con el mismo nombre (*case-insensitive* vía `LOWER(TRIM(nombre))`). Si existe, falla con `SucursalDuplicadaError`.
   2. Inserta la sucursal con `isActive = true`.
-  3. Emite evento de auditoría: `{ accion: 'crear', entidad: 'sucursales', detalles: { despues: { id, nombre, direccion, telefono, isActive: true } } }`.
+  3. Emite evento de auditoría: `{ accion: 'crear', entidad: 'sucursales', detalles: { despues: { id, nombre, direccion, contacto, isActive: true } } }`.
 - **Pruebas:** [auditoria-operaciones.use-case.test.ts](../../Backend/packages/core/tests/administracion/auditoria-operaciones.use-case.test.ts).
 
 ### 5.3 `EditarSucursalUseCase`
 - **Archivo:** [EditarSucursalUseCase.ts](../../Backend/packages/core/src/modules/administracion/application/use-cases/EditarSucursalUseCase.ts)
 - **Dependencias:** `ISucursalRepository`, `IAuditor`
-- **Entrada:** `{ id: number; nombre?: string; direccion?: string; telefono?: string; isActive?: boolean; actor: ActorAuditoria }`
+- **Entrada:** `{ id: number; nombre?: string; direccion?: string; contacto?: string; isActive?: boolean; actor: ActorAuditoria }`
 - **Salida:** `Result<Sucursal, DomainError>`
 - **Reglas:**
   1. Carga la sucursal. Falla con `SucursalNoEncontradaError` si no existe.
@@ -309,7 +309,7 @@ Representa la vista agregada de una cuenta de usuario junto con su empleado vinc
 ### 5.8 `RestablecerPasswordUsuarioUseCase`
 - **Archivo:** [RestablecerPasswordUsuarioUseCase.ts](../../Backend/packages/core/src/modules/administracion/application/use-cases/RestablecerPasswordUsuarioUseCase.ts)
 - **Dependencias:** `IGestionUsuarioRepository`, `IPasswordService`, `IAuditor`
-- **Entrada:** `{ usuarioId: string; nuevoPassword: string; actor: ActorAuditoria }`
+- **Entrada:** `{ usuarioId: string; nuevaPassword: string; actor: ActorAuditoria }`
 - **Salida:** `Result<void, DomainError>`
 - **Reglas:**
   1. Carga al usuario. Falla con `UsuarioNoEncontradoError`.
@@ -345,7 +345,7 @@ Representa la vista agregada de una cuenta de usuario junto con su empleado vinc
 
 ### 6.1 Tablas Drizzle ([administracion.schema.ts](../../Backend/packages/database/src/schema/administracion.schema.ts))
 
-- **`sucursales`**: `id_sucursal` (int PK auto), `nombre` (varchar 100 unique), `direccion` (varchar 255), `telefono` (varchar 20), `is_active` (boolean def 1), `creado_en`, `actualizado_en`.
+- **`sucursales`**: `id_sucursal` (int PK auto), `nombre` (varchar 100 unique), `direccion` (varchar 255), `contacto` (varchar 100), `is_active` (boolean def 1), `creado_en`, `actualizado_en`.
 - **`areas`**: `id_area` (int PK auto), `sucursal_id` (FK sucursales), `nombre` (varchar 100).
 - **`empleados`**: `id_empleado` (int PK auto), `nombre` (varchar 100), `apellido` (varchar 100), `tipo_documento` (enum 'CC', 'CE'), `numero_documento` (`varcharBin(30)` unique), `sucursal_id` (FK sucursales), `area_id` (FK areas nullable), `sueldo_actual` (decimal 12,2), `creado_en`.
 - **`usuario_sucursales`**: `usuario_id` (char 36 FK usuarios), `sucursal_id` (int FK sucursales), PK compuesta (`usuario_id`, `sucursal_id`).
@@ -372,7 +372,7 @@ Prefijo general de montaje en `main.ts`: `/administracion`.
 | `POST` | `/administracion/sucursales` | `administracion:gestionar-sucursales` | `crearSucursalController` | `CrearSucursalUseCase` | `crearSucursalSchema` | 201, 400, 401, 403 |
 | `PUT` | `/administracion/sucursales/:id` | `administracion:gestionar-sucursales` | `editarSucursalController` | `EditarSucursalUseCase` | `editarSucursalSchema` | 200, 400, 401, 403, 404, 422 |
 | `PUT` | `/administracion/sucursales/:id/estado` | `administracion:gestionar-sucursales` | `cambiarEstadoSucursalController` | `EditarSucursalUseCase` | `cambiarEstadoSucursalSchema` | 200, 400, 401, 403, 404, 422 |
-| `GET` | `/administracion/usuarios` | `autenticacion:gestionar-usuarios` | `listarUsuariosController` | `ListarUsuariosUseCase` | `listarUsuariosQuerySchema` | 200, 400, 401, 403 |
+| `GET` | `/administracion/usuarios` | `autenticacion:gestionar-usuarios` | `listarUsuariosController` | `ListarUsuariosUseCase` | `filtrosUsuariosSchema` (paginado: `pagina`, `limite`) | 200, 400, 401, 403 |
 | `POST` | `/administracion/usuarios` | `autenticacion:gestionar-usuarios` | `crearUsuarioController` | `CrearUsuarioUseCase` | `crearUsuarioSchema` | 201, 400, 401, 403 |
 | `PUT` | `/administracion/usuarios/:id/rol` | `autenticacion:asignar-roles` | `cambiarRolUsuarioController` | `CambiarRolUsuarioUseCase` | `cambiarRolSchema` | 200, 400, 401, 403, 404 |
 | `PUT` | `/administracion/usuarios/:id/estado` | `autenticacion:gestionar-usuarios` | `cambiarEstadoUsuarioController` | `CambiarEstadoUsuarioUseCase` | `cambiarEstadoUsuarioSchema` | 200, 400, 401, 403, 404 |
@@ -380,27 +380,31 @@ Prefijo general de montaje en `main.ts`: `/administracion`.
 | `GET` | `/administracion/usuarios/:id/sucursales` | `autenticacion:gestionar-usuarios` | `obtenerSucursalesUsuarioController` | `ObtenerSucursalesUsuarioUseCase` | Ninguno | 200, 401, 403, 404 |
 | `PUT` | `/administracion/usuarios/:id/sucursales` | `autenticacion:gestionar-usuarios` | `asignarSucursalesUsuarioController` | `AsignarSucursalesUsuarioUseCase` | `asignarSucursalesSchema` | 200, 400, 401, 403, 404 |
 | `GET` | `/administracion/auditoria/exportar` | `autenticacion:ver-auditoria` | `exportarAuditoriaCsvController` | `ExportarAuditoriaCsvUseCase` | `exportarAuditoriaCsvSchema` | 200, 400, 401, 403 |
-| `GET` | `/administracion/dashboard/metricas` | `administracion:ver-metricas-sucursal` | `consultarMetricasGananciasController` | `ConsultarMetricasGananciasUseCase` | `metricasGananciasQuerySchema` | 200, 400, 401, 403 |
+| `GET` | `/administracion/dashboard/metricas` | `administracion:ver-metricas-globales` | `consultarMetricasGananciasController` | `ConsultarMetricasGananciasUseCase` | `metricasGananciasQuerySchema` | 200, 400, 401, 403 |
 | `GET` | `/administracion/dashboard/tendencias` | `administracion:ver-metricas-sucursal` | `consultarTendenciasVentasController` | `ConsultarTendenciasVentasUseCase` | `tendenciasVentasQuerySchema` | 200, 400, 401, 403 |
-| `GET` | `/administracion/dashboard/rendimiento` | `administracion:ver-metricas-sucursal` | `consultarRendimientoSucursalesController` | `ConsultarRendimientoSucursalesUseCase` | `rendimientoSucursalesQuerySchema` | 200, 400, 401, 403 |
-| `GET` | `/administracion/dashboard/ranking` | `administracion:ver-metricas-sucursal` | `consultarRankingProductosController` | `ConsultarRankingProductosUseCase` | `rankingProductosQuerySchema` | 200, 400, 401, 403 |
-| `GET` | `/administracion/dashboard/inventario` | `administracion:ver-metricas-sucursal` | `consultarComparativoInventarioController` | `ConsultarComparativoInventarioUseCase` | `comparativoInventarioQuerySchema` | 200, 400, 401, 403 |
+| `GET` | `/administracion/dashboard/rendimiento` | `administracion:ver-metricas-globales` | `consultarRendimientoSucursalesController` | `ConsultarRendimientoSucursalesUseCase` | `rendimientoSucursalesQuerySchema` | 200, 400, 401, 403 |
+| `GET` | `/administracion/dashboard/ranking` | `administracion:ver-metricas-globales` | `consultarRankingProductosController` | `ConsultarRankingProductosUseCase` | `rankingProductosQuerySchema` | 200, 400, 401, 403 |
+| `GET` | `/administracion/dashboard/inventario` | `administracion:ver-metricas-globales` | `consultarComparativoInventarioController` | `ConsultarComparativoInventarioUseCase` | `comparativoInventarioQuerySchema` | 200, 400, 401, 403 |
+| `GET` | `/administracion/dashboard/resumen` | `administracion:ver-metricas-globales` | `consultarResumenDashboardController` | `ConsultarResumenDashboardUseCase` | `resumenDashboardQuerySchema` | 200, 400, 401, 403 |
+| `GET` | `/administracion/roles` | `autenticacion:asignar-roles` | `listarRolesController` | `ListarRolesUseCase` | Ninguno | 200, 401, 403 |
 
 ---
 
 ## 8. Contratos (Shared)
 
 - **Sucursales** ([sucursal.schema.ts](../../Shared/contracts/src/administracion/sucursal.schema.ts)):
-  - `crearSucursalSchema`: `{ nombre: min(2), direccion: min(5), telefono: min(7) }`
-  - `editarSucursalSchema`: `{ nombre?, direccion?, telefono?, isActive? }` (exige al menos un campo).
+  - `crearSucursalSchema`: `{ nombre: min(3) max(150), direccion?: max(255), contacto?: max(100) }`
+  - `editarSucursalSchema`: `{ nombre?, direccion?, contacto?, isActive? }` (exige al menos un campo).
   - `cambiarEstadoSucursalSchema`: `{ isActive: boolean }`
   - `detalleSucursalResponseSchema`: `{ id, nombre, direccion, contacto, isActive, usuariosAsignados, estadisticas, ventasRecientes }`
 - **Usuarios** ([usuario.schema.ts](../../Shared/contracts/src/administracion/usuario.schema.ts)):
   - `crearUsuarioSchema`: `{ email, password: min(8), rolId, nombre: min(2), apellido: min(2), tipoDocumento: enum('CC', 'CE'), numeroDocumento: min(5), sucursalId }`
   - `cambiarRolSchema`: `{ rolId: int > 0 }`
   - `cambiarEstadoUsuarioSchema`: `{ isActive: boolean }`
-  - `restablecerPasswordSchema`: `{ nuevoPassword: min(8) }`
-  - `listarUsuariosQuerySchema`: `{ rolId?: coerce.number, sucursalId?: coerce.number }`
+  - `restablecerPasswordSchema`: `{ nuevaPassword: min(8) max(128) }`
+  - `filtrosUsuariosSchema`: `{ rolId?, sucursalId?, busqueda?, isActive?, pagina = 1, limite = 20 }` → `{ items, total, pagina, limite, totalPaginas }`
+- **Roles** ([rol.schema.ts](../../Shared/contracts/src/administracion/rol.schema.ts)):
+  - `rolResumenSchema`: `{ id, nombre, descripcion | null }` (respuesta de `GET /administracion/roles`)
 - **Asignación de Sedes** ([asignacion-sucursales.schema.ts](../../Shared/contracts/src/administracion/asignacion-sucursales.schema.ts)):
   - `asignarSucursalesSchema`: `{ sucursalPrincipalId: int > 0, sucursalesAdicionalesIds: array(int > 0) }`
 - **Auditoría** ([auditoria.schema.ts](../../Shared/contracts/src/administracion/auditoria.schema.ts)):

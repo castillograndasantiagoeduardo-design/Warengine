@@ -23,6 +23,7 @@ import {
 } from '../controllers/administracion/auditoria.controller.ts';
 import { consultarAlertasStockController } from '../controllers/administracion/alerta-stock.controller.ts';
   // Usuarios (RF-ADM-C5, C6, C7, C8, C9, C10)
+import { listarRolesController } from '../controllers/administracion/rol.controller.ts';
 import {
   asignarSucursalesUsuarioController,
   obtenerSucursalesUsuarioController,
@@ -54,6 +55,7 @@ import {
   consultarMetricasGananciasController,
   consultarRankingProductosController,
   consultarRendimientoSucursalesController,
+  consultarResumenDashboardController,
   consultarTendenciasVentasController,
 } from '../controllers/administracion/dashboard.controller.ts';
 
@@ -66,6 +68,7 @@ const PERMISO_AUDITORIA = 'autenticacion:ver-auditoria';
 const PERMISO_ALERTAS = 'administracion:gestionar-alertas';
 const PERMISO_SALARIOS = 'administracion:gestionar-salarios';
 const PERMISO_METRICAS = 'administracion:ver-metricas-sucursal';
+const PERMISO_METRICAS_GLOBALES = 'administracion:ver-metricas-globales';
 
 export function createAdministracionRoutes(container: AppContainer): Hono {
   const api = new Hono();
@@ -99,6 +102,9 @@ export function createAdministracionRoutes(container: AppContainer): Hono {
   api.get('/usuarios/:id/sucursales', authMiddleware(container, PERMISO_USUARIOS), obtenerSucursalesUsuarioController(container));
   api.put('/usuarios/:id/sucursales', authMiddleware(container, PERMISO_USUARIOS), asignarSucursalesUsuarioController(container));
 
+  // Catálogo de roles para el selector de cambio de rol (RF-ADM-C7)
+  api.get('/roles', authMiddleware(container, PERMISO_ROLES), listarRolesController(container));
+
   // Auditoría (RF-ADM-C11, RF-ADM-C20) y Alertas
   api.get('/auditoria/exportar', authMiddleware(container, PERMISO_AUDITORIA), exportarAuditoriaCsvController(container));
   api.get('/auditoria', authMiddleware(container, PERMISO_AUDITORIA), consultarAuditoriaController(container));
@@ -108,11 +114,14 @@ export function createAdministracionRoutes(container: AppContainer): Hono {
   api.put('/alertas/:id/estado', authMiddleware(container, PERMISO_ALERTAS), cambiarEstadoAlertaAdminController(container));
 
   // Dashboard y Analítica (RF-ADM-A1, RF-ADM-A2, RF-ADM-A3, RF-ADM-A4, RF-ADM-C4, RNF-ADM-01, RNF-ADM-03, RNF-ADM-04)
-  api.get('/dashboard/metricas', authMiddleware(container, PERMISO_METRICAS), consultarMetricasGananciasController(container));
+  // Métricas consolidadas multi-sede: exclusivas del Super Admin (RF-ADM-A1, RF-SA-I3).
+  // Tendencias sigue con el permiso por sucursal: el backend acota el alcance a la sede del admin.
+  api.get('/dashboard/metricas', authMiddleware(container, PERMISO_METRICAS_GLOBALES), consultarMetricasGananciasController(container));
   api.get('/dashboard/tendencias', authMiddleware(container, PERMISO_METRICAS), consultarTendenciasVentasController(container));
-  api.get('/dashboard/rendimiento', authMiddleware(container, PERMISO_METRICAS), consultarRendimientoSucursalesController(container));
-  api.get('/dashboard/ranking', authMiddleware(container, PERMISO_METRICAS), consultarRankingProductosController(container));
-  api.get('/dashboard/inventario', authMiddleware(container, PERMISO_METRICAS), consultarComparativoInventarioController(container));
+  api.get('/dashboard/rendimiento', authMiddleware(container, PERMISO_METRICAS_GLOBALES), consultarRendimientoSucursalesController(container));
+  api.get('/dashboard/ranking', authMiddleware(container, PERMISO_METRICAS_GLOBALES), consultarRankingProductosController(container));
+  api.get('/dashboard/inventario', authMiddleware(container, PERMISO_METRICAS_GLOBALES), consultarComparativoInventarioController(container));
+  api.get('/dashboard/resumen', authMiddleware(container, PERMISO_METRICAS_GLOBALES), consultarResumenDashboardController(container));
 
   return api;
 }

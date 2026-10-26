@@ -54,3 +54,27 @@ export const comparativoInventarioQuerySchema = z.object({
   soloConStockBajo: z.preprocess((val) => val === 'true' || val === true, z.boolean().optional()),
 });
 export type ComparativoInventarioQuery = z.infer<typeof comparativoInventarioQuerySchema>;
+
+// RF-ADM-A1 / RF-SA-I3: resumen global del Super Admin (GET /administracion/dashboard/resumen)
+export const resumenDashboardQuerySchema = z
+  .object({
+    desde: z.coerce.date().optional(),
+    hasta: z.coerce.date().optional(),
+  })
+  .refine((d) => !d.desde || !d.hasta || d.desde <= d.hasta, {
+    message: 'La fecha final no puede ser anterior a la inicial',
+    path: ['hasta'],
+  });
+export type ResumenDashboardQuery = z.infer<typeof resumenDashboardQuerySchema>;
+
+export const resumenDashboardResponseSchema = z.object({
+  totalSucursales: z.number().int().nonnegative(),
+  sucursalesActivas: z.number().int().nonnegative(),
+  usuariosTotales: z.number().int().nonnegative(),
+  usuariosActivos: z.number().int().nonnegative(),
+  ventasConsolidadas: z.number(),
+  gananciaNeta: z.number(),
+  totalFacturas: z.number().int().nonnegative(),
+  ticketPromedio: z.number(),
+});
+export type ResumenDashboardResponse = z.infer<typeof resumenDashboardResponseSchema>;

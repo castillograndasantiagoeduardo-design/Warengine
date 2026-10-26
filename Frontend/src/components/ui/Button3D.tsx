@@ -1,27 +1,53 @@
+
 import React from 'react';
 import Link from 'next/link';
+
+type Button3DSize = 'landing' | 'panel' | 'panel-sm';
+type Button3DVariant = 'gold' | 'navy' | 'danger' | 'success';
 
 interface Button3DProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   href?: string;
   className?: string;
   children: React.ReactNode;
   onClick?: (e: React.MouseEvent<HTMLAnchorElement | HTMLButtonElement>) => void;
+  /** 'landing' (por defecto) escala con el viewport; 'panel' usa medidas fijas con área táctil de 44 px. */
+  size?: Button3DSize;
+  variant?: Button3DVariant;
 }
+
+const SIZE_CLASSES: Record<Button3DSize, string> = {
+  landing: 'text-[clamp(12px,1.75vw,28px)] px-[2vw] py-[0.5vw]',
+  panel: 'btn-3d-panel text-sm px-5',
+  'panel-sm': 'btn-3d-panel text-xs px-3',
+};
+
+// Cada variante redefine los tokens de acento que consume .btn-3d (fondo, sombra 3D y texto).
+const VARIANT_STYLES: Record<Button3DVariant, React.CSSProperties | undefined> = {
+  gold: undefined,
+  navy: { '--ac': '#394a68', '--ac-dk': '#263349', '--ac-fg': '#ffffff' } as React.CSSProperties,
+  danger: { '--ac': '#b42318', '--ac-dk': '#7a1810', '--ac-fg': '#ffffff' } as React.CSSProperties,
+  success: { '--ac': '#2f8f5b', '--ac-dk': '#1d5c3a', '--ac-fg': '#ffffff' } as React.CSSProperties,
+};
 
 export function Button3D({
   href,
   className = '',
   children,
   onClick,
+  size = 'landing',
+  variant = 'gold',
+  style,
   ...props
 }: Button3DProps) {
-  const combinedClasses = `btn-3d text-[clamp(12px,1.75vw,28px)] px-[2vw] py-[0.5vw] ${className}`;
+  const combinedClasses = `btn-3d ${SIZE_CLASSES[size]} ${className}`;
+  const combinedStyle = { ...VARIANT_STYLES[variant], ...style };
 
   if (href) {
     return (
       <Link
         href={href}
         className={combinedClasses}
+        style={combinedStyle}
         onClick={onClick}
       >
         {children}
@@ -32,6 +58,7 @@ export function Button3D({
   return (
     <button
       className={combinedClasses}
+      style={combinedStyle}
       onClick={onClick}
       {...props}
     >

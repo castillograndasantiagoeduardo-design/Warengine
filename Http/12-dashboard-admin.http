@@ -7,7 +7,9 @@
 #   - RF-ADM-A4: Indicador de producto más y menos vendido global (ranking rotación)
 #   - RF-ADM-C4: Vista comparativa de inventario entre sucursales
 #   - RNF-ADM-01: Carga de métricas en menos de 3 segundos (< 3s)
-#   - RNF-ADM-03: Exigir autorización RBAC (administracion:ver-metricas-sucursal)
+#   - RNF-ADM-03: Exigir autorización RBAC
+#       · metricas, rendimiento, ranking, inventario, resumen → administracion:ver-metricas-globales
+#       · tendencias → administracion:ver-metricas-sucursal (alcance acotado a la sede del admin)
 #   - RNF-ADM-04: Alcance por sucursal (Super Admin global; Admin local acotado a su sede)
 #
 # Requiere: REST Client (extensión VS Code)
@@ -61,7 +63,8 @@ Authorization: Bearer {{loginSuperAdmin.response.body.accessToken}}
 
 ###
 
-### UC-DASH-03: Métricas acotadas a Sucursal 1 (Consultadas por Admin Sucursal)
+### UC-DASH-03: Métricas consolidadas pedidas por un Admin de Sucursal
+# Resultado esperado: 403 PERMISO_DENEGADO (exige administracion:ver-metricas-globales)
 GET {{baseUrl}}/administracion/dashboard/metricas?sucursalId=1
 Authorization: Bearer {{loginAdminSucursal.response.body.accessToken}}
 
@@ -149,5 +152,38 @@ Authorization: Bearer {{loginSuperAdmin.response.body.accessToken}}
 ### UC-DASH-13: Error de acceso por falta de autenticación
 # Resultado esperado: 401 Unauthorized
 GET {{baseUrl}}/administracion/dashboard/metricas
+
+###
+
+# ------------------------------------------------------------------------------
+# RESUMEN GLOBAL DEL SUPER ADMIN (RF-ADM-A1, RF-SA-I3)
+# Permiso: administracion:ver-metricas-globales (solo super-admin)
+# ------------------------------------------------------------------------------
+
+### UC-DASH-14: Resumen global sin filtros
+# Resultado esperado: 200 { totalSucursales, sucursalesActivas, usuariosTotales, usuariosActivos,
+#                           ventasConsolidadas, gananciaNeta, totalFacturas, ticketPromedio }
+GET {{baseUrl}}/administracion/dashboard/resumen
+Authorization: Bearer {{loginSuperAdmin.response.body.accessToken}}
+
+###
+
+### UC-DASH-15: Resumen global acotado por rango de fechas
+GET {{baseUrl}}/administracion/dashboard/resumen?desde=2026-10-01T00:00:00Z&hasta=2026-10-31T23:59:59Z
+Authorization: Bearer {{loginSuperAdmin.response.body.accessToken}}
+
+###
+
+### UC-DASH-16: Rango invertido
+# Resultado esperado: 400 VALIDATION_ERROR (la fecha final no puede ser anterior a la inicial)
+GET {{baseUrl}}/administracion/dashboard/resumen?desde=2026-10-31&hasta=2026-10-01
+Authorization: Bearer {{loginSuperAdmin.response.body.accessToken}}
+
+###
+
+### UC-DASH-17: Admin de sucursal sin permiso global
+# Resultado esperado: 403 PERMISO_DENEGADO
+GET {{baseUrl}}/administracion/dashboard/resumen
+Authorization: Bearer {{loginAdminSucursal.response.body.accessToken}}
 
 ###
