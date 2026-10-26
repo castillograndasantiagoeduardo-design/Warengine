@@ -23,7 +23,6 @@
 
   --font-anton: var(--font-anton), sans-serif;
   --font-archivo: var(--font-archivo), sans-serif;
-  --font-pixelify: var(--font-pixelify), monospace;
   --font-ui: var(--font-ui), system-ui, sans-serif;
   --font-bodoni: var(--font-bodoni), serif;
 }
@@ -40,13 +39,6 @@ body {
   /* Cifras de igual ancho: montos y tablas alineados con la fuente proporcional */
   font-variant-numeric: tabular-nums;
   -webkit-font-smoothing: antialiased;
-}
-
-/* Login: conserva la fuente pixelada. Redefine --font-ui para que los componentes
-   compartidos (Button3D, FormField, .btn-3d) se vean igual que antes dentro de /acceso. */
-.fuente-login {
-  --font-ui: var(--font-pixelify);
-  font-family: var(--font-ui), monospace;
 }
 
 /* Grano analógico overlay */

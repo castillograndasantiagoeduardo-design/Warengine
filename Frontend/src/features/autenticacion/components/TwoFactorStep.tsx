@@ -74,7 +74,7 @@ export function TwoFactorStep({ onSuccess }: TwoFactorStepProps) {
         <div>
           <label
             htmlFor={totpInputId}
-            className="block text-center font-[family-name:var(--font-pixelify)] text-[11px] uppercase tracking-widest text-white/80 mb-1.5"
+            className="block text-center font-[family-name:var(--font-ui)] text-[11px] uppercase tracking-widest text-white/80 mb-1.5"
           >
             Código de 6 Dígitos
           </label>
@@ -111,7 +111,7 @@ export function TwoFactorStep({ onSuccess }: TwoFactorStepProps) {
         <button
           type="submit"
           disabled={isSubmitting || rateLimit.bloqueado || codigoTotp.length !== 6}
-          className="w-full rounded-full py-2.5 px-5 font-[family-name:var(--font-pixelify)] font-bold text-xs uppercase tracking-wider bg-[#E9B949] text-[#14213D] hover:bg-[#14213D] hover:text-white hover:border hover:border-[#E9B949]/60 active:scale-[0.98] transition-colors duration-200 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+          className="w-full rounded-full py-2.5 px-5 font-[family-name:var(--font-ui)] font-bold text-xs uppercase tracking-wider bg-[#E9B949] text-[#14213D] hover:bg-[#14213D] hover:text-white hover:border hover:border-[#E9B949]/60 active:scale-[0.98] transition-colors duration-200 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
           style={{
             boxShadow:
               '5px 5px 12px rgba(0,0,0,0.45), -3px -3px 10px rgba(255,255,255,0.06)',
@@ -146,7 +146,7 @@ export function TwoFactorStep({ onSuccess }: TwoFactorStepProps) {
           type="button"
           onClick={cancelar}
           disabled={isSubmitting}
-          className="w-full text-center font-[family-name:var(--font-pixelify)] text-[11px] text-white/60 hover:text-white transition-colors cursor-pointer py-1"
+          className="w-full text-center font-[family-name:var(--font-ui)] text-[11px] text-white/60 hover:text-white transition-colors cursor-pointer py-1"
         >
           &larr; Volver al inicio de sesión
         </button>

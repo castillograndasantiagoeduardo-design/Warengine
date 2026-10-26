@@ -37,7 +37,7 @@ export function RegisterNotice({
 
       <SocialAuthButtons />
 
-      <p className="font-[family-name:var(--font-pixelify)] text-[11px] text-center text-white/60 uppercase tracking-widest mb-2.5">
+      <p className="font-[family-name:var(--font-ui)] text-[11px] text-center text-white/60 uppercase tracking-widest mb-2.5">
         acceso corporativo y sucursales
       </p>
 
@@ -63,7 +63,7 @@ export function RegisterNotice({
           <button
             type="button"
             onClick={onSwitchToLogin}
-            className="rounded-full px-4 py-1.5 bg-[#E9B949] text-[#14213D] font-[family-name:var(--font-pixelify)] font-bold text-xs uppercase cursor-pointer hover:bg-white transition-colors"
+            className="rounded-full px-4 py-1.5 bg-[#E9B949] text-[#14213D] font-[family-name:var(--font-ui)] font-bold text-xs uppercase cursor-pointer hover:bg-white transition-colors"
           >
             Ir a Iniciar Sesión
           </button>
@@ -88,7 +88,7 @@ export function RegisterNotice({
           <div>
             <label
               htmlFor="reg-corp-email"
-              className="block font-[family-name:var(--font-pixelify)] text-[11px] uppercase tracking-wider text-white/80 mb-1"
+              className="block font-[family-name:var(--font-ui)] text-[11px] uppercase tracking-wider text-white/80 mb-1"
             >
               Tu Correo Institucional
             </label>
@@ -114,7 +114,7 @@ export function RegisterNotice({
           <div className="pt-1.5">
             <button
               type="submit"
-              className="w-full rounded-full py-2.5 px-5 font-[family-name:var(--font-pixelify)] font-bold text-xs uppercase tracking-wider bg-[#E9B949] text-[#14213D] hover:bg-[#14213D] hover:text-white hover:border hover:border-[#E9B949]/60 active:scale-[0.98] transition-colors duration-200 cursor-pointer"
+              className="w-full rounded-full py-2.5 px-5 font-[family-name:var(--font-ui)] font-bold text-xs uppercase tracking-wider bg-[#E9B949] text-[#14213D] hover:bg-[#14213D] hover:text-white hover:border hover:border-[#E9B949]/60 active:scale-[0.98] transition-colors duration-200 cursor-pointer"
               style={{
                 boxShadow:
                   '5px 5px 12px rgba(0,0,0,0.45), -3px -3px 10px rgba(255,255,255,0.06)',

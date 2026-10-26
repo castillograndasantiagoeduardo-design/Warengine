@@ -67,7 +67,7 @@ export function AuthOverlay({ isLogin, onToggleMode }: AuthOverlayProps) {
           <button
             type="button"
             onClick={onToggleMode}
-            className="rounded-full px-6 py-2.5 border-2 border-white/70 text-white font-[family-name:var(--font-pixelify)] font-bold text-xs uppercase tracking-wider hover:bg-white hover:text-[#14213D] hover:border-white transition-all duration-200 cursor-pointer active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
+            className="rounded-full px-6 py-2.5 border-2 border-white/70 text-white font-[family-name:var(--font-ui)] font-bold text-xs uppercase tracking-wider hover:bg-white hover:text-[#14213D] hover:border-white transition-all duration-200 cursor-pointer active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
             style={{
               boxShadow:
                 '4px 4px 10px rgba(0,0,0,0.4), -3px -3px 8px rgba(255,255,255,0.05)',
@@ -94,7 +94,7 @@ export function AuthOverlay({ isLogin, onToggleMode }: AuthOverlayProps) {
           <button
             type="button"
             onClick={onToggleMode}
-            className="rounded-full px-6 py-2.5 border-2 border-white/70 text-white font-[family-name:var(--font-pixelify)] font-bold text-xs uppercase tracking-wider hover:bg-white hover:text-[#14213D] hover:border-white transition-all duration-200 cursor-pointer active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
+            className="rounded-full px-6 py-2.5 border-2 border-white/70 text-white font-[family-name:var(--font-ui)] font-bold text-xs uppercase tracking-wider hover:bg-white hover:text-[#14213D] hover:border-white transition-all duration-200 cursor-pointer active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
             style={{
               boxShadow:
                 '4px 4px 10px rgba(0,0,0,0.4), -3px -3px 8px rgba(255,255,255,0.05)',

@@ -79,4 +79,4 @@ Cambios principales:
 - Endpoints nuevos de solo lectura: `GET /ventas/turnos/abiertos` y `GET /inventario/stock?sucursalId=` (acotados por alcance).
 - Dashboard admin-sucursal con rutas `/ventas/*` y datos reales (sin ayer×0.75 ni meta fija). POS y B2B con stock real de la sede, sin cliente "Consumidor Final" implícito; B2B con IVA 0 como el backend (antes toda venta B2B fallaba por `PAGO_INVALIDO`).
 - `database/client.ts`: sesión MySQL en UTC (`SET time_zone='+00:00'`): corrige horas corridas 5 h y el punto 10 de esta lista de riesgos.
-- Fuente Outfit (`--font-ui`) en todas las vistas; Pixelify solo en `/acceso` (`.fuente-login`).
+- Fuente Outfit (`--font-ui`) en todas las vistas, `/acceso` incluido; Pixelify se retiró del proyecto.

@@ -59,7 +59,7 @@ export function LoginForm({
       {/* Botones Sociales Neumórficos */}
       <SocialAuthButtons />
 
-      <p className="font-[family-name:var(--font-pixelify)] text-[11px] text-center text-white/60 uppercase tracking-widest mb-3">
+      <p className="font-[family-name:var(--font-ui)] text-[11px] text-center text-white/60 uppercase tracking-widest mb-3">
         o usa tu correo institucional
       </p>
 
@@ -90,7 +90,7 @@ export function LoginForm({
         <div>
           <label
             htmlFor={emailInputId}
-            className="block font-[family-name:var(--font-pixelify)] text-[11px] uppercase tracking-wider text-white/80 mb-1"
+            className="block font-[family-name:var(--font-ui)] text-[11px] uppercase tracking-wider text-white/80 mb-1"
           >
             Correo electrónico
           </label>
@@ -133,14 +133,14 @@ export function LoginForm({
           <div className="flex items-center justify-between mb-1">
             <label
               htmlFor={passwordInputId}
-              className="block font-[family-name:var(--font-pixelify)] text-[11px] uppercase tracking-wider text-white/80"
+              className="block font-[family-name:var(--font-ui)] text-[11px] uppercase tracking-wider text-white/80"
             >
               Contraseña
             </label>
             <a
               href="#recuperar"
               onClick={handleRecuperarPassword}
-              className="font-[family-name:var(--font-pixelify)] text-[10px] text-[#E9B949]/80 hover:text-[#E9B949] transition-colors focus-visible:outline-none focus-visible:underline"
+              className="font-[family-name:var(--font-ui)] text-[10px] text-[#E9B949]/80 hover:text-[#E9B949] transition-colors focus-visible:outline-none focus-visible:underline"
             >
               ¿Olvidaste?
             </a>
@@ -234,7 +234,7 @@ export function LoginForm({
           <button
             type="submit"
             disabled={isSubmitting || rateLimit.bloqueado}
-            className="w-full rounded-full py-2.5 px-5 font-[family-name:var(--font-pixelify)] font-bold text-xs uppercase tracking-wider bg-[#E9B949] text-[#14213D] hover:bg-[#14213D] hover:text-white hover:border hover:border-[#E9B949]/60 active:scale-[0.98] transition-colors duration-200 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E9B949]"
+            className="w-full rounded-full py-2.5 px-5 font-[family-name:var(--font-ui)] font-bold text-xs uppercase tracking-wider bg-[#E9B949] text-[#14213D] hover:bg-[#14213D] hover:text-white hover:border hover:border-[#E9B949]/60 active:scale-[0.98] transition-colors duration-200 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E9B949]"
             style={{
               boxShadow:
                 '5px 5px 12px rgba(0,0,0,0.45), -3px -3px 10px rgba(255,255,255,0.06)',

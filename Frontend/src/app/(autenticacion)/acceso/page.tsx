@@ -24,7 +24,7 @@ export default function AccesoPage() {
           '--ac-fg': '#14213D',
         } as React.CSSProperties
       }
-      className="fuente-login relative min-h-[100dvh] w-full flex items-center justify-center overflow-x-hidden bg-[radial-gradient(75vw_75vh_at_50%_50%,#162544_0%,#101a30_60%,#090f1d_100%)] select-none px-4"
+      className="relative min-h-[100dvh] w-full flex items-center justify-center overflow-x-hidden bg-[radial-gradient(75vw_75vh_at_50%_50%,#162544_0%,#101a30_60%,#090f1d_100%)] select-none px-4"
     >
       {/* Grano analógico de fondo */}
       <NoiseOverlay />
