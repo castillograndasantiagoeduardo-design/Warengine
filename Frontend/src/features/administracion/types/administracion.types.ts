@@ -143,6 +143,34 @@ export interface UsuarioGestionado {
   sucursalesAdicionales: { id: number; nombre: string }[];
 }
 
+// ─── Alertas ───────────────────────────────────────────────────
+export type EstadoAlertaAdmin = 'pendiente' | 'visto' | 'atendido';
+
+export interface AlertaAdmin {
+  id: string;
+  usuarioId: string;
+  sucursalId: number;
+  motivo: string;
+  prioridad: 'urgente' | 'normal';
+  descripcion: string | null;
+  estado: EstadoAlertaAdmin;
+  fechaCreacion: string;
+  fechaAtencion: string | null;
+  sucursalNombre?: string | null;
+  usuarioEmail?: string | null;
+}
+
+export interface AlertaStock {
+  productoId: string;
+  sku: string;
+  nombre: string;
+  sucursalId: number;
+  sucursalNombre: string;
+  stockActual: number;
+  stockMinimo: number;
+  faltante: number;
+}
+
 // ─── Auditoría ─────────────────────────────────────────────────
 /** Registro de logs_auditoria. `detalles` viene sanitizado ({ antes, despues } en mutaciones). */
 export interface LogAuditoria {
