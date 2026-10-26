@@ -28,4 +28,7 @@ export * from './AdminProfileModal';
 export * from './VoidInvoiceModal';
 export * from './InvoiceDetailModal';
 export * from './BranchInvoicingView';
+export * from './BranchMovementsView';
+export * from './BranchOverviewView';
+export * from './BranchAccessDenied';
 export * from './DashboardSkeleton';

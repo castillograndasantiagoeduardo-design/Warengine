@@ -22,7 +22,6 @@ import { CreateProductModal } from './CreateProductModal';
 import { RegisterStockEntryModal } from './RegisterStockEntryModal';
 import { ManualExitModal } from './ManualExitModal';
 import { StockCountAuditModal } from './StockCountAuditModal';
-import { BranchKardexModal } from './BranchKardexModal';
 import {
   SearchIcon,
   PlusIcon,
@@ -34,7 +33,6 @@ import {
   CheckIcon,
   MinusIcon,
   ScaleIcon,
-  BoxesIcon,
 } from './Icons';
 import type { ProductoInventarioSede } from '../types/branch-inventory.types';
 
@@ -87,7 +85,6 @@ export function BranchInventoryView({
   const [isEntryModalOpen, setIsEntryModalOpen] = useState(false);
   const [isExitModalOpen, setIsExitModalOpen] = useState(false);
   const [isAuditModalOpen, setIsAuditModalOpen] = useState(false);
-  const [isKardexModalOpen, setIsKardexModalOpen] = useState(false);
   const [productoMovimiento, setProductoMovimiento] = useState<ProductoInventarioSede | null>(null);
 
   const formatCOP = (num: number) =>
@@ -122,11 +119,6 @@ export function BranchInventoryView({
   const handleAbrirAjuste = (p?: ProductoInventarioSede) => {
     setProductoMovimiento(p || null);
     setIsAuditModalOpen(true);
-  };
-
-  const handleAbrirKardex = (p?: ProductoInventarioSede) => {
-    setProductoMovimiento(p || null);
-    setIsKardexModalOpen(true);
   };
 
   // Contadores para chips de filtrado
@@ -178,15 +170,6 @@ export function BranchInventoryView({
           >
             <ScaleIcon size={14} className="text-[#e3b341]" />
             <span>Ajuste Físico</span>
-          </button>
-
-          {/* Botón Historial Kardex */}
-          <button
-            onClick={() => handleAbrirKardex()}
-            className="flex items-center gap-1.5 h-9 px-3 rounded-xl bg-white/[0.04] border border-white/[0.1] text-xs font-semibold text-slate-200 hover:text-white hover:bg-white/[0.08] transition-colors cursor-pointer font-[family-name:var(--font-archivo)]"
-          >
-            <BoxesIcon size={14} className="text-amber-400" />
-            <span>Kardex</span>
           </button>
 
           {/* Botón Nuevo Producto */}
@@ -532,15 +515,6 @@ export function BranchInventoryView({
                             <ScaleIcon size={14} />
                           </button>
 
-                          {/* Ver Kardex del producto */}
-                          <button
-                            onClick={() => handleAbrirKardex(prod)}
-                            title="Ver movimientos Kardex de este artículo"
-                            className="p-1.5 rounded-lg text-slate-400 hover:text-amber-400 hover:bg-amber-400/15 transition-colors cursor-pointer"
-                          >
-                            <BoxesIcon size={14} />
-                          </button>
-
                           {/* Editar producto */}
                           <button
                             onClick={() => handleAbrirEdicion(prod)}
@@ -636,22 +610,6 @@ export function BranchInventoryView({
           if (res.ok) recargar();
           return res;
         }}
-      />
-
-      <BranchKardexModal
-        isOpen={isKardexModalOpen}
-        sucursalId={sucursalId}
-        sucursalNombre={sucursalNombre}
-        productos={productos}
-        productoInicial={productoMovimiento}
-        onClose={() => {
-          setIsKardexModalOpen(false);
-          setProductoMovimiento(null);
-        }}
-        onConsultarKardex={consultarKardex}
-        onExportarCsv={exportarCsv}
-        isLoading={isKardexLoading}
-        movimientos={kardexData.items}
       />
     </div>
   );

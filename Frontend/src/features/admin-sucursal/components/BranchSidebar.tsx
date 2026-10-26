@@ -21,11 +21,13 @@ import {
   ShieldIcon,
   LogOutIcon,
   TruckIcon,
+  BoxesIcon,
 } from './Icons';
 
 export type BranchSection =
   | 'resumen'
   | 'inventario'
+  | 'movimientos'
   | 'proveedores'
   | 'cajeros'
   | 'facturacion'
@@ -50,6 +52,7 @@ interface NavItem {
 const MENU_ITEMS: NavItem[] = [
   { id: 'resumen', label: 'Resumen', icon: <LayoutDashboardIcon size={18} /> },
   { id: 'inventario', label: 'Inventario & Stock', icon: <PackageIcon size={18} /> },
+  { id: 'movimientos', label: 'Movimientos Sede', icon: <BoxesIcon size={18} /> },
   { id: 'proveedores', label: 'Proveedores', icon: <TruckIcon size={18} /> },
   { id: 'cajeros', label: 'Cajeros & Turnos', icon: <UsersRoundIcon size={18} /> },
   { id: 'facturacion', label: 'Facturación & Ventas', icon: <ReceiptTextIcon size={18} /> },
