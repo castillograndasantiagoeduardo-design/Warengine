@@ -8,6 +8,7 @@
  */
 
 import React from 'react';
+import { WarEngineLogo } from '@/components/panel/WarEngineLogo';
 import type { TurnoCajaDto } from '../types/pos.types';
 
 interface PosHeaderProps {
@@ -53,8 +54,8 @@ export function PosHeader({
     <header className="h-16 px-4 bg-[#0a1124] border-b border-white/10 flex items-center justify-between select-none shadow-md">
       {/* Lado izquierdo: Marca y Sucursal */}
       <div className="flex items-center gap-3">
-        <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#e3b341] to-[#b88a1f] flex items-center justify-center shadow-lg shadow-[#e3b341]/20">
-          <span className="font-[family-name:var(--font-anton)] text-black text-xl tracking-tighter">W</span>
+        <div className="w-10 h-10 flex items-center justify-center drop-shadow-[0_2px_8px_rgba(217,160,45,0.35)]">
+          <WarEngineLogo className="w-9" />
         </div>
         <div>
           <div className="flex items-center gap-2">
