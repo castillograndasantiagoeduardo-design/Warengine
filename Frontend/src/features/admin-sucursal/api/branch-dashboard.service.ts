@@ -60,13 +60,13 @@ export class BranchDashboardService implements IBranchDashboardService {
         this.http.get<any>('/administracion/alertas-stock', {
           params: { sucursalId, limit: 10, page: 1 },
         }),
-        this.http.get<any>('/ventas/facturas', {
-          params: { sucursalId, limite: 10 },
+        this.http.get<any>('/facturacion/facturas', {
+          params: { sucursalId, limit: 10 },
         }),
         this.http.get<any>('/administracion/empleados', {
           params: { sucursalId },
         }),
-        this.http.get<any>('/ventas/turnos/actual'),
+        this.http.get<any>('/facturacion/turnos/actual'),
       ]);
 
       const metricasRaw = metricasRes.status === 'fulfilled' ? (metricasRes.value?.data ?? metricasRes.value) : null;
@@ -208,10 +208,37 @@ export class BranchDashboardService implements IBranchDashboardService {
         ? Math.round((productosSaludables / totalProductos) * 1000) / 10
         : 100;
 
-    // 3. Empleados y Turnos de Caja Reales
+    // 3. Empleados y Turnos de Caja Reales (Cero mocks o turnos sintéticos)
     const empleadosList = Array.isArray(empleadosRaw) ? empleadosRaw : [];
     const empleadosActivos = empleadosList.filter((e: any) => e.isActive);
-    const turnosAbiertosCount = turnosRaw?.id ? 1 : 0;
+
+    const turnosData = turnosRaw?.id ? [turnosRaw] : Array.isArray(turnosRaw) ? turnosRaw : [];
+    const cajerosEnTurno: CashierShiftItem[] = turnosData
+      .filter((t: any) => t && t.id && !t.fechaCierre && !t.fecha_cierre)
+      .map((t: any) => {
+        const nombre = t.usuarioNombre || t.nombreUsuario || 'Cajero en Turno';
+        const partes = nombre.split(' ').filter(Boolean);
+        const iniciales = partes.length >= 2 ? `${partes[0][0]}${partes[1][0]}` : nombre.slice(0, 2);
+
+        return {
+          id: String(t.id || t.id_turno_caja),
+          cajeroNombre: nombre,
+          cajeroIniciales: iniciales.toUpperCase(),
+          cajaNumero: `Caja ${t.sucursalId || sucursalId}`,
+          horaInicio: (t.fechaApertura || t.fecha_apertura)
+            ? new Date(t.fechaApertura || t.fecha_apertura).toLocaleTimeString('es-CO', {
+                hour: '2-digit',
+                minute: '2-digit',
+              })
+            : 'En curso',
+          totalVentas: Number(t.totalVentas || 0),
+          totalVentasFormateado: formatCOP(Number(t.totalVentas || 0)),
+          cantidadVentas: Number(t.cantidadVentas || 0),
+          estado: 'abierto',
+        };
+      });
+
+    const turnosAbiertosCount = cajerosEnTurno.length;
 
     const sucursalDetectada =
       empleadosList[0]?.sucursalNombre ||
@@ -243,7 +270,7 @@ export class BranchDashboardService implements IBranchDashboardService {
         agotados: sinExistenciasCount,
       },
       cajeros: {
-        activos: empleadosActivos.length,
+        activos: cajerosEnTurno.length,
         total: empleadosList.length,
         turnosAbiertos: turnosAbiertosCount,
         disponibles: Math.max(0, empleadosList.length - turnosAbiertosCount),
@@ -309,25 +336,6 @@ export class BranchDashboardService implements IBranchDashboardService {
           estado: f.estado === 'ANULADA' ? 'anulada' : 'completada',
         }))
       : [];
-
-    // 7. Colaboradores y Turnos de Caja Reales
-    const cajerosEnTurno: CashierShiftItem[] = empleadosList.map((emp: any, idx: number) => {
-      const nombre = emp.nombre || 'Colaborador';
-      const partes = nombre.split(' ').filter(Boolean);
-      const iniciales = partes.length >= 2 ? `${partes[0][0]}${partes[1][0]}` : nombre.slice(0, 2);
-
-      return {
-        id: emp.id || String(idx),
-        cajeroNombre: nombre,
-        cajeroIniciales: iniciales.toUpperCase(),
-        cajaNumero: emp.cargo || `Puesto 0${idx + 1}`,
-        horaInicio: emp.fechaIngreso || '08:00',
-        totalVentas: 0,
-        totalVentasFormateado: '$0',
-        cantidadVentas: 0,
-        estado: emp.isActive ? 'abierto' : 'cerrado',
-      };
-    });
 
     const fechaFormateada = new Date().toLocaleDateString('es-CO', {
       weekday: 'long',

@@ -26,6 +26,7 @@ import {
   DashboardSkeleton,
   BranchInventoryView,
   BranchSuppliersView,
+  BranchStaffView,
   DollarSignIcon,
   ReceiptTextIcon,
   PackageIcon,
@@ -137,6 +138,11 @@ export default function DashboardPage() {
         />
       ) : activeSection === 'proveedores' ? (
         <BranchSuppliersView />
+      ) : activeSection === 'cajeros' ? (
+        <BranchStaffView
+          sucursalId={usuario?.sucursalId ?? 1}
+          sucursalNombre={data?.sucursalNombre || 'Sede Norte'}
+        />
       ) : isDashboardLoading && !data ? (
         <DashboardSkeleton />
       ) : (
@@ -242,6 +248,7 @@ export default function DashboardPage() {
               <div className="lg:col-span-4">
                 <ActiveCashiersCard
                   turnos={data.cajerosEnTurno}
+                  onAdministrarTurnosClick={() => setActiveSection('cajeros')}
                   className="h-full"
                 />
               </div>

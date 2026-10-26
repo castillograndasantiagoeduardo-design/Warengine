@@ -86,8 +86,10 @@ export function useBranchSuppliers(inventoryService: IBranchInventoryService = b
     );
     try {
       await inventoryService.cambiarEstadoProveedor(id, isActive);
+      setError(null);
     } catch (err: any) {
-      console.error('[useBranchSuppliers] Error al cambiar estado:', err);
+      const msg = err?.message || 'No se puede desactivar el proveedor porque tiene productos activos vinculados (RF-ADM-B19).';
+      setError(msg);
       await cargarProveedores();
     }
   };

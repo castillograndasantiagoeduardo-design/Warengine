@@ -48,9 +48,9 @@ interface NavItem {
 
 const MENU_ITEMS: NavItem[] = [
   { id: 'resumen', label: 'Resumen', icon: <LayoutDashboardIcon size={18} /> },
-  { id: 'inventario', label: 'Inventario & Stock', icon: <PackageIcon size={18} />, badge: '3' },
+  { id: 'inventario', label: 'Inventario & Stock', icon: <PackageIcon size={18} /> },
   { id: 'proveedores', label: 'Proveedores', icon: <TruckIcon size={18} /> },
-  { id: 'cajeros', label: 'Cajeros & Turnos', icon: <UsersRoundIcon size={18} />, badge: '3' },
+  { id: 'cajeros', label: 'Cajeros & Turnos', icon: <UsersRoundIcon size={18} /> },
   { id: 'facturacion', label: 'Facturación & POS', icon: <ReceiptTextIcon size={18} />, href: '/pos' },
   { id: 'reportes', label: 'Reportes', icon: <BarChartIcon size={18} /> },
 ];
