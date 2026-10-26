@@ -1,22 +1,25 @@
-
 import React from 'react';
 import Link from 'next/link';
 
-type Button3DSize = 'landing' | 'panel' | 'panel-sm';
-type Button3DVariant = 'gold' | 'navy' | 'danger' | 'success';
+export type Button3DSize = 'landing' | 'responsive' | 'panel' | 'panel-sm' | 'sm' | 'md' | 'lg';
+export type Button3DVariant = 'gold' | 'navy' | 'danger' | 'success';
 
-interface Button3DProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+export interface Button3DProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   href?: string;
   className?: string;
   children: React.ReactNode;
   onClick?: (e: React.MouseEvent<HTMLAnchorElement | HTMLButtonElement>) => void;
-  /** 'landing' (por defecto) escala con el viewport; 'panel' usa medidas fijas con área táctil de 44 px. */
+  /** 'landing' / 'responsive' escala con el viewport; 'panel', 'sm', 'md', 'lg' usan medidas fijas. */
   size?: Button3DSize;
   variant?: Button3DVariant;
 }
 
 const SIZE_CLASSES: Record<Button3DSize, string> = {
   landing: 'text-[clamp(12px,1.75vw,28px)] px-[2vw] py-[0.5vw]',
+  responsive: 'text-[clamp(12px,1.75vw,28px)] px-[2vw] py-[0.5vw]',
+  sm: 'text-xs px-3.5 py-1.5 min-h-[38px] rounded-xl shadow-[0_3px_0_var(--gold-dark,#b88a1f)] font-bold',
+  md: 'text-sm px-5 py-2 min-h-[42px] rounded-xl shadow-[0_3px_0_var(--gold-dark,#b88a1f)] font-bold',
+  lg: 'text-base px-6 py-2.5 min-h-[48px] rounded-2xl shadow-[0_4px_0_var(--gold-dark,#b88a1f)] font-bold',
   panel: 'btn-3d-panel text-sm px-5',
   'panel-sm': 'btn-3d-panel text-xs px-3',
 };

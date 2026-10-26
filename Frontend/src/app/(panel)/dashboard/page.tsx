@@ -7,25 +7,30 @@
  * decide qué vista principal mostrar según el rol autenticado.
  */
 
-import React from 'react';
+import React, { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { usePermissions } from '@/features/autenticacion';
 import { SuperAdminDashboard } from '@/features/administracion';
 import { EmptyState } from '@/components/ui/EmptyState';
 
 export default function DashboardPage() {
+  const router = useRouter();
   const { esSuperAdmin, esAdminSucursal } = usePermissions();
+
+  useEffect(() => {
+    if (esAdminSucursal) {
+      router.replace('/admin-sucursal');
+    }
+  }, [esAdminSucursal, router]);
 
   if (esSuperAdmin) {
     return <SuperAdminDashboard />;
   }
 
   if (esAdminSucursal) {
-    // ─── PUNTO DE MONTAJE: vista del Admin de Sucursal ───────────────
-    // Reemplazar este bloque por el componente de su feature, p. ej.:
-    //   return <AdminSucursalDashboard />;
     return (
-      <div className="panel-card">
-        <EmptyState title="Panel de sucursal" description="La vista del administrador de sucursal se monta aquí." />
+      <div className="panel-card flex items-center justify-center p-8 text-white/70">
+        <p>Redirigiendo al panel de administración de sucursal...</p>
       </div>
     );
   }

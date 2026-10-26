@@ -53,6 +53,7 @@ export function middleware(request: NextRequest) {
   const tieneSesion = accessTokenValido || Boolean(refreshTokenCookie);
 
   const esRutaProtegida =
+    pathname.startsWith('/admin-sucursal') ||
     pathname.startsWith('/dashboard') ||
     pathname.startsWith('/pos') ||
     pathname.startsWith('/administracion') ||
@@ -67,16 +68,32 @@ export function middleware(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  // 3. Caso: Cajero intentando entrar al panel administrativo o viceversa
+  // 2. Redirección de compatibilidad: /dashboard redirige a /admin-sucursal
+  if (pathname.startsWith('/dashboard')) {
+    if (payload?.rolId === 2) {
+      return NextResponse.redirect(new URL('/admin-sucursal', request.url));
+    }
+  }
+
+  // 3. Control de acceso granular por rol (RBAC perimetral)
   if (tieneSesion && payload?.rolId) {
-    if (pathname.startsWith('/dashboard') && payload.rolId === 3) {
-      // Cajero redirigido a su terminal POS
-      return NextResponse.redirect(new URL('/pos', request.url));
+    // El panel de sucursal (/admin-sucursal) es exclusivo para Administradores de Sucursal (rolId: 2)
+    if (pathname.startsWith('/admin-sucursal') && payload.rolId !== 2) {
+      if (payload.rolId === 3) {
+        // Cajero redirigido a su terminal POS
+        return NextResponse.redirect(new URL('/pos', request.url));
+      }
+      // Super-admin (rolId: 1) o cualquier otro rol no autorizado para el panel de sucursal
+      const url = new URL('/acceso', request.url);
+      url.searchParams.set('error', 'acceso_denegado_sucursal');
+      return NextResponse.redirect(url);
     }
 
     if (pathname.startsWith('/pos') && payload.rolId !== 3 && payload.rolId !== 1) {
-      // Administrador que no es cajero ni super-admin redirigido a su panel
-      return NextResponse.redirect(new URL('/dashboard', request.url));
+      // Si un admin-sucursal visita /pos, redirigir a su panel /admin-sucursal
+      if (payload.rolId === 2) {
+        return NextResponse.redirect(new URL('/admin-sucursal', request.url));
+      }
     }
   }
 
