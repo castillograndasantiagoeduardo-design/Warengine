@@ -52,7 +52,7 @@ export function PosCarrito({
           <span className="text-[10px] uppercase font-bold text-white/50 tracking-wider font-[family-name:var(--font-ui)]">
             Cliente Asignado
           </span>
-          <button
+          <button type="button"
             onClick={onAbrirModalCliente}
             className="text-[11px] text-[#e3b341] hover:underline cursor-pointer flex items-center gap-1 font-[family-name:var(--font-ui)]"
           >
@@ -93,7 +93,7 @@ export function PosCarrito({
         <div className="flex items-center justify-between text-xs text-white/50 pb-1 border-b border-white/5">
           <span>Detalle de Artículos ({totales.cantidadItems})</span>
           {totales.tieneItems && (
-            <button
+            <button type="button"
               onClick={onLimpiarCarrito}
               className="text-[10px] text-red-400 hover:text-red-300 hover:underline cursor-pointer"
             >
@@ -123,7 +123,7 @@ export function PosCarrito({
                   </h6>
                   <span className="text-[10px] text-white/40 font-mono">{item.sku}</span>
                 </div>
-                <button
+                <button type="button"
                   onClick={() => onEliminarItem(item.productoId)}
                   className="text-white/40 hover:text-red-400 text-xs px-1 cursor-pointer"
                   title="Eliminar de la orden"

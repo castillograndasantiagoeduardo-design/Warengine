@@ -126,7 +126,7 @@ export function PosCatalogo({ onAgregarProducto, inputBuscarRef, sucursalId, ver
         {/* Chips de categorías */}
         {categorias.length > 0 && (
           <div className="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar">
-            <button
+            <button type="button"
               onClick={() => setCategoriaSeleccionada('todas')}
               className={`px-3 py-1 rounded-lg text-xs font-[family-name:var(--font-ui)] uppercase whitespace-nowrap cursor-pointer transition-all ${
                 categoriaSeleccionada === 'todas'
@@ -137,7 +137,7 @@ export function PosCatalogo({ onAgregarProducto, inputBuscarRef, sucursalId, ver
               Todos ({productos.length})
             </button>
             {categorias.map((cat) => (
-              <button
+              <button type="button"
                 key={cat}
                 onClick={() => setCategoriaSeleccionada(cat)}
                 className={`px-3 py-1 rounded-lg text-xs font-[family-name:var(--font-ui)] uppercase whitespace-nowrap cursor-pointer transition-all ${

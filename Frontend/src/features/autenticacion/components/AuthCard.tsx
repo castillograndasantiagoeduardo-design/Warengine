@@ -31,7 +31,7 @@ export function AuthCard() {
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      const params = new URLSearchParams(window.location.search);
+      const params = new URLSearchParams(globalThis.location.search);
       if (params.get('error') === 'acceso_denegado_sucursal') {
         setRolError(
           'Acceso restringido: El dashboard actual está reservado exclusivamente para cuentas con rol "admin-sucursal". Inicie sesión con una cuenta de Administrador de Sucursal.'
@@ -83,7 +83,7 @@ export function AuthCard() {
             </h4>
             <p className="leading-relaxed text-amber-200/90">{rolError}</p>
           </div>
-          <button
+          <button type="button"
             onClick={() => setRolError(null)}
             className="text-amber-400 hover:text-white transition-colors text-xs font-mono px-1.5 py-0.5 rounded cursor-pointer"
             aria-label="Cerrar aviso"

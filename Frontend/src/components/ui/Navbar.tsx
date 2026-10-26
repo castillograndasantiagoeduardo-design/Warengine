@@ -46,7 +46,7 @@ export function Navbar({ activeTab, onNavigate }: NavbarProps) {
       <nav aria-label="Navegación principal">
         <ul className="flex items-center gap-[clamp(14px,3.8vw,48px)] ml-[2vw] list-none">
           <li>
-            <button
+            <button type="button"
               onClick={() => onNavigate('inicio')}
               className={`font-[family-name:var(--font-ui)] text-[clamp(12px,1.5vw,26px)] tracking-wider pb-1 transition-colors border-b-2 cursor-pointer ${
                 activeTab === 'inicio'
@@ -58,7 +58,7 @@ export function Navbar({ activeTab, onNavigate }: NavbarProps) {
             </button>
           </li>
           <li>
-            <button
+            <button type="button"
               onClick={() => onNavigate('alcance')}
               className={`font-[family-name:var(--font-ui)] text-[clamp(12px,1.5vw,26px)] tracking-wider pb-1 transition-colors border-b-2 cursor-pointer ${
                 activeTab === 'alcance'
@@ -70,7 +70,7 @@ export function Navbar({ activeTab, onNavigate }: NavbarProps) {
             </button>
           </li>
           <li>
-            <button
+            <button type="button"
               onClick={() => onNavigate('planes')}
               className={`font-[family-name:var(--font-ui)] text-[clamp(12px,1.5vw,26px)] tracking-wider pb-1 transition-colors border-b-2 cursor-pointer ${
                 activeTab === 'planes'
@@ -82,7 +82,7 @@ export function Navbar({ activeTab, onNavigate }: NavbarProps) {
             </button>
           </li>
           <li>
-            <button
+            <button type="button"
               onClick={() => onNavigate('nosotros')}
               className={`font-[family-name:var(--font-ui)] text-[clamp(12px,1.5vw,26px)] tracking-wider pb-1 transition-colors border-b-2 cursor-pointer ${
                 activeTab === 'nosotros'
