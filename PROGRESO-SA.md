@@ -65,3 +65,18 @@ Verificación tras cada paso: `deno task check` ✅ · `lint` sin problemas nuev
 8. **Sin indicador de 2FA en la sesión:** `/auth/verificar` y el login no dicen si la cuenta ya tiene 2FA; la pantalla Mi cuenta ofrece configurar y desactivar sin saber el estado actual.
 9. **Tokens en el cuerpo del login:** `POST /auth/login` devuelve `accessToken` y `refreshToken` en el JSON además de las cookies HttpOnly. El frontend no los guarda, pero quedan expuestos a JS; valorar quitarlos del cuerpo.
 10. **Bug preexistente de zona horaria (BD):** los triggers que marcan `tokens_invalidados_en` usan `NOW()` con la zona del servidor MySQL (UTC-5), y la app compara en UTC. Resultado: al cambiar rol/estado de un usuario, sus sesiones abiertas no se cortan hasta ~5 h después. No se tocó (triggers/configuración de BD); solución sugerida: `default-time-zone=+00:00` en MySQL o `UTC_TIMESTAMP()` en los triggers.
+
+## Demo expo (26/10/2026) — rama `feat/demo-expo` (local, sin push)
+
+Avance para la exposición: flujo super admin → admin de sucursal → cajero → dashboards → vendedor B2B con datos reales. No es el producto terminado; solo se tocaron las rutas de ese flujo y la tipografía.
+
+**Estado inicial limpio:** desde `Backend/`, `deno task seed:expo` (pide escribir el nombre de la BD) o `deno task seed:expo --yes --db=<DB_NAME>`. Deja roles/permisos, la Sede Principal (id=1) y `superadmin@warengine.local` sin 2FA (clave = `SEED_SUPERADMIN_PASSWORD`). **Borra todos los datos de negocio.**
+
+**Prueba E2E:** con la API en 8017 y la BD recién sembrada, `deno run -A --env-file=.env scripts/e2e-expo.ts` (57 comprobaciones). Deja datos de prueba: volver a correr `seed:expo` después.
+
+Cambios principales:
+- Sesión (login, 2FA, `/auth/verificar`) con `nombre`, `sucursalId`, `sucursalNombre`; el front ya no asume la sede 1. Métricas/tendencias/ranking exigen `sucursalId` si el usuario tiene varias sedes (`SUCURSAL_REQUERIDA`).
+- Endpoints nuevos de solo lectura: `GET /ventas/turnos/abiertos` y `GET /inventario/stock?sucursalId=` (acotados por alcance).
+- Dashboard admin-sucursal con rutas `/ventas/*` y datos reales (sin ayer×0.75 ni meta fija). POS y B2B con stock real de la sede, sin cliente "Consumidor Final" implícito; B2B con IVA 0 como el backend (antes toda venta B2B fallaba por `PAGO_INVALIDO`).
+- `database/client.ts`: sesión MySQL en UTC (`SET time_zone='+00:00'`): corrige horas corridas 5 h y el punto 10 de esta lista de riesgos.
+- Fuente Outfit (`--font-ui`) en todas las vistas; Pixelify solo en `/acceso` (`.fuente-login`).
