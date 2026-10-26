@@ -74,8 +74,8 @@ export function PosClienteModal({
       });
       setModoCrear(false);
       onClose();
-    } catch (err: any) {
-      setErrorCrear(err?.message || 'Error al guardar el cliente.');
+    } catch (err: unknown) {
+      setErrorCrear(err instanceof Error ? err.message : 'Error al guardar el cliente.');
     }
   };
 
@@ -204,7 +204,7 @@ export function PosClienteModal({
                 </label>
                 <select
                   value={tipoDocumento}
-                  onChange={(e) => setTipoDocumento(e.target.value as any)}
+                  onChange={(e) => setTipoDocumento(e.target.value as 'CC' | 'NIT' | 'RUT')}
                   className="w-full px-3 py-2 rounded-xl bg-[#0a1124] border border-white/20 text-white text-xs focus:outline-none focus:border-[#e3b341]"
                 >
                   <option value="CC">Cédula de Ciudadanía (CC)</option>
@@ -249,7 +249,7 @@ export function PosClienteModal({
                 </label>
                 <select
                   value={tipoCliente}
-                  onChange={(e) => setTipoCliente(e.target.value as any)}
+                  onChange={(e) => setTipoCliente(e.target.value as 'B2C' | 'B2B')}
                   className="w-full px-3 py-2 rounded-xl bg-[#0a1124] border border-white/20 text-white text-xs focus:outline-none focus:border-[#e3b341]"
                 >
                   <option value="B2C">B2C (Persona Natural)</option>

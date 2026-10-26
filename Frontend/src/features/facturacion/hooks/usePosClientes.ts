@@ -66,8 +66,8 @@ export function usePosClientes() {
       try {
         const resultados = await posService.buscarClientes(terminoBusqueda.trim());
         setClientesEncontrados(resultados);
-      } catch (err: any) {
-        setError(err?.message || 'Error al buscar clientes.');
+      } catch (err: unknown) {
+        setError(err instanceof Error ? err.message : 'Error al buscar clientes.');
       } finally {
         setIsBuscando(false);
       }
@@ -97,8 +97,8 @@ export function usePosClientes() {
       setTerminoBusqueda('');
       setClientesEncontrados([]);
       return res.cliente;
-    } catch (err: any) {
-      const msg = err?.message || 'Error al registrar cliente.';
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Error al registrar cliente.';
       setError(msg);
       throw err;
     } finally {

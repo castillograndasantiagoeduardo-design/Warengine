@@ -133,8 +133,8 @@ export function usePosCobro() {
 
       setFacturaEmitida(factura);
       return factura;
-    } catch (err: any) {
-      const msg = err?.message || 'Error al emitir la factura.';
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Error al emitir la factura.';
       setErrorEmision(msg);
       throw err;
     } finally {

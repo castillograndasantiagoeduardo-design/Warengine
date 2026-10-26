@@ -4,7 +4,6 @@
  * PosCobroModal.tsx — Pasarela de liquidación y cobro de la terminal POS.
  */
 
-import React from 'react';
 import type { MedioPago } from '../types/pos.types';
 
 interface PosCobroModalProps {
@@ -146,22 +145,13 @@ export function PosCobroModal({
                 <label className="text-xs font-semibold text-white/80 uppercase font-[family-name:var(--font-pixelify)]">
                   Monto Recibido del Cliente (COP)
                 </label>
-                <div className="flex items-center gap-3">
-                  <button
-                    type="button"
-                    onClick={() => onCambiarMontoEfectivo(0)}
-                    className="text-[11px] text-white/50 hover:text-white hover:underline font-[family-name:var(--font-pixelify)] cursor-pointer"
-                  >
-                    Dejar en $0
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => onCambiarMontoEfectivo(totalVenta)}
-                    className="text-[11px] text-[#e3b341] hover:underline font-[family-name:var(--font-pixelify)] font-bold cursor-pointer"
-                  >
-                    ⚡ Monto Exacto ({formatoCOP(totalVenta)})
-                  </button>
-                </div>
+                <button
+                  type="button"
+                  onClick={() => onCambiarMontoEfectivo(totalVenta)}
+                  className="text-[11px] text-[#e3b341] hover:underline font-[family-name:var(--font-pixelify)] cursor-pointer"
+                >
+                  Monto Exacto
+                </button>
               </div>
 
               <div className="relative">
@@ -170,17 +160,9 @@ export function PosCobroModal({
                   type="number"
                   min={0}
                   step={500}
-                  value={montoEfectivoRecibido === 0 ? '' : montoEfectivoRecibido}
-                  onChange={(e) => {
-                    const val = e.target.value;
-                    if (val === '') {
-                      onCambiarMontoEfectivo(0);
-                    } else {
-                      const num = parseFloat(val);
-                      onCambiarMontoEfectivo(isNaN(num) || num < 0 ? 0 : num);
-                    }
-                  }}
-                  placeholder="0 (Ingresa el efectivo recibido)"
+                  value={montoEfectivoRecibido || ''}
+                  onChange={(e) => onCambiarMontoEfectivo(parseFloat(e.target.value) || 0)}
+                  placeholder="0"
                   autoFocus
                   className="w-full pl-8 pr-4 py-3 rounded-xl bg-[#0a1124] border border-white/20 text-white font-[family-name:var(--font-anton)] text-2xl tracking-wider focus:outline-none focus:border-[#e3b341]"
                 />
@@ -208,18 +190,14 @@ export function PosCobroModal({
                   Cambio / Devuelta a Entregar
                 </span>
                 <p className="text-xs text-white/40">
-                  {montoEfectivoRecibido === 0
-                    ? 'Monto en $0 · Pulsa "Monto Exacto" o ingresa el efectivo'
-                    : montoEfectivoRecibido < totalVenta
-                    ? `Faltan ${formatoCOP(totalVenta - montoEfectivoRecibido)} para cubrir la venta`
+                  {montoEfectivoRecibido < totalVenta
+                    ? `Faltan ${formatoCOP(totalVenta - montoEfectivoRecibido)}`
                     : 'Monto cubierto'}
                 </p>
               </div>
               <span
                 className={`font-[family-name:var(--font-anton)] text-2xl tracking-wider ${
-                  montoEfectivoRecibido >= totalVenta && montoEfectivoRecibido > 0
-                    ? 'text-emerald-400'
-                    : 'text-white/40'
+                  montoEfectivoRecibido >= totalVenta ? 'text-emerald-400' : 'text-red-400'
                 }`}
               >
                 {formatoCOP(cambioDevuelta)}

@@ -20,7 +20,7 @@ import type {
 export class PosService implements IPosService {
   constructor(private readonly http: IHttpClient = apiClient) {}
 
-  private mapTurno(raw: any): TurnoCajaDto | null {
+  private mapTurno(raw: Record<string, unknown> | null | undefined): TurnoCajaDto | null {
     if (!raw) return null;
     return {
       id: String(raw.id),
@@ -30,39 +30,41 @@ export class PosService implements IPosService {
       fondoFinal: raw.fondoFinal !== null && raw.fondoFinal !== undefined ? Number(raw.fondoFinal) : null,
       diferencia: raw.diferencia !== null && raw.diferencia !== undefined ? Number(raw.diferencia) : null,
       fechaApertura: String(raw.fechaApertura || raw.fecha_apertura),
-      fechaCierre: raw.fechaCierre || raw.fecha_cierre || null,
+      fechaCierre: (raw.fechaCierre as string) || (raw.fecha_cierre as string) || null,
       estaAbierto: raw.fechaCierre === null || raw.fecha_cierre === null || Boolean(raw.estaAbierto),
     };
   }
 
   public async obtenerTurnoActual(): Promise<TurnoCajaDto | null> {
     try {
-      const response = await this.http.get<{ turno: any } | any>('/ventas/turnos/actual');
-      const rawTurno = response?.turno !== undefined ? response.turno : response;
-      return this.mapTurno(rawTurno);
-    } catch (err: any) {
-      if (err?.status === 404) return null;
+      const response = await this.http.get<{ turno: Record<string, unknown> } | Record<string, unknown>>('/ventas/turnos/actual');
+      const rawTurno = response && 'turno' in response && response.turno !== undefined ? response.turno : response;
+      return this.mapTurno(rawTurno as Record<string, unknown>);
+    } catch (err: unknown) {
+      if ((err as { status?: number })?.status === 404) return null;
       throw err;
     }
   }
 
   public async abrirTurno(fondoInicial: number): Promise<TurnoCajaDto> {
-    const raw = await this.http.post<any>('/ventas/turnos', { fondoInicial });
-    const turno = this.mapTurno(raw?.turno || raw);
+    const raw = await this.http.post<Record<string, unknown>>('/ventas/turnos', { fondoInicial });
+    const turnoObj = (raw && 'turno' in raw && raw.turno) ? (raw.turno as Record<string, unknown>) : raw;
+    const turno = this.mapTurno(turnoObj);
     if (!turno) throw new Error('No se pudo mapear el turno abierto.');
     return turno;
   }
 
   public async cerrarTurno(turnoId: string, fondoFinal: number): Promise<TurnoCajaDto> {
-    const raw = await this.http.post<any>(`/ventas/turnos/${turnoId}/cerrar`, { fondoFinal });
-    const turno = this.mapTurno(raw?.turno || raw);
+    const raw = await this.http.post<Record<string, unknown>>(`/ventas/turnos/${turnoId}/cerrar`, { fondoFinal });
+    const turnoObj = (raw && 'turno' in raw && raw.turno) ? (raw.turno as Record<string, unknown>) : raw;
+    const turno = this.mapTurno(turnoObj);
     if (!turno) throw new Error('No se pudo mapear el turno cerrado.');
     return turno;
   }
 
   public async buscarProductos(query?: string, _sucursalId?: number): Promise<ProductoPos[]> {
     try {
-      const response = await this.http.get<any>('/inventario/productos', {
+      const response = await this.http.get<{ items?: Array<Record<string, unknown>> } | Array<Record<string, unknown>>>('/inventario/productos', {
         params: {
           texto: query?.trim() || undefined,
           limit: 50,
@@ -70,8 +72,10 @@ export class PosService implements IPosService {
         },
       });
 
-      const items = Array.isArray(response) ? response : response?.items || [];
-      return items.map((p: any) => ({
+      const items: Array<Record<string, unknown>> = Array.isArray(response)
+        ? response
+        : (response?.items || []);
+      return items.map((p) => ({
         id: String(p.id),
         sku: String(p.sku || ''),
         nombre: String(p.nombre || ''),
@@ -89,7 +93,7 @@ export class PosService implements IPosService {
 
   public async buscarClientes(texto?: string): Promise<ClienteDto[]> {
     try {
-      const response = await this.http.get<any>('/ventas/clientes', {
+      const response = await this.http.get<{ clientes?: ClienteDto[] } | ClienteDto[]>('/ventas/clientes', {
         params: {
           texto: texto?.trim() || undefined,
           limite: 20,
@@ -119,7 +123,7 @@ export class PosService implements IPosService {
 
   public async listarFacturas(params?: { sucursalId?: number; fechaInicio?: string; limite?: number }): Promise<FacturaDto[]> {
     try {
-      const response = await this.http.get<any>('/ventas/facturas', {
+      const response = await this.http.get<{ facturas?: FacturaDto[] } | FacturaDto[]>('/ventas/facturas', {
         params: {
           sucursalId: params?.sucursalId,
           fechaInicio: params?.fechaInicio,

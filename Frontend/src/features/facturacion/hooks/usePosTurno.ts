@@ -24,8 +24,8 @@ export function usePosTurno() {
     try {
       const actual = await posService.obtenerTurnoActual();
       setTurno(actual);
-    } catch (err: any) {
-      setError(err?.message || 'Error al consultar el turno de caja.');
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Error al consultar el turno de caja.');
     } finally {
       setIsLoading(false);
     }
@@ -42,12 +42,12 @@ export function usePosTurno() {
       const nuevoTurno = await posService.abrirTurno(fondoInicial);
       setTurno(nuevoTurno);
       return nuevoTurno;
-    } catch (err: any) {
-      // Si el backend responde que ya tiene un turno abierto, recargar el turno actual
-      if (err?.code === 'TURNO_YA_ABIERTO' || err?.message?.includes('abierto')) {
+    } catch (err: unknown) {
+      const errObj = err as { code?: string; message?: string };
+      if (errObj?.code === 'TURNO_YA_ABIERTO' || errObj?.message?.includes('abierto')) {
         await cargarTurnoActual();
       }
-      const msg = err?.message || 'No se pudo abrir el turno de caja.';
+      const msg = err instanceof Error ? err.message : 'No se pudo abrir el turno de caja.';
       setError(msg);
       throw err;
     } finally {
@@ -65,8 +65,8 @@ export function usePosTurno() {
       const turnoCerrado = await posService.cerrarTurno(turno.id, fondoFinal);
       setTurno(null);
       return turnoCerrado;
-    } catch (err: any) {
-      const msg = err?.message || 'No se pudo cerrar el turno de caja.';
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'No se pudo cerrar el turno de caja.';
       setError(msg);
       throw err;
     } finally {
