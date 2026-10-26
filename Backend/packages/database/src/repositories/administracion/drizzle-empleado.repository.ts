@@ -13,7 +13,7 @@
  * - RF-ADM-C5: Listado de empleados con filtros combinables.
  */
 
-import { and, eq, type SQL } from 'drizzle-orm';
+import { and, eq, inArray, type SQL } from 'drizzle-orm';
 import { Database } from '../../client.ts';
 import { areas, empleados, sucursales } from '../../schema/administracion.schema.ts';
 import {
@@ -57,6 +57,9 @@ export class DrizzleEmpleadoRepository implements IEmpleadoRepository {
 
     if (filtros?.sucursalId !== undefined) {
       condiciones.push(eq(empleados.sucursal_id, filtros.sucursalId));
+    }
+    if (filtros?.sucursalIds !== undefined) {
+      condiciones.push(inArray(empleados.sucursal_id, filtros.sucursalIds));
     }
     if (filtros?.areaId !== undefined) {
       condiciones.push(eq(empleados.area_id, filtros.areaId));

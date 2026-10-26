@@ -446,12 +446,13 @@ export function createContainer(_env?: Record<string, string>): AppContainer {
   const editarAreaUseCase = new EditarAreaUseCase(areaRepository, auditoriaRepository);
   const eliminarAreaUseCase = new EliminarAreaUseCase(areaRepository, auditoriaRepository);
 
-  const listarEmpleadosUseCase = new ListarEmpleadosUseCase(empleadoRepository);
-  const obtenerEmpleadoPorIdUseCase = new ObtenerEmpleadoPorIdUseCase(empleadoRepository);
+  const listarEmpleadosUseCase = new ListarEmpleadosUseCase(empleadoRepository, resolverAlcanceSucursalUseCase);
+  const obtenerEmpleadoPorIdUseCase = new ObtenerEmpleadoPorIdUseCase(empleadoRepository, resolverAlcanceSucursalUseCase);
   const editarEmpleadoUseCase = new EditarEmpleadoUseCase(
     empleadoRepository,
     areaRepository,
     auditoriaRepository,
+    resolverAlcanceSucursalUseCase,
   );
   const registrarAumentoSalarioUseCase = new RegistrarAumentoSalarioUseCase(
     empleadoRepository,
