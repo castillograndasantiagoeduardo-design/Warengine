@@ -74,6 +74,7 @@ export function PosHistorialDrawer({
               </div>
             </div>
             <button
+              type="button"
               onClick={onClose}
               className="text-white/40 hover:text-white text-lg p-1 cursor-pointer"
             >

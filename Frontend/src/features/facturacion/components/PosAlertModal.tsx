@@ -46,8 +46,8 @@ export function PosAlertModal({ isOpen, onClose, sucursalId }: PosAlertModalProp
         setMensaje('');
         onClose();
       }, 1500);
-    } catch (err: any) {
-      setErrorLocal(err?.message || 'Error al enviar alerta a la administración.');
+    } catch (err: unknown) {
+      setErrorLocal(err instanceof Error ? err.message : 'Error al enviar alerta a la administración.');
     } finally {
       setIsEnviando(false);
     }
@@ -57,6 +57,7 @@ export function PosAlertModal({ isOpen, onClose, sucursalId }: PosAlertModalProp
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
       <div className="w-full max-w-md bg-[#0f1b3d] border border-white/10 rounded-2xl p-6 shadow-2xl relative select-none">
         <button
+          type="button"
           onClick={onClose}
           className="absolute top-4 right-4 text-white/40 hover:text-white text-lg cursor-pointer"
         >
