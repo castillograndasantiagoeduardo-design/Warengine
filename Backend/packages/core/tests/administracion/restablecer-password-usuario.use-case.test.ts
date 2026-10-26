@@ -27,6 +27,7 @@ function usuariosFalsos(existente: UsuarioGestionado | null) {
   const llamadas: LlamadaPassword[] = [];
   const repo: IGestionUsuarioRepository = {
     listar: () => Promise.resolve([]),
+    listarPaginado: () => Promise.resolve({ items: [], total: 0 }),
     findById: () => Promise.resolve(existente),
     existeEmail: () => Promise.resolve(false),
     existeDocumento: () => Promise.resolve(false),

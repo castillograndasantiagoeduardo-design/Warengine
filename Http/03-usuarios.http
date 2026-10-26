@@ -376,3 +376,42 @@ Content-Type: application/json
 ### Verificar la auditoría (esperado: un registro "restablecer_password" sin contraseña)
 GET {{baseUrl}}/administracion/auditoria?accion=restablecer_password
 Authorization: Bearer {{login.response.body.accessToken}}
+
+###
+
+# ------------------------------------------------------------------------------
+# CATÁLOGO DE ROLES (selector de cambio de rol, RF-ADM-C7)
+# Permiso: autenticacion:asignar-roles
+# ------------------------------------------------------------------------------
+
+### Listar roles (esperado: 200 [{ id, nombre, descripcion }] ordenado por id)
+GET {{baseUrl}}/administracion/roles
+Authorization: Bearer {{login.response.body.accessToken}}
+
+###
+
+### Sin sesión (esperado: 401 TOKEN_INVALIDO)
+GET {{baseUrl}}/administracion/roles
+
+###
+
+# ------------------------------------------------------------------------------
+# LISTADO PAGINADO CON FILTROS COMBINABLES (RF-ADM-C5, RF-ADM-C16)
+# Respuesta: { items: [{ ..., rolNombre, sucursalNombre, sucursalesAdicionales }], total, pagina, limite, totalPaginas }
+# ------------------------------------------------------------------------------
+
+### Primera página de 5 usuarios
+GET {{baseUrl}}/administracion/usuarios?pagina=1&limite=5
+Authorization: Bearer {{login.response.body.accessToken}}
+
+###
+
+### Rol admin-sucursal + Sede 1 (principal o adicional) + solo activos + texto
+GET {{baseUrl}}/administracion/usuarios?rolId=2&sucursalId=1&isActive=true&busqueda=warengine
+Authorization: Bearer {{login.response.body.accessToken}}
+
+###
+
+### Error: límite fuera de rango (esperado: 400 VALIDATION_ERROR)
+GET {{baseUrl}}/administracion/usuarios?limite=500
+Authorization: Bearer {{login.response.body.accessToken}}

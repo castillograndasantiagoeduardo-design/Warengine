@@ -35,8 +35,10 @@ export function exportarAuditoriaCsvController(container: AppContainer) {
       return c.json(result.value, 200);
     }
 
-    c.header('Content-Type', 'text/csv; charset=utf-8');
-    c.header('Content-Disposition', `attachment; filename="${result.value.nombreArchivo}"`);
-    return c.text(result.value.csv, 200);
+    // c.text() forzaría text/plain: se usa c.body() para respetar el tipo CSV
+    return c.body(result.value.csv, 200, {
+      'Content-Type': 'text/csv; charset=utf-8',
+      'Content-Disposition': `attachment; filename="${result.value.nombreArchivo}"`,
+    });
   });
 }

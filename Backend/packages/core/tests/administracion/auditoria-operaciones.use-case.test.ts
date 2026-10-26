@@ -58,6 +58,7 @@ function usuario(rolId = 3, rolNombre = 'cajero', isActive = true) {
 function usuariosFalsos(existente: UsuarioGestionado | null): IGestionUsuarioRepository {
   return {
     listar: () => Promise.resolve([]),
+    listarPaginado: () => Promise.resolve({ items: [], total: 0 }),
     findById: () => Promise.resolve(existente),
     existeEmail: () => Promise.resolve(false),
     existeDocumento: () => Promise.resolve(false),
