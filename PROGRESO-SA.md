@@ -1,7 +1,7 @@
 # PROGRESO-SA.md — Panel del Super Admin (Warengine)
 
 > Demo: lunes 26 de octubre de 2026 · Rama: `feat/sa-base` (sin push)
-> Última actualización: domingo 25/10/2026 — Fase A (backend) terminada; Fase B en curso.
+> Última actualización: domingo 25/10/2026 — Fases A y B terminadas; Fase C en curso.
 
 ## Estado por fase
 
@@ -9,8 +9,8 @@
 | :--- | :--- | :--- |
 | Base (12 commits previos) | Kit UI, shell, selector `/dashboard`, dashboard global, sucursales + detalle + áreas, empleados + salarios | ✅ Hecho |
 | **A — Backend** | roles, resumen, permisos globales, usuarios paginados, auditoría, seed demo, docs | ✅ Hecho (pendiente prueba en vivo, ver Dudas) |
-| **B — P0** | Autorización por permisos en la UI, Usuarios y roles, Auditoría | 🔄 En curso |
-| **C — P1** | Alertas administrativas y de stock, Cuenta 2FA | ⏳ Pendiente |
+| **B — P0** | Autorización por permisos en la UI, Usuarios y roles, Auditoría | ✅ Hecho (pendiente prueba en vivo) |
+| **C — P1** | Alertas administrativas y de stock, Cuenta 2FA | 🔄 En curso |
 | **D — P2** | Inventario global, facturación admin, logística, asistente | ⏳ Solo si queda tiempo |
 
 ## Fase A — Backend
@@ -27,11 +27,15 @@
 
 Verificación tras cada paso: `deno task check` ✅ · `lint` sin problemas nuevos (235 preexistentes) ✅ · `deno task test` 381/381 ✅.
 
-## Fase B — en curso
+## Fase B — Pantallas P0
 
-- [ ] Autorización de la UI por permisos (sin atajo super-admin) y estado 403 desde la API
-- [ ] Usuarios y roles (`/dashboard/usuarios`)
-- [ ] Auditoría (`/dashboard/auditoria`)
+| Paso | Resultado | Commit |
+| :--- | :--- | :--- |
+| B0 Autorización por permisos | Sin atajo super-admin; `permisos.ts` (acción → permiso de la ruta); bloques y botones según permiso; 403 → acceso restringido | `20fc4e3` |
+| B1 Usuarios y roles | Paginado en servidor, filtros, alta atómica, rol (último super-admin), multisede, estado, contraseña | `aeec118` |
+| B2 Auditoría | Filtros fecha/actor/acción/entidad, detalle antes/después, exportar CSV | `3adc216` |
+
+`npm run build` ✅ tras cada paso. Sin probar contra la API real (ver Dudas 1).
 
 ## Dudas y riesgos abiertos
 
