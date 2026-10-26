@@ -393,7 +393,7 @@ export function PixelCard({
           '--pc-t': textColor,
         } as React.CSSProperties
       }
-      className={`relative flex flex-col items-center justify-center gap-[0.7vw] w-[clamp(280px,24vw,420px)] h-[min(60vh,32vw)] min-h-[380px] overflow-hidden rounded-[24px] p-[1.6vw] text-center isolate outline-none select-none transition-all duration-300 ${
+      className={`relative flex flex-col items-center justify-center gap-[0.7vw] w-[clamp(280px,25vw,420px)] h-[min(68vh,38vw)] min-h-[460px] overflow-hidden rounded-[24px] p-[1.6vw] text-center isolate outline-none select-none transition-all duration-300 ${
         isPicked ? 'card-picked' : 'card-rise'
       } ${className}`}
     >

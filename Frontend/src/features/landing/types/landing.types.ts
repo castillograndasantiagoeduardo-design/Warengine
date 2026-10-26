@@ -19,6 +19,7 @@ export interface PlanData {
   price: string;
   tag?: string;
   desc: string;
+  features?: string[];
   img: string;
   color: string;
   textColor: string;

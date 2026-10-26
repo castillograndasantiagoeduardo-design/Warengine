@@ -7,7 +7,7 @@ import type { SlideData } from '../types/landing.types';
 export const SLIDES: SlideData[] = [
   {
     title: 'Almacen',
-    desc: 'Control de entradas y salidas, manejo automatizado de inventario.',
+    desc: 'Control de inventario, compras, salidas y punto de venta ágil.',
     img: '/images/alcance/almacen.webp',
     bg: '/images/alcance/fondo_azul.webp',
     c: '#394a68',
@@ -17,7 +17,7 @@ export const SLIDES: SlideData[] = [
   },
   {
     title: 'Tienda',
-    desc: 'Sistema POS, facturacion electronica & control de inventario.',
+    desc: 'Facturacion B2B, administracion de sucursal y logistica de activos.',
     img: '/images/alcance/tienda.webp',
     bg: '/images/alcance/fondo_amarillo.webp',
     c: '#e9b949',
@@ -27,7 +27,7 @@ export const SLIDES: SlideData[] = [
   },
   {
     title: 'Empresario',
-    desc: 'Gestiona tus tiendas & bodegas desde cualquier lugar.',
+    desc: 'Gestion multi-sucursal, auditoria forense y Asistente IA MCP.',
     img: '/images/alcance/oficina.webp',
     bg: '/images/alcance/fondo_rojo.webp',
     c: '#780606',
