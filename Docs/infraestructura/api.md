@@ -132,3 +132,72 @@ Backend/apps/api/
 - **Archivos:** [`Backend/apps/api/src/utils/identidad.ts`](../../Backend/apps/api/src/utils/identidad.ts) y [`Backend/apps/api/src/utils/actor.ts`](../../Backend/apps/api/src/utils/actor.ts)
 - `obtenerIdentidad(c)`: Recupera la información del token autenticado (`usuarioId`, `rolId`). Si se invoca en un endpoint que omitió `authMiddleware`, lanza un error fatal de programación para evitar operaciones huérfanas.
 - `obtenerActor(c)`: Construye el objeto `{ usuarioId, ip }` requerido por los casos de uso para asentar en los logs de auditoría.
+
+---
+
+## 6. Contrato de Respuestas HTTP (forma real)
+
+Esta sección describe lo que **realmente** devuelve la API hoy, verificado contra
+`result.presenter.ts`, `handler.ts`, `auth.middleware.ts` y los controladores.
+
+### 6.1 Respuestas de éxito
+
+- El cuerpo es **el valor del caso de uso serializado tal cual** (sin envoltorio `{ data }`).
+  Ej.: `GET /administracion/sucursales` → `[{ id, nombre, direccion, contacto, isActive }]`.
+- Si el caso de uso no devuelve valor (`Result.ok()`), el cuerpo es `{ "success": true }`.
+- Códigos: `200 OK` por defecto; `201 Created` en las creaciones (`POST` de sucursales,
+  áreas, usuarios, alertas, facturas…).
+- Las exportaciones CSV (`/auditoria/exportar`) responden `text/csv; charset=utf-8` con
+  `Content-Disposition: attachment; filename="…"`; con `formato=json` devuelven JSON.
+- Montos: los mappers de empleados, salarios, productos, facturas, turnos, devoluciones y
+  activos, y el repositorio de métricas, convierten los `DECIMAL` de MySQL a `number`. Un
+  endpoint nuevo que lea `DECIMAL` debe hacer lo mismo (Drizzle los entrega como `string`).
+
+### 6.2 Respuestas de error
+
+Todas comparten la forma `{ "error": "<CODIGO>", "message": "<texto legible>" }`:
+
+| Origen | HTTP | Cuerpo |
+|---|---|---|
+| Validación Zod en la frontera | `400` | `{ "error": "VALIDATION_ERROR", "issues": [{ "code", "path": ["campo"], "message" }] }` (sin `message`) |
+| Parámetro de ruta inválido (`:id`) | `400` | `{ "error": "VALIDATION_ERROR", "message": "Id … inválido." }` |
+| Sin token / token inválido | `401` | `{ "error": "TOKEN_INVALIDO", "message": … }` |
+| Falta el permiso de la ruta | `403` | `{ "error": "PERMISO_DENEGADO", "message": … }` (y se audita como `acceso_denegado`) |
+| Sede fuera del alcance del usuario | `403` | `{ "error": "SUCURSAL_FUERA_DE_ALCANCE", … }` |
+| Error de dominio (`Result.fail`) | según §4 | `{ "error", "message" }` (+ `tempToken` en `428 REQUIERE_2FA`) |
+| Excepción no controlada | `500` | `{ "error": "INTERNAL_ERROR", "message": "Error procesando la solicitud" }` |
+
+> **Aviso:** los códigos que no están en el `switch` del presenter caen en `400` (o `404` si
+> terminan en `_NO_ENCONTRADO/A`). Por eso `SEDE_PRINCIPAL_NO_INACTIVABLE`,
+> `SUCURSAL_TIENE_USUARIOS_ACTIVOS`, `AREA_TIENE_EMPLEADOS` y `ULTIMO_SUPER_ADMIN` llegan
+> como **400**, aunque el módulo los describa como 422. El cliente debe decidir por `error`
+> (el código), no solo por el status.
+
+### 6.3 Paginación
+
+Conviven dos formas; el frontend las normaliza con `normalizarPaginado()`:
+
+| Forma | Endpoints | Query | Respuesta |
+|---|---|---|---|
+| Español | `/administracion/usuarios`, `/administracion/auditoria` | `pagina` (≥1, def. 1), `limite` (usuarios 1–100 def. 20; auditoría 1–200 def. 50) | `{ items, total, pagina, limite, totalPaginas }` |
+| Shared-kernel | `/administracion/alertas-stock` y listados de inventario/facturación que usan `paginacionSchema` | `page` (≥1), `limit` (1–100, def. 10) | `{ items, total, page, limit, totalPages }` |
+
+El resto de listados de `/administracion` (sucursales, áreas, empleados, salarios, roles,
+alertas) devuelve el **arreglo completo** sin paginar.
+
+### 6.4 Permisos por ruta de `/administracion`
+
+| Permiso | Rutas |
+|---|---|
+| `administracion:gestionar-sucursales` | `GET/POST /sucursales`, `GET /sucursales/:id/detalle`, `PUT /sucursales/:id`, `PUT /sucursales/:id/estado`, `GET/POST /sucursales/:id/areas`, `PUT/DELETE /areas/:id` |
+| `administracion:gestionar-personal` | `GET /empleados`, `GET/PUT /empleados/:id` |
+| `administracion:gestionar-salarios` | `GET/POST /empleados/:id/salarios` |
+| `autenticacion:gestionar-usuarios` | `GET/POST /usuarios`, `PUT /usuarios/:id/estado`, `PUT /usuarios/:id/password`, `GET/PUT /usuarios/:id/sucursales` |
+| `autenticacion:asignar-roles` | `PUT /usuarios/:id/rol`, `GET /roles` |
+| `autenticacion:ver-auditoria` | `GET /auditoria`, `GET /auditoria/exportar` |
+| `administracion:gestionar-alertas` | `GET /alertas-stock`, `GET/POST /alertas`, `PUT /alertas/:id/estado` |
+| `administracion:ver-metricas-globales` | `GET /dashboard/metricas`, `/rendimiento`, `/ranking`, `/inventario`, `/resumen` |
+| `administracion:ver-metricas-sucursal` | `GET /dashboard/tendencias` (alcance acotado a las sedes del usuario) |
+
+Todas las rutas de `/administracion` están documentadas en `openapi.doc.ts` (Swagger en
+`/swagger`) y tienen escenarios en `Http/` (verificado ruta por ruta).
