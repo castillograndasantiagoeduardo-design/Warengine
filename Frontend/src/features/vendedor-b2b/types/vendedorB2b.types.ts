@@ -49,3 +49,6 @@ export interface CrearOrdenB2BPayload {
   }>;
   esB2B: boolean;
 }
+
+/** Producto del catálogo con las existencias reales de la sede del vendedor (GET /inventario/stock). */
+export type ProductoCatalogoB2B = ProductoResponse & { stockSede: number };

@@ -10,7 +10,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { vendedorB2bService } from '../api';
 import type {
-  ProductoResponse,
+  ProductoCatalogoB2B,
   ItemCotizacionB2B,
   FiltrosCatalogoB2B,
   FacturaDto,
@@ -19,10 +19,12 @@ import type {
 } from '../types';
 import { ApiError } from '@/lib/api';
 
-const IVA_PORCENTAJE = 0.19;
-
-export function useVendedorB2B() {
-  const [productos, setProductos] = useState<ProductoResponse[]>([]);
+/**
+ * @param sucursalId sede del vendedor (sesión). null = sin sede asignada: no se carga catálogo.
+ */
+export function useVendedorB2B(sucursalId: number | null) {
+  const [productos, setProductos] = useState<ProductoCatalogoB2B[]>([]);
+  const [errorCatalogo, setErrorCatalogo] = useState<string | null>(null);
   const [categorias, setCategorias] = useState<Array<{ id: number; nombre: string }>>([]);
   const [isLoadingCatalogo, setIsLoadingCatalogo] = useState<boolean>(true);
   const [filtros, setFiltros] = useState<FiltrosCatalogoB2B>({
@@ -33,7 +35,8 @@ export function useVendedorB2B() {
 
   const [itemsCotizacion, setItemsCotizacion] = useState<ItemCotizacionB2B[]>([]);
   const [clienteSeleccionado, setClienteSeleccionado] = useState<ClienteDto | null>(null);
-  const [medioPago, setMedioPago] = useState<MedioPago>('credito_corporativo');
+  // Un cliente B2B nuevo nace sin crédito: la venta por defecto es por transferencia
+  const [medioPago, setMedioPago] = useState<MedioPago>('transferencia');
   const [referenciaPago, setReferenciaPago] = useState<string>('');
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [errorFactura, setErrorFactura] = useState<string | null>(null);
@@ -42,21 +45,33 @@ export function useVendedorB2B() {
 
   // Cargar catálogo inicial y categorías
   const cargarCatalogo = useCallback(async () => {
+    if (sucursalId === null) {
+      setIsLoadingCatalogo(false);
+      return;
+    }
     setIsLoadingCatalogo(true);
+    setErrorCatalogo(null);
     try {
       const [prods, cats] = await Promise.all([
-        vendedorB2bService.obtenerProductos(),
+        vendedorB2bService.obtenerProductos(sucursalId),
         vendedorB2bService.obtenerCategorias(),
       ]);
       setProductos(prods);
       setCategorias(cats);
-    } catch {
-      // Fallback a catálogo vacío sin romper la interfaz
+    } catch (err) {
       setProductos([]);
+      setErrorCatalogo(err instanceof Error ? err.message : 'No se pudo cargar el catálogo.');
     } finally {
       setIsLoadingCatalogo(false);
     }
-  }, []);
+  }, [sucursalId]);
+
+  // Sin crédito habilitado no se ofrece pago a crédito (la API también lo rechaza)
+  useEffect(() => {
+    if (clienteSeleccionado && !clienteSeleccionado.creditoHabilitado && medioPago === 'credito_corporativo') {
+      setMedioPago('transferencia');
+    }
+  }, [clienteSeleccionado, medioPago]);
 
   useEffect(() => {
     cargarCatalogo();
@@ -87,9 +102,12 @@ export function useVendedorB2B() {
   }, []);
 
   // Agregar producto a la cotización B2B (aplica precio corporativo prioritario RF-FMC-C6)
-  const agregarAlCarrito = useCallback((producto: ProductoResponse) => {
+  const agregarAlCarrito = useCallback((producto: ProductoCatalogoB2B) => {
+    if (producto.stockSede <= 0) return;
     setItemsCotizacion((prev) => {
       const existente = prev.find((i) => i.productoId === producto.id);
+      // Nunca más unidades que el stock real de la sede (el trigger de BD también lo valida)
+      if (existente && existente.cantidad >= producto.stockSede) return prev;
       const precioUnitario = producto.precioCorporativo && producto.precioCorporativo > 0
         ? producto.precioCorporativo
         : producto.precioVenta;
@@ -118,6 +136,7 @@ export function useVendedorB2B() {
           cantidad: 1,
           descuento: 0,
           subtotal: precioUnitario,
+          stockDisponible: producto.stockSede,
         },
       ];
     });
@@ -133,8 +152,8 @@ export function useVendedorB2B() {
         item.productoId === productoId
           ? {
               ...item,
-              cantidad,
-              subtotal: cantidad * item.precioUnitario - item.descuento,
+              cantidad: Math.min(cantidad, item.stockDisponible ?? cantidad),
+              subtotal: Math.min(cantidad, item.stockDisponible ?? cantidad) * item.precioUnitario - item.descuento,
             }
           : item,
       ),
@@ -154,9 +173,13 @@ export function useVendedorB2B() {
 
   // Cálculos consolidados
   const { subtotal, iva, total } = useMemo(() => {
-    const rawSubtotal = itemsCotizacion.reduce((acc, item) => acc + item.subtotal, 0);
-    const ivaCalculado = Math.round(rawSubtotal * IVA_PORCENTAJE);
-    const totalCalculado = rawSubtotal + ivaCalculado;
+    // Mismo cálculo que Factura.calcularTotales del backend: líneas redondeadas a centavos, IVA 0.
+    // La API exige que el pago coincida exactamente con ese total.
+    const rawSubtotal = Math.round(
+      itemsCotizacion.reduce((acc, item) => acc + Math.round(item.subtotal * 100) / 100, 0) * 100,
+    ) / 100;
+    const ivaCalculado = 0;
+    const totalCalculado = rawSubtotal;
     return {
       subtotal: rawSubtotal,
       iva: ivaCalculado,
@@ -204,6 +227,8 @@ export function useVendedorB2B() {
 
       setFacturaEmitida(resultado);
       limpiarCotizacion();
+      // Refresca existencias: la venta descontó stock en la sede
+      void cargarCatalogo();
       return true;
     } catch (err) {
       if (err instanceof ApiError) {
@@ -215,7 +240,7 @@ export function useVendedorB2B() {
     } finally {
       setIsSubmitting(false);
     }
-  }, [clienteSeleccionado, itemsCotizacion, medioPago, total, referenciaPago, limpiarCotizacion]);
+  }, [clienteSeleccionado, itemsCotizacion, medioPago, total, referenciaPago, limpiarCotizacion, cargarCatalogo]);
 
   return {
     productos: productosFiltrados,
@@ -246,5 +271,6 @@ export function useVendedorB2B() {
     limpiarCotizacion,
     emitirFacturaB2B,
     recargarCatalogo: cargarCatalogo,
+    errorCatalogo,
   };
 }

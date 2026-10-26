@@ -59,7 +59,7 @@ export function ComprobanteB2BModal({ factura, onClose }: ComprobanteB2BModalPro
               <span className="font-mono">${factura.subtotal.toLocaleString('es-CO')}</span>
             </div>
             <div className="flex justify-between text-white/60">
-              <span>IVA (19%):</span>
+              <span>IVA:</span>
               <span className="font-mono">${factura.iva.toLocaleString('es-CO')}</span>
             </div>
             <div className="flex justify-between text-sm font-bold text-white pt-1">

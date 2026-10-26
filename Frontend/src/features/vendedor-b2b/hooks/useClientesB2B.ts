@@ -36,7 +36,8 @@ export function useClientesB2B() {
     setIsLoadingClientes(true);
     try {
       const data = await vendedorB2bService.buscarClientes(query);
-      setClientes(data);
+      // Solo clientes corporativos: la API rechaza ventas B2B a clientes B2C
+      setClientes(data.filter((c) => c.tipoCliente === 'B2B'));
     } catch {
       setClientes([]);
     } finally {
