@@ -52,7 +52,7 @@ const MENU_ITEMS: NavItem[] = [
   { id: 'inventario', label: 'Inventario & Stock', icon: <PackageIcon size={18} /> },
   { id: 'proveedores', label: 'Proveedores', icon: <TruckIcon size={18} /> },
   { id: 'cajeros', label: 'Cajeros & Turnos', icon: <UsersRoundIcon size={18} /> },
-  { id: 'facturacion', label: 'Facturación & POS', icon: <ReceiptTextIcon size={18} />, href: '/pos' },
+  { id: 'facturacion', label: 'Facturación & Ventas', icon: <ReceiptTextIcon size={18} /> },
   { id: 'reportes', label: 'Reportes', icon: <BarChartIcon size={18} /> },
 ];
 

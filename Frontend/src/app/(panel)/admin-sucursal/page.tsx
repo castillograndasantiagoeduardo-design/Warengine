@@ -28,6 +28,7 @@ import {
   BranchSuppliersView,
   BranchStaffView,
   AdminProfileModal,
+  BranchInvoicingView,
   DollarSignIcon,
   ReceiptTextIcon,
   PackageIcon,
@@ -151,6 +152,11 @@ export default function DashboardPage() {
           sucursalId={usuario?.sucursalId ?? 1}
           sucursalNombre={data?.sucursalNombre || 'Sede Norte'}
         />
+      ) : activeSection === 'facturacion' ? (
+        <BranchInvoicingView
+          sucursalId={usuario?.sucursalId ?? 1}
+          sucursalNombre={data?.sucursalNombre || 'Sede Norte'}
+        />
       ) : isDashboardLoading && !data ? (
         <DashboardSkeleton />
       ) : (
@@ -249,6 +255,7 @@ export default function DashboardPage() {
               <div className="lg:col-span-8">
                 <RecentOperationsTable
                   facturas={data.operacionesRecientes}
+                  onVerTodasClick={() => setActiveSection('facturacion')}
                   className="h-full"
                 />
               </div>
