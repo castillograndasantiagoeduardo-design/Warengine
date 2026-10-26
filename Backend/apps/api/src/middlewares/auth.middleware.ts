@@ -5,7 +5,7 @@ import { getTokensFromCookies } from '../utils/cookie.ts';
 import { CLAVE_IDENTIDAD } from '../utils/identidad.ts';
 import { obtenerIp } from '../utils/ip.ts';
 
-export function authMiddleware(container: AppContainer, permisoRequerido?: string) {
+export function authMiddleware(container: AppContainer, permisoRequerido?: string | string[]) {
   return async (c: Context, next: Next) => {
     // 1. Prioridad: leer desde cookie HttpOnly
     let token = getTokensFromCookies(c).accessToken;

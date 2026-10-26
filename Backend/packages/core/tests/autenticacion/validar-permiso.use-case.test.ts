@@ -197,3 +197,44 @@ Deno.test('ValidarPermisoUseCase: rechaza con USUARIO_INACTIVO si el usuario est
   assertEquals(result.error.code, 'USUARIO_INACTIVO');
   assertEquals(eventos.length, 0);
 });
+
+Deno.test('ValidarPermisoUseCase: aprueba si el usuario tiene al menos uno de los permisos requeridos en un array', async () => {
+  const payload = makePayload();
+  const { auditor, eventos } = makeAuditor();
+  const useCase = new ValidarPermisoUseCase(
+    makeTokenService(payload),
+    makeUsuarioRepository(makeUsuario()),
+    makeRolRepository(['administracion:ver-metricas-sucursal']),
+    auditor,
+  );
+
+  const result = await useCase.execute({
+    accessToken: 'valid_token',
+    permisoRequerido: ['administracion:ver-metricas-globales', 'administracion:ver-metricas-sucursal'],
+  });
+
+  assertEquals(result.isSuccess, true);
+  assertEquals(eventos.length, 0);
+});
+
+Deno.test('ValidarPermisoUseCase: rechaza si el usuario no tiene ninguno de los permisos requeridos en un array', async () => {
+  const payload = makePayload();
+  const { auditor, eventos } = makeAuditor();
+  const useCase = new ValidarPermisoUseCase(
+    makeTokenService(payload),
+    makeUsuarioRepository(makeUsuario()),
+    makeRolRepository(['inventario:leer']),
+    auditor,
+  );
+
+  const result = await useCase.execute({
+    accessToken: 'valid_token',
+    permisoRequerido: ['administracion:ver-metricas-globales', 'administracion:ver-metricas-sucursal'],
+  });
+
+  assertEquals(result.isFailure, true);
+  assertEquals(result.error.code, 'PERMISO_DENEGADO');
+  assertEquals(eventos.length, 1);
+  assertEquals(eventos[0].accion, ACCIONES_AUDITORIA.ACCESO_DENEGADO);
+});
+

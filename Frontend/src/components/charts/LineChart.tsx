@@ -99,8 +99,25 @@ export function LineChart({ labels, series, formatY, formatTooltip = formatY, he
             return (
               <g key={s.key}>
                 {s.area && n > 1 && <polygon points={`0,${h} ${puntos} ${x(n - 1)},${h}`} fill={s.color} fillOpacity={0.18} />}
-                <polyline points={puntos} fill="none" stroke={s.color} strokeWidth={2} strokeLinejoin="round" strokeLinecap="round" />
-                {n === 1 && <circle cx={x(0)} cy={y(s.values[0])} r={4} fill={s.color} />}
+                {s.area && n === 1 && (
+                  <rect
+                    x={0}
+                    y={y(s.values[0])}
+                    width={w}
+                    height={Math.max(h - y(s.values[0]), 0)}
+                    fill={s.color}
+                    fillOpacity={0.12}
+                  />
+                )}
+                {n > 1 && (
+                  <polyline points={puntos} fill="none" stroke={s.color} strokeWidth={2} strokeLinejoin="round" strokeLinecap="round" />
+                )}
+                {n === 1 && (
+                  <>
+                    <line x1={0} x2={w} y1={y(s.values[0])} y2={y(s.values[0])} stroke={s.color} strokeWidth={2} strokeDasharray="4 4" opacity={0.6} />
+                    <circle cx={x(0)} cy={y(s.values[0])} r={6} fill={s.color} stroke="#14213d" strokeWidth={2} />
+                  </>
+                )}
               </g>
             );
           })}

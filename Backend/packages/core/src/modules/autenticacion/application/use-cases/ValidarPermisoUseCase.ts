@@ -15,7 +15,7 @@ import {
 
 export interface ValidarPermisoRequest {
   accessToken: string;
-  permisoRequerido?: string; // ej. 'facturacion:facturar'
+  permisoRequerido?: string | string[]; // ej. 'facturacion:facturar' o ['permiso1', 'permiso2']
   ip?: string | null;
   metodo?: string;
   ruta?: string;
@@ -63,7 +63,13 @@ export class ValidarPermisoUseCase {
       const permisos = await this.rolRepository.obtenerPermisosDeRol(usuario.rolId);
 
       if (request.permisoRequerido) {
-        if (!permisos.includes(request.permisoRequerido)) {
+        const requeridos = Array.isArray(request.permisoRequerido)
+          ? request.permisoRequerido
+          : [request.permisoRequerido];
+
+        const tienePermiso = requeridos.some((p) => permisos.includes(p));
+
+        if (!tienePermiso) {
           // RF-ADM-C11: Auditoría de acceso denegado cuando el usuario autenticado carece del permiso requerido
           await this.auditor.registrar({
             actor: {
@@ -74,13 +80,13 @@ export class ValidarPermisoUseCase {
             entidad: ENTIDADES_AUDITORIA.ACCESO,
             entidadId: null,
             detalles: {
-              permisoRequerido: request.permisoRequerido,
+              permisoRequerido: requeridos.join(' | '),
               metodo: request.metodo ?? null,
               ruta: request.ruta ?? null,
             },
           });
 
-          return Result.fail(new PermisoDenegadoError(request.permisoRequerido));
+          return Result.fail(new PermisoDenegadoError(requeridos[0]));
         }
       }
 

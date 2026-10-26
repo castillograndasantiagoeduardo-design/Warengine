@@ -96,6 +96,27 @@ export function PlanesSection({
                 {plan.desc}
               </p>
 
+              {/* Lista de Capacidades / Módulos */}
+              {plan.features && plan.features.length > 0 && (
+                <ul className="flex flex-col gap-1 w-[92%] my-1 text-left border-y border-white/10 py-1.5">
+                  {plan.features.map((feat, fIdx) => (
+                    <li
+                      key={fIdx}
+                      className="flex items-center gap-2 font-[family-name:var(--font-archivo)] text-[clamp(10px,0.85vw,13px)] text-[#d5dae2]"
+                    >
+                      <span
+                        className="w-1.5 h-1.5 rounded-[1px] shrink-0"
+                        style={{
+                          backgroundColor: plan.textColor,
+                          boxShadow: `0 0 6px ${plan.textColor}`,
+                        }}
+                      />
+                      <span className="truncate leading-tight font-bold">{feat}</span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+
               {/* Botón Comprar */}
               <button
                 type="button"
@@ -103,7 +124,7 @@ export function PlanesSection({
                   e.stopPropagation();
                   handlePick(idx);
                 }}
-                className="mt-2 text-[#111111] font-[family-name:var(--font-pixelify)] font-medium text-[clamp(13px,1.3vw,18px)] tracking-wider rounded-[0.9vw] px-[2vw] py-[0.4vw] shadow-[0_0.25vw_0_rgba(0,0,0,0.6)] hover:translate-y-[2px] transition-all duration-100 cursor-pointer"
+                className="mt-auto text-[#111111] font-[family-name:var(--font-pixelify)] font-medium text-[clamp(13px,1.3vw,18px)] tracking-wider rounded-[0.9vw] px-[2vw] py-[0.4vw] shadow-[0_0.25vw_0_rgba(0,0,0,0.6)] hover:translate-y-[2px] transition-all duration-100 cursor-pointer"
                 style={{ backgroundColor: plan.textColor }}
                 aria-label={`Comprar plan ${plan.name}`}
               >
