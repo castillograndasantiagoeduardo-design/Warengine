@@ -190,7 +190,7 @@ alertas) devuelve el **arreglo completo** sin paginar.
 | Permiso | Rutas |
 |---|---|
 | `administracion:gestionar-sucursales` | `GET/POST /sucursales`, `GET /sucursales/:id/detalle`, `PUT /sucursales/:id`, `PUT /sucursales/:id/estado`, `GET/POST /sucursales/:id/areas`, `PUT/DELETE /areas/:id` |
-| `administracion:gestionar-personal` | `GET /empleados`, `GET/PUT /empleados/:id` |
+| `administracion:gestionar-personal` | `GET /empleados`, `GET/PUT /empleados/:id` (acotado al alcance de sedes del usuario; fuera de alcance → 403 `SUCURSAL_FUERA_DE_ALCANCE`) |
 | `administracion:gestionar-salarios` | `GET/POST /empleados/:id/salarios` |
 | `autenticacion:gestionar-usuarios` | `GET/POST /usuarios`, `PUT /usuarios/:id/estado`, `PUT /usuarios/:id/password`, `GET/PUT /usuarios/:id/sucursales` |
 | `autenticacion:asignar-roles` | `PUT /usuarios/:id/rol`, `GET /roles` |

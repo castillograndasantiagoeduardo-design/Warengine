@@ -18,6 +18,7 @@ import { AppContainer } from '@warengine/composition';
 import { presentResult } from '../../presenters/result.presenter.ts';
 import { leerJson, safeHandler } from '../../utils/handler.ts';
 import { obtenerActor } from '../../utils/actor.ts';
+import { obtenerIdentidad } from '../../utils/identidad.ts';
 
 export function listarEmpleadosController(container: AppContainer) {
   return safeHandler(async (c) => {
@@ -27,7 +28,10 @@ export function listarEmpleadosController(container: AppContainer) {
     }
     return presentResult(
       c,
-      await container.administracion.listarEmpleados.execute(parsed.data),
+      await container.administracion.listarEmpleados.execute({
+        ...parsed.data,
+        usuarioId: obtenerIdentidad(c).usuarioId,
+      }),
     );
   });
 }
@@ -40,7 +44,7 @@ export function obtenerEmpleadoPorIdController(container: AppContainer) {
     }
     return presentResult(
       c,
-      await container.administracion.obtenerEmpleadoPorId.execute({ id }),
+      await container.administracion.obtenerEmpleadoPorId.execute({ id, usuarioId: obtenerIdentidad(c).usuarioId }),
     );
   });
 }
