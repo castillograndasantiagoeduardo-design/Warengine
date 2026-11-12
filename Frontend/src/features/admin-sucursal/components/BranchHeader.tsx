@@ -11,6 +11,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Search, Sun, Moon, Building2, User } from 'lucide-react';
+import { useAuth } from '@/features/autenticacion';
 import { SelectorPaleta } from './SelectorPaleta';
 import { Insignia } from './Insignia';
 import type { DashboardPeriodo } from '../types/branch-dashboard.types';
@@ -40,6 +41,7 @@ export function BranchHeader({
   onOpenProfile,
   className = '',
 }: BranchHeaderProps) {
+  const { usuario } = useAuth();
   const [modo, setModo] = useState<'dark' | 'light'>('dark');
 
   useEffect(() => {
@@ -62,9 +64,35 @@ export function BranchHeader({
     localStorage.setItem('warengine-tema', nuevo);
   };
 
+  // Cálculo de nombre e iniciales del usuario para la cápsula ejecutiva
+  const email = usuario?.email || '';
+  const emailPrefix = email ? email.split('@')[0] : '';
+  const partesNombre = emailPrefix.includes('.') ? emailPrefix.split('.') : [emailPrefix];
+  const nombreUsuario =
+    usuario?.nombre ||
+    (partesNombre.length > 1
+      ? `${partesNombre[0].charAt(0).toUpperCase() + partesNombre[0].slice(1)} ${
+          partesNombre[1].charAt(0).toUpperCase() + partesNombre[1].slice(1)
+        }`
+      : emailPrefix
+      ? emailPrefix.charAt(0).toUpperCase() + emailPrefix.slice(1)
+      : 'Carlos Restrepo');
+
+  const iniciales = (
+    usuario?.nombre
+      ? usuario.nombre
+          .split(' ')
+          .map((n) => n[0])
+          .join('')
+          .slice(0, 2)
+      : partesNombre.length > 1
+      ? (partesNombre[0][0] + partesNombre[1][0])
+      : nombreUsuario.slice(0, 2)
+  ).toUpperCase() || 'CR';
+
   return (
-    <header className={`sticky top-4 z-30 w-full ${className}`}>
-      <div className="vidrio-fuerte px-4 sm:px-5 py-3 flex items-center justify-between gap-4">
+    <header className={`sticky top-4 z-30 w-full overflow-visible ${className}`}>
+      <div className="vidrio-fuerte px-4 sm:px-5 py-2.5 flex items-center justify-between gap-4 overflow-visible">
         {/* Lado Izquierdo: Cápsula de Sucursal + Buscador Rápido */}
         <div className="flex items-center gap-3 flex-1 max-w-xl">
           {/* Cápsula de Sucursal Activa */}
@@ -85,7 +113,7 @@ export function BranchHeader({
               type="text"
               value={searchTerm}
               onChange={(e) => onSearchChange?.(e.target.value)}
-              placeholder="Buscar producto, SKU, factura..."
+              placeholder="Buscar factura, cliente, producto..."
               className="superficie-control rounded-xl pl-8 pr-12 py-1.5 text-xs w-full focus:outline-none placeholder-text-muted"
             />
             <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[10px] font-mono text-text-muted px-1 rounded bg-white/[0.04] border border-border hidden sm:inline">
@@ -94,7 +122,7 @@ export function BranchHeader({
           </div>
         </div>
 
-        {/* Lado Derecho: Rango de Fechas + SelectorPaleta + Toggle Tema + Perfil */}
+        {/* Lado Derecho: Rango de Fechas + SelectorPaleta + Toggle Tema + Cápsula Perfil */}
         <div className="flex items-center gap-2 shrink-0">
           {/* Selector de Período (Hoy | 7D | 30D) */}
           <div className="hidden md:flex items-center p-1 rounded-xl bg-surface border border-border text-xs">
@@ -135,18 +163,26 @@ export function BranchHeader({
             )}
           </button>
 
-          {/* Botón de Perfil */}
-          {onOpenProfile && (
-            <button
-              type="button"
-              onClick={onOpenProfile}
-              className="superficie-control rounded-xl p-2 text-text-muted hover:text-text transition-colors cursor-pointer"
-              title="Mi perfil de administrador"
-              aria-label="Ver perfil de administrador"
-            >
-              <User className="w-3.5 h-3.5 text-text" />
-            </button>
-          )}
+          {/* Cápsula de Perfil de Usuario Ejecutiva (Imagen 1) */}
+          <div
+            onClick={onOpenProfile}
+            className="flex items-center gap-2.5 pl-1.5 pr-3 py-1 rounded-xl bg-surface border border-border cursor-pointer hover:border-border-hover transition-colors shrink-0"
+            title="Mi perfil de administrador"
+            role="button"
+            tabIndex={0}
+          >
+            <div className="w-7 h-7 rounded-lg bg-brand-600 text-btn-primario-texto flex items-center justify-center font-titulos font-semibold text-xs shadow-sm">
+              {iniciales}
+            </div>
+            <div className="text-left hidden lg:block leading-tight">
+              <div className="text-xs font-semibold text-text truncate max-w-[130px]">
+                {nombreUsuario}
+              </div>
+              <div className="text-[10px] text-text-muted truncate max-w-[130px]">
+                {sucursalNombre}
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </header>

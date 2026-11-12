@@ -41,7 +41,7 @@ export function GraficoVentas({
   puntos: puntosProp,
   className = '',
 }: GraficoVentasProps) {
-  const [tipoGrafico, setTipoGrafico] = useState<'barras' | 'curva'>('curva');
+  const [tipoGrafico, setTipoGrafico] = useState<'barras' | 'curva'>('barras');
   const [hoverIndex, setHoverIndex] = useState<number | null>(null);
 
   const containerRef = useRef<HTMLDivElement>(null);
@@ -52,14 +52,14 @@ export function GraficoVentas({
     if (puntosProp && puntosProp.length > 0) {
       return puntosProp;
     }
-    // TODO: datos de respaldo de la especificación si aún no hay 7 días registrados en BD
+    // Datos de respaldo con los mismos montos de la imagen 1 si aún no hay 7 días registrados en BD
     return [
       { fecha: '2026-10-30', diaEtiqueta: 'Vie 30', diaCorto: 'Vie', monto: 3200000 },
       { fecha: '2026-10-31', diaEtiqueta: 'Sáb 31', diaCorto: 'Sáb', monto: 4100000 },
-      { fecha: '2026-11-01', diaEtiqueta: 'Dom 01', diaCorto: 'Dom', monto: 2800000 },
-      { fecha: '2026-11-02', diaEtiqueta: 'Lun 02', diaCorto: 'Lun', monto: 3450000 },
-      { fecha: '2026-11-03', diaEtiqueta: 'Mar 03', diaCorto: 'Mar', monto: 3950000 },
-      { fecha: '2026-11-04', diaEtiqueta: 'Mié 04', diaCorto: 'Mié', monto: 4400000 },
+      { fecha: '2026-11-01', diaEtiqueta: 'Dom 01', diaCorto: 'Dom', monto: 1900000 },
+      { fecha: '2026-11-02', diaEtiqueta: 'Lun 02', diaCorto: 'Lun', monto: 3900000 },
+      { fecha: '2026-11-03', diaEtiqueta: 'Mar 03', diaCorto: 'Mar', monto: 4300000 },
+      { fecha: '2026-11-04', diaEtiqueta: 'Mié 04', diaCorto: 'Mié', monto: 4200000 },
       { fecha: '2026-11-05', diaEtiqueta: 'Jue 05', diaCorto: 'Jue', monto: 4900000 },
     ];
   }, [puntosProp]);
@@ -95,12 +95,12 @@ export function GraficoVentas({
       totalSemana: total,
       diaPico: pico,
       promedioDiario: prom,
-      maxValor: max * 1.15, // holgura superior
+      maxValor: max * 1.15, // holgura superior para las cifras arriba de las barras
     };
   }, [puntos]);
 
   // Coordenadas para SVG
-  const padding = { top: 20, right: 20, bottom: 35, left: 55 };
+  const padding = { top: 30, right: 20, bottom: 35, left: 55 };
   const chartWidth = Math.max(100, dimensions.width - padding.left - padding.right);
   const chartHeight = Math.max(80, dimensions.height - padding.top - padding.bottom);
 
@@ -303,11 +303,11 @@ export function GraficoVentas({
             </>
           )}
 
-          {/* VISTA 2: BARRAS */}
+          {/* VISTA 2: BARRAS (Igual a la imagen 1 con valores arriba de cada barra) */}
           {tipoGrafico === 'barras' && (
             <>
               {puntos.map((p, idx) => {
-                const anchoBarra = Math.min(42, Math.max(18, (chartWidth / puntos.length) * 0.55));
+                const anchoBarra = Math.min(38, Math.max(18, (chartWidth / puntos.length) * 0.46));
                 const cx = padding.left + (idx + 0.5) * (chartWidth / puntos.length);
                 const x = cx - anchoBarra / 2;
                 const y = getY(p.monto);
@@ -321,12 +321,23 @@ export function GraficoVentas({
                     onMouseEnter={() => setHoverIndex(idx)}
                     onMouseLeave={() => setHoverIndex(null)}
                   >
+                    {/* Cifra de facturación arriba de cada barra (Imagen 1) */}
+                    <text
+                      x={cx}
+                      y={y - 8}
+                      textAnchor="middle"
+                      className="text-[11px] font-sans font-medium fill-current text-text-muted tabular-nums select-none"
+                    >
+                      {formatearMillones(p.monto)}
+                    </text>
+
+                    {/* Barra con borde redondeado superior */}
                     <rect
                       x={x}
                       y={y}
                       width={anchoBarra}
                       height={h}
-                      rx={5}
+                      rx={6}
                       fill={isHovered ? 'url(#degradadoBarrasHover)' : 'url(#degradadoBarras)'}
                       className="transition-all duration-150"
                     />
@@ -343,6 +354,7 @@ export function GraficoVentas({
                 ? padding.left + (idx + 0.5) * (chartWidth / puntos.length)
                 : getX(idx);
             const isHovered = hoverIndex === idx;
+            const isToday = idx === puntos.length - 1;
 
             return (
               <text
@@ -351,7 +363,11 @@ export function GraficoVentas({
                 y={padding.top + chartHeight + 22}
                 textAnchor="middle"
                 className={`text-[11px] font-sans fill-current transition-colors tabular-nums ${
-                  isHovered ? 'text-brand-400 font-semibold' : 'text-text-muted font-medium'
+                  isHovered
+                    ? 'text-brand-400 font-semibold'
+                    : isToday
+                    ? 'text-text font-bold'
+                    : 'text-text-muted font-medium'
                 }`}
               >
                 {p.diaEtiqueta}

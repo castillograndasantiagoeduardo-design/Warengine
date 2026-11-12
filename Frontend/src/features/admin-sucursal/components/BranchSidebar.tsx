@@ -13,27 +13,28 @@ import { useAuth } from '@/features/autenticacion';
 import {
   LayoutDashboard,
   Package,
-  Boxes,
-  Truck,
-  UsersRound,
   Receipt,
+  UsersRound,
+  Wrench,
   BarChart3,
   Settings,
   LogOut,
   ChevronLeft,
   ChevronRight,
-  Shield,
 } from 'lucide-react';
 
 export type BranchSection =
   | 'resumen'
+  | 'facturacion'
   | 'inventario'
+  | 'clientes'
+  | 'personal'
+  | 'activos'
+  | 'reportes'
+  | 'configuracion'
   | 'movimientos'
   | 'proveedores'
-  | 'cajeros'
-  | 'facturacion'
-  | 'reportes'
-  | 'configuracion';
+  | 'cajeros';
 
 interface BranchSidebarProps {
   activeSection?: BranchSection;
@@ -49,19 +50,20 @@ interface NavItem {
 }
 
 const MENU_ITEMS: NavItem[] = [
-  { id: 'resumen', label: 'Resumen', icon: <LayoutDashboard className="w-4 h-4 shrink-0" /> },
-  { id: 'inventario', label: 'Inventario & Stock', icon: <Package className="w-4 h-4 shrink-0" /> },
-  { id: 'movimientos', label: 'Movimientos Sede', icon: <Boxes className="w-4 h-4 shrink-0" /> },
+  { id: 'resumen', label: 'Dashboard', icon: <LayoutDashboard className="w-4 h-4 shrink-0" /> },
+  { id: 'facturacion', label: 'Facturación', icon: <Receipt className="w-4 h-4 shrink-0" /> },
+  { id: 'inventario', label: 'Inventario', icon: <Package className="w-4 h-4 shrink-0" /> },
+  { id: 'clientes', label: 'Clientes', icon: <UsersRound className="w-4 h-4 shrink-0" /> },
 ];
 
 const OPERACIONES_ITEMS: NavItem[] = [
-  { id: 'facturacion', label: 'Facturación & POS', icon: <Receipt className="w-4 h-4 shrink-0" /> },
-  { id: 'cajeros', label: 'Cajeros & Turnos', icon: <UsersRound className="w-4 h-4 shrink-0" /> },
-  { id: 'proveedores', label: 'Proveedores', icon: <Truck className="w-4 h-4 shrink-0" /> },
+  { id: 'personal', label: 'Personal', icon: <UsersRound className="w-4 h-4 shrink-0" /> },
+  { id: 'activos', label: 'Activos', icon: <Wrench className="w-4 h-4 shrink-0" /> },
+  { id: 'reportes', label: 'Reportes', icon: <BarChart3 className="w-4 h-4 shrink-0" /> },
 ];
 
 const SISTEMA_ITEMS: NavItem[] = [
-  // Dejamos pendientes las secciones restantes del sistema
+  { id: 'configuracion', label: 'Configuración', icon: <Settings className="w-4 h-4 shrink-0" /> },
 ];
 
 export function BranchSidebar({
@@ -170,6 +172,16 @@ export function BranchSidebar({
               </div>
             )}
             <div className="space-y-1">{OPERACIONES_ITEMS.map(renderItem)}</div>
+          </div>
+
+          {/* SECCIÓN 3: SISTEMA (Imagen 1) */}
+          <div>
+            {!colapsado && (
+              <div className="px-3 text-[10px] uppercase tracking-wider font-semibold text-text-muted mb-1.5">
+                Sistema
+              </div>
+            )}
+            <div className="space-y-1">{SISTEMA_ITEMS.map(renderItem)}</div>
           </div>
         </div>
       </div>

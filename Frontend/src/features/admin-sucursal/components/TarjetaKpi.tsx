@@ -44,7 +44,7 @@ export function TarjetaKpi({
         <span className="text-sm font-sans font-medium text-text-muted truncate">
           {titulo}
         </span>
-        <div className="w-10 h-10 rounded-xl bg-brand-100 dark:bg-brand-500/15 text-brand-700 dark:text-brand-300 flex items-center justify-center shrink-0">
+        <div className="w-9 h-9 rounded-xl bg-surface border border-border text-brand-400 flex items-center justify-center shrink-0">
           {icono}
         </div>
       </div>

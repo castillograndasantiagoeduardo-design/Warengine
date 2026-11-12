@@ -39,7 +39,7 @@ export interface TemaInfo {
 
 export const TEMAS_OFICIALES: TemaInfo[] = [
   { id: 'zafiro', nombre: 'Zafiro', m1: '#3b6cf2', m2: '#4f46e5', m3: '#06b6d4' },
-  { id: 'acero', nombre: 'Acero', m1: '#3b82f6', m2: '#475569', m3: '#0284c7' },
+  { id: 'acero', nombre: 'Acero Corporativo', m1: '#3b82f6', m2: '#475569', m3: '#0284c7' },
   { id: 'grafito', nombre: 'Grafito', m1: '#64748b', m2: '#475569', m3: '#1e3a8a' },
   { id: 'indigo', nombre: 'Índigo', m1: '#6366f1', m2: '#4338ca', m3: '#1d4ed8' },
   { id: 'petroleo', nombre: 'Petróleo', m1: '#0284c7', m2: '#0f766e', m3: '#1e3a8a' },
@@ -163,12 +163,12 @@ export function SelectorPaleta() {
   const dot2 = paletaActiva === 'personalizada' ? customConfig.luz1 : temaActual?.m2 || '#4f46e5';
 
   return (
-    <div className="relative" ref={refPopover}>
+    <div className="relative inline-block" ref={refPopover}>
       {/* Botón Disparador en Barra Superior */}
       <button
         type="button"
         onClick={() => setAbierto(!abierto)}
-        className="superficie-control rounded-xl px-2.5 py-1.5 flex items-center gap-2 text-xs font-medium cursor-pointer shadow-sm"
+        className="superficie-control rounded-xl px-2.5 py-1.5 flex items-center gap-2 text-xs font-medium cursor-pointer shadow-sm hover:border-border-hover transition-colors"
         title="Apariencia y temas del panel"
         aria-label="Abrir selector de apariencia"
       >
@@ -178,21 +178,26 @@ export function SelectorPaleta() {
           <span className="w-2.5 h-2.5 rounded-full ring-1 ring-border" style={{ backgroundColor: dot2 }} />
         </div>
         <span className="text-text font-sans hidden sm:inline">{nombreActivo}</span>
+        <ChevronDown
+          className={`w-3 h-3 text-text-muted transition-transform duration-150 ${
+            abierto ? 'rotate-180' : ''
+          }`}
+        />
       </button>
 
       {/* Popover Flotante de Una Sola Vista */}
       {abierto && (
         <div
-          className="vidrio-popover absolute right-0 mt-2 w-[340px] sm:w-[380px] p-4 z-50 animate-in fade-in zoom-in-95 duration-150 text-text max-h-[82vh] overflow-y-auto custom-scrollbar"
-          style={{ top: '100%' }}
+          className="vidrio-popover !absolute right-0 mt-2 w-[320px] sm:w-[340px] p-3.5 z-[100] shadow-2xl rounded-2xl max-h-[460px] overflow-y-auto custom-scrollbar animate-in fade-in zoom-in-95 duration-150 text-text"
+          style={{ position: 'absolute', top: 'calc(100% + 4px)', right: 0 }}
         >
-          <div className="space-y-4">
+          <div className="space-y-3.5">
             {/* 1. MODO OSCURO / CLARO */}
             <div>
-              <div className="text-[11px] uppercase tracking-wider font-medium text-text-muted mb-2">
+              <div className="text-[10px] uppercase tracking-wider font-semibold text-text-muted mb-1.5">
                 Modo
               </div>
-              <div className="grid grid-cols-2 gap-1.5 p-1 rounded-xl bg-surface border border-border">
+              <div className="grid grid-cols-2 gap-1 p-1 rounded-xl bg-surface border border-border">
                 <button
                   type="button"
                   onClick={() => cambiarModo('dark')}
@@ -222,10 +227,10 @@ export function SelectorPaleta() {
 
             {/* 2. TEMAS OFICIALES (Cuadrícula 3 cols sin descripciones) */}
             <div>
-              <div className="text-[11px] uppercase tracking-wider font-medium text-text-muted mb-2">
+              <div className="text-[10px] uppercase tracking-wider font-semibold text-text-muted mb-1.5">
                 Temas
               </div>
-              <div className="grid grid-cols-3 gap-1.5">
+              <div className="grid grid-cols-3 gap-1">
                 {TEMAS_OFICIALES.map((t) => {
                   const estaActivo = paletaActiva === t.id;
                   return (
@@ -233,23 +238,23 @@ export function SelectorPaleta() {
                       key={t.id}
                       type="button"
                       onClick={() => seleccionarTema(t.id)}
-                      className={`relative flex flex-col items-center p-2 rounded-xl border text-center transition-all cursor-pointer ${
+                      className={`relative flex flex-col items-center p-1.5 rounded-xl border text-center transition-all cursor-pointer ${
                         estaActivo
-                          ? 'border-brand-500 bg-brand-500/12 shadow-sm'
+                          ? 'border-brand-500 bg-brand-500/15 shadow-sm'
                           : 'border-border bg-surface hover:border-border-hover hover:bg-white/[0.04]'
                       }`}
                     >
                       {estaActivo && (
-                        <span className="absolute top-1.5 right-1.5 w-3.5 h-3.5 rounded-full bg-brand-500 text-btn-primario-texto flex items-center justify-center">
-                          <Check className="w-2.5 h-2.5" />
+                        <span className="absolute top-1 right-1 w-3 h-3 rounded-full bg-brand-500 text-btn-primario-texto flex items-center justify-center">
+                          <Check className="w-2 h-2" />
                         </span>
                       )}
-                      <div className="flex items-center -space-x-1 mb-1.5 mt-0.5">
-                        <span className="w-3 h-3 rounded-full ring-1 ring-border" style={{ backgroundColor: t.m1 }} />
-                        <span className="w-3 h-3 rounded-full ring-1 ring-border" style={{ backgroundColor: t.m2 }} />
-                        <span className="w-3 h-3 rounded-full ring-1 ring-border" style={{ backgroundColor: t.m3 }} />
+                      <div className="flex items-center -space-x-1 mb-1 mt-0.5">
+                        <span className="w-2.5 h-2.5 rounded-full ring-1 ring-border" style={{ backgroundColor: t.m1 }} />
+                        <span className="w-2.5 h-2.5 rounded-full ring-1 ring-border" style={{ backgroundColor: t.m2 }} />
+                        <span className="w-2.5 h-2.5 rounded-full ring-1 ring-border" style={{ backgroundColor: t.m3 }} />
                       </div>
-                      <span className="text-[11px] font-medium text-text truncate w-full">
+                      <span className="text-[10px] font-medium text-text truncate w-full">
                         {t.nombre}
                       </span>
                     </button>
@@ -260,7 +265,7 @@ export function SelectorPaleta() {
 
             {/* 3. EFECTO DE FONDO */}
             <div>
-              <div className="text-[11px] uppercase tracking-wider font-medium text-text-muted mb-2">
+              <div className="text-[10px] uppercase tracking-wider font-semibold text-text-muted mb-1.5">
                 Efecto de fondo
               </div>
               <div className="grid grid-cols-3 gap-1 p-1 rounded-xl bg-surface border border-border">
@@ -273,7 +278,7 @@ export function SelectorPaleta() {
                     key={f.id}
                     type="button"
                     onClick={() => cambiarFondo(f.id)}
-                    className={`py-1.5 px-2 rounded-lg text-[11px] font-medium transition-all text-center truncate cursor-pointer ${
+                    className={`py-1.5 px-1.5 rounded-lg text-[10px] font-medium transition-all text-center truncate cursor-pointer ${
                       fondoActivo === f.id
                         ? 'bg-brand-600 text-btn-primario-texto shadow-sm'
                         : 'text-text-muted hover:text-text'

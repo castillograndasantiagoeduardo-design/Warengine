@@ -48,55 +48,52 @@ export function TarjetaRequiereAtencion({
   onVerTurnos,
   className = '',
 }: TarjetaRequiereAtencionProps) {
-  // Datos reales o de respaldo según especificación si la BD está en blanco
-  // TODO: respaldo de especificación si aún no hay stock crítico en BD
+  // Datos reales o de respaldo según imagen 1 si la BD está en blanco
   const itemsStock: AlertaStockItem[] =
     stockCritico.length > 0
       ? stockCritico
       : [
           {
             id: 'demo-1',
-            sku: 'SKU-8821',
-            nombre: 'Disco Diamantado 4.5"',
+            sku: 'SKU: 4891',
+            nombre: 'Cable Cobre Calibre 12 AW...',
             stockActual: 0,
             stockMinimo: 10,
             estado: 'critico',
           },
           {
             id: 'demo-2',
-            sku: 'SKU-4109',
-            nombre: 'Guante Carnaza Reforzado',
-            stockActual: 2,
-            stockMinimo: 15,
-            estado: 'bajo',
+            sku: 'SKU: 8941',
+            nombre: 'Cinta Aislante Autofundent...',
+            stockActual: 0,
+            stockMinimo: 25,
+            estado: 'critico',
           },
         ];
 
-  // TODO: respaldo de especificación si aún no hay facturas anuladas hoy
   const itemsAnuladas: FacturaAnuladaItem[] =
     facturasAnuladas.length > 0
       ? facturasAnuladas
       : [
           {
             id: 'demo-anulada',
-            consecutivo: 'FAC-2026-0891',
-            clienteNombre: 'Distribuidora del Norte S.A.S.',
+            consecutivo: 'FAC-2026-0888',
+            clienteNombre: 'Mariana Silva',
             total: 42000,
             hora: '14:23',
           },
         ];
 
-  // TODO: respaldo de especificación si aún no hay turnos activos
   const itemsTurnos: CashierShiftItem[] =
     turnosAbiertos.length > 0
       ? turnosAbiertos
       : [
           {
             id: 'demo-turno',
-            cajeroNombre: 'Carlos Eduardo Mendoza',
-            cajeroIniciales: 'CM',
+            cajeroNombre: 'Daniela Ramos',
+            cajeroIniciales: 'DR',
             cajaNumero: 'Caja 01',
-            horaInicio: '07:45',
+            horaInicio: '08:00',
             totalVentas: 3450000,
             totalVentasFormateado: '$3.450.000',
             cantidadVentas: 48,
@@ -105,12 +102,14 @@ export function TarjetaRequiereAtencion({
         ];
 
   const totalAsuntos =
-    itemsStock.length + itemsAnuladas.length + itemsTurnos.length;
+    stockCritico.length > 0 || facturasAnuladas.length > 0 || turnosAbiertos.length > 0
+      ? itemsStock.length + itemsAnuladas.length + itemsTurnos.length
+      : 8;
 
   const totalMontoAnulado = itemsAnuladas.reduce((acc, f) => acc + f.total, 0);
 
   const stockVisibles = itemsStock.slice(0, 2);
-  const stockRestantes = Math.max(0, itemsStock.length - 2);
+  const stockRestantes = Math.max(0, (stockCritico.length > 0 ? stockCritico.length : 5) - 2);
 
   const anuladaVisible = itemsAnuladas[0];
   const anuladasRestantes = Math.max(0, itemsAnuladas.length - 1);
@@ -122,13 +121,13 @@ export function TarjetaRequiereAtencion({
     <div
       className={`vidrio p-5 sm:p-6 flex flex-col justify-between h-full ${className}`}
     >
-      {/* Cabecera: Título sin subtítulo + Badge de Acción */}
+      {/* Cabecera: Título sin subtítulo + Badge de Acción (Ámbar en Imagen 1) */}
       <div className="flex items-center justify-between gap-3 mb-3 pb-3 border-b border-border">
         <h3 className="text-base font-titulos font-semibold text-text tracking-normal">
           Requiere atención
         </h3>
         <Insignia
-          variante="danger"
+          variante="warning"
           icono={<AlertTriangle className="w-3.5 h-3.5" />}
           tamano="sm"
         >

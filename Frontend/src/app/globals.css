@@ -82,11 +82,11 @@
 /* 1. ZAFIRO (Por Defecto) */
 :root,
 html[data-paleta="zafiro"] {
-  --p-base: #070d1a;
+  --p-base: #070a14;
   --p-base-claro: #eef2f9;
-  --p-luz-1: #2551d6;
-  --p-luz-2: #4f46e5;
-  --p-luz-3: #06b6d4;
+  --p-luz-1: #1d4ed8;
+  --p-luz-2: #3730a3;
+  --p-luz-3: #0284c7;
   --p-50: #eff4ff;
   --p-100: #dbe6fe;
   --p-200: #bfd3fe;
@@ -108,10 +108,10 @@ html[data-paleta="zafiro"] {
 
 /* 2. ACERO CORPORATIVO */
 html[data-paleta="acero"] {
-  --p-base: #090d14;
+  --p-base: #070a12;
   --p-base-claro: #eef2f6;
-  --p-luz-1: #2563eb;
-  --p-luz-2: #475569;
+  --p-luz-1: #1d4ed8;
+  --p-luz-2: #334155;
   --p-luz-3: #0284c7;
   --p-50: #f0f6ff;
   --p-100: #e0ecfe;
@@ -123,7 +123,7 @@ html[data-paleta="acero"] {
   --p-700: #1d4ed8;
   --p-800: #1e40af;
   --p-900: #1e3a8a;
-  --p-950: #172554;
+  --p-950: #0f172a;
   --p-btn-texto: #ffffff;
 }
 [data-muestra="acero"] {
@@ -379,8 +379,8 @@ html[data-paleta="cobre"] {
 
 :root,
 .dark {
-  --bg: var(--p-base, #070d1a);
-  --surface: rgba(255, 255, 255, 0.025);
+  --bg: #070a13;
+  --surface: rgba(14, 22, 38, 0.65);
   --border: rgba(255, 255, 255, 0.08);
   --border-top-brillo: rgba(255, 255, 255, 0.14);
   --border-hover: rgba(255, 255, 255, 0.16);
@@ -388,14 +388,14 @@ html[data-paleta="cobre"] {
   --hover-tabla: rgba(255, 255, 255, 0.04);
   --text: #f1f5f9;
   --text-muted: #a5b4cc;
-  --vidrio-bg: rgba(255, 255, 255, 0.025);
-  /* Barra superior y sidebar al 94% de opacidad para que NADA se lea a través */
-  --vidrio-fuerte-bg: color-mix(in srgb, var(--p-base, #070d1a) 94%, transparent);
-  --vidrio-fuerte-borde: rgba(255, 255, 255, 0.12);
-  --vidrio-fuerte-sombra: 0 4px 20px -2px rgba(0, 0, 0, 0.4), 0 1px 3px rgba(0, 0, 0, 0.2);
+  --vidrio-bg: rgba(11, 18, 32, 0.76);
+  /* Barra superior y sidebar al 92% de opacidad para nitidez y contraste ejecutivo */
+  --vidrio-fuerte-bg: rgba(9, 14, 26, 0.92);
+  --vidrio-fuerte-borde: rgba(255, 255, 255, 0.10);
+  --vidrio-fuerte-sombra: 0 4px 20px -2px rgba(0, 0, 0, 0.5), 0 1px 3px rgba(0, 0, 0, 0.25);
   --vidrio-borde: rgba(255, 255, 255, 0.08);
-  --vidrio-sombra: 0 8px 32px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.08);
-  --vidrio-fallback: rgba(17, 25, 45, 0.95);
+  --vidrio-sombra: 0 8px 32px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.07);
+  --vidrio-fallback: rgba(12, 18, 32, 0.96);
   --superficie-ctrl-bg: rgba(255, 255, 255, 0.04);
   --superficie-ctrl-borde: rgba(255, 255, 255, 0.08);
 }
@@ -465,14 +465,15 @@ html[data-paleta="cobre"] {
 
 /* Nivel 3: Popover / Modal Flotante */
 .vidrio-popover {
-  position: relative;
-  background-color: color-mix(in srgb, var(--p-base, #070d1a) 96%, transparent);
+  position: absolute !important;
+  background-color: rgba(10, 16, 29, 0.96);
   backdrop-filter: blur(28px) saturate(160%);
   -webkit-backdrop-filter: blur(28px) saturate(160%);
   border: 1px solid var(--border-hover);
   border-top-color: var(--border-top-brillo);
   border-radius: 1rem;
-  box-shadow: 0 20px 48px -8px rgba(0, 0, 0, 0.6), 0 0 0 1px var(--border);
+  box-shadow: 0 20px 48px -8px rgba(0, 0, 0, 0.75), 0 0 0 1px var(--border);
+  z-index: 100;
 }
 
 .light .vidrio-popover {

@@ -1,10 +1,10 @@
 'use client';
 
 /**
- * FondoAmbiental.tsx — Capa fija de iluminación ambiental, orbes difusos y textura de cristal.
+ * FondoAmbiental.tsx — Capa fija de iluminación ambiental suave y textura de cristal.
  *
- * Se posiciona en fixed inset-0 con -z-10, garantizando que el glassmorphism
- * de las tarjetas (.vidrio) y barras (.vidrio-fuerte) refracte las luces vivas del tema.
+ * Mantiene la profundidad y elegancia oscura de WarEngine sin saturar de azul
+ * los componentes ni las tarjetas KPI.
  */
 
 import React, { useEffect, useState } from 'react';
@@ -32,68 +32,63 @@ export function FondoAmbiental() {
 
   return (
     <div className="fixed inset-0 pointer-events-none -z-10 overflow-hidden select-none">
-      {/* 1. Fondo base dinámico */}
+      {/* 1. Fondo base oscuro profundo */}
       <div className="absolute inset-0 bg-bg transition-colors duration-500" />
 
-      {/* 2. Manchas / Orbes de Iluminación Ambiental */}
+      {/* 2. Trama de Malla Fina Sutil (Matriz tecnológica como en imagen 1) */}
+      <div className="absolute inset-0 trama-malla opacity-35 pointer-events-none" />
+
+      {/* 3. Manchas / Orbes de Iluminación Ambiental MUY TENUES (4-8% opacidad, sin saturar KPIs) */}
       {fondo === 'orbes' && (
         <>
           {/* Mancha 1: Arriba Izquierda */}
           <div
-            className="absolute -top-24 -left-20 w-[480px] h-[480px] rounded-full blur-[110px] opacity-70 transition-all duration-700"
+            className="absolute -top-32 -left-24 w-[420px] h-[420px] rounded-full blur-[160px] opacity-[0.08] transition-all duration-700"
             style={{ backgroundColor: 'var(--p-luz-1, #2551d6)' }}
           />
 
-          {/* Mancha 2: Centro-Izquierda (Detrás de KPIs) */}
+          {/* Mancha 2: Centro (Aura tenue detrás de las gráficas, sin saturar KPIs) */}
           <div
-            className="absolute top-1/4 left-1/12 w-[540px] h-[350px] rounded-full blur-[110px] opacity-60 transition-all duration-700"
-            style={{ backgroundColor: 'var(--p-500, #3b6cf2)' }}
+            className="absolute top-1/3 left-1/4 w-[480px] h-[320px] rounded-full blur-[160px] opacity-[0.04] transition-all duration-700"
+            style={{ backgroundColor: 'var(--p-500, #3b82f6)' }}
           />
 
           {/* Mancha 3: Centro-Derecha */}
           <div
-            className="absolute top-1/3 right-1/10 w-[580px] h-[440px] rounded-full blur-[110px] opacity-65 transition-all duration-700"
+            className="absolute top-1/2 right-1/10 w-[440px] h-[360px] rounded-full blur-[160px] opacity-[0.05] transition-all duration-700"
             style={{ backgroundColor: 'var(--p-luz-2, #4f46e5)' }}
           />
 
           {/* Mancha 4: Abajo Derecha */}
           <div
-            className="absolute -bottom-32 right-1/4 w-[500px] h-[440px] rounded-full blur-[110px] opacity-55 transition-all duration-700"
+            className="absolute -bottom-36 right-1/4 w-[400px] h-[360px] rounded-full blur-[160px] opacity-[0.04] transition-all duration-700"
             style={{ backgroundColor: 'var(--p-luz-3, #06b6d4)' }}
           />
         </>
       )}
 
-      {/* 3. Variante Aurora Ambiental */}
+      {/* 4. Variante Aurora Ambiental */}
       {fondo === 'aurora' && (
-        <div className="absolute inset-0 opacity-40">
+        <div className="absolute inset-0 opacity-[0.07]">
           <div
-            className="absolute -top-1/4 left-0 right-0 h-[600px] blur-[120px] transition-all duration-700"
+            className="absolute -top-1/4 left-0 right-0 h-[500px] blur-[160px] transition-all duration-700"
             style={{
               background: `linear-gradient(135deg, var(--p-luz-1, #2551d6) 0%, var(--p-luz-2, #4f46e5) 50%, var(--p-luz-3, #06b6d4) 100%)`,
             }}
           />
-          <div
-            className="absolute bottom-0 left-1/4 w-[700px] h-[400px] rounded-full blur-[130px] opacity-50"
-            style={{ backgroundColor: 'var(--p-500, #3b6cf2)' }}
-          />
         </div>
       )}
 
-      {/* 4. Variante Retícula + Luz */}
+      {/* 5. Variante Retícula + Luz */}
       {fondo === 'reticula' && (
-        <>
-          <div
-            className="absolute top-0 right-1/4 w-[600px] h-[450px] rounded-full blur-[120px] opacity-60 transition-all duration-700"
-            style={{ backgroundColor: 'var(--p-500, #3b6cf2)' }}
-          />
-          <div className="absolute inset-0 trama-malla opacity-80" />
-        </>
+        <div
+          className="absolute top-0 right-1/4 w-[500px] h-[380px] rounded-full blur-[160px] opacity-[0.06] transition-all duration-700"
+          style={{ backgroundColor: 'var(--p-500, #3b82f6)' }}
+        />
       )}
 
-      {/* 5. Textura de Ruido Analógico Submarino */}
+      {/* 6. Textura de Ruido Analógico Submarino Fino */}
       <div className="absolute inset-0 textura-ruido pointer-events-none" />
     </div>
   );
 }
-
