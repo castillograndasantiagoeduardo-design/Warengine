@@ -80,7 +80,7 @@ const scriptInicializacionTema = `
   try {
     var d = document.documentElement;
     var paleta = localStorage.getItem('warengine-paleta') || 'zafiro';
-    var fondo = localStorage.getItem('warengine-fondo') || 'orbes';
+    var fondo = localStorage.getItem('warengine-fondo') || 'malla';
     var tema = localStorage.getItem('warengine-tema') || 'dark';
     d.setAttribute('data-paleta', paleta);
     d.setAttribute('data-fondo', fondo);
@@ -115,7 +115,7 @@ export default function RootLayout({
     <html
       lang="es"
       data-paleta="zafiro"
-      data-fondo="orbes"
+      data-fondo="malla"
       suppressHydrationWarning
       className={`${plusJakartaSans.variable} ${inter.variable} ${ibmPlexMono.variable} ${anton.variable} ${archivo.variable} ${outfit.variable} ${bodoni.variable} dark h-full antialiased`}
     >

@@ -1,177 +1,279 @@
-/**
- * generadorPaleta.ts — Generador matemático de paletas personalizadas WarEngine.
- *
- * Principio: Utilitario puro en TypeScript (cero dependencias externas).
- * Calcula la escala tonal completa (--p-50 a --p-950) mediante mezcla RGB
- * y garantiza contraste accesible WCAG AA para el botón de acción principal.
- */
-
-export interface ColorOpcion {
-  id: string;
-  nombre: string;
-  hex: string;
-}
-
-export const CATALOGO_COLORES_ACENTO: ColorOpcion[] = [
-  { id: 'zafiro', nombre: 'Azul Zafiro', hex: '#3b6cf2' },
-  { id: 'petroleo', nombre: 'Azul Petróleo', hex: '#0284c7' },
-  { id: 'cian', nombre: 'Cian Ártico', hex: '#06b6d4' },
-  { id: 'turquesa', nombre: 'Turquesa Jade', hex: '#14b8a6' },
-  { id: 'esmeralda', nombre: 'Esmeralda', hex: '#10b981' },
-  { id: 'lima', nombre: 'Lima Ejecutivo', hex: '#65a30d' },
-  { id: 'oro', nombre: 'Oro Financiero', hex: '#eab308' },
-  { id: 'cobre', nombre: 'Naranja Cobre', hex: '#f97316' },
-  { id: 'vino', nombre: 'Borgoña Imperial', hex: '#e11d48' },
-  { id: 'violeta', nombre: 'Violeta', hex: '#8b5cf6' },
-  { id: 'indigo', nombre: 'Índigo', hex: '#6366f1' },
-  { id: 'grafito', nombre: 'Grafito Titanio', hex: '#64748b' },
-];
-
-export const CATALOGO_COLORES_FONDO: ColorOpcion[] = [
-  { id: 'obsidiana-azul', nombre: 'Negro Marino', hex: '#070d1a' },
-  { id: 'noche-titanio', nombre: 'Titanio Profundo', hex: '#090d14' },
-  { id: 'grafito-puro', nombre: 'Grafito Neutro', hex: '#0a0c10' },
-  { id: 'abismo-indigo', nombre: 'Abismo Índigo', hex: '#080a18' },
-  { id: 'abismo-petroleo', nombre: 'Petróleo Oscuro', hex: '#071016' },
-  { id: 'borgoña-negro', nombre: 'Vino Nocturno', hex: '#10080c' },
-  { id: 'ambar-obsidiana', nombre: 'Obsidiana Dorada', hex: '#0b0a08' },
-  { id: 'violeta-abismo', nombre: 'Sombra Violeta', hex: '#0b0816' },
-  { id: 'cian-carbon', nombre: 'Carbón Ártico', hex: '#0a0f14' },
-  { id: 'esmeralda-negro', nombre: 'Selva Negra', hex: '#06110f' },
-  { id: 'cobre-ceniza', nombre: 'Ceniza Cobre', hex: '#120c07' },
-  { id: 'espacio-puro', nombre: 'Negro Puro', hex: '#030712' },
-];
-
-interface Rgb {
-  r: number;
-  g: number;
-  b: number;
-}
-
-function hexARgb(hex: string): Rgb {
-  let c = hex.replace('#', '').trim();
-  if (c.length === 3) {
-    c = c.split('').map((x) => x + x).join('');
-  }
-  const num = parseInt(c, 16);
-  return {
-    r: (num >> 16) & 255,
-    g: (num >> 8) & 255,
-    b: num & 255,
-  };
-}
-
-function rgbAHex(rgb: Rgb): string {
-  const clamp = (v: number) => Math.max(0, Math.min(255, Math.round(v)));
-  const toHex = (v: number) => clamp(v).toString(16).padStart(2, '0');
-  return `#${toHex(rgb.r)}${toHex(rgb.g)}${toHex(rgb.b)}`;
-}
-
-export function mezclarHex(hex1: string, hex2: string, factor: number): string {
-  const f = Math.max(0, Math.min(1, factor));
-  const rgb1 = hexARgb(hex1);
-  const rgb2 = hexARgb(hex2);
-  return rgbAHex({
-    r: rgb1.r + (rgb2.r - rgb1.r) * f,
-    g: rgb1.g + (rgb2.g - rgb1.g) * f,
-    b: rgb1.b + (rgb2.b - rgb1.b) * f,
-  });
-}
-
-function luminanciaRelativa(rgb: Rgb): number {
-  const srgb = [rgb.r / 255, rgb.g / 255, rgb.b / 255].map((v) =>
-    v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4)
-  );
-  return 0.2126 * srgb[0] + 0.7152 * srgb[1] + 0.0722 * srgb[2];
-}
-
-/** Calcula el contraste accesible WCAG AA para el texto sobre el botón de acento */
-export function obtenerColorTextoBoton(colorAcentoHex: string): string {
-  const lum = luminanciaRelativa(hexARgb(colorAcentoHex));
-  return lum > 0.42 ? '#0f172a' : '#ffffff';
-}
-
-export interface VariablesPersonalizadas {
+export interface ConfiguracionPaletaPersonalizada {
   acento: string;
-  fondo: string;
+  fondoOscuro: string;
   luz1: string;
   luz2: string;
   luz3: string;
 }
 
-/** Genera el mapa de variables CSS para inyectar en document.documentElement.style */
-export function generarVariablesCss(config: VariablesPersonalizadas): Record<string, string> {
-  const acento = config.acento;
-  const blanco = '#ffffff';
-  const negro = '#020617';
+export interface MuestraColorCatalogo {
+  nombre: string;
+  hex: string;
+}
 
-  const p50 = mezclarHex(blanco, acento, 0.12);
-  const p100 = mezclarHex(blanco, acento, 0.22);
-  const p200 = mezclarHex(blanco, acento, 0.38);
-  const p300 = mezclarHex(blanco, acento, 0.58);
-  const p400 = mezclarHex(blanco, acento, 0.82);
-  const p500 = acento;
-  const p600 = mezclarHex(acento, negro, 0.22);
-  const p700 = mezclarHex(acento, negro, 0.38);
-  const p800 = mezclarHex(acento, negro, 0.55);
-  const p900 = mezclarHex(acento, negro, 0.72);
-  const p950 = mezclarHex(acento, negro, 0.86);
+export const CATALOGO_COLORES_ACENTO: MuestraColorCatalogo[] = [
+  { nombre: "Azul Zafiro", hex: "#3b6cf2" },
+  { nombre: "Azul Petróleo", hex: "#0284c7" },
+  { nombre: "Cian Ártico", hex: "#06b6d4" },
+  { nombre: "Turquesa Jade", hex: "#14b8a6" },
+  { nombre: "Esmeralda", hex: "#10b981" },
+  { nombre: "Lima Ejecutivo", hex: "#65a30d" },
+  { nombre: "Oro Financiero", hex: "#eab308" },
+  { nombre: "Naranja Cobre", hex: "#f97316" },
+  { nombre: "Borgoña Imperial", hex: "#e11d48" },
+  { nombre: "Violeta", hex: "#8b5cf6" },
+  { nombre: "Índigo", hex: "#6366f1" },
+  { nombre: "Grafito Titanio", hex: "#64748b" },
+];
 
-  const btnTexto = obtenerColorTextoBoton(p600);
+export const CATALOGO_COLORES_FONDO: MuestraColorCatalogo[] = [
+  { nombre: "Marino Zafiro", hex: "#070d1a" },
+  { nombre: "Nórdico Petróleo", hex: "#071016" },
+  { nombre: "Abismo Cian", hex: "#0a0f14" },
+  { nombre: "Bosque Profundo", hex: "#06110f" },
+  { nombre: "Oliva Nocturno", hex: "#0a1009" },
+  { nombre: "Negro Obsidiana", hex: "#0b0a08" },
+  { nombre: "Carbón Cobre", hex: "#120c07" },
+  { nombre: "Vino Nocturno", hex: "#10080c" },
+  { nombre: "Obsidiana Violeta", hex: "#0b0816" },
+  { nombre: "Noche Índigo", hex: "#080a18" },
+  { nombre: "Pizarra Acero", hex: "#090d14" },
+  { nombre: "Titanio Puro", hex: "#0a0c10" },
+];
+
+export const CONFIG_BASE_POR_PALETA: Record<string, ConfiguracionPaletaPersonalizada> = {
+  zafiro: {
+    acento: "#3b6cf2",
+    fondoOscuro: "#070d1a",
+    luz1: "#2551d6",
+    luz2: "#4f46e5",
+    luz3: "#06b6d4",
+  },
+  violeta: {
+    acento: "#8b5cf6",
+    fondoOscuro: "#0b0816",
+    luz1: "#7c3aed",
+    luz2: "#c026d3",
+    luz3: "#3b82f6",
+  },
+  cian: {
+    acento: "#06b6d4",
+    fondoOscuro: "#0a0f14",
+    luz1: "#06b6d4",
+    luz2: "#0ea5e9",
+    luz3: "#475569",
+  },
+  esmeralda: {
+    acento: "#10b981",
+    fondoOscuro: "#06110f",
+    luz1: "#10b981",
+    luz2: "#14b8a6",
+    luz3: "#0ea5e9",
+  },
+  cobre: {
+    acento: "#f97316",
+    fondoOscuro: "#120c07",
+    luz1: "#ea580c",
+    luz2: "#d97706",
+    luz3: "#78350f",
+  },
+  acero: {
+    acento: "#3b82f6",
+    fondoOscuro: "#090d14",
+    luz1: "#2563eb",
+    luz2: "#475569",
+    luz3: "#0284c7",
+  },
+  grafito: {
+    acento: "#64748b",
+    fondoOscuro: "#0a0c10",
+    luz1: "#475569",
+    luz2: "#334155",
+    luz3: "#1e3a8a",
+  },
+  indigo: {
+    acento: "#6366f1",
+    fondoOscuro: "#080a18",
+    luz1: "#4338ca",
+    luz2: "#3730a3",
+    luz3: "#1d4ed8",
+  },
+  petroleo: {
+    acento: "#0284c7",
+    fondoOscuro: "#071016",
+    luz1: "#0284c7",
+    luz2: "#0f766e",
+    luz3: "#1e3a8a",
+  },
+  vino: {
+    acento: "#e11d48",
+    fondoOscuro: "#10080c",
+    luz1: "#be123c",
+    luz2: "#881337",
+    luz3: "#334155",
+  },
+  oro: {
+    acento: "#eab308",
+    fondoOscuro: "#0b0a08",
+    luz1: "#d97706",
+    luz2: "#b45309",
+    luz3: "#334155",
+  },
+};
+
+function hexARgb(hex: string): [number, number, number] {
+  const limpio = hex.replace("#", "").trim();
+  if (limpio.length === 3) {
+    const r = parseInt(limpio[0] + limpio[0], 16) || 0;
+    const g = parseInt(limpio[1] + limpio[1], 16) || 0;
+    const b = parseInt(limpio[2] + limpio[2], 16) || 0;
+    return [r, g, b];
+  }
+  const num = parseInt(limpio.padEnd(6, "0").slice(0, 6), 16);
+  return [(num >> 16) & 255, (num >> 8) & 255, num & 255];
+}
+
+function rgbAHex(r: number, g: number, b: number): string {
+  const aHex = (n: number) =>
+    Math.max(0, Math.min(255, Math.round(n)))
+      .toString(16)
+      .padStart(2, "0");
+  return `#${aHex(r)}${aHex(g)}${aHex(b)}`;
+}
+
+/**
+ * Mezcla dos colores HEX según el porcentaje del primero (0 a 1)
+ */
+export function mezclarHex(hex1: string, hex2: string, peso1: number): string {
+  const [r1, g1, b1] = hexARgb(hex1);
+  const [r2, g2, b2] = hexARgb(hex2);
+  const p = Math.max(0, Math.min(1, peso1));
+  return rgbAHex(
+    r1 * p + r2 * (1 - p),
+    g1 * p + g2 * (1 - p),
+    b1 * p + b2 * (1 - p)
+  );
+}
+
+/**
+ * Calcula luminancia relativa WCAG para decidir si el texto sobre botón primario
+ * debe ser blanco (#ffffff) u oscuro (#0f172a)
+ */
+export function calcularTextoContraste(hexFondo: string): string {
+  const [r, g, b] = hexARgb(hexFondo).map((v) => {
+    const s = v / 255;
+    return s <= 0.03928 ? s / 12.92 : Math.pow((s + 0.055) / 1.055, 2.4);
+  });
+  const luminancia = 0.2126 * r + 0.7152 * g + 0.0722 * b;
+  return luminancia > 0.34 ? "#0f172a" : "#ffffff";
+}
+
+export interface VariablesCssPaleta {
+  "--p-base": string;
+  "--p-base-claro": string;
+  "--p-luz-1": string;
+  "--p-luz-2": string;
+  "--p-luz-3": string;
+  "--p-50": string;
+  "--p-100": string;
+  "--p-200": string;
+  "--p-300": string;
+  "--p-400": string;
+  "--p-500": string;
+  "--p-600": string;
+  "--p-700": string;
+  "--p-800": string;
+  "--p-900": string;
+  "--p-950": string;
+  "--p-btn-texto": string;
+}
+
+/**
+ * Genera todas las variables CSS (--p-*) a partir de los 5 colores elegidos por el usuario
+ */
+export function generarVariablesDesdeConfig(
+  config: ConfiguracionPaletaPersonalizada
+): VariablesCssPaleta {
+  const acento = config.acento || "#3b6cf2";
+  const fondoOscuro = config.fondoOscuro || "#070d1a";
+  const p600 = mezclarHex(acento, "#050814", 0.88);
 
   return {
-    '--p-base': config.fondo,
-    '--p-base-claro': mezclarHex('#ffffff', config.fondo, 0.06),
-    '--p-luz-1': config.luz1,
-    '--p-luz-2': config.luz2,
-    '--p-luz-3': config.luz3,
-    '--p-50': p50,
-    '--p-100': p100,
-    '--p-200': p200,
-    '--p-300': p300,
-    '--p-400': p400,
-    '--p-500': p500,
-    '--p-600': p600,
-    '--p-700': p700,
-    '--p-800': p800,
-    '--p-900': p900,
-    '--p-950': p950,
-    '--p-btn-texto': btnTexto,
+    "--p-base": fondoOscuro,
+    "--p-base-claro": mezclarHex(acento, "#f4f6fb", 0.07),
+    "--p-luz-1": config.luz1 || acento,
+    "--p-luz-2": config.luz2 || p600,
+    "--p-luz-3": config.luz3 || "#06b6d4",
+    "--p-50": mezclarHex(acento, "#ffffff", 0.08),
+    "--p-100": mezclarHex(acento, "#ffffff", 0.16),
+    "--p-200": mezclarHex(acento, "#ffffff", 0.32),
+    "--p-300": mezclarHex(acento, "#ffffff", 0.52),
+    "--p-400": mezclarHex(acento, "#ffffff", 0.76),
+    "--p-500": acento,
+    "--p-600": p600,
+    "--p-700": mezclarHex(acento, "#050814", 0.74),
+    "--p-800": mezclarHex(acento, "#050814", 0.6),
+    "--p-900": mezclarHex(acento, "#050814", 0.45),
+    "--p-950": mezclarHex(acento, "#050814", 0.28),
+    "--p-btn-texto": calcularTextoContraste(p600),
   };
 }
 
-export function aplicarPaletaPersonalizada(varsObj: Record<string, string>): void {
-  if (typeof document === 'undefined') return;
-  const d = document.documentElement;
-  for (const [k, v] of Object.entries(varsObj)) {
-    d.style.setProperty(k, v);
+// Aliases para compatibilidad con código anterior si aplica
+export const generarVariablesCss = generarVariablesDesdeConfig;
+export type VariablesPersonalizadas = ConfiguracionPaletaPersonalizada;
+export function aplicarPaletaPersonalizada(vars: VariablesCssPaleta): void {
+  if (typeof document === "undefined") return;
+  const html = document.documentElement;
+  for (const [clave, valor] of Object.entries(vars)) {
+    html.style.setProperty(clave, valor);
   }
 }
-
 export function limpiarPaletaPersonalizada(): void {
-  if (typeof document === 'undefined') return;
-  const d = document.documentElement;
-  const keys = [
-    '--p-base',
-    '--p-base-claro',
-    '--p-luz-1',
-    '--p-luz-2',
-    '--p-luz-3',
-    '--p-50',
-    '--p-100',
-    '--p-200',
-    '--p-300',
-    '--p-400',
-    '--p-500',
-    '--p-600',
-    '--p-700',
-    '--p-800',
-    '--p-900',
-    '--p-950',
-    '--p-btn-texto',
-  ];
-  for (const k of keys) {
-    d.style.removeProperty(k);
+  limpiarVariablesPersonalizadasEnDom();
+}
+
+const CLAVES_VARIABLES: Array<keyof VariablesCssPaleta> = [
+  "--p-base",
+  "--p-base-claro",
+  "--p-luz-1",
+  "--p-luz-2",
+  "--p-luz-3",
+  "--p-50",
+  "--p-100",
+  "--p-200",
+  "--p-300",
+  "--p-400",
+  "--p-500",
+  "--p-600",
+  "--p-700",
+  "--p-800",
+  "--p-900",
+  "--p-950",
+  "--p-btn-texto",
+];
+
+/**
+ * Inyecta las variables personalizadas directamente en <html>
+ */
+export function aplicarVariablesPersonalizadasEnDom(
+  config: ConfiguracionPaletaPersonalizada
+): void {
+  if (typeof document === "undefined") return;
+  const html = document.documentElement;
+  const vars = generarVariablesDesdeConfig(config);
+  for (const clave of CLAVES_VARIABLES) {
+    html.style.setProperty(clave, vars[clave]);
   }
 }
 
+/**
+ * Limpia las variables inline de <html> para que actúen las reglas CSS de las paletas recomendadas
+ */
+export function limpiarVariablesPersonalizadasEnDom(): void {
+  if (typeof document === "undefined") return;
+  const html = document.documentElement;
+  for (const clave of CLAVES_VARIABLES) {
+    html.style.removeProperty(clave);
+  }
+}

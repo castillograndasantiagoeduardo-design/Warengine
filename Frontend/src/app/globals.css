@@ -37,7 +37,7 @@
   --font-titulos: var(--fuente-titulos);
   --font-mono: var(--fuente-codigo);
 
-  /* Compatibilidad con vistas previas */
+  /* Compatibilidad con vistas previas y otros módulos */
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-gold: var(--gold);
@@ -75,18 +75,18 @@
   font-variant-numeric: tabular-nums;
 }
 
-/* ============================================================
-   TEMAS OFICIALES WARENGINE (11 PALETAS + PERSONALIZADA)
-   ============================================================ */
+/* ========================================================================== */
+/* 1. DEFINICIÓN DE LAS 11 PALETAS OFICIALES (Idéntico a prueba-diseno)        */
+/* ========================================================================== */
 
-/* 1. ZAFIRO (Por Defecto) */
+/* a) ZAFIRO (Predeterminada) */
 :root,
 html[data-paleta="zafiro"] {
-  --p-base: #070a14;
+  --p-base: #070d1a;
   --p-base-claro: #eef2f9;
-  --p-luz-1: #1d4ed8;
-  --p-luz-2: #3730a3;
-  --p-luz-3: #0284c7;
+  --p-luz-1: #2551d6;
+  --p-luz-2: #4f46e5;
+  --p-luz-3: #06b6d4;
   --p-50: #eff4ff;
   --p-100: #dbe6fe;
   --p-200: #bfd3fe;
@@ -100,42 +100,116 @@ html[data-paleta="zafiro"] {
   --p-950: #0f1d42;
   --p-btn-texto: #ffffff;
 }
-[data-muestra="zafiro"] {
-  --m-1: #3b6cf2;
-  --m-2: #4f46e5;
-  --m-3: #06b6d4;
+
+/* b) VIOLETA */
+html[data-paleta="violeta"] {
+  --p-base: #0b0816;
+  --p-base-claro: #f3effb;
+  --p-luz-1: #7c3aed;
+  --p-luz-2: #c026d3;
+  --p-luz-3: #3b82f6;
+  --p-50: #f5f3ff;
+  --p-100: #ede9fe;
+  --p-200: #ddd6fe;
+  --p-300: #c4b5fd;
+  --p-400: #a78bfa;
+  --p-500: #8b5cf6;
+  --p-600: #7c3aed;
+  --p-700: #6d28d9;
+  --p-800: #5b21b6;
+  --p-900: #4c1d95;
+  --p-950: #2e1065;
+  --p-btn-texto: #ffffff;
 }
 
-/* 2. ACERO CORPORATIVO */
+/* c) CIAN (Texto sobre botón primario en #04202b para contraste AA) */
+html[data-paleta="cian"] {
+  --p-base: #0a0f14;
+  --p-base-claro: #ecf6f9;
+  --p-luz-1: #06b6d4;
+  --p-luz-2: #0ea5e9;
+  --p-luz-3: #475569;
+  --p-50: #ecfeff;
+  --p-100: #cffafe;
+  --p-200: #a5f3fc;
+  --p-300: #67e8f9;
+  --p-400: #38bdf8;
+  --p-500: #22d3ee;
+  --p-600: #06b6d4;
+  --p-700: #0e7490;
+  --p-800: #155e75;
+  --p-900: #164e63;
+  --p-950: #083344;
+  --p-btn-texto: #04202b;
+}
+
+/* d) ESMERALDA */
+html[data-paleta="esmeralda"] {
+  --p-base: #06110f;
+  --p-base-claro: #edf7f5;
+  --p-luz-1: #10b981;
+  --p-luz-2: #14b8a6;
+  --p-luz-3: #0ea5e9;
+  --p-50: #f0fdfa;
+  --p-100: #ccfbf1;
+  --p-200: #99f6e4;
+  --p-300: #5eead4;
+  --p-400: #2dd4bf;
+  --p-500: #14b8a6;
+  --p-600: #0d9488;
+  --p-700: #0f766e;
+  --p-800: #115e59;
+  --p-900: #134e4a;
+  --p-950: #042f2e;
+  --p-btn-texto: #ffffff;
+}
+
+/* e) COBRE */
+html[data-paleta="cobre"] {
+  --p-base: #0c0a09;
+  --p-base-claro: #faf3ee;
+  --p-luz-1: #f97316;
+  --p-luz-2: #ea580c;
+  --p-luz-3: #78350f;
+  --p-50: #fff7ed;
+  --p-100: #ffedd5;
+  --p-200: #fed7aa;
+  --p-300: #fdba74;
+  --p-400: #fb923c;
+  --p-500: #f97316;
+  --p-600: #ea580c;
+  --p-700: #c2410c;
+  --p-800: #9a3412;
+  --p-900: #7c2d12;
+  --p-950: #431407;
+  --p-btn-texto: #ffffff;
+}
+
+/* f) ACERO CORPORATIVO (Pizarra y azul acero institucional) */
 html[data-paleta="acero"] {
-  --p-base: #070a12;
-  --p-base-claro: #eef2f6;
-  --p-luz-1: #1d4ed8;
-  --p-luz-2: #334155;
+  --p-base: #090d14;
+  --p-base-claro: #f1f5f9;
+  --p-luz-1: #2563eb;
+  --p-luz-2: #475569;
   --p-luz-3: #0284c7;
-  --p-50: #f0f6ff;
-  --p-100: #e0ecfe;
+  --p-50: #f0f7ff;
+  --p-100: #e0effe;
   --p-200: #bae0fd;
-  --p-300: #7cc3fb;
-  --p-400: #38a4f8;
+  --p-300: #93c5fd;
+  --p-400: #60a5fa;
   --p-500: #3b82f6;
   --p-600: #2563eb;
   --p-700: #1d4ed8;
   --p-800: #1e40af;
   --p-900: #1e3a8a;
-  --p-950: #0f172a;
+  --p-950: #172554;
   --p-btn-texto: #ffffff;
 }
-[data-muestra="acero"] {
-  --m-1: #3b82f6;
-  --m-2: #475569;
-  --m-3: #0284c7;
-}
 
-/* 3. GRAFITO Y TITANIO */
+/* g) GRAFITO EJECUTIVO (Titanio, pizarra y plata sobria) */
 html[data-paleta="grafito"] {
-  --p-base: #0a0c10;
-  --p-base-claro: #f1f3f6;
+  --p-base: #090b10;
+  --p-base-claro: #f3f4f6;
   --p-luz-1: #475569;
   --p-luz-2: #334155;
   --p-luz-3: #1e3a8a;
@@ -152,13 +226,8 @@ html[data-paleta="grafito"] {
   --p-950: #020617;
   --p-btn-texto: #ffffff;
 }
-[data-muestra="grafito"] {
-  --m-1: #64748b;
-  --m-2: #475569;
-  --m-3: #1e3a8a;
-}
 
-/* 4. ÍNDIGO INSTITUCIONAL */
+/* h) ÍNDIGO INSTITUCIONAL (Banca privada y consultoría) */
 html[data-paleta="indigo"] {
   --p-base: #080a18;
   --p-base-claro: #eef0f9;
@@ -178,13 +247,8 @@ html[data-paleta="indigo"] {
   --p-950: #1e1b4b;
   --p-btn-texto: #ffffff;
 }
-[data-muestra="indigo"] {
-  --m-1: #6366f1;
-  --m-2: #4338ca;
-  --m-3: #1d4ed8;
-}
 
-/* 5. AZUL PETRÓLEO */
+/* i) AZUL PETRÓLEO (Nórdico empresarial y logístico) */
 html[data-paleta="petroleo"] {
   --p-base: #071016;
   --p-base-claro: #eef5f8;
@@ -200,17 +264,12 @@ html[data-paleta="petroleo"] {
   --p-600: #0369a1;
   --p-700: #075985;
   --p-800: #0c4a6e;
-  --p-900: #083344;
-  --p-950: #04202b;
+  --p-900: #082f49;
+  --p-950: #051e30;
   --p-btn-texto: #ffffff;
 }
-[data-muestra="petroleo"] {
-  --m-1: #0284c7;
-  --m-2: #0f766e;
-  --m-3: #1e3a8a;
-}
 
-/* 6. VINO / BORGOÑA DIRECTIVO */
+/* j) BORGOÑA DIRECTIVO (Vino imperial y pizarra) */
 html[data-paleta="vino"] {
   --p-base: #10080c;
   --p-base-claro: #f8f1f3;
@@ -227,16 +286,11 @@ html[data-paleta="vino"] {
   --p-700: #9f1239;
   --p-800: #881337;
   --p-900: #4c0519;
-  --p-950: #27020d;
+  --p-950: #2b020d;
   --p-btn-texto: #ffffff;
 }
-[data-muestra="vino"] {
-  --m-1: #e11d48;
-  --m-2: #be123c;
-  --m-3: #334155;
-}
 
-/* 7. ORO Y OBSIDIANA */
+/* k) ORO Y OBSIDIANA (Financiero de alto contraste) */
 html[data-paleta="oro"] {
   --p-base: #0b0a08;
   --p-base-claro: #f7f5ef;
@@ -253,134 +307,18 @@ html[data-paleta="oro"] {
   --p-700: #a16207;
   --p-800: #854d0e;
   --p-900: #713f12;
-  --p-950: #3f2206;
+  --p-950: #422006;
   --p-btn-texto: #1c1917;
 }
-[data-muestra="oro"] {
-  --m-1: #eab308;
-  --m-2: #d97706;
-  --m-3: #334155;
-}
 
-/* 8. VIOLETA */
-html[data-paleta="violeta"] {
-  --p-base: #0b0816;
-  --p-base-claro: #f3effb;
-  --p-luz-1: #7c3aed;
-  --p-luz-2: #c026d3;
-  --p-luz-3: #3b82f6;
-  --p-50: #faf5ff;
-  --p-100: #f3e8ff;
-  --p-200: #e9d5ff;
-  --p-300: #d8b4fe;
-  --p-400: #c084fc;
-  --p-500: #8b5cf6;
-  --p-600: #7c3aed;
-  --p-700: #6d28d9;
-  --p-800: #5b21b6;
-  --p-900: #4c1d95;
-  --p-950: #2e1065;
-  --p-btn-texto: #ffffff;
-}
-[data-muestra="violeta"] {
-  --m-1: #8b5cf6;
-  --m-2: #7c3aed;
-  --m-3: #c026d3;
-}
-
-/* 9. CIAN */
-html[data-paleta="cian"] {
-  --p-base: #0a0f14;
-  --p-base-claro: #ecf6f9;
-  --p-luz-1: #06b6d4;
-  --p-luz-2: #0ea5e9;
-  --p-luz-3: #475569;
-  --p-50: #ecfeff;
-  --p-100: #cffafe;
-  --p-200: #a5f3fc;
-  --p-300: #67e8f9;
-  --p-400: #22d3ee;
-  --p-500: #06b6d4;
-  --p-600: #0891b2;
-  --p-700: #0e7490;
-  --p-800: #155e75;
-  --p-900: #164e63;
-  --p-950: #083344;
-  --p-btn-texto: #04202b;
-}
-[data-muestra="cian"] {
-  --m-1: #22d3ee;
-  --m-2: #06b6d4;
-  --m-3: #0ea5e9;
-}
-
-/* 10. ESMERALDA */
-html[data-paleta="esmeralda"] {
-  --p-base: #06110f;
-  --p-base-claro: #edf7f5;
-  --p-luz-1: #10b981;
-  --p-luz-2: #14b8a6;
-  --p-luz-3: #0ea5e9;
-  --p-50: #f0fdf4;
-  --p-100: #dcfce7;
-  --p-200: #bbf7d0;
-  --p-300: #86efac;
-  --p-400: #4ade80;
-  --p-500: #10b981;
-  --p-600: #059669;
-  --p-700: #047857;
-  --p-800: #065f46;
-  --p-900: #064e3b;
-  --p-950: #022c22;
-  --p-btn-texto: #04231f;
-}
-[data-muestra="esmeralda"] {
-  --m-1: #14b8a6;
-  --m-2: #10b981;
-  --m-3: #0ea5e9;
-}
-
-/* 11. COBRE */
-html[data-paleta="cobre"] {
-  --p-base: #120c07;
-  --p-base-claro: #faf3ec;
-  --p-luz-1: #ea580c;
-  --p-luz-2: #d97706;
-  --p-luz-3: #78350f;
-  --p-50: #fff7ed;
-  --p-100: #ffedd5;
-  --p-200: #fed7aa;
-  --p-300: #fdba74;
-  --p-400: #fb923c;
-  --p-500: #f97316;
-  --p-600: #ea580c;
-  --p-700: #c2410c;
-  --p-800: #9a3412;
-  --p-900: #7c2d12;
-  --p-950: #431407;
-  --p-btn-texto: #ffffff;
-}
-[data-muestra="cobre"] {
-  --m-1: #f97316;
-  --m-2: #ea580c;
-  --m-3: #d97706;
-}
-
-/* 12. PERSONALIZADA */
-[data-muestra="personalizada"] {
-  --m-1: var(--p-500, #3b6cf2);
-  --m-2: var(--p-luz-1, #4f46e5);
-  --m-3: var(--p-luz-2, #06b6d4);
-}
-
-/* ============================================================
-   SUPERFICIES DE CRISTAL (GLASSMORPHISM)
-   ============================================================ */
+/* ========================================================================== */
+/* 2. VARIABLES DE TEMA OSCURO Y CLARO (TRANSLUCIDEZ DE CRISTAL OFICIAL)      */
+/* ========================================================================== */
 
 :root,
 .dark {
-  --bg: #070a13;
-  --surface: rgba(14, 22, 38, 0.65);
+  --bg: var(--p-base);
+  --surface: rgba(255, 255, 255, 0.025);
   --border: rgba(255, 255, 255, 0.08);
   --border-top-brillo: rgba(255, 255, 255, 0.14);
   --border-hover: rgba(255, 255, 255, 0.16);
@@ -388,20 +326,19 @@ html[data-paleta="cobre"] {
   --hover-tabla: rgba(255, 255, 255, 0.04);
   --text: #f1f5f9;
   --text-muted: #a5b4cc;
-  --vidrio-bg: rgba(11, 18, 32, 0.76);
-  /* Barra superior y sidebar al 92% de opacidad para nitidez y contraste ejecutivo */
-  --vidrio-fuerte-bg: rgba(9, 14, 26, 0.92);
-  --vidrio-fuerte-borde: rgba(255, 255, 255, 0.10);
-  --vidrio-fuerte-sombra: 0 4px 20px -2px rgba(0, 0, 0, 0.5), 0 1px 3px rgba(0, 0, 0, 0.25);
+  --vidrio-bg: rgba(255, 255, 255, 0.025);
+  --vidrio-fuerte-bg: color-mix(in srgb, var(--p-base, #070d1a) 94%, transparent);
+  --vidrio-fuerte-borde: rgba(255, 255, 255, 0.12);
+  --vidrio-fuerte-sombra: 0 4px 20px -2px rgba(0, 0, 0, 0.4), 0 1px 3px rgba(0, 0, 0, 0.2);
   --vidrio-borde: rgba(255, 255, 255, 0.08);
-  --vidrio-sombra: 0 8px 32px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.07);
-  --vidrio-fallback: rgba(12, 18, 32, 0.96);
-  --superficie-ctrl-bg: rgba(255, 255, 255, 0.04);
-  --superficie-ctrl-borde: rgba(255, 255, 255, 0.08);
+  --vidrio-sombra: 0 8px 32px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  --vidrio-fallback: rgba(17, 25, 45, 0.95);
+  --superficie-ctrl-bg: rgba(255, 255, 255, 0.05);
+  --superficie-ctrl-borde: rgba(255, 255, 255, 0.1);
 }
 
 .light {
-  --bg: var(--p-base-claro, #eef2f9);
+  --bg: var(--p-base-claro);
   --surface: rgba(255, 255, 255, 0.58);
   --border: rgba(15, 23, 42, 0.09);
   --border-top-brillo: rgba(255, 255, 255, 0.95);
@@ -417,11 +354,14 @@ html[data-paleta="cobre"] {
   --vidrio-borde: rgba(255, 255, 255, 0.82);
   --vidrio-sombra: 0 8px 28px rgba(15, 23, 42, 0.07), 0 0 0 1px rgba(15, 23, 42, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.95);
   --vidrio-fallback: rgba(255, 255, 255, 0.95);
-  --superficie-ctrl-bg: rgba(15, 23, 42, 0.045);
-  --superficie-ctrl-borde: rgba(15, 23, 42, 0.1);
+  --superficie-ctrl-bg: rgba(255, 255, 255, 0.65);
+  --superficie-ctrl-borde: rgba(15, 23, 42, 0.12);
 }
 
-/* Nivel 1: Vidrio Estándar (Tarjetas de contenido y tablas) */
+/* ========================================================================== */
+/* 3. CLASES DE VIDRIO REUTILIZABLES (GLASSMORPHISM EJECUTIVO)                */
+/* ========================================================================== */
+
 .vidrio {
   position: relative;
   background-color: var(--vidrio-bg);
@@ -441,7 +381,12 @@ html[data-paleta="cobre"] {
   left: 8%;
   right: 8%;
   height: 1px;
-  background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.2) 50%, transparent 100%);
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.2) 50%,
+    transparent 100%
+  );
   pointer-events: none;
 }
 
@@ -450,7 +395,6 @@ html[data-paleta="cobre"] {
   border-color: var(--border-hover);
 }
 
-/* Nivel 2: Vidrio Fuerte (Sidebar y Navbar) */
 .vidrio-fuerte {
   position: relative;
   background-color: var(--vidrio-fuerte-bg);
@@ -461,32 +405,38 @@ html[data-paleta="cobre"] {
   border-top-color: var(--border-top-brillo);
   border-radius: 1rem;
   box-shadow: var(--vidrio-fuerte-sombra, var(--vidrio-sombra));
+  transition: border-color 300ms ease, background-color 300ms ease, width 250ms ease, box-shadow 300ms ease;
 }
 
-/* Nivel 3: Popover / Modal Flotante */
+/* Superficie de alta densidad (95% opacidad) para popovers y menús desplegables */
 .vidrio-popover {
-  position: absolute !important;
-  background-color: rgba(10, 16, 29, 0.96);
+  position: absolute;
+  background-color: rgba(11, 17, 30, 0.95);
   backdrop-filter: blur(28px) saturate(160%);
   -webkit-backdrop-filter: blur(28px) saturate(160%);
-  border: 1px solid var(--border-hover);
-  border-top-color: var(--border-top-brillo);
+  border: 1px solid rgba(255, 255, 255, 0.16);
   border-radius: 1rem;
-  box-shadow: 0 20px 48px -8px rgba(0, 0, 0, 0.75), 0 0 0 1px var(--border);
-  z-index: 100;
+  box-shadow:
+    0 20px 50px rgba(0, 0, 0, 0.65),
+    0 0 0 1px rgba(255, 255, 255, 0.06),
+    inset 0 1px 0 rgba(255, 255, 255, 0.14);
+  z-index: 50;
 }
 
 .light .vidrio-popover {
   background-color: rgba(255, 255, 255, 0.96);
-  box-shadow: 0 20px 48px -8px rgba(15, 23, 42, 0.15), 0 0 0 1px rgba(15, 23, 42, 0.08);
+  border: 1px solid rgba(15, 23, 42, 0.14);
+  box-shadow:
+    0 20px 45px rgba(15, 23, 42, 0.16),
+    0 0 0 1px rgba(15, 23, 42, 0.05),
+    inset 0 1px 0 rgba(255, 255, 255, 1);
 }
 
-/* Nivel 4: Superficie de Control (Inputs, Badges, Botones secundarios) */
 .superficie-control {
   background-color: var(--superficie-ctrl-bg);
   border: 1px solid var(--superficie-ctrl-borde);
   color: var(--text);
-  transition: all 150ms ease;
+  transition: background-color 300ms ease, border-color 300ms ease, color 300ms ease;
 }
 
 .superficie-control:hover {
@@ -498,30 +448,172 @@ html[data-paleta="cobre"] {
   box-shadow: 0 0 0 2px color-mix(in srgb, var(--p-500, #3b6cf2) 25%, transparent);
 }
 
-/* Texturas de fondo */
+.fila-tabla {
+  border-bottom: 1px solid var(--separador-tabla);
+  transition: background-color 150ms ease;
+}
+.fila-tabla:last-child {
+  border-bottom: none;
+}
+.fila-tabla:hover {
+  background-color: var(--hover-tabla);
+}
+
+/* Textura de ruido sutil (< 0.04) */
+.textura-ruido {
+  background-image: radial-gradient(rgba(255, 255, 255, 0.06) 1px, transparent 0);
+  background-size: 24px 24px;
+  opacity: 0.03;
+}
+
+/* Retícula arquitectónica tenue para la variante de fondo "malla" */
 .trama-malla {
-  background-size: 32px 32px;
-  background-image: linear-gradient(to right, rgba(255, 255, 255, 0.035) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(255, 255, 255, 0.035) 1px, transparent 1px);
+  background-image:
+    linear-gradient(to right, rgba(255, 255, 255, 0.04) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
+  background-size: 56px 56px;
 }
 
 .light .trama-malla {
-  background-image: linear-gradient(to right, rgba(15, 23, 42, 0.04) 1px, transparent 1px),
+  background-image:
+    linear-gradient(to right, rgba(15, 23, 42, 0.04) 1px, transparent 1px),
     linear-gradient(to bottom, rgba(15, 23, 42, 0.04) 1px, transparent 1px);
+  background-size: 56px 56px;
 }
 
-.textura-ruido {
-  opacity: 0.028;
-  mix-blend-mode: overlay;
-  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='220' height='220'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 .9 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+/* ========================================================================== */
+/* 4. EFECTOS DINÁMICOS DE FONDO (ORBES, AURORA Y RETÍCULA + LUZ)             */
+/* ========================================================================== */
+
+/* Transición suave de 300ms al cambiar de paleta o fondo */
+.mancha-luz {
+  transition: background-color 300ms ease, opacity 300ms ease, transform 500ms ease;
 }
 
-/* ============================================================
-   ESTILOS BASE Y ELEMENTOS EXISTENTES (COMPATIBILIDAD)
-   ============================================================ */
+.capa-malla {
+  opacity: 0;
+  transition: opacity 300ms ease;
+}
 
-* {
-  box-sizing: border-box;
+html[data-fondo="aurora"] .mancha-aurora-1 {
+  transform: scaleX(1.65) scaleY(0.75) rotate(-14deg) translateY(20px);
+}
+html[data-fondo="aurora"] .mancha-aurora-2 {
+  transform: scaleX(1.6) scaleY(0.7) rotate(12deg) translateX(-40px);
+}
+html[data-fondo="aurora"] .mancha-aurora-3 {
+  transform: scaleX(1.5) scaleY(0.8) rotate(-8deg);
+}
+
+html[data-fondo="malla"] .capa-malla {
+  opacity: 1;
+}
+
+/* ========================================================================== */
+/* 5. ACCESIBILIDAD Y FALLBACKS                                               */
+/* ========================================================================== */
+
+/* Fallback cuando el navegador no soporta backdrop-filter */
+@supports not (backdrop-filter: blur(1px)) {
+  .vidrio,
+  .vidrio-fuerte,
+  .vidrio-popover {
+    background-color: var(--vidrio-fallback);
+  }
+}
+
+/* Accesibilidad: reducción de movimiento */
+@media (prefers-reduced-motion: reduce) {
+  .mancha-luz,
+  .capa-malla,
+  .vidrio,
+  .vidrio-fuerte,
+  .btn-3d,
+  body {
+    transition: none !important;
+    transform: none !important;
+  }
+  html[data-fondo="aurora"] .mancha-aurora-1,
+  html[data-fondo="aurora"] .mancha-aurora-2,
+  html[data-fondo="aurora"] .mancha-aurora-3 {
+    transform: none !important;
+  }
+}
+
+/* Accesibilidad: reducción de transparencia */
+@media (prefers-reduced-transparency: reduce) {
+  .vidrio,
+  .vidrio-fuerte,
+  .vidrio-popover {
+    background-color: var(--vidrio-fallback);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+}
+
+/* ========================================================================== */
+/* 6. MUESTRAS DE PALETAS Y ESTILOS GLOBALES                                  */
+/* ========================================================================== */
+
+[data-muestra="zafiro"] {
+  --m-1: #3b6cf2;
+  --m-2: #4f46e5;
+  --m-3: #06b6d4;
+}
+[data-muestra="violeta"] {
+  --m-1: #8b5cf6;
+  --m-2: #c026d3;
+  --m-3: #3b82f6;
+}
+[data-muestra="cian"] {
+  --m-1: #22d3ee;
+  --m-2: #0ea5e9;
+  --m-3: #475569;
+}
+[data-muestra="esmeralda"] {
+  --m-1: #14b8a6;
+  --m-2: #10b981;
+  --m-3: #0ea5e9;
+}
+[data-muestra="cobre"] {
+  --m-1: #f97316;
+  --m-2: #ea580c;
+  --m-3: #78350f;
+}
+[data-muestra="acero"] {
+  --m-1: #3b82f6;
+  --m-2: #475569;
+  --m-3: #0284c7;
+}
+[data-muestra="grafito"] {
+  --m-1: #64748b;
+  --m-2: #334155;
+  --m-3: #1e3a8a;
+}
+[data-muestra="indigo"] {
+  --m-1: #6366f1;
+  --m-2: #4338ca;
+  --m-3: #1d4ed8;
+}
+[data-muestra="petroleo"] {
+  --m-1: #0284c7;
+  --m-2: #0f766e;
+  --m-3: #1e3a8a;
+}
+[data-muestra="vino"] {
+  --m-1: #e11d48;
+  --m-2: #881337;
+  --m-3: #334155;
+}
+[data-muestra="oro"] {
+  --m-1: #eab308;
+  --m-2: #d97706;
+  --m-3: #334155;
+}
+[data-muestra="personalizada"] {
+  --m-1: var(--p-500, #3b6cf2);
+  --m-2: var(--p-luz-1, #4f46e5);
+  --m-3: var(--p-luz-2, #06b6d4);
 }
 
 body {
@@ -530,6 +622,8 @@ body {
   font-family: var(--fuente-texto), system-ui, sans-serif;
   font-variant-numeric: tabular-nums;
   -webkit-font-smoothing: antialiased;
+  min-height: 100vh;
+  transition: background-color 300ms ease, color 300ms ease;
 }
 
 /* Botón 3D mecánico */
@@ -582,11 +676,4 @@ body {
 }
 .light .custom-scrollbar::-webkit-scrollbar-thumb {
   background: rgba(15, 23, 42, 0.15);
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .vidrio, .btn-3d {
-    animation: none !important;
-    transition: none !important;
-  }
 }
