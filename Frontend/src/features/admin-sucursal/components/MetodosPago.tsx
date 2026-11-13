@@ -10,6 +10,7 @@
  */
 
 import React, { useMemo } from 'react';
+import { Tarjeta } from './Tarjeta';
 import { Insignia } from './Insignia';
 import { formatCOP } from '@/lib/format/moneda';
 
@@ -97,25 +98,18 @@ export function MetodosPago({
   const opsTotal = totalOperaciones || items.reduce((acc, i) => acc + i.operaciones, 0);
 
   return (
-    <div
-      className={`vidrio p-5 sm:p-6 flex flex-col justify-between h-full ${className}`}
-    >
-      {/* 1. Cabecera */}
-      <div className="flex items-center justify-between gap-3 mb-2 pb-3 border-b border-border">
-        <div className="min-w-0 flex-1">
-          <h3 className="text-base font-titulos font-semibold text-text tracking-normal">
-            Métodos de pago
-          </h3>
-          <p className="text-xs font-sans font-medium text-text-muted mt-0.5 truncate">
-            Distribución de transacciones del día
-          </p>
-        </div>
-        <Insignia variante="brand" tamano="sm">
+    <Tarjeta
+      titulo="Métodos de pago"
+      subtitulo="Distribución de transacciones del día"
+      className={`h-full ${className}`}
+      accion={
+        <span className="text-xs font-sans font-medium text-text-muted px-2.5 py-1 rounded-lg superficie-control tabular-nums whitespace-nowrap">
           {opsTotal} op.
-        </Insignia>
-      </div>
-
-      {/* 2. Donut SVG Centrado */}
+        </span>
+      }
+    >
+      <div className="flex flex-col justify-between h-full space-y-4 font-sans">
+        {/* 2. Donut SVG Centrado */}
       <div className="py-2 flex items-center justify-center relative">
         <div className="w-32 h-32 relative flex items-center justify-center">
           <svg
@@ -189,7 +183,8 @@ export function MetodosPago({
           </div>
         ))}
       </div>
-    </div>
+      </div>
+    </Tarjeta>
   );
 }
 

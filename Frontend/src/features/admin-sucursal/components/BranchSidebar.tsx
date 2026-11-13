@@ -113,7 +113,7 @@ export function BranchSidebar({
       className={`
         vidrio-fuerte h-[calc(100vh-2rem)] rounded-2xl flex flex-col justify-between
         transition-all duration-300 p-3 select-none
-        ${colapsado ? 'w-[68px]' : 'w-60'}
+        ${colapsado ? 'w-20' : 'w-64'}
         ${className}
       `}
     >

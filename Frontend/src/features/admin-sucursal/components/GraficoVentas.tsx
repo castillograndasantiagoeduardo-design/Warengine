@@ -9,6 +9,7 @@
  */
 
 import React, { useState, useRef, useEffect, useMemo } from 'react';
+import { Tarjeta } from './Tarjeta';
 import { formatCOP } from '@/lib/format/moneda';
 
 export interface PuntoVentaDiaria {
@@ -156,20 +157,16 @@ export function GraficoVentas({
   });
 
   return (
-    <div className={`vidrio p-5 sm:p-6 flex flex-col justify-between h-full ${className}`}>
-      {/* 1. Cabecera con Título, Subtítulo y Conmutador Segmentado */}
-      <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
-        <div className="min-w-0 flex-1">
-          <h3 className="text-base font-titulos font-semibold text-text tracking-normal truncate">
-            Rendimiento de ventas
-          </h3>
-          <p className="text-xs font-sans font-medium text-text-muted mt-0.5 truncate">
-            Facturación consolidada de los últimos 7 días en {sucursalNombre}
-          </p>
-        </div>
-
-        {/* Conmutador Segmentado: Barras | Curva analítica */}
-        <div className="flex items-center p-1 rounded-xl superficie-control text-xs shrink-0">
+    <Tarjeta
+      titulo="Rendimiento de ventas"
+      subtitulo={`Facturación consolidada de los últimos 7 días en ${sucursalNombre}`}
+      className={`h-full ${className}`}
+      accion={
+        <div
+          className="flex items-center p-1 rounded-xl superficie-control text-xs font-sans"
+          role="group"
+          aria-label="Tipo de visualización de ventas"
+        >
           <button
             type="button"
             onClick={() => setTipoGrafico('barras')}
@@ -193,13 +190,14 @@ export function GraficoVentas({
             Curva analítica
           </button>
         </div>
-      </div>
-
-      {/* 2. Área del Gráfico Reactiva con ResizeObserver */}
-      <div
-        ref={containerRef}
-        className="flex-1 min-h-[280px] max-h-[420px] w-full relative select-none"
-      >
+      }
+    >
+      <div className="flex-1 flex flex-col justify-between h-full pt-1">
+        {/* 2. Área del Gráfico Reactiva con ResizeObserver */}
+        <div
+          ref={containerRef}
+          className="flex-1 min-h-[280px] max-h-[420px] w-full relative select-none"
+        >
         <svg
           viewBox={`0 0 ${dimensions.width} ${dimensions.height}`}
           className="w-full h-full block overflow-visible"
@@ -438,7 +436,8 @@ export function GraficoVentas({
           </span>
         </div>
       </div>
-    </div>
+      </div>
+    </Tarjeta>
   );
 }
 

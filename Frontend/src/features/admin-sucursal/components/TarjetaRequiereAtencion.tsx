@@ -10,6 +10,7 @@
  */
 
 import React from 'react';
+import { Tarjeta } from './Tarjeta';
 import {
   AlertTriangle,
   Package,
@@ -118,23 +119,21 @@ export function TarjetaRequiereAtencion({
   const turnosRestantes = Math.max(0, itemsTurnos.length - 1);
 
   return (
-    <div
-      className={`vidrio p-5 sm:p-6 flex flex-col justify-between h-full ${className}`}
+    <Tarjeta
+      titulo="Requiere atención"
+      className={`h-full ${className}`}
+      accion={
+        <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg superficie-control text-xs font-sans whitespace-nowrap">
+          <Insignia
+            variante="warning"
+            icono={<AlertTriangle className="w-3.5 h-3.5" />}
+            tamano="sm"
+          >
+            {totalAsuntos} prioritarios
+          </Insignia>
+        </div>
+      }
     >
-      {/* Cabecera: Título sin subtítulo + Badge de Acción (Ámbar en Imagen 1) */}
-      <div className="flex items-center justify-between gap-3 mb-3 pb-3 border-b border-border">
-        <h3 className="text-base font-titulos font-semibold text-text tracking-normal">
-          Requiere atención
-        </h3>
-        <Insignia
-          variante="warning"
-          icono={<AlertTriangle className="w-3.5 h-3.5" />}
-          tamano="sm"
-        >
-          {totalAsuntos} prioritarios
-        </Insignia>
-      </div>
-
       {/* Cuerpo en 3 Bloques con Scroll Suave */}
       <div className="flex-1 flex flex-col justify-between space-y-3.5 overflow-y-auto max-h-[440px] pr-0.5 custom-scrollbar">
         {/* BLOQUE 1: STOCK CRÍTICO */}
@@ -301,7 +300,7 @@ export function TarjetaRequiereAtencion({
           )}
         </div>
       </div>
-    </div>
+    </Tarjeta>
   );
 }
 

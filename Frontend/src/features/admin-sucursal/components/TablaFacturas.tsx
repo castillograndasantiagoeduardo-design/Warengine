@@ -10,6 +10,7 @@
 
 import React, { useState, useMemo } from 'react';
 import { ArrowRight, FileText } from 'lucide-react';
+import { Tarjeta } from './Tarjeta';
 import { Insignia } from './Insignia';
 import { formatCOP } from '@/lib/format/moneda';
 
@@ -119,20 +120,13 @@ export function TablaFacturas({
   const mostradas = filtradas.slice(0, 5);
 
   return (
-    <div className={`vidrio p-5 sm:p-6 flex flex-col justify-between h-full ${className}`}>
-      {/* 1. Cabecera con Título, Subtítulo y Filtros Segmentados */}
-      <div className="flex flex-wrap items-center justify-between gap-3 mb-3 pb-3 border-b border-border">
-        <div className="min-w-0 flex-1">
-          <h3 className="text-base font-titulos font-semibold text-text tracking-normal truncate">
-            Últimas facturas
-          </h3>
-          <p className="text-xs font-sans font-medium text-text-muted mt-0.5 truncate">
-            Comprobantes fiscales generados en el mostrador POS y canal B2B
-          </p>
-        </div>
-
-        {/* Filtros Segmentados */}
-        <div className="flex items-center p-1 rounded-xl superficie-control text-xs shrink-0">
+    <Tarjeta
+      titulo="Últimas facturas"
+      subtitulo="Comprobantes fiscales generados en el mostrador POS y canal B2B"
+      sinRelleno
+      className={`h-full ${className}`}
+      accion={
+        <div className="flex items-center p-1 rounded-xl superficie-control text-xs font-sans">
           {(
             [
               { id: 'todas', label: 'Todas' },
@@ -145,9 +139,9 @@ export function TablaFacturas({
               key={t.id}
               type="button"
               onClick={() => setFiltro(t.id)}
-              className={`px-3 py-1 rounded-lg text-xs font-medium transition-all cursor-pointer ${
+              className={`px-2.5 py-1 rounded-lg font-medium transition-colors whitespace-nowrap cursor-pointer ${
                 filtro === t.id
-                  ? 'bg-brand-600 text-btn-primario-texto shadow-sm'
+                  ? 'bg-brand-600 text-btn-primario-texto font-semibold shadow-xs'
                   : 'text-text-muted hover:text-text'
               }`}
             >
@@ -155,9 +149,11 @@ export function TablaFacturas({
             </button>
           ))}
         </div>
-      </div>
-
-      {/* 2. Tabla sin Scroll Horizontal con 4 Columnas Exactas */}
+      }
+    >
+      <div className="flex flex-col justify-between h-full">
+        {/* 2. Tabla sin Scroll Horizontal con 4 Columnas Exactas */}
+        <div className="px-1 sm:px-2">
       <div className="w-full overflow-hidden">
         <table className="w-full border-collapse table-fixed">
           <thead>
@@ -236,24 +232,26 @@ export function TablaFacturas({
           </tbody>
         </table>
       </div>
-
-      {/* 3. Pie de Tabla: Contador y Enlace */}
-      <div className="flex items-center justify-between gap-3 pt-3 mt-2 border-t border-border/70 text-xs">
-        <span className="text-text-muted font-sans tabular-nums">
-          Mostrando {mostradas.length} de {filtradas.length} facturas
-        </span>
-        {onVerTodas && (
-          <button
-            type="button"
-            onClick={onVerTodas}
-            className="text-brand-400 hover:text-brand-300 font-sans font-medium transition-colors flex items-center gap-1.5 cursor-pointer"
-          >
-            <span>Ver todas las facturas</span>
-            <ArrowRight className="w-3.5 h-3.5" />
-          </button>
-        )}
       </div>
-    </div>
+
+        {/* 3. Pie de Tabla: Contador y Enlace */}
+        <div className="px-5 py-3 border-t border-border flex items-center justify-between text-xs font-sans mt-auto">
+          <span className="text-text-muted font-sans font-medium tabular-nums">
+            Mostrando {mostradas.length} de {filtradas.length} facturas
+          </span>
+          {onVerTodas && (
+            <button
+              type="button"
+              onClick={onVerTodas}
+              className="text-text-muted hover:text-text font-sans font-medium transition-colors flex items-center gap-1.5 cursor-pointer group"
+            >
+              <span>Ver todas las facturas</span>
+              <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
+            </button>
+          )}
+        </div>
+      </div>
+    </Tarjeta>
   );
 }
 

@@ -11,6 +11,7 @@
  */
 
 import React, { useMemo } from 'react';
+import { Tarjeta } from './Tarjeta';
 import {
   CheckCircle2,
   UserCheck,
@@ -106,21 +107,21 @@ export function TarjetaActivos({
   ];
 
   return (
-    <div className={`vidrio p-5 sm:p-6 ${className}`}>
-      {/* 1. Cabecera: Título sin subtítulo largo + Badge de Total */}
-      <div className="flex items-center justify-between gap-3 mb-4 pb-3 border-b border-border">
-        <div className="flex items-center gap-2">
-          <PackageCheck className="w-4 h-4 text-brand-500" />
-          <h3 className="text-base font-titulos font-semibold text-text tracking-normal">
-            Activos
-          </h3>
+    <Tarjeta
+      titulo="Activos"
+      className={`w-full ${className}`}
+      accion={
+        <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg superficie-control text-xs font-sans whitespace-nowrap">
+          <span className="text-text-muted font-medium">Total:</span>
+          <span className="font-semibold text-text tabular-nums">
+            {data.total}
+          </span>
+          <span className="text-text-muted font-medium">equipos</span>
         </div>
-        <Insignia variante="neutral" tamano="sm">
-          Total: {data.total} equipos
-        </Insignia>
-      </div>
-
-      {/* 2. Barra Segmentada Horizontal Fina (h-2 rounded-full) */}
+      }
+    >
+      <div className="space-y-3 font-sans -my-1">
+        {/* 2. Barra Segmentada Horizontal Fina (h-2 rounded-full) */}
       <div
         className="w-full h-2 rounded-full overflow-hidden flex superficie-control mb-4"
         title={`Disponible: ${data.disponible} (${pDisp}%) | Asignado: ${data.asignado} (${pAsig}%) | Mantenimiento: ${data.mantenimiento} (${pMant}%) | Baja: ${data.baja} (${pBaja}%)`}
@@ -177,7 +178,8 @@ export function TarjetaActivos({
           </div>
         ))}
       </div>
-    </div>
+      </div>
+    </Tarjeta>
   );
 }
 
