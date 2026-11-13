@@ -49,11 +49,16 @@ export function presentResult<T>(c: Context, result: Result<T, DomainError>, suc
     case 'TOTP_NO_CONFIGURADO':
     case 'TOTP_YA_ACTIVADO':
     case 'TOKEN_RECUPERACION_INVALIDO':
+    case 'RESET_TOKEN_INVALIDO':
+    case 'CODIGO_OTP_INVALIDO':
+    case 'CODIGO_OTP_EXPIRADO':
     case 'PASSWORDS_NO_COINCIDEN':
       status = 400; // Bad Request
       break;
     case 'LOGIN_BLOQUEADO':
     case 'LIMITE_SOLICITUDES_EXCEDIDO':
+    case 'CODIGO_OTP_BLOQUEADO':
+    case 'REENVIO_EN_COOLDOWN':
       status = 429; // Too Many Requests
       break;
         case 'TURNO_YA_ABIERTO':
@@ -100,6 +105,14 @@ export function presentResult<T>(c: Context, result: Result<T, DomainError>, suc
 
   if ('tempToken' in error && (error as { tempToken?: unknown }).tempToken) {
     responseBody.tempToken = (error as { tempToken: unknown }).tempToken;
+  }
+
+  if ('intentosRestantes' in error && (error as { intentosRestantes?: unknown }).intentosRestantes !== undefined) {
+    responseBody.intentosRestantes = (error as { intentosRestantes: unknown }).intentosRestantes;
+  }
+
+  if ('segundosRestantes' in error && (error as { segundosRestantes?: unknown }).segundosRestantes !== undefined) {
+    responseBody.segundosRestantes = (error as { segundosRestantes: unknown }).segundosRestantes;
   }
 
   return c.json(responseBody, status);

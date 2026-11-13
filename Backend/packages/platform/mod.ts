@@ -17,4 +17,6 @@ export * from './src/hashing/argon2-password-hasher.ts';
 export * from './src/jwt/jwt-token-service.ts';
 export * from './src/totp/totp-service.ts';
 export * from './src/mailer/mailer.ts';
+export * from './src/mailer/gmail-mailer.ts';
+export * from './src/crypto/reset-crypto.ts';
 export * from './src/asistente/gemini-asistente.service.ts';

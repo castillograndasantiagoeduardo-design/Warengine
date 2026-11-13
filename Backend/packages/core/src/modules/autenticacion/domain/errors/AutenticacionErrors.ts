@@ -86,5 +86,49 @@ export class PasswordsNoCoincidenError extends DomainError {
   }
 }
 
+export class CodigoOtpInvalidoError extends DomainError {
+  public readonly code = 'CODIGO_OTP_INVALIDO';
+  public readonly intentosRestantes?: number;
+  constructor(mensaje = 'El código ingresado es incorrecto.', intentosRestantes?: number) {
+    super(mensaje);
+    this.intentosRestantes = intentosRestantes;
+  }
+}
+
+export class CodigoOtpExpiradoError extends DomainError {
+  public readonly code = 'CODIGO_OTP_EXPIRADO';
+  constructor(mensaje = 'El código ha expirado. Solicita uno nuevo.') {
+    super(mensaje);
+  }
+}
+
+export class CodigoOtpBloqueadoError extends DomainError {
+  public readonly code = 'CODIGO_OTP_BLOQUEADO';
+  constructor(
+    mensaje = 'Has superado el límite de 5 intentos. El código ha sido bloqueado por seguridad. Solicita uno nuevo.',
+  ) {
+    super(mensaje);
+  }
+}
+
+export class ReenvioOtpEnCooldownError extends DomainError {
+  public readonly code = 'REENVIO_EN_COOLDOWN';
+  public readonly segundosRestantes: number;
+  constructor(segundosRestantes: number) {
+    super(
+      `Debes esperar ${segundosRestantes} segundos antes de solicitar un nuevo código de verificación.`,
+    );
+    this.segundosRestantes = segundosRestantes;
+  }
+}
+
+export class ResetTokenInvalidoError extends DomainError {
+  public readonly code = 'RESET_TOKEN_INVALIDO';
+  constructor(mensaje = 'El token de restablecimiento es inválido o ha expirado.') {
+    super(mensaje);
+  }
+}
+
+
 
 

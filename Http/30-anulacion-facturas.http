@@ -76,14 +76,3 @@ Authorization: Bearer {{token}}
 
 ### 9. Un cajero NO puede anular -> 403 PERMISO_DENEGADO
 # (inicia sesión con un cajero y repite el paso 4 con su token)
-
-
-
-
-
-
-
-
-
-
-

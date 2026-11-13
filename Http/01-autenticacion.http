@@ -328,3 +328,49 @@ Content-Type: application/json
 ###
 
 
+
+
+# ==============================================================================
+# FLUJO DE RECUPERACIÓN GLASSY OTP V4 (CÓDIGO 4 DÍGITOS + RESET TOKEN)
+# ==============================================================================
+
+### 1. Solicitar código OTP de 4 dígitos (y Reenvío "Resend")
+# Cooldown mínimo de 60 segundos entre reenvíos.
+# Expira en 10 minutos. Anti-enumeración: siempre 200 OK.
+# @name forgotPassword
+POST {{baseUrl}}/auth/forgot-password
+Content-Type: application/json
+
+{
+  "email": "superadmin@warengine.local"
+}
+
+###
+
+### 2. Verificar código OTP de 4 dígitos
+# Validación automática al ingresar el cuarto dígito.
+# Bloqueo estricto tras 5 intentos fallidos (SELECT ... FOR UPDATE).
+# Devuelve resetToken temporal válido por 15 minutos.
+# @name verifyCode
+POST {{baseUrl}}/auth/verify-code
+Content-Type: application/json
+
+{
+  "email": "superadmin@warengine.local",
+  "code": "1234"
+}
+
+###
+
+### 3. Restablecer contraseña con resetToken
+# Hashea con Argon2id (m=65536, t=3, p=4).
+# Marca tokens como usados y REVOCA todas las sesiones (refresh_tokens revocado=1 y tokens_invalidados_en).
+POST {{baseUrl}}/auth/reset-password
+Content-Type: application/json
+
+{
+  "resetToken": "{{verifyCode.response.body.resetToken}}",
+  "newPassword": "NuevaPasswordSegura2026!"
+}
+
+###

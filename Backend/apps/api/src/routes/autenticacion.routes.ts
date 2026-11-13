@@ -10,6 +10,10 @@ import { desactivar2faController } from '../controllers/autenticacion/2fa/desact
 import { solicitarRecuperacionController } from '../controllers/autenticacion/recuperar-password/solicitar-recuperacion.controller.ts';
 import { validarTokenController } from '../controllers/autenticacion/recuperar-password/validar-token.controller.ts';
 import { restablecerPasswordController } from '../controllers/autenticacion/recuperar-password/restablecer-password.controller.ts';
+import { forgotPasswordController } from '../controllers/autenticacion/recuperar-password/forgot-password.controller.ts';
+import { verifyCodeController } from '../controllers/autenticacion/recuperar-password/verify-code.controller.ts';
+import { resetPasswordController } from '../controllers/autenticacion/recuperar-password/reset-password.controller.ts';
+import { createIpRateLimiter } from '../middlewares/rate-limit.middleware.ts';
 import { authMiddleware } from '../middlewares/auth.middleware.ts';
 import { obtenerIdentidad } from '../utils/identidad.ts';
 import { safeHandler } from '../utils/handler.ts';
@@ -51,6 +55,17 @@ export function createAutenticacionRoutes(container: AppContainer): Hono {
   api.post('/recuperar-password/solicitar', solicitarRecuperacionController(container));
   api.get('/recuperar-password/validar', validarTokenController(container));
   api.post('/recuperar-password/restablecer', restablecerPasswordController(container));
+
+  // Flujo OTP de 4 dígitos Glassy OTP V4 (Rate Limit: 5 peticiones / 1 min por IP)
+  const otpRateLimiter = createIpRateLimiter({
+    ventanaMs: 60 * 1000,
+    maxPeticiones: 5,
+    mensaje: 'Demasiadas solicitudes de recuperación desde esta IP. Intenta de nuevo en un minuto.',
+  });
+
+  api.post('/forgot-password', otpRateLimiter, forgotPasswordController(container));
+  api.post('/verify-code', otpRateLimiter, verifyCodeController(container));
+  api.post('/reset-password', otpRateLimiter, resetPasswordController(container));
 
   return api;
 }

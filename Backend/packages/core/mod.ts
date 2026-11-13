@@ -33,6 +33,9 @@ export * from './src/modules/autenticacion/application/use-cases/Desactivar2FAUs
 export * from './src/modules/autenticacion/application/use-cases/SolicitarRecuperacionPasswordUseCase.ts';
 export * from './src/modules/autenticacion/application/use-cases/ValidarTokenPasswordResetUseCase.ts';
 export * from './src/modules/autenticacion/application/use-cases/RestablecerPasswordUseCase.ts';
+export * from './src/modules/autenticacion/application/use-cases/ForgotPasswordUseCase.ts';
+export * from './src/modules/autenticacion/application/use-cases/VerifyCodeUseCase.ts';
+export * from './src/modules/autenticacion/application/use-cases/ResetPasswordUseCase.ts';
 export * from './src/modules/autenticacion/application/use-cases/ObtenerSesionActualUseCase.ts';
 
 
