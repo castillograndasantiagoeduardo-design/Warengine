@@ -211,22 +211,31 @@ export function LoginForm({
           )}
         </div>
 
-        {/* Checkbox 'Recordarme' (Extiende sesión a 30 días según RF-SA-G4) */}
-        <div className="flex items-center gap-2 pt-0.5">
-          <input
-            id={rememberCheckboxId}
-            type="checkbox"
-            checked={values.recordarme}
-            onChange={(e) => setCampo('recordarme', e.target.checked)}
-            disabled={isSubmitting || rateLimit.bloqueado}
-            className="w-3.5 h-3.5 rounded bg-[#0f192e] border border-white/20 text-[#E9B949] focus:ring-[#E9B949] accent-[#E9B949] cursor-pointer"
-          />
-          <label
-            htmlFor={rememberCheckboxId}
-            className="text-[11px] text-white/70 font-[family-name:var(--font-archivo)] select-none cursor-pointer hover:text-white transition-colors"
+        {/* Fila: Recordarme y Enlace Olvidé Contraseña */}
+        <div className="flex items-center justify-between gap-2 pt-0.5">
+          <div className="flex items-center gap-2">
+            <input
+              id={rememberCheckboxId}
+              type="checkbox"
+              checked={values.recordarme}
+              onChange={(e) => setCampo('recordarme', e.target.checked)}
+              disabled={isSubmitting || rateLimit.bloqueado}
+              className="w-3.5 h-3.5 rounded bg-[#0f192e] border border-white/20 text-[#E9B949] focus:ring-[#E9B949] accent-[#E9B949] cursor-pointer"
+            />
+            <label
+              htmlFor={rememberCheckboxId}
+              className="text-[11px] text-white/70 font-[family-name:var(--font-archivo)] select-none cursor-pointer hover:text-white transition-colors"
+            >
+              Recordar (30d)
+            </label>
+          </div>
+
+          <a
+            href="/recuperar-password"
+            className="text-[11px] text-[#E9B949] hover:text-[#f3cd6e] hover:underline transition-colors font-[family-name:var(--font-archivo)]"
           >
-            Recordar mi dispositivo (30 días)
-          </label>
+            ¿Olvidaste tu clave?
+          </a>
         </div>
 
         {/* Botón Píldora Primario Dorado con Hover Invertido y Spinner */}

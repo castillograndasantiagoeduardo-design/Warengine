@@ -44,6 +44,7 @@ app.get('/health', (c) => c.text('Warengine API - OK'));
 // Registro de módulos
 const authRoutes = createAutenticacionRoutes(container);
 app.route('/auth', authRoutes);
+app.route('/', authRoutes); // Alias directos para /forgot-password, /verify-code, /reset-password
 
 const adminRoutes = createAdministracionRoutes(container);
 app.route('/administracion', adminRoutes);

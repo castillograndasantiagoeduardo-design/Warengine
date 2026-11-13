@@ -1,5 +1,6 @@
 import { sql } from 'drizzle-orm';
 import {
+  bigint,
   char,
   check,
   date,
@@ -184,21 +185,27 @@ export const refresh_tokens = mysqlTable('refresh_tokens', {
 
 /**
  * Tabla: password_reset_tokens
- * Tokens de un solo uso para recuperación de contraseña olvidada.
+ * Códigos OTP y tokens de recuperación de contraseña de un solo uso.
  */
 export const password_reset_tokens = mysqlTable('password_reset_tokens', {
-  id_password_reset_token: char('id_password_reset_token', { length: 36 })
-    .notNull()
-    .default(sql.raw('(UUID())'))
-    .primaryKey(),
-  usuario_id: char('usuario_id', { length: 36 })
+  id: bigint('id', { mode: 'number', unsigned: true }).autoincrement().primaryKey(),
+  id_usuario: char('id_usuario', { length: 36 })
     .notNull()
     .references(() => usuarios.id_usuario, { onDelete: 'cascade' }),
-  token_hash: varcharBin('token_hash', { length: 255 }).notNull(),
-  expira_en: datetime('expira_en', { mode: 'date' }).notNull(),
-  usado: tinyint('usado').notNull().default(0),
+  email: varchar('email', { length: 150 }).notNull(),
+  code_hash: char('code_hash', { length: 64 }),
+  attempts: tinyint('attempts', { unsigned: true }).notNull().default(0),
+  expires_at: datetime('expires_at', { mode: 'date' }).notNull(),
+  reset_token_hash: char('reset_token_hash', { length: 64 }),
+  reset_token_expires_at: datetime('reset_token_expires_at', { mode: 'date' }),
+  used: tinyint('used').notNull().default(0),
+  created_at: datetime('created_at', { mode: 'date' })
+    .notNull()
+    .default(sql.raw('CURRENT_TIMESTAMP')),
 }, (table) => [
-  index('idx_password_reset_usuario_id').on(table.usuario_id),
+  index('idx_email').on(table.email),
+  index('idx_token').on(table.reset_token_hash),
+  index('fk_prt_usuario').on(table.id_usuario),
 ]);
 
 /**

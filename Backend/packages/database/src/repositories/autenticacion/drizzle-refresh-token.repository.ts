@@ -49,4 +49,10 @@ export class DrizzleRefreshTokenRepository implements IRefreshTokenRepository {
       .set({ revocado: 1 })
       .where(eq(refresh_tokens.token_hash, tokenHash));
   }
+
+  public async revocarTodosPorUsuario(usuarioId: string): Promise<void> {
+    await this.db.update(refresh_tokens)
+      .set({ revocado: 1 })
+      .where(eq(refresh_tokens.usuario_id, usuarioId));
+  }
 }

@@ -3,7 +3,12 @@ import { IPasswordService } from '@warengine/core';
 
 export class Argon2PasswordHasher implements IPasswordService {
   public async hashear(plain: string): Promise<string> {
-    return await argon2.hash(plain);
+    return await argon2.hash(plain, {
+      type: argon2.argon2id,
+      memoryCost: 65536,
+      timeCost: 3,
+      parallelism: 4,
+    });
   }
 
   public async comparar(plain: string, hash: string): Promise<boolean> {

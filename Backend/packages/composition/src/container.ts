@@ -53,6 +53,14 @@ import { JwtTokenService } from '../../platform/src/jwt/jwt-token-service.ts';
 import { Argon2PasswordHasher } from '../../platform/src/hashing/argon2-password-hasher.ts';
 import { TotpService } from '../../platform/src/totp/totp-service.ts';
 import { PlatformMailer } from '../../platform/src/mailer/mailer.ts';
+import { GmailMailer } from '../../platform/src/mailer/gmail-mailer.ts';
+import {
+  generarCodigoOtp,
+  hashearCodigoOtp,
+  compararCodigoOtp,
+  generarResetToken,
+  hashearResetToken,
+} from '../../platform/src/crypto/reset-crypto.ts';
 import { GeminiAsistenteService } from '../../platform/src/asistente/gemini-asistente.service.ts';
 import { validarYObtenerJwtSecret } from '../../platform/src/config/jwt.config.ts';
 
@@ -72,6 +80,9 @@ import {
   SolicitarRecuperacionPasswordUseCase,
   ValidarTokenPasswordResetUseCase,
   RestablecerPasswordUseCase,
+  ForgotPasswordUseCase,
+  VerifyCodeUseCase,
+  ResetPasswordUseCase,
   ObtenerSesionActualUseCase,
 
   ListarSucursalesUseCase,
@@ -194,6 +205,9 @@ export interface AppContainer {
     solicitarRecuperacionPassword: SolicitarRecuperacionPasswordUseCase;
     validarTokenPasswordReset: ValidarTokenPasswordResetUseCase;
     restablecerPassword: RestablecerPasswordUseCase;
+    forgotPassword: ForgotPasswordUseCase;
+    verifyCode: VerifyCodeUseCase;
+    resetPassword: ResetPasswordUseCase;
     obtenerSesionActual: ObtenerSesionActualUseCase;
   };
 
@@ -427,6 +441,34 @@ export function createContainer(_env?: Record<string, string>): AppContainer {
     usuarioRepository,
     passwordHasher,
     auditoriaRepository,
+  );
+
+  const resetHmacSecret = Deno.env.get('RESET_HMAC_SECRET') || 'warengine_reset_hmac_secret_production_ready_default';
+  const gmailMailer = new GmailMailer();
+
+  const forgotPasswordUseCase = new ForgotPasswordUseCase(
+    usuarioRepository,
+    passwordResetRepository,
+    gmailMailer,
+    auditoriaRepository,
+    generarCodigoOtp,
+    (codigo, email) => hashearCodigoOtp(codigo, email, resetHmacSecret),
+  );
+
+  const verifyCodeUseCase = new VerifyCodeUseCase(
+    passwordResetRepository,
+    (codigo, email, hashGuardado) => compararCodigoOtp(codigo, email, resetHmacSecret, hashGuardado),
+    generarResetToken,
+    hashearResetToken,
+  );
+
+  const resetPasswordUseCase = new ResetPasswordUseCase(
+    passwordResetRepository,
+    refreshTokenRepository,
+    usuarioRepository,
+    passwordHasher,
+    auditoriaRepository,
+    hashearResetToken,
   );
 
   const validarPermisoUseCase = new ValidarPermisoUseCase(
@@ -800,6 +842,9 @@ export function createContainer(_env?: Record<string, string>): AppContainer {
       solicitarRecuperacionPassword: solicitarRecuperacionPasswordUseCase,
       validarTokenPasswordReset: validarTokenPasswordResetUseCase,
       restablecerPassword: restablecerPasswordUseCase,
+      forgotPassword: forgotPasswordUseCase,
+      verifyCode: verifyCodeUseCase,
+      resetPassword: resetPasswordUseCase,
       obtenerSesionActual: obtenerSesionActualUseCase,
     },
 

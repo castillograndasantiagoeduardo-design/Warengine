@@ -30,7 +30,8 @@
     "@hono/swagger-ui": "npm:@hono/swagger-ui@^0.5.0",
     "@google/generative-ai": "npm:@google/generative-ai@^0.24.1",
     "@modelcontextprotocol/sdk": "npm:@modelcontextprotocol/sdk@^1.32.1",
-    "@modelcontextprotocol/sdk/": "npm:/@modelcontextprotocol/sdk@^1.32.1/"
+    "@modelcontextprotocol/sdk/": "npm:/@modelcontextprotocol/sdk@^1.32.1/",
+    "nodemailer": "npm:nodemailer@^6.9.16"
   },
   "tasks": {
     "dev-api": "deno run --allow-net --allow-env --allow-read --allow-ffi --allow-run --env apps/api/src/main.ts",
