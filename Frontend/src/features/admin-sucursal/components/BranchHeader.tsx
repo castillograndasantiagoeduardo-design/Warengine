@@ -96,7 +96,7 @@ export function BranchHeader({
         {/* Lado Izquierdo: Cápsula de Sucursal + Buscador Rápido */}
         <div className="flex items-center gap-3 flex-1 max-w-xl">
           {/* Cápsula de Sucursal Activa */}
-          <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-surface border border-border shrink-0">
+          <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl superficie-control shrink-0">
             <Building2 className="w-3.5 h-3.5 text-brand-500" />
             <span className="font-sans font-medium text-xs text-text truncate max-w-[130px] sm:max-w-[180px]">
               {sucursalNombre}
@@ -125,7 +125,7 @@ export function BranchHeader({
         {/* Lado Derecho: Rango de Fechas + SelectorPaleta + Toggle Tema + Cápsula Perfil */}
         <div className="flex items-center gap-2 shrink-0">
           {/* Selector de Período (Hoy | 7D | 30D) */}
-          <div className="hidden md:flex items-center p-1 rounded-xl bg-surface border border-border text-xs">
+          <div className="hidden md:flex items-center p-1 rounded-xl superficie-control text-xs">
             {PERIODOS.map((p) => {
               const isActive = periodo === p.id;
               return (
@@ -166,7 +166,7 @@ export function BranchHeader({
           {/* Cápsula de Perfil de Usuario Ejecutiva (Imagen 1) */}
           <div
             onClick={onOpenProfile}
-            className="flex items-center gap-2.5 pl-1.5 pr-3 py-1 rounded-xl bg-surface border border-border cursor-pointer hover:border-border-hover transition-colors shrink-0"
+            className="flex items-center gap-2.5 pl-1.5 pr-3 py-1 rounded-xl superficie-control cursor-pointer hover:border-brand-400/30 transition-colors shrink-0"
             title="Mi perfil de administrador"
             role="button"
             tabIndex={0}

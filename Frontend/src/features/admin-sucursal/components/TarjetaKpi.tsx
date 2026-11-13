@@ -37,7 +37,7 @@ export function TarjetaKpi({
 }: TarjetaKpiProps) {
   return (
     <div
-      className={`vidrio p-5 sm:p-6 flex flex-col justify-between h-full ${className}`}
+      className={`vidrio vidrio-kpi p-5 sm:p-6 flex flex-col justify-between h-full ${className}`}
     >
       {/* Nivel 1: Fila Superior Fija (h-10) */}
       <div className="h-10 flex items-center justify-between gap-3 mb-3">

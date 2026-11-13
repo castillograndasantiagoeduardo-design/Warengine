@@ -122,7 +122,7 @@ export function TarjetaActivos({
 
       {/* 2. Barra Segmentada Horizontal Fina (h-2 rounded-full) */}
       <div
-        className="w-full h-2 rounded-full overflow-hidden flex bg-surface border border-border mb-4"
+        className="w-full h-2 rounded-full overflow-hidden flex superficie-control mb-4"
         title={`Disponible: ${data.disponible} (${pDisp}%) | Asignado: ${data.asignado} (${pAsig}%) | Mantenimiento: ${data.mantenimiento} (${pMant}%) | Baja: ${data.baja} (${pBaja}%)`}
       >
         <div

@@ -304,11 +304,10 @@ export function SelectorPaleta() {
         />
       </button>
 
-      {/* Panel Apariencia del dashboard (flotante con posición absoluta estricta) */}
+      {/* Panel Apariencia del dashboard (vista única sin pestañas) */}
       {abierto && (
         <div
-          className="!absolute right-0 mt-2.5 w-80 sm:w-[410px] max-h-[calc(100vh-88px)] overflow-y-auto vidrio-popover p-4 space-y-3.5 text-xs z-50 shadow-2xl custom-scrollbar animate-in fade-in zoom-in-95 duration-150"
-          style={{ position: 'absolute', top: 'calc(100% + 4px)', right: 0 }}
+          className="absolute right-0 mt-2.5 w-80 sm:w-[410px] max-h-[calc(100vh-88px)] overflow-y-auto vidrio-popover p-4 space-y-3.5 text-xs z-50 shadow-2xl"
           role="dialog"
           aria-label="Apariencia del dashboard"
         >

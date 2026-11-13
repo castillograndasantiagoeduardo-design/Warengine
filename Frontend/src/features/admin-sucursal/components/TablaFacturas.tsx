@@ -132,7 +132,7 @@ export function TablaFacturas({
         </div>
 
         {/* Filtros Segmentados */}
-        <div className="flex items-center p-1 rounded-xl bg-surface border border-border text-xs shrink-0">
+        <div className="flex items-center p-1 rounded-xl superficie-control text-xs shrink-0">
           {(
             [
               { id: 'todas', label: 'Todas' },
@@ -195,7 +195,7 @@ export function TablaFacturas({
                   {/* Columna 2: Cliente (40%) */}
                   <td className="py-1.5 px-2 align-middle">
                     <div className="flex items-center gap-2.5 min-w-0">
-                      <div className="w-8 h-8 rounded-lg bg-surface border border-border flex items-center justify-center shrink-0 text-xs font-semibold text-text">
+                      <div className="w-8 h-8 rounded-lg superficie-control flex items-center justify-center shrink-0 text-xs font-semibold text-text">
                         {fac.clienteIniciales}
                       </div>
                       <div className="min-w-0 flex-1">

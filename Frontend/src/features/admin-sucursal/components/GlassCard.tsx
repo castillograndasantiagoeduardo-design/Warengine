@@ -34,21 +34,13 @@ export function GlassCard({
   return (
     <div
       className={`
-        relative overflow-hidden rounded-2xl
-        bg-[#111d3f]/65 backdrop-blur-md
-        border border-white/[0.08]
-        shadow-[0_8px_24px_0_rgba(2,8,23,0.22)]
-        ${hoverEffect ? 'transition-all duration-200 hover:border-white/[0.16] hover:shadow-[0_12px_32px_0_rgba(2,8,23,0.35)] hover:-translate-y-0.5' : ''}
+        vidrio overflow-hidden
+        ${hoverEffect ? 'hover:-translate-y-1' : ''}
         ${PADDING_MAP[padding]}
         ${className}
       `}
       {...props}
     >
-      {/* Sutil resplandor de borde superior tipo luz difusa */}
-      <div
-        className="pointer-events-none absolute inset-x-0 top-0 h-[1px] bg-gradient-to-r from-transparent via-white/10 to-transparent"
-        aria-hidden="true"
-      />
       {children}
     </div>
   );

@@ -169,7 +169,7 @@ export function GraficoVentas({
         </div>
 
         {/* Conmutador Segmentado: Barras | Curva analítica */}
-        <div className="flex items-center p-1 rounded-xl bg-surface border border-border text-xs shrink-0">
+        <div className="flex items-center p-1 rounded-xl superficie-control text-xs shrink-0">
           <button
             type="button"
             onClick={() => setTipoGrafico('barras')}

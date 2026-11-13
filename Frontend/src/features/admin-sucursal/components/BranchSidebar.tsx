@@ -198,7 +198,7 @@ export function BranchSidebar({
             hover:bg-white/[0.04]
           `}
         >
-          <div className="w-8 h-8 rounded-lg bg-surface border border-border text-xs font-semibold text-text flex items-center justify-center shrink-0">
+          <div className="w-8 h-8 rounded-lg superficie-control text-xs font-semibold text-text flex items-center justify-center shrink-0">
             {userInitial}
           </div>
           {!colapsado && (
