@@ -3,9 +3,15 @@
 /**
  * BranchSidebar.tsx — Sidebar flotante con Glassmorphism Ejecutivo (.vidrio-fuerte).
  *
- * Soporta dos modos:
- * 1. Expandido (w-60): Logo "W", secciones MENÚ, OPERACIONES, SISTEMA y pie con perfil.
- * 2. Colapsado / Dock (w-[68px]): Botones centrados w-11 h-11 con title nativo.
+ * Implementación oficial idéntica al proyecto de prueba (localhost:3005):
+ * 1. Expandido (w-64):
+ *    - Encabezado: Logo "W", texto "WarEngine" y "Admin. de sucursal", botón PanelLeftClose a la derecha (ml-auto).
+ *    - Navegación: Categorías MENÚ, OPERACIONES, SISTEMA con gap uniforme y estilo translúcido.
+ *    - Pie: Perfil de usuario y botón Cerrar sesión.
+ * 2. Colapsado (w-20):
+ *    - Encabezado: Logo "W" centrado.
+ *    - Navegación: Íconos centrados w-11 h-11 con separadores horizontales (w-6 h-px bg-border).
+ *    - Pie: Avatar de usuario, botón Cerrar sesión y al final botón PanelLeftOpen para volver a expandir.
  */
 
 import React, { useState } from 'react';
@@ -19,8 +25,8 @@ import {
   BarChart3,
   Settings,
   LogOut,
-  ChevronLeft,
-  ChevronRight,
+  PanelLeftClose,
+  PanelLeftOpen,
 } from 'lucide-react';
 
 export type BranchSection =
@@ -87,16 +93,16 @@ export function BranchSidebar({
         onClick={() => onSelectSection?.(item.id)}
         title={colapsado ? item.label : undefined}
         className={`
-          w-full flex items-center transition-all duration-150 cursor-pointer rounded-xl
+          flex items-center transition-all duration-150 cursor-pointer rounded-xl
           ${
             colapsado
-              ? 'justify-center w-11 h-11 mx-auto'
-              : 'gap-3 px-3 py-2 text-xs font-sans font-medium'
+              ? 'p-2.5 justify-center w-11 h-11'
+              : 'w-full px-3 py-2 text-left gap-3 text-xs font-sans font-medium'
           }
           ${
             isActive
               ? 'bg-brand-600/15 dark:bg-brand-500/18 border border-brand-600/30 dark:border-brand-400/40 text-brand-700 dark:text-slate-100 font-semibold shadow-sm'
-              : 'text-text-muted hover:text-text hover:bg-white/[0.04]'
+              : 'border border-transparent text-text-muted font-normal hover:text-text hover:bg-slate-900/5 dark:hover:bg-white/6'
           }
         `}
       >
@@ -112,82 +118,106 @@ export function BranchSidebar({
     <aside
       className={`
         vidrio-fuerte h-[calc(100vh-2rem)] rounded-2xl flex flex-col justify-between
-        transition-all duration-300 p-3 select-none
+        transition-all duration-300 select-none overflow-hidden shrink-0
         ${colapsado ? 'w-20' : 'w-64'}
         ${className}
       `}
+      aria-label="Barra lateral de navegación"
     >
-      {/* 1. Header con Logo Oficial y botón Colapsar */}
-      <div>
-        <div className="flex items-center justify-between gap-2 px-1 py-2 mb-4 border-b border-border">
-          <div className="flex items-center gap-2.5 min-w-0">
-            {/* Logo "W" Corporativo */}
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-brand-500 to-brand-600 text-btn-primario-texto flex items-center justify-center font-titulos font-semibold text-base shadow-sm shrink-0">
+      <div className="flex flex-col flex-1 overflow-y-auto overflow-x-hidden">
+        {/* 1. Header con Logo Oficial y botón Colapsar a la derecha */}
+        <div
+          className={`h-16 px-4 flex items-center border-b border-border shrink-0 ${
+            colapsado ? 'justify-center' : 'justify-between'
+          }`}
+        >
+          <div className="flex items-center gap-3 min-w-0">
+            {/* Logo "W" en cuadrado brand-600 redondeado */}
+            <div
+              className="w-8 h-8 rounded-lg bg-brand-600 flex items-center justify-center text-btn-primario-texto font-sans font-semibold text-sm shrink-0 shadow-sm shadow-brand-600/30 transition-colors duration-300"
+              title="WarEngine — Admin. de sucursal"
+              aria-label="Logo de WarEngine"
+            >
               W
             </div>
+
             {!colapsado && (
               <div className="min-w-0">
-                <div className="font-titulos font-semibold text-sm text-text leading-tight tracking-tight truncate">
+                <span className="font-titulos font-semibold text-sm tracking-normal text-text block leading-tight">
                   WarEngine
-                </div>
-                <div className="text-[10px] font-sans font-medium text-text-muted leading-tight truncate">
+                </span>
+                <span className="font-sans text-xs font-medium text-text-muted block leading-tight mt-0.5 whitespace-nowrap">
                   Admin. de sucursal
-                </div>
+                </span>
               </div>
             )}
           </div>
 
-          <button
-            type="button"
-            onClick={() => setColapsado(!colapsado)}
-            className="p-1 rounded-lg text-text-muted hover:text-text hover:bg-white/[0.04] transition-colors cursor-pointer hidden md:flex"
-            title={colapsado ? 'Expandir menú' : 'Colapsar menú'}
-            aria-label={colapsado ? 'Expandir menú' : 'Colapsar menú'}
-          >
-            {colapsado ? (
-              <ChevronRight className="w-4 h-4" />
-            ) : (
-              <ChevronLeft className="w-4 h-4" />
-            )}
-          </button>
+          {!colapsado && (
+            <button
+              type="button"
+              onClick={() => setColapsado(true)}
+              className="p-1.5 rounded-lg text-text-muted hover:text-text hover:bg-slate-900/5 dark:hover:bg-white/8 transition-colors shrink-0 cursor-pointer ml-auto"
+              title="Colapsar barra lateral"
+              aria-label="Colapsar barra lateral"
+            >
+              <PanelLeftClose className="w-4 h-4" />
+            </button>
+          )}
         </div>
 
-        {/* 2. Lista de Navegación por Secciones */}
-        <div className="space-y-4">
+        {/* 2. Navegación por Secciones */}
+        <nav
+          className={`p-3 space-y-5 flex-1 ${colapsado ? 'flex flex-col items-center' : ''}`}
+          aria-label="Navegación principal"
+        >
           {/* SECCIÓN 1: MENÚ */}
-          <div>
-            {!colapsado && (
-              <div className="px-3 text-[10px] uppercase tracking-wider font-semibold text-text-muted mb-1.5">
-                Menú
-              </div>
+          <div className={`space-y-1.5 ${colapsado ? 'w-full flex flex-col items-center' : ''}`}>
+            {!colapsado ? (
+              <p className="px-3 text-xs font-sans font-medium uppercase tracking-wide text-text-muted">
+                MENÚ
+              </p>
+            ) : (
+              <div className="w-6 h-px bg-border my-1" aria-hidden="true" />
             )}
-            <div className="space-y-1">{MENU_ITEMS.map(renderItem)}</div>
+            <div className={`space-y-1 ${colapsado ? 'w-full flex flex-col items-center' : ''}`}>
+              {MENU_ITEMS.map(renderItem)}
+            </div>
           </div>
 
           {/* SECCIÓN 2: OPERACIONES */}
-          <div>
-            {!colapsado && (
-              <div className="px-3 text-[10px] uppercase tracking-wider font-semibold text-text-muted mb-1.5">
-                Operaciones
-              </div>
+          <div className={`space-y-1.5 ${colapsado ? 'w-full flex flex-col items-center' : ''}`}>
+            {!colapsado ? (
+              <p className="px-3 text-xs font-sans font-medium uppercase tracking-wide text-text-muted">
+                OPERACIONES
+              </p>
+            ) : (
+              <div className="w-6 h-px bg-border my-1" aria-hidden="true" />
             )}
-            <div className="space-y-1">{OPERACIONES_ITEMS.map(renderItem)}</div>
+            <div className={`space-y-1 ${colapsado ? 'w-full flex flex-col items-center' : ''}`}>
+              {OPERACIONES_ITEMS.map(renderItem)}
+            </div>
           </div>
 
-          {/* SECCIÓN 3: SISTEMA (Imagen 1) */}
-          <div>
-            {!colapsado && (
-              <div className="px-3 text-[10px] uppercase tracking-wider font-semibold text-text-muted mb-1.5">
-                Sistema
-              </div>
+          {/* SECCIÓN 3: SISTEMA */}
+          <div className={`space-y-1.5 ${colapsado ? 'w-full flex flex-col items-center' : ''}`}>
+            {!colapsado ? (
+              <p className="px-3 text-xs font-sans font-medium uppercase tracking-wide text-text-muted">
+                SISTEMA
+              </p>
+            ) : (
+              <div className="w-6 h-px bg-border my-1" aria-hidden="true" />
             )}
-            <div className="space-y-1">{SISTEMA_ITEMS.map(renderItem)}</div>
+            <div className={`space-y-1 ${colapsado ? 'w-full flex flex-col items-center' : ''}`}>
+              {SISTEMA_ITEMS.map(renderItem)}
+            </div>
           </div>
-        </div>
+        </nav>
       </div>
 
-      {/* 3. Pie con Perfil de Usuario y Logout */}
-      <div className="pt-3 border-t border-border space-y-1.5">
+      {/* 3. Pie del Sidebar */}
+      <div className="p-3 border-t border-border shrink-0 space-y-1">
+        {/* Perfil del Administrador */}
         <button
           type="button"
           onClick={onOpenProfile}
@@ -195,7 +225,7 @@ export function BranchSidebar({
           className={`
             w-full flex items-center rounded-xl p-2 transition-colors cursor-pointer
             ${colapsado ? 'justify-center' : 'gap-2.5 text-left'}
-            hover:bg-white/[0.04]
+            hover:bg-slate-900/5 dark:hover:bg-white/6
           `}
         >
           <div className="w-8 h-8 rounded-lg superficie-control text-xs font-semibold text-text flex items-center justify-center shrink-0">
@@ -213,6 +243,7 @@ export function BranchSidebar({
           )}
         </button>
 
+        {/* Cerrar sesión */}
         <button
           type="button"
           onClick={() => logout()}
@@ -225,6 +256,19 @@ export function BranchSidebar({
           <LogOut className="w-4 h-4 shrink-0" />
           {!colapsado && <span>Cerrar sesión</span>}
         </button>
+
+        {/* Botón para expandir al final cuando está colapsado */}
+        {colapsado && (
+          <button
+            type="button"
+            onClick={() => setColapsado(false)}
+            className="w-full flex items-center justify-center p-2.5 rounded-xl text-text-muted hover:text-text hover:bg-slate-900/5 dark:hover:bg-white/8 transition-colors cursor-pointer pt-2 border-t border-border/50"
+            title="Expandir barra lateral"
+            aria-label="Expandir barra lateral"
+          >
+            <PanelLeftOpen className="w-4 h-4" />
+          </button>
+        )}
       </div>
     </aside>
   );
