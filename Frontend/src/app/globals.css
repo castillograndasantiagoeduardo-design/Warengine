@@ -335,7 +335,7 @@ html[data-paleta="oro"] {
   --vidrio-fallback: rgba(17, 25, 45, 0.95);
   --superficie-ctrl-bg: rgba(255, 255, 255, 0.05);
   --superficie-ctrl-borde: rgba(255, 255, 255, 0.1);
-  --kpi-glow-opacity: 0.12;
+  --kpi-glow-opacity: 0.2;
 }
 
 .light {
@@ -357,7 +357,7 @@ html[data-paleta="oro"] {
   --vidrio-fallback: rgba(255, 255, 255, 0.95);
   --superficie-ctrl-bg: rgba(255, 255, 255, 0.65);
   --superficie-ctrl-borde: rgba(15, 23, 42, 0.12);
-  --kpi-glow-opacity: 0.06;
+  --kpi-glow-opacity: 0.6;
 }
 
 /* ========================================================================== */
@@ -386,7 +386,7 @@ html[data-paleta="oro"] {
   background: linear-gradient(
     90deg,
     transparent 0%,
-    rgba(255, 255, 255, 0.2) 50%,
+    rgba(255, 255, 255, var(--kpi-glow-opacity, 0.2)) 50%,
     transparent 100%
   );
   pointer-events: none;
@@ -395,40 +395,6 @@ html[data-paleta="oro"] {
 .vidrio:hover {
   transform: translateY(-4px);
   border-color: var(--border-hover);
-}
-
-/* Resplandor tenue y localizado para tarjetas KPI y componentes destacados */
-.vidrio-kpi {
-  position: relative;
-  overflow: hidden;
-}
-
-.vidrio-kpi::after {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: radial-gradient(
-    circle 260px at 15% 0%,
-    var(--p-luz-1, #3b82f6) 0%,
-    rgba(255, 255, 255, 0.05) 40%,
-    transparent 75%
-  );
-  opacity: var(--kpi-glow-opacity, 0.12);
-  pointer-events: none;
-  border-radius: inherit;
-  transition: opacity 300ms ease;
-}
-
-.light .vidrio-kpi::after {
-  background: radial-gradient(
-    circle 260px at 15% 0%,
-    var(--p-luz-1, #3b82f6) 0%,
-    transparent 75%
-  );
-  opacity: var(--kpi-glow-opacity, 0.06);
 }
 
 .vidrio-fuerte {

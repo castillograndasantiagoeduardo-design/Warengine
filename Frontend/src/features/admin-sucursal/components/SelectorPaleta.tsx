@@ -269,7 +269,7 @@ export function SelectorPaleta() {
   const valorHexRolActivo = configCustom[rolActivo] || '#3b6cf2';
 
   return (
-    <div ref={contenedorRef} className="relative inline-block font-sans">
+    <div ref={contenedorRef} className="relative font-sans">
       {/* Botón de tema en la Barra Superior */}
       <button
         type="button"
