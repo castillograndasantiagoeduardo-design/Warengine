@@ -267,8 +267,19 @@ Utilitario puro en TypeScript (sin librerías externas) que:
   3. **EFECTO DE FONDO**: Control segmentado (`Orbes difusos` | `Aurora ambiental` | `Retícula + luz`, con `malla` como valor por defecto).
   4. **PERSONALIZAR COLORES (AVANZADO)**: Acordeón colapsable cerrado por defecto con 5 roles de color.
 
-### 6.2. Sidebar Flotante Colapsable (`BranchSidebar.tsx`)
+### 6.2. Sidebar Flotante Colapsable (`BranchSidebar.tsx`) y Enrutamiento App Router
 - Usa `.vidrio-fuerte h-[calc(100vh-2rem)] rounded-2xl flex flex-col justify-between select-none overflow-hidden shrink-0`.
+- **Navegación basada en rutas reales (`next/link` + `usePathname`)**:
+  - Configuración declarativa centralizada en `src/features/admin-sucursal/config/branch-navigation.config.ts` (`BRANCH_NAV_ITEMS` e `INVENTORY_SECTION_TABS`).
+  - Layout compartido en `src/app/(panel)/admin-sucursal/layout.tsx` que monta `BranchLayout` una sola vez para todas las subrutas.
+  - Subrutas del módulo:
+    - `/admin-sucursal` → Dashboard (`BranchOverviewView`)
+    - `/admin-sucursal/facturacion` → Facturación y Alertas (`BranchInvoicingView`)
+    - `/admin-sucursal/inventario` → Pestaña Productos (`BranchInventoryView`, envuelta por `inventario/layout.tsx` con `SectionTabs`)
+    - `/admin-sucursal/inventario/movimientos` → Pestaña Movimientos / Kardex (`BranchMovementsView`)
+    - `/admin-sucursal/inventario/proveedores` → Pestaña Proveedores (`BranchSuppliersView`)
+    - `/admin-sucursal/personal` → Personal y Turnos de Sede (`BranchStaffView`)
+    - `/admin-sucursal/clientes`, `/admin-sucursal/activos`, `/admin-sucursal/reportes`, `/admin-sucursal/configuracion` → Vistas con estado estándar `ModuleUnderConstruction`.
 - **Modo Expandido (`w-64`)**:
   - **Encabezado (`h-16 px-4 flex items-center justify-between border-b border-border`)**: A la izquierda el logo `"W"` (`w-8 h-8 rounded-lg bg-brand-600`) junto a `"WarEngine"` y `"Admin. de sucursal"`. Al extremo derecho (`ml-auto`), el botón con ícono `PanelLeftClose` para colapsar la barra lateral sin sobreponerse nunca al texto.
   - **Navegación**: Secciones `MENÚ` (`Dashboard`, `Facturación`, `Inventario`, `Clientes`), `OPERACIONES` (`Personal`, `Activos`, `Reportes`) y `SISTEMA` (`Configuración`).

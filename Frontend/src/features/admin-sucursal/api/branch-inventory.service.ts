@@ -396,21 +396,23 @@ export class BranchInventoryService implements IBranchInventoryService {
     desde?: string;
     hasta?: string;
   }): Promise<Blob> {
-    const params: Record<string, any> = {};
+    const params: Record<string, string | number | undefined> = {};
     if (filtros?.productoId) params.productoId = filtros.productoId;
     if (filtros?.sucursalId) params.sucursalId = filtros.sucursalId;
     if (filtros?.tipo) params.tipo = filtros.tipo;
     if (filtros?.desde) params.desde = filtros.desde;
     if (filtros?.hasta) params.hasta = filtros.hasta;
 
-    const queryString = new URLSearchParams(params).toString();
-    const url = `/inventario/kardex/exportar-csv${queryString ? `?${queryString}` : ''}`;
-    
-    const token = typeof window !== 'undefined' ? localStorage.getItem('warengine_token') : null;
-    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8017'}${url}`, {
-      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    // Usa IHttpClient (credentials: 'include' + renovación silenciosa de cookies HttpOnly).
+    // Como la respuesta es text/csv, parseResponse devuelve el contenido en texto plano.
+    const csvTexto = await this.http.get<string>(
+      '/inventario/kardex/exportar-csv',
+      { params },
+    );
+
+    return new Blob(['\uFEFF', csvTexto ?? ''], {
+      type: 'text/csv;charset=utf-8',
     });
-    return await response.blob();
   }
 }
 
