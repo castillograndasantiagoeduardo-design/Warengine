@@ -70,6 +70,8 @@ export function middleware(request: NextRequest) {
   }
 
   // 2. Redirección de compatibilidad: /dashboard redirige a /admin-sucursal
+  // NOTA (Fase 0 Admin de Sucursal): Esto incluye /dashboard/cuenta (2FA). La configuración
+  // de 2FA del admin de sucursal se migrará a /admin-sucursal/configuracion en su fase respectiva.
   if (pathname.startsWith('/dashboard')) {
     if (payload?.rolId === 2) {
       return NextResponse.redirect(new URL('/admin-sucursal', request.url));

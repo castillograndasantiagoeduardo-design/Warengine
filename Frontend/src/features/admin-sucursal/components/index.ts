@@ -45,3 +45,4 @@ export * from './MetodosPago';
 export * from './TarjetaActivos';
 export * from './FondoAmbiental';
 export * from './SelectorPaleta';
+export * from './shared';
