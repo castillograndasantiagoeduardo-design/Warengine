@@ -529,6 +529,7 @@ export function createContainer(_env?: Record<string, string>): AppContainer {
     alertaAdminRepository,
   );
   const atenderAlertaAdminUseCase = new AtenderAlertaAdminUseCase(
+    resolverAlcanceSucursalUseCase,
     alertaAdminRepository,
     auditoriaRepository,
   );

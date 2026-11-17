@@ -10,14 +10,27 @@ export interface ListarFacturasRequest {
     clienteId?: string;
     fechaInicio?: Date;
     fechaFin?: Date;
+    desde?: Date;
+    hasta?: Date;
     estado?: 'emitida' | 'anulada';
+    texto?: string;
+    tipo?: string;
     sucursalId?: number;
+    page?: number;
     limite?: number;
     offset?: number;
     actor: ActorAuditoria;
 }
 
-export type ListarFacturasResponse = Result<Factura[], DomainError>;
+export interface FacturasPaginadas {
+    items: Factura[];
+    total: number;
+    totalPaginas: number;
+    page: number;
+    limite: number;
+}
+
+export type ListarFacturasResponse = Result<FacturasPaginadas, DomainError>;
 
 export class ListarFacturasUseCase {
     constructor(
@@ -39,16 +52,40 @@ export class ListarFacturasUseCase {
             sucursalIdFiltro = sucursalId;
         }
 
-        const facturas = await this.facturaRepository.listar({
+        const limite = Math.min(Math.max(request.limite ?? 20, 1), 100);
+        const page = Math.max(request.page ?? (request.offset !== undefined ? Math.floor(request.offset / limite) + 1 : 1), 1);
+        const offset = request.offset !== undefined ? request.offset : (page - 1) * limite;
+        const fechaInicio = request.desde ?? request.fechaInicio;
+        const fechaFin = request.hasta ?? request.fechaFin;
+
+        const filtros = {
             sucursalId: sucursalIdFiltro,
             clienteId: request.clienteId,
-            fechaInicio: request.fechaInicio,
-            fechaFin: request.fechaFin,
+            fechaInicio,
+            fechaFin,
             estado: request.estado,
-            limite: request.limite ?? 20,
-            offset: request.offset ?? 0,
-        });
+            texto: request.texto,
+            tipo: request.tipo,
+            limite,
+            offset,
+        };
 
-        return Result.ok(facturas);
+        let resultado: { items: Factura[]; total: number };
+        if (this.facturaRepository.listarPaginado) {
+            resultado = await this.facturaRepository.listarPaginado(filtros);
+        } else {
+            const items = await this.facturaRepository.listar(filtros);
+            resultado = { items, total: items.length };
+        }
+
+        const totalPaginas = Math.ceil(resultado.total / limite);
+
+        return Result.ok({
+            items: resultado.items,
+            total: resultado.total,
+            totalPaginas,
+            page,
+            limite,
+        });
     }
 }

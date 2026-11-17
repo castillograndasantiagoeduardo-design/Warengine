@@ -1,11 +1,14 @@
-import { EstadoFactura, Factura, FacturaItem, FacturaPago, MedioPago } from '@warengine/core';
+import { DevolucionVenta, EstadoFactura, Factura, FacturaItem, FacturaPago, MedioPago } from '@warengine/core';
 import {
     FacturaItemRecord,
     FacturaPagoRecord,
     FacturaRecord,
 } from '../../schema/facturacion.schema.ts';
 
-export function facturaItemFromRow(row: FacturaItemRecord): FacturaItem {
+export function facturaItemFromRow(
+    row: FacturaItemRecord,
+    productoNombre?: string | null,
+): FacturaItem {
     return new FacturaItem(
         row.id_factura_item,
         row.factura_id,
@@ -14,6 +17,7 @@ export function facturaItemFromRow(row: FacturaItemRecord): FacturaItem {
         Number(row.precio_unitario),
         Number(row.descuento),
         Number(row.subtotal),
+        productoNombre,
     );
 }
 
@@ -32,6 +36,11 @@ export function facturaFromRow(
     row: FacturaRecord,
     items: FacturaItem[] = [],
     pagos: FacturaPago[] = [],
+    clienteNombre?: string | null,
+    clienteDocumento?: string | null,
+    cajeroNombre?: string | null,
+    tipoVenta?: 'POS' | 'B2B' | null,
+    devoluciones?: DevolucionVenta[],
 ): Factura {
     return new Factura(
         row.id_factura,
@@ -48,5 +57,10 @@ export function facturaFromRow(
         row.fecha,
         items,
         pagos,
+        clienteNombre,
+        clienteDocumento,
+        cajeroNombre,
+        tipoVenta,
+        devoluciones,
     );
 }

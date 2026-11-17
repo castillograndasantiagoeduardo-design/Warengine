@@ -6,16 +6,18 @@
 
 import type {
   FacturaSede,
+  FacturasPaginadasSede,
   AlertaOperativa,
   FiltrosFacturasSede,
   FiltrosAlertasSede,
+  RegistrarDevolucionPayload,
 } from '../types/branch-invoicing.types';
 
 export interface IBranchInvoicingService {
   listarFacturas(
     sucursalId: number,
     filtros?: FiltrosFacturasSede,
-  ): Promise<FacturaSede[]>;
+  ): Promise<FacturasPaginadasSede>;
 
   obtenerFacturaPorId(id: string): Promise<FacturaSede>;
 
@@ -24,8 +26,13 @@ export interface IBranchInvoicingService {
     motivo: string,
   ): Promise<{ mensaje: string; factura: FacturaSede }>;
 
+  registrarDevolucion(
+    id: string,
+    payload: RegistrarDevolucionPayload,
+  ): Promise<{ facturaId: string; totalReembolso: number; lineas: any[] }>;
+
   listarAlertas(
-    sucursalId: number,
+    sucursalId?: number,
     filtros?: FiltrosAlertasSede,
   ): Promise<AlertaOperativa[]>;
 
