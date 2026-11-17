@@ -3,37 +3,63 @@
 /**
  * FondoAmbiental.tsx — Capa fija de iluminación ambiental, aurora, retícula y ruido de cristal.
  *
- * Implementación alineada estrictamente con prueba-diseno-warengine (localhost:3005):
- * - Fija en toda la ventana (fixed inset-0, -z-10, pointer-events-none, no intercepta clics).
- * - Mancha de luz superior izquierda (mancha-aurora-1): Iluminación clara y amplia detrás de
- *   "Resumen de la sucursal" y de la tarjeta "Ventas del día", eliminando áreas oscuras.
- * - Mancha de luz de KPIs (mancha-aurora-2): Resplandor tenue y difuso que no satura las tarjetas.
- * - Manchas secundaria y terciaria (mancha-aurora-3 y mancha inferior derecha).
- * - Capa de retícula arquitectónica (.capa-malla .trama-malla) visible en temas claro y oscuro.
- * - Textura de ruido analógico muy sutil (.textura-ruido).
+ * Implementación con style explícito de filter: blur(125px-130px) y opacidades suaves (0.16 a 0.22)
+ * para lograr una luz atmosférica, suave y pareja sin teñir ni saturar las tarjetas.
  */
 
 import React from 'react';
 
 export function FondoAmbiental() {
   return (
-    <div className="fixed inset-0 pointer-events-none -z-10 overflow-hidden" aria-hidden="true">
-      {/* 1. Iluminación superior izquierda clara (--p-luz-1): Detrás del título y "Ventas del día" */}
-      <div className="mancha-luz mancha-aurora-1 absolute -top-10 left-0 sm:left-10 w-[640px] h-[520px] rounded-full bg-luz-1/28 dark:bg-luz-1/45 blur-[100px]" />
+    /* CAPA DE FONDO AMBIENTAL FIJA */
+    <div
+      className="fixed inset-0 pointer-events-none -z-10 overflow-hidden"
+      aria-hidden="true"
+    >
+      {/* 1. Orbe superior izquierdo — suave y muy difuminado */}
+      <div
+        className="mancha-luz mancha-aurora-1 absolute -top-24 -left-24 w-[520px] h-[520px] rounded-full"
+        style={{
+          backgroundColor: 'var(--p-luz-1, #2551d6)',
+          opacity: 0.22,
+          filter: 'blur(125px)',
+        }}
+      />
 
-      {/* 2. Resplandor suave detrás de la fila de KPIs (--p-500, difuso y suave para mantener translucidez) */}
-      <div className="mancha-luz mancha-aurora-2 absolute top-[10%] left-[16%] w-[580px] h-[380px] rounded-full bg-brand-500/16 dark:bg-brand-500/24 blur-[110px]" />
+      {/* 2. Orbe central-izquierdo detrás de los KPIs — opacidad controlada (0.20) para NO teñir de azul fuerte la primera tarjeta */}
+      <div
+        className="mancha-luz mancha-aurora-2 absolute top-[12%] left-[24%] w-[560px] h-[360px] rounded-full"
+        style={{
+          backgroundColor: 'var(--p-500, #3b6cf2)',
+          opacity: 0.20,
+          filter: 'blur(130px)',
+        }}
+      />
 
-      {/* 3. Iluminación lateral derecha (--p-luz-2): Detrás del gráfico de ventas y panel de atención */}
-      <div className="mancha-luz mancha-aurora-3 absolute top-[30%] right-[8%] w-[580px] h-[440px] rounded-full bg-luz-2/18 dark:bg-luz-2/30 blur-[110px]" />
+      {/* 3. Orbe central-derecho detrás del gráfico y Requiere atención */}
+      <div
+        className="mancha-luz mancha-aurora-3 absolute top-[32%] right-[8%] w-[600px] h-[460px] rounded-full"
+        style={{
+          backgroundColor: 'var(--p-luz-2, #4f46e5)',
+          opacity: 0.22,
+          filter: 'blur(130px)',
+        }}
+      />
 
-      {/* 4. Iluminación inferior (--p-luz-3): Detrás de métodos de pago y tabla de facturas */}
-      <div className="mancha-luz absolute bottom-[6%] right-[4%] w-[500px] h-[440px] rounded-full bg-luz-3/14 dark:bg-luz-3/20 blur-[110px]" />
+      {/* 4. Orbe inferior derecho detrás de Métodos de pago / Activos */}
+      <div
+        className="mancha-luz absolute bottom-[6%] right-[4%] w-[520px] h-[440px] rounded-full"
+        style={{
+          backgroundColor: 'var(--p-luz-3, #06b6d4)',
+          opacity: 0.16,
+          filter: 'blur(125px)',
+        }}
+      />
 
-      {/* 5. Capa de retícula arquitectónica (Retícula + luz) */}
+      {/* Capa para la variante de fondo "malla" (retícula muy tenue al 3.5%) */}
       <div className="capa-malla absolute inset-0 trama-malla" />
 
-      {/* 6. Textura de micro-ruido analógico de cristal */}
+      {/* Textura de ruido sutil */}
       <div className="absolute inset-0 textura-ruido" />
     </div>
   );
