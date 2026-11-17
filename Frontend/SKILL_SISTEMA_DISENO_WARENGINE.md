@@ -1,17 +1,17 @@
 ---
 name: diseno-vistas-warengine
-description: Sistema de diseño oficial de WarEngine (Glassmorphism Ejecutivo: Negro/Marino, Azul Zafiro y Blanco). Úsala siempre para crear o actualizar cualquier vista, pantalla, tabla, formulario, modal o componente del frontend de WarEngine manteniendo consistencia total en colores, tipografía, tarjetas translúcidas, sidebar y barra superior.
+description: Sistema de diseño oficial de WarEngine (Glassmorphism Ejecutivo: Negro/Marino, Azul Zafiro y Blanco). Úsala siempre para crear o actualizar cualquier dashboard, vista, pantalla, tabla, formulario, modal o componente del frontend de WarEngine manteniendo consistencia total con el estándar de Admin de Sucursal.
 ---
 
 # SKILL: Sistema de Diseño y Arquitectura Visual WarEngine
 
-Esta skill define las reglas visuales, tokens CSS, tipografía, niveles de transparencia (*glassmorphism*), estructura de layout (Sidebar + Navbar) y componentes base para construir **cualquier vista del proyecto WarEngine**.
+Esta skill define las reglas visuales, tokens CSS, tipografía, niveles de transparencia (*glassmorphism*), estructura de layout (Sidebar + Navbar) y componentes base para construir **cualquier dashboard o vista del proyecto WarEngine**, tomando como referencia canónica el **Dashboard de Administrador de Sucursal (`/admin-sucursal`)**.
 
 ---
 
 ## 1. Identidad Visual y Tema Inicial por Defecto (Negro, Azul y Blanco)
 
-El estilo de WarEngine es **ejecutivo, sobrio, corporativo y de alta precisión**. Todas las vistas deben arrancar por defecto en **Modo Oscuro (`.dark`)** con la paleta **Zafiro Ejecutivo (`data-paleta="zafiro"`)**, cuya tríada cromática base es:
+El estilo de WarEngine es **ejecutivo, sobrio, corporativo y de alta precisión**. Todas las vistas deben arrancar por defecto en **Modo Oscuro (`.dark`)** con la paleta **Zafiro Ejecutivo (`data-paleta="zafiro"`)** y el efecto de fondo **Retícula + luz (`data-fondo="malla"`)**, cuya tríada cromática base es:
 
 1. **Negro / Marino Profundo (`#070d1a` y `#0f1b33`)**: Lienzo principal y superficies de alta densidad.
 2. **Azul Ejecutivo (`#3b6cf2` y `#2551d6`)**: Acento principal de marca, botones primarios, estados activos, indicadores e iluminación ambiental.
@@ -62,7 +62,7 @@ Los colores de estado comunican alertas reales y **nunca cambian con el tema**:
 
 ## 2. Sistema Tipográfico Oficial (Fijo)
 
-Se cargan exclusivamente **3 fuentes** mediante `next/font/google` en `layout.tsx`, todas con `subsets: ["latin"]`, `display: "swap"` y únicamente los pesos **`["400", "500", "600"]`**:
+Se cargan **3 fuentes** para los paneles mediante `next/font/google` en `layout.tsx`, todas con `subsets: ["latin"]`, `display: "swap"` y únicamente los pesos **`["400", "500", "600"]`**:
 
 | Variable CSS | Clase Tailwind | Fuente (`next/font/google`) | Uso estricto en todas las vistas |
 | :--- | :--- | :--- | :--- |
@@ -91,32 +91,40 @@ Se cargan exclusivamente **3 fuentes** mediante `next/font/google` en `layout.ts
 
 ## 3. Transparencia, Capas de Cristal (Glassmorphism) y Fondo Ambiental
 
-El efecto flotante y translúcido de WarEngine se basa en **4 niveles de superficie** sobre un fondo con iluminación ambiental difusa:
+El efecto flotante y translúcido de WarEngine se basa en **4 niveles de superficie** sobre un fondo con iluminación ambiental difusa y retícula arquitectónica:
 
-### 3.1. Fondo Ambiental Dinámico (En todas las pantallas)
-Cada página debe incluir detrás del contenido (`fixed inset-0 pointer-events-none -z-10 overflow-hidden`) las manchas de luz que dan vida al cristal:
-- **Mancha 1 (Arriba izquierda)**: `w-[480px] h-[480px] rounded-full bg-luz-1/22 dark:bg-luz-1/35 blur-[110px]`
-- **Mancha 2 (Centro-izquierda / KPIs)**: `w-[540px] h-[350px] rounded-full bg-brand-500/22 dark:bg-brand-500/34 blur-[110px]`
-- **Mancha 3 (Centro-derecha)**: `w-[580px] h-[440px] rounded-full bg-luz-2/20 dark:bg-luz-2/32 blur-[110px]`
-- **Mancha 4 (Abajo derecha)**: `w-[500px] h-[440px] rounded-full bg-luz-3/16 dark:bg-luz-3/22 blur-[110px]`
-- **Capa de retícula opcional (`.trama-malla`)** y **Textura de ruido SVG (`.textura-ruido`, opacidad `0.028`)**.
+### 3.1. Fondo Ambiental Dinámico (`FondoAmbiental.tsx`)
+Cada dashboard debe incluir detrás del contenido (`fixed inset-0 pointer-events-none -z-10 overflow-hidden`) las manchas de luz y la retícula:
+- **Mancha 1 (Arriba izquierda — `--p-luz-1`)**: `absolute -top-16 -left-16 w-[480px] h-[480px] rounded-full bg-luz-1/22 dark:bg-luz-1/35 blur-[110px]`
+- **Mancha 2 (Centro-izquierda / KPIs — `--p-500`)**: `absolute top-[11%] left-[22%] w-[540px] h-[350px] rounded-full bg-brand-500/22 dark:bg-brand-500/34 blur-[110px]`
+- **Mancha 3 (Centro-derecha — `--p-luz-2`)**: `absolute top-[33%] right-[10%] w-[580px] h-[440px] rounded-full bg-luz-2/20 dark:bg-luz-2/32 blur-[110px]`
+- **Mancha 4 (Abajo derecha — `--p-luz-3`)**: `absolute bottom-[6%] right-[4%] w-[500px] h-[440px] rounded-full bg-luz-3/16 dark:bg-luz-3/22 blur-[110px]`
+- **Capa de retícula arquitectónica (`.capa-malla.trama-malla`, líneas de `1px` cada `56px` al `4%` de opacidad)** y **Textura de ruido (`.textura-ruido`, opacidad `0.03`)**.
 
 ### 3.2. Las 4 Clases de Superficie y Transparencia
 
-| Clase CSS | Opacidad Oscuro (`.dark`) | Opacidad Claro (`.light`) | Blur / Saturación | Dónde usarla |
+| Clase CSS | Opacidad Oscuro (`.dark`) | Opacidad Claro (`.light`) | Comportamiento de filtro | Dónde usarla |
 | :--- | :--- | :--- | :--- | :--- |
-| **`.vidrio`** | `rgba(255, 255, 255, 0.025)` | `rgba(255, 255, 255, 0.58)` | `blur(20px) saturate(160%)` | **Todas las tarjetas de contenido**, contenedores de tablas, gráficos y paneles de módulos. Incluye bisel especular superior `::before` y elevación `hover: -4px`. |
-| **`.vidrio-fuerte`** | `94%` de `--p-base` (`#070d1a`) | `92%` de `#ffffff` + `--p-base-claro` | `blur(28px) saturate(150%)` | **Barra Superior (Navbar) y Sidebar**. Su alta opacidad garantiza que al hacer scroll **jamás se lea el texto que pasa por detrás**. |
-| **`.vidrio-popover`** | `rgba(11, 17, 30, 0.95)` | `rgba(255, 255, 255, 0.96)` | `blur(28px) saturate(160%)` | **Menús desplegables, popovers, modales y diálogos flotantes**. |
-| **`.superficie-control`** | `rgba(255, 255, 255, 0.04)` | `rgba(15, 23, 42, 0.045)` | Sin blur adicional | **Inputs, buscadores, botones secundarios, selectores de filtro y badges neutros**. |
+| **`.vidrio`** | `rgba(255, 255, 255, 0.025)` | `rgba(255, 255, 255, 0.58)` | **Sin `backdrop-filter`** (permite ver nítida la retícula `.trama-malla` a través del cristal) | **Todas las tarjetas de contenido**, KPIs, contenedores de tablas, gráficos y paneles de módulos. Incluye bisel especular superior `::before` y elevación `hover: -4px`. |
+| **`.vidrio-fuerte`** | `94%` de `--p-base` (`#070d1a`) | `92%` de `#ffffff` + `--p-base-claro` | Alta densidad sin transparentar texto al hacer scroll | **Barra Superior (Navbar) y Sidebar**. |
+| **`.vidrio-popover`** | `rgba(11, 17, 30, 0.95)` | `rgba(255, 255, 255, 0.96)` | `blur(28px) saturate(160%)` | **Menús desplegables, popovers, selector de apariencia, modales y diálogos flotantes**. |
+| **`.superficie-control`** | `rgba(255, 255, 255, 0.05)` | `rgba(255, 255, 255, 0.65)` | Sin blur adicional | **Inputs, buscadores, botones secundarios, selectores de filtro y badges neutros**. |
+
+### 3.3. Regla Crítica sobre `.vidrio` en Webpack (Por qué NO debe llevar `backdrop-filter: blur(20px) saturate(160%)`)
+
+> **Problema detectado y resuelto en `/admin-sucursal`:**  
+> En proyectos que usan `@tailwindcss/turbopack` (LightningCSS), escribir `-webkit-backdrop-filter` después de `backdrop-filter` provocaba que el compilador descartara `backdrop-filter` y dejara solo el prefijo `-webkit-`, el cual Chrome moderno ignora. En cambio, en **WarEngine (`next dev --webpack` con `@tailwindcss/postcss`)**, el compilador sí mantenía activo `backdrop-filter: blur(20px) saturate(160%)`.  
+> Cuando `backdrop-filter: blur(20px) saturate(160%)` se aplica sobre `.vidrio`:
+> 1. El `blur(20px)` difumina las líneas de `1px` de `.trama-malla` detrás de cada tarjeta hasta borrarlas por completo, haciendo que las tarjetas se vean opacas y sin cuadrícula interior.
+> 2. El `saturate(160%)` multiplica por `1.6x` la saturación de la luz azul detrás de las tarjetas KPI, tiñendo las tarjetas de un relleno azul eléctrico sólido.
+>
+> **Solución obligatoria:** `.vidrio` y `.vidrio-fuerte` NO deben incluir `backdrop-filter: blur(...) saturate(...)` en `globals.css`. De ese modo, el fondo de `rgba(255, 255, 255, 0.025)` actúa como un cristal limpio y transparente que deja ver con total nitidez la retícula arquitectónica y la iluminación ambiental suave.
 
 ```css
-/* Definición exacta de .vidrio y .vidrio-fuerte */
+/* Definición oficial obligatoria de .vidrio y .vidrio-fuerte en globals.css */
 .vidrio {
   position: relative;
   background-color: var(--vidrio-bg);
-  backdrop-filter: blur(20px) saturate(160%);
-  -webkit-backdrop-filter: blur(20px) saturate(160%);
   border: 1px solid var(--vidrio-borde);
   border-top-color: var(--border-top-brillo);
   border-radius: 1rem; /* 16px */
@@ -143,13 +151,12 @@ Cada página debe incluir detrás del contenido (`fixed inset-0 pointer-events-n
 .vidrio-fuerte {
   position: relative;
   background-color: var(--vidrio-fuerte-bg);
-  backdrop-filter: blur(28px) saturate(150%);
-  -webkit-backdrop-filter: blur(28px) saturate(150%);
   border: 1px solid var(--vidrio-fuerte-borde, var(--vidrio-borde));
   border-bottom: 1px solid var(--vidrio-fuerte-borde, var(--border));
   border-top-color: var(--border-top-brillo);
   border-radius: 1rem;
   box-shadow: var(--vidrio-fuerte-sombra, var(--vidrio-sombra));
+  transition: border-color 300ms ease, background-color 300ms ease, width 250ms ease, box-shadow 300ms ease;
 }
 ```
 
@@ -157,7 +164,7 @@ Cada página debe incluir detrás del contenido (`fixed inset-0 pointer-events-n
 
 ## 4. Estructura Maestra de Layout (Sidebar + Barra Superior + Contenido)
 
-Todas las vistas autenticadas comparten el mismo esqueleto flotante con margen perimetral:
+Todos los dashboards autenticados de WarEngine comparten el mismo esqueleto flotante con margen perimetral y `relative isolate`:
 
 ```tsx
 <div className="min-h-screen bg-bg text-text font-sans relative isolate overflow-x-clip transition-colors duration-300">
@@ -168,13 +175,13 @@ Todas las vistas autenticadas comparten el mismo esqueleto flotante con margen p
   <div className="flex items-start p-4 sm:p-5 lg:p-6 gap-6 max-w-[1680px] mx-auto min-h-screen">
     {/* Sidebar Flotante Sticky en Desktop */}
     <div className="hidden md:block sticky top-4 self-start z-30 shrink-0">
-      <Sidebar ... />
+      <BranchSidebar ... />
     </div>
 
     {/* Columna Derecha: Navbar Sticky + Main */}
     <div className="flex-1 min-w-0 flex flex-col gap-6">
-      <BarraSuperior ... />
-      <main className="space-y-6 flex-1 pb-4">
+      <BranchHeader ... />
+      <main className="space-y-6 flex-1 pb-6 min-w-0">
         {/* Encabezado de la Vista + Contenido del Módulo */}
       </main>
     </div>
@@ -182,36 +189,44 @@ Todas las vistas autenticadas comparten el mismo esqueleto flotante con margen p
 </div>
 ```
 
-### 4.1. Sidebar Flotante (`Sidebar.tsx`)
+> **Regla de contenedores intermedios**: Ningún `<main>`, `<section>` o `<div>` entre el wrapper `relative isolate` y las tarjetas `<Tarjeta>` puede tener clases de fondo sólidas (`bg-slate-*`, `bg-navy-*`, `bg-bg`, etc.) que tapen las orbes de luz o la retícula `.trama-malla`.
+
+### 4.1. Sidebar Flotante (`BranchSidebar.tsx`)
 - Usa `.vidrio-fuerte` con altura `h-[calc(100vh-2rem)]` y bordes `rounded-2xl`.
 - **Dos modos**:
-  - **Expandido (`w-60`)**: Muestra logo `"W"` (`w-8 h-8 rounded-lg bg-brand-600 text-btn-primario-texto`), nombre `"WarEngine"` (`font-titulos font-semibold text-sm`), rol `"Admin. de sucursal"`, secciones (`MENÚ`, `OPERACIONES`, `SISTEMA`) y pie con avatar del usuario.
-  - **Colapsado / Dock (`w-[68px]`)**: Muestra solo íconos centrados en botones `w-11 h-11 rounded-xl` con atributo `title` nativo y divisores horizontales finos.
-- **Ítem activo**: `bg-brand-600/15 dark:bg-brand-500/18 border border-brand-600/30 dark:border-brand-400/40 text-brand-800 dark:text-slate-100 font-semibold`.
+  - **Expandido (`w-64`)**:
+    - Encabezado `h-16 px-4 flex items-center justify-between border-b border-border` con el logo `"W"` (`w-8 h-8 rounded-lg bg-brand-600 text-btn-primario-texto`), nombre `"WarEngine"`, rol `"Admin. de sucursal"` y a la extrema derecha (`ml-auto`) el botón con ícono `PanelLeftClose` para colapsar el sidebar sin sobreponerse al texto.
+    - Secciones de navegación (`MENÚ`, `OPERACIONES`, `SISTEMA`).
+    - Pie `p-3 border-t border-border` con el botón discreto `Cerrar sesión` (`LogOut`).
+  - **Colapsado / Dock (`w-20`)**:
+    - Encabezado `h-16 px-4 flex items-center justify-center border-b border-border` con solo el logo `"W"` centrado.
+    - Ítems de navegación centrados en botones `w-11 h-11 rounded-xl` con `title` nativo y divisores horizontales `w-6 h-px bg-border`.
+    - Pie `p-3 border-t border-border space-y-1` donde el botón de expandir (`PanelLeftOpen`) se ubica **justo arriba del botón de Cerrar sesión (`LogOut`)**.
+- **Ítem activo**: `bg-brand-600/15 dark:bg-brand-500/18 border border-brand-600/30 dark:border-brand-400/40 text-brand-700 dark:text-slate-100 font-semibold`.
 
-### 4.2. Barra Superior Flotante (`BarraSuperior.tsx`)
+### 4.2. Barra Superior Flotante (`BranchHeader.tsx`)
 - Contenedor `<header className="sticky top-4 z-30 w-full">` con hijo `.vidrio-fuerte px-4 sm:px-5 py-3 flex items-center justify-between gap-4`.
-- **Izquierda**: Botón hamburguesa móvil (`md:hidden`), cápsula de sucursal (`Sucursal Centro` + badge verde `En línea`), y buscador con ícono `Search` (`superficie-control rounded-xl text-xs`).
-- **Derecha**: Selector segmentado de período (`Hoy | 7D | 30D | 1A`), botón del panel **`SelectorPaleta`** (Apariencia), botón rápido de modo Oscuro/Claro (`Sun`/`Moon`) y menú de perfil de usuario.
+- **Izquierda**: Cápsula de sucursal activa + badge verde `En línea`, y buscador global con ícono `Search` (`superficie-control rounded-xl text-xs`).
+- **Derecha**: Selector segmentado de período (`Hoy | 7D | 30D`), botón del popover **`SelectorPaleta`** (anclado con `relative` y `absolute right-0 top-full mt-2 z-50` para no deformar nunca el header), conmutador rápido de modo Oscuro/Claro (`Sun`/`Moon`) y acceso al perfil de usuario.
 
 ---
 
-## 5. Catálogo de Componentes Base para Nuevas Vistas
+## 5. Catálogo de Componentes Base para Todos los Dashboards
 
-Al construir cualquier pantalla nueva (ej. *Inventario*, *Facturación*, *Clientes*, *Personal*, *Activos*, *Reportes*), reutiliza siempre estos patrones:
+Al construir o rediseñar cualquier dashboard o vista de módulo en WarEngine, reutiliza siempre estos componentes base:
 
 1. **Encabezado de Vista**:
    - Izquierda: `<h1 className="text-2xl sm:text-3xl font-titulos font-semibold tracking-[-0.005em] text-text">` + subtítulo `text-sm font-sans font-medium text-text-muted mt-1`.
-   - Derecha: Máximo 2 botones de acción contextuales al rol (`Boton` secundario con `superficie-control` + `Boton` primario con `bg-gradient-to-b from-brand-500 to-brand-600 text-btn-primario-texto`).
-2. **Tarjetas Contenedoras (`Tarjeta.tsx`)**:
-   - Superficie `.vidrio`, cabecera opcional con `px-5 sm:px-6 py-4 border-b border-border`, título `<h3 className="text-base font-titulos font-semibold text-text tracking-normal">`, subtítulo `text-xs font-medium text-text-muted` y slot `accion` a la derecha (para filtros segmentados o contadores).
+   - Derecha: Máximo 2 botones de acción contextuales al rol (botón secundario con `superficie-control` + botón primario con `bg-gradient-to-b from-brand-500 to-brand-600 text-btn-primario-texto`).
+2. **Componente Base de Tarjeta (`Tarjeta.tsx`)**:
+   - **Todas** las tarjetas del dashboard deben usar `<Tarjeta>` (`className="vidrio flex flex-col overflow-hidden"`). Prohibido crear tarjetas con rellenos propios o clases paralelas que rompan la uniformidad del cristal.
+   - Cabecera opcional con `px-5 sm:px-6 py-4 border-b border-border`, título `<h3 className="text-base font-titulos font-semibold text-text tracking-normal">`, subtítulo `text-xs font-medium text-text-muted` y slot `accion` a la derecha.
 3. **Tarjetas KPI (`TarjetaKpi.tsx`)**:
-   - Estructura alineada en 3 niveles: fila superior fija (`h-10`) con etiqueta e ícono en recuadro `w-10 h-10 rounded-xl bg-brand-100 dark:bg-brand-500/15 text-brand-700 dark:text-brand-300`; cifra central en `text-3xl font-titulos font-semibold tracking-[-0.005em] tabular-nums`; fila inferior (`min-h-[34px]`) con `Insignia` semántica + período.
-4. **Tablas Compactas (`Tabla.tsx`)**:
-   - **Prohibido el scroll horizontal en escritorio (1280px y 1440px)**. Agrupa metadatos secundarios en una segunda línea debajo del dato principal (ej. fecha/hora bajo el consecutivo, tipo de cliente B2B/B2C bajo el nombre) para mantener entre 4 y 5 columnas máximas.
+   - Envuelve a `<Tarjeta className="h-full">` y alinea su contenido en 3 niveles: fila superior fija (`h-10`) con etiqueta e ícono en recuadro `w-10 h-10 rounded-xl bg-brand-100 border border-brand-200 text-brand-700 dark:bg-brand-500/15 dark:border-brand-400/20 dark:text-brand-300`; cifra central en `text-3xl font-titulos font-semibold tracking-[-0.005em] tabular-nums leading-none`; fila inferior (`min-h-[34px]`) con `Insignia` semántica + período.
+4. **Tablas Compactas (`TablaFacturas.tsx` / `Tabla.tsx`)**:
+   - **Prohibido el scroll horizontal en escritorio (1280px y 1440px)**. Agrupa metadatos secundarios en una segunda línea debajo del dato principal para mantener 4–5 columnas máximas.
    - Filas de `h-[52px]`, encabezados `text-[11px] uppercase tracking-wider font-medium text-text-muted`, montos alineados a la derecha con `tabular-nums` y columna de estado alineada a la derecha con `Insignia` sin recortes.
 5. **Insignias / Badges (`Insignia.tsx`)**:
    - Siempre acompañadas de ícono semántico (`CheckCircle2`, `AlertTriangle`, `XCircle`, `Info`) o punto de color, bordes suaves `ring-1 ring-inset` y `whitespace-nowrap`.
 6. **Formato Regional**:
    - Moneda y números en formato colombiano (`es-CO`): punto para miles (`$8.450.000`), coma para decimales (`12,5 %`, `$4,9 M`).
-
