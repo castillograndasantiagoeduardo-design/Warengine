@@ -33,3 +33,15 @@ export * from './BranchMovementsView';
 export * from './BranchOverviewView';
 export * from './BranchAccessDenied';
 export * from './DashboardSkeleton';
+
+// Nuevos componentes ejecutivos rediseñados
+export * from './Insignia';
+export * from './Tarjeta';
+export * from './TarjetaKpi';
+export * from './GraficoVentas';
+export * from './TarjetaRequiereAtencion';
+export * from './TablaFacturas';
+export * from './MetodosPago';
+export * from './TarjetaActivos';
+export * from './FondoAmbiental';
+export * from './SelectorPaleta';

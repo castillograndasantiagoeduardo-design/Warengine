@@ -1,38 +1,47 @@
 'use client';
 
 /**
- * BranchSidebar.tsx — Barra de navegación lateral contextual para la sede activa.
+ * BranchSidebar.tsx — Sidebar flotante con Glassmorphism Ejecutivo (.vidrio-fuerte).
  *
- * Principio SOLID: Single Responsibility (SRP).
- * Encapsula la identidad corporativa de WarEngine, los enlaces del panel de control
- * y el perfil del usuario autenticado según los tokens del diseño de Figma (nodo 0:1).
+ * Implementación oficial idéntica al proyecto de prueba (localhost:3005):
+ * 1. Expandido (w-64):
+ *    - Encabezado: Logo "W", texto "WarEngine" y "Admin. de sucursal", botón PanelLeftClose a la derecha (ml-auto).
+ *    - Navegación: Categorías MENÚ, OPERACIONES, SISTEMA con gap uniforme y estilo translúcido.
+ *    - Pie: Perfil de usuario y botón Cerrar sesión.
+ * 2. Colapsado (w-20):
+ *    - Encabezado: Logo "W" centrado.
+ *    - Navegación: Íconos centrados w-11 h-11 con separadores horizontales (w-6 h-px bg-border).
+ *    - Pie: Avatar de usuario, botón Cerrar sesión y al final botón PanelLeftOpen para volver a expandir.
  */
 
-import React from 'react';
-import Link from 'next/link';
+import React, { useState } from 'react';
 import { useAuth } from '@/features/autenticacion';
 import {
-  LayoutDashboardIcon,
-  PackageIcon,
-  UsersRoundIcon,
-  ReceiptTextIcon,
-  BarChartIcon,
-  SettingsIcon,
-  ShieldIcon,
-  LogOutIcon,
-  TruckIcon,
-  BoxesIcon,
-} from './Icons';
+  LayoutDashboard,
+  Package,
+  Receipt,
+  Users2,
+  UserCheck,
+  Wrench,
+  BarChart3,
+  Settings,
+  LogOut,
+  PanelLeftClose,
+  PanelLeftOpen,
+} from 'lucide-react';
 
 export type BranchSection =
   | 'resumen'
+  | 'facturacion'
   | 'inventario'
+  | 'clientes'
+  | 'personal'
+  | 'activos'
+  | 'reportes'
+  | 'configuracion'
   | 'movimientos'
   | 'proveedores'
-  | 'cajeros'
-  | 'facturacion'
-  | 'reportes'
-  | 'configuracion';
+  | 'cajeros';
 
 interface BranchSidebarProps {
   activeSection?: BranchSection;
@@ -45,216 +54,189 @@ interface NavItem {
   id: BranchSection;
   label: string;
   icon: React.ReactNode;
-  badge?: string;
-  href?: string;
 }
 
 const MENU_ITEMS: NavItem[] = [
-  { id: 'resumen', label: 'Resumen', icon: <LayoutDashboardIcon size={18} /> },
-  { id: 'inventario', label: 'Inventario & Stock', icon: <PackageIcon size={18} /> },
-  { id: 'movimientos', label: 'Movimientos Sede', icon: <BoxesIcon size={18} /> },
-  { id: 'proveedores', label: 'Proveedores', icon: <TruckIcon size={18} /> },
-  { id: 'cajeros', label: 'Cajeros & Turnos', icon: <UsersRoundIcon size={18} /> },
-  { id: 'facturacion', label: 'Facturación & Ventas', icon: <ReceiptTextIcon size={18} /> },
+  { id: 'resumen', label: 'Dashboard', icon: <LayoutDashboard className="w-4 h-4 shrink-0" /> },
+  { id: 'facturacion', label: 'Facturación', icon: <Receipt className="w-4 h-4 shrink-0" /> },
+  { id: 'inventario', label: 'Inventario', icon: <Package className="w-4 h-4 shrink-0" /> },
+  { id: 'clientes', label: 'Clientes', icon: <Users2 className="w-4 h-4 shrink-0" /> },
+];
+
+const OPERACIONES_ITEMS: NavItem[] = [
+  { id: 'personal', label: 'Personal', icon: <UserCheck className="w-4 h-4 shrink-0" /> },
+  { id: 'activos', label: 'Activos', icon: <Wrench className="w-4 h-4 shrink-0" /> },
+  { id: 'reportes', label: 'Reportes', icon: <BarChart3 className="w-4 h-4 shrink-0" /> },
 ];
 
 const SISTEMA_ITEMS: NavItem[] = [
-  // Por ahora oculto hasta la fase de configuración de sede:
-  // { id: 'configuracion', label: 'Configuración Sede', icon: <SettingsIcon size={18} /> },
+  { id: 'configuracion', label: 'Configuración', icon: <Settings className="w-4 h-4 shrink-0" /> },
 ];
 
 export function BranchSidebar({
   activeSection = 'resumen',
   onSelectSection,
-  onOpenProfile,
   className = '',
 }: BranchSidebarProps) {
-  const { usuario, logout } = useAuth();
+  const { logout } = useAuth();
+  const [colapsado, setColapsado] = useState(false);
 
-  const handleItemClick = (item: NavItem, e: React.MouseEvent) => {
-    if (item.href) return;
-    e.preventDefault();
-    onSelectSection?.(item.id);
+  const renderItem = (item: NavItem) => {
+    const isActive = activeSection === item.id;
+    return (
+      <button
+        key={item.id}
+        type="button"
+        onClick={() => onSelectSection?.(item.id)}
+        title={colapsado ? item.label : undefined}
+        className={`
+          flex items-center transition-all duration-150 cursor-pointer rounded-xl
+          ${
+            colapsado
+              ? 'p-2.5 justify-center w-11 h-11'
+              : 'w-full px-3 py-2 text-left gap-3 text-xs font-sans font-medium'
+          }
+          ${
+            isActive
+              ? 'bg-brand-600/15 dark:bg-brand-500/18 border border-brand-600/30 dark:border-brand-400/40 text-brand-700 dark:text-slate-100 font-semibold shadow-sm'
+              : 'border border-transparent text-text-muted font-normal hover:text-text hover:bg-slate-900/5 dark:hover:bg-white/6'
+          }
+        `}
+      >
+        <span className={isActive ? 'text-brand-500' : 'text-text-muted'}>
+          {item.icon}
+        </span>
+        {!colapsado && <span className="truncate">{item.label}</span>}
+      </button>
+    );
   };
-
-  const userInitial = usuario?.email ? usuario.email.charAt(0).toUpperCase() : 'AS';
-  const userDisplayName = usuario?.email ? usuario.email.split('@')[0] : 'Admin Sucursal';
 
   return (
     <aside
       className={`
-        flex flex-col justify-between w-[218px] shrink-0
-        bg-[#09132b]/80 backdrop-blur-xl border-r border-white/[0.08]
-        p-4 select-none min-h-screen text-slate-300
+        vidrio-fuerte h-[calc(100vh-2rem)] rounded-2xl flex flex-col justify-between
+        transition-all duration-300 select-none overflow-hidden shrink-0
+        ${colapsado ? 'w-20' : 'w-64'}
         ${className}
       `}
+      aria-label="Barra lateral de navegación"
     >
-      {/* 1. Header con Logotipo Oficial de WarEngine */}
-      <div>
-        <div className="flex items-center gap-3 px-2 py-3 mb-6 border-b border-white/[0.06]">
-          <div className="w-8 h-8 shrink-0">
-            <svg
-              viewBox="60 50 1015 575"
-              xmlns="http://www.w3.org/2000/svg"
-              className="w-full h-auto block"
-              aria-label="Logo WarEngine"
+      <div className="flex flex-col flex-1 overflow-y-auto overflow-x-hidden">
+        {/* 1. Header con Logo Oficial y botón Colapsar a la derecha */}
+        <div
+          className={`h-16 px-4 flex items-center border-b border-border shrink-0 ${
+            colapsado ? 'justify-center' : 'justify-between'
+          }`}
+        >
+          <div className="flex items-center gap-3 min-w-0">
+            {/* Logo "W" en cuadrado brand-600 redondeado */}
+            <div
+              className="w-8 h-8 rounded-lg bg-brand-600 flex items-center justify-center text-btn-primario-texto font-sans font-semibold text-sm shrink-0 shadow-sm shadow-brand-600/30 transition-colors duration-300"
+              title="WarEngine — Admin. de sucursal"
+              aria-label="Logo de WarEngine"
             >
-              <polygon
-                fill="#D9A02D"
-                points="75,85 445,215 490,305 428,452 600,213 665,300 487,610 385,425 235,318 180,240 360,305 130,165"
-              />
-              <polygon
-                fill="#ffffff"
-                points="1060,65 740,590 635,432 700,335 745,415 830,218 775,205"
-              />
-            </svg>
-          </div>
-          <div className="flex flex-col">
-            <span className="font-[family-name:var(--font-anton)] text-xl tracking-wider text-white uppercase leading-none">
-              WarEngine
-            </span>
-            <span className="text-[10px] uppercase font-bold tracking-widest text-[#e3b341] font-[family-name:var(--font-ui)]">
-              Admin Sucursal
-            </span>
-          </div>
-        </div>
-
-        {/* 2. Sección MENU */}
-        <div className="mb-6">
-          <span className="block px-3 text-[10px] font-bold uppercase tracking-wider text-slate-500 font-[family-name:var(--font-ui)] mb-2">
-            Menu
-          </span>
-          <nav className="flex flex-col gap-1">
-            {MENU_ITEMS.map((item) => {
-              const isActive = activeSection === item.id;
-              const content = (
-                <div
-                  className={`
-                    flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-medium
-                    transition-all duration-150 cursor-pointer
-                    ${
-                      isActive
-                        ? 'bg-[#e3b341]/10 text-[#e3b341] border border-[#e3b341]/25 font-semibold shadow-[0_2px_8px_rgba(227,179,65,0.12)]'
-                        : 'text-slate-400 hover:text-white hover:bg-white/[0.04]'
-                    }
-                  `}
-                >
-                  <div className="flex items-center gap-3">
-                    <span className={isActive ? 'text-[#e3b341]' : 'text-slate-400'}>
-                      {item.icon}
-                    </span>
-                    <span className="font-[family-name:var(--font-archivo)]">
-                      {item.label}
-                    </span>
-                  </div>
-                  {item.badge && (
-                    <span
-                      className={`
-                        text-[10px] font-bold px-1.5 py-0.5 rounded-md font-mono
-                        ${
-                          isActive
-                            ? 'bg-[#e3b341]/20 text-[#e3b341]'
-                            : 'bg-white/[0.06] text-slate-400'
-                        }
-                      `}
-                    >
-                      {item.badge}
-                    </span>
-                  )}
-                </div>
-              );
-
-              if (item.href) {
-                return (
-                  <Link key={item.id} href={item.href}>
-                    {content}
-                  </Link>
-                );
-              }
-
-              return (
-                <button
-                  key={item.id}
-                  onClick={(e) => handleItemClick(item, e)}
-                  className="w-full text-left"
-                >
-                  {content}
-                </button>
-              );
-            })}
-          </nav>
-        </div>
-
-        {/* 3. Sección SISTEMA (Oculta mientras no tenga items activos) */}
-        {SISTEMA_ITEMS.length > 0 && (
-          <div>
-            <span className="block px-3 text-[10px] font-bold uppercase tracking-wider text-slate-500 font-[family-name:var(--font-ui)] mb-2">
-              Sistema
-            </span>
-            <nav className="flex flex-col gap-1">
-              {SISTEMA_ITEMS.map((item) => {
-                const isActive = activeSection === item.id;
-                return (
-                  <button
-                    key={item.id}
-                    onClick={(e) => handleItemClick(item, e)}
-                    className={`
-                      flex items-center gap-3 w-full px-3 py-2.5 rounded-xl text-xs font-medium
-                      transition-all duration-150 cursor-pointer
-                      ${
-                        isActive
-                          ? 'bg-[#e3b341]/10 text-[#e3b341] border border-[#e3b341]/25 font-semibold'
-                          : 'text-slate-400 hover:text-white hover:bg-white/[0.04]'
-                      }
-                    `}
-                  >
-                    <span className={isActive ? 'text-[#e3b341]' : 'text-slate-400'}>
-                      {item.icon}
-                    </span>
-                    <span className="font-[family-name:var(--font-archivo)]">
-                      {item.label}
-                    </span>
-                  </button>
-                );
-              })}
-            </nav>
-          </div>
-        )}
-      </div>
-
-      {/* 4. Footer: Perfil del Administrador y Cierre de Sesión */}
-      <div className="pt-4 border-t border-white/[0.06]">
-        <div className="flex items-center justify-between p-2 rounded-xl bg-white/[0.02] border border-white/[0.06] hover:border-white/[0.12] transition-colors">
-          <button
-            type="button"
-            onClick={onOpenProfile}
-            title="Ver y editar mi información de contacto"
-            className="flex items-center gap-2.5 min-w-0 text-left cursor-pointer group flex-1"
-          >
-            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gradient-to-tr from-[#b88a1f] to-[#e3b341] text-[#0d1630] font-bold text-xs font-[family-name:var(--font-ui)] shadow-sm group-hover:scale-105 transition-transform">
-              {userInitial}
+              W
             </div>
-            <div className="min-w-0">
-              <p className="text-xs font-medium text-white truncate font-[family-name:var(--font-archivo)] group-hover:text-[#e3b341] transition-colors">
-                {userDisplayName}
-              </p>
-              <div className="flex items-center gap-1.5">
-                <span className="h-1.5 w-1.5 rounded-full bg-[#10b981]" />
-                <span className="text-[10px] text-slate-400 truncate">
-                  Mi Perfil
+
+            {!colapsado && (
+              <div className="min-w-0">
+                <span className="font-titulos font-semibold text-sm tracking-normal text-text block leading-tight">
+                  WarEngine
+                </span>
+                <span className="font-sans text-xs font-medium text-text-muted block leading-tight mt-0.5 whitespace-nowrap">
+                  Admin. de sucursal
                 </span>
               </div>
-            </div>
-          </button>
+            )}
+          </div>
 
-          <button
-            onClick={() => logout()}
-            title="Cerrar sesión"
-            className="p-1.5 rounded-lg text-slate-400 hover:text-red-400 hover:bg-red-500/10 transition-colors cursor-pointer shrink-0"
-          >
-            <LogOutIcon size={16} />
-          </button>
+          {!colapsado && (
+            <button
+              type="button"
+              onClick={() => setColapsado(true)}
+              className="p-1.5 rounded-lg text-text-muted hover:text-text hover:bg-slate-900/5 dark:hover:bg-white/8 transition-colors shrink-0 cursor-pointer ml-auto"
+              title="Colapsar barra lateral"
+              aria-label="Colapsar barra lateral"
+            >
+              <PanelLeftClose className="w-4 h-4" />
+            </button>
+          )}
         </div>
+
+        {/* 2. Navegación por Secciones */}
+        <nav
+          className={`p-3 space-y-5 flex-1 ${colapsado ? 'flex flex-col items-center' : ''}`}
+          aria-label="Navegación principal"
+        >
+          {/* SECCIÓN 1: MENÚ */}
+          <div className={`space-y-1.5 ${colapsado ? 'w-full flex flex-col items-center' : ''}`}>
+            {!colapsado ? (
+              <p className="px-3 text-xs font-sans font-medium uppercase tracking-wide text-text-muted">
+                MENÚ
+              </p>
+            ) : (
+              <div className="w-6 h-px bg-border my-1" aria-hidden="true" />
+            )}
+            <div className={`space-y-1 ${colapsado ? 'w-full flex flex-col items-center' : ''}`}>
+              {MENU_ITEMS.map(renderItem)}
+            </div>
+          </div>
+
+          {/* SECCIÓN 2: OPERACIONES */}
+          <div className={`space-y-1.5 ${colapsado ? 'w-full flex flex-col items-center' : ''}`}>
+            {!colapsado ? (
+              <p className="px-3 text-xs font-sans font-medium uppercase tracking-wide text-text-muted">
+                OPERACIONES
+              </p>
+            ) : (
+              <div className="w-6 h-px bg-border my-1" aria-hidden="true" />
+            )}
+            <div className={`space-y-1 ${colapsado ? 'w-full flex flex-col items-center' : ''}`}>
+              {OPERACIONES_ITEMS.map(renderItem)}
+            </div>
+          </div>
+
+          {/* SECCIÓN 3: SISTEMA */}
+          <div className={`space-y-1.5 ${colapsado ? 'w-full flex flex-col items-center' : ''}`}>
+            {!colapsado ? (
+              <p className="px-3 text-xs font-sans font-medium uppercase tracking-wide text-text-muted">
+                SISTEMA
+              </p>
+            ) : (
+              <div className="w-6 h-px bg-border my-1" aria-hidden="true" />
+            )}
+            <div className={`space-y-1 ${colapsado ? 'w-full flex flex-col items-center' : ''}`}>
+              {SISTEMA_ITEMS.map(renderItem)}
+            </div>
+          </div>
+        </nav>
+      </div>
+
+      {/* 3. Pie del Sidebar: botón de expandir (en modo colapsado) arriba de Cerrar sesión */}
+      <div className="p-3 border-t border-border shrink-0 space-y-1">
+        {colapsado && (
+          <button
+            type="button"
+            onClick={() => setColapsado(false)}
+            className="w-full flex items-center justify-center p-2.5 rounded-xl text-text-muted hover:text-text hover:bg-slate-900/5 dark:hover:bg-white/8 transition-colors cursor-pointer"
+            title="Expandir barra lateral"
+            aria-label="Expandir barra lateral"
+          >
+            <PanelLeftOpen className="w-4 h-4" />
+          </button>
+        )}
+
+        <button
+          type="button"
+          onClick={() => logout()}
+          title={colapsado ? 'Cerrar sesión' : undefined}
+          className={`w-full flex items-center gap-3 rounded-xl text-xs font-sans font-medium text-text-muted hover:text-text hover:bg-slate-900/5 dark:hover:bg-white/6 transition-colors cursor-pointer ${
+            colapsado ? 'justify-center p-2.5' : 'px-3 py-2.5'
+          }`}
+        >
+          <LogOut className="w-4 h-4 shrink-0 text-text-muted" />
+          {!colapsado && <span>Cerrar sesión</span>}
+        </button>
       </div>
     </aside>
   );

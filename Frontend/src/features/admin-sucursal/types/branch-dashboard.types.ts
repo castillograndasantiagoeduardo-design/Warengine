@@ -3,8 +3,14 @@
  *
  * Principio SOLID: Interface Segregation (ISP).
  * Define estructuras de datos granulares, cohesivas y fuertemente tipadas para cada
- * bloque del panel administrativo (KPIs, gráfica horaria, salud de stock, turnos y facturas).
+ * bloque del panel administrativo (KPIs, gráfica de 7 días, alertas, facturas, métodos de pago y activos).
  */
+
+import type { PuntoVentaDiaria } from '../components/GraficoVentas';
+import type { FacturaAnuladaItem } from '../components/TarjetaRequiereAtencion';
+import type { FacturaFila } from '../components/TablaFacturas';
+import type { MetodoPagoItem } from '../components/MetodosPago';
+import type { ResumenActivosSede } from '../components/TarjetaActivos';
 
 export type DashboardPeriodo = 'hoy' | '7d' | '30d';
 
@@ -29,6 +35,7 @@ export interface KpiCatalogoStock {
   totalAlertas: number;
   stockBajo: number;
   agotados: number;
+  criticosCount?: number;
 }
 
 export interface KpiCajerosActivos {
@@ -38,11 +45,21 @@ export interface KpiCajerosActivos {
   disponibles: number;
 }
 
+export interface KpiActivos {
+  total: number;
+  enMantenimiento: number;
+  enReparacion: number;
+  disponibles: number;
+  asignados: number;
+  bajas: number;
+}
+
 export interface KpisSucursal {
   ventas: KpiVentas;
   transacciones: KpiTransacciones;
   stock: KpiCatalogoStock;
   cajeros: KpiCajerosActivos;
+  activos?: KpiActivos;
 }
 
 export interface SalesVelocityPoint {
@@ -109,4 +126,16 @@ export interface BranchDashboardData {
   saludInventario: InventoryHealthData;
   operacionesRecientes: RecentInvoiceItem[];
   cajerosEnTurno: CashierShiftItem[];
+
+  // Campos específicos del nuevo rediseño
+  tendencias7Dias?: PuntoVentaDiaria[];
+  requiereAtencion?: {
+    stockCritico: AlertaStockItem[];
+    facturasAnuladas: FacturaAnuladaItem[];
+    turnosAbiertos: CashierShiftItem[];
+  };
+  ultimasFacturas?: FacturaFila[];
+  metodosPago?: MetodoPagoItem[];
+  totalOperacionesMetodosPago?: number;
+  resumenActivos?: ResumenActivosSede;
 }
