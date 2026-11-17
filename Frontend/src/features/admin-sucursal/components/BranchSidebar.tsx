@@ -20,7 +20,8 @@ import {
   LayoutDashboard,
   Package,
   Receipt,
-  UsersRound,
+  Users2,
+  UserCheck,
   Wrench,
   BarChart3,
   Settings,
@@ -59,11 +60,11 @@ const MENU_ITEMS: NavItem[] = [
   { id: 'resumen', label: 'Dashboard', icon: <LayoutDashboard className="w-4 h-4 shrink-0" /> },
   { id: 'facturacion', label: 'Facturación', icon: <Receipt className="w-4 h-4 shrink-0" /> },
   { id: 'inventario', label: 'Inventario', icon: <Package className="w-4 h-4 shrink-0" /> },
-  { id: 'clientes', label: 'Clientes', icon: <UsersRound className="w-4 h-4 shrink-0" /> },
+  { id: 'clientes', label: 'Clientes', icon: <Users2 className="w-4 h-4 shrink-0" /> },
 ];
 
 const OPERACIONES_ITEMS: NavItem[] = [
-  { id: 'personal', label: 'Personal', icon: <UsersRound className="w-4 h-4 shrink-0" /> },
+  { id: 'personal', label: 'Personal', icon: <UserCheck className="w-4 h-4 shrink-0" /> },
   { id: 'activos', label: 'Activos', icon: <Wrench className="w-4 h-4 shrink-0" /> },
   { id: 'reportes', label: 'Reportes', icon: <BarChart3 className="w-4 h-4 shrink-0" /> },
 ];
@@ -75,14 +76,10 @@ const SISTEMA_ITEMS: NavItem[] = [
 export function BranchSidebar({
   activeSection = 'resumen',
   onSelectSection,
-  onOpenProfile,
   className = '',
 }: BranchSidebarProps) {
-  const { usuario, logout } = useAuth();
+  const { logout } = useAuth();
   const [colapsado, setColapsado] = useState(false);
-
-  const userInitial = usuario?.email ? usuario.email.charAt(0).toUpperCase() : 'A';
-  const userDisplayName = usuario?.email ? usuario.email.split('@')[0] : 'Admin Sede';
 
   const renderItem = (item: NavItem) => {
     const isActive = activeSection === item.id;
@@ -215,60 +212,31 @@ export function BranchSidebar({
         </nav>
       </div>
 
-      {/* 3. Pie del Sidebar */}
+      {/* 3. Pie del Sidebar: botón de expandir (en modo colapsado) arriba de Cerrar sesión */}
       <div className="p-3 border-t border-border shrink-0 space-y-1">
-        {/* Perfil del Administrador */}
-        <button
-          type="button"
-          onClick={onOpenProfile}
-          title={colapsado ? userDisplayName : undefined}
-          className={`
-            w-full flex items-center rounded-xl p-2 transition-colors cursor-pointer
-            ${colapsado ? 'justify-center' : 'gap-2.5 text-left'}
-            hover:bg-slate-900/5 dark:hover:bg-white/6
-          `}
-        >
-          <div className="w-8 h-8 rounded-lg superficie-control text-xs font-semibold text-text flex items-center justify-center shrink-0">
-            {userInitial}
-          </div>
-          {!colapsado && (
-            <div className="min-w-0 flex-1">
-              <div className="text-xs font-sans font-medium text-text truncate">
-                {userDisplayName}
-              </div>
-              <div className="text-[10px] font-sans text-text-muted truncate">
-                {usuario?.email || 'admin@warengine.local'}
-              </div>
-            </div>
-          )}
-        </button>
-
-        {/* Cerrar sesión */}
-        <button
-          type="button"
-          onClick={() => logout()}
-          title={colapsado ? 'Cerrar sesión' : undefined}
-          className={`
-            w-full flex items-center rounded-xl p-2 text-xs font-sans font-medium text-red-400 hover:text-red-300 hover:bg-red-500/10 transition-colors cursor-pointer
-            ${colapsado ? 'justify-center' : 'gap-2 px-3'}
-          `}
-        >
-          <LogOut className="w-4 h-4 shrink-0" />
-          {!colapsado && <span>Cerrar sesión</span>}
-        </button>
-
-        {/* Botón para expandir al final cuando está colapsado */}
         {colapsado && (
           <button
             type="button"
             onClick={() => setColapsado(false)}
-            className="w-full flex items-center justify-center p-2.5 rounded-xl text-text-muted hover:text-text hover:bg-slate-900/5 dark:hover:bg-white/8 transition-colors cursor-pointer pt-2 border-t border-border/50"
+            className="w-full flex items-center justify-center p-2.5 rounded-xl text-text-muted hover:text-text hover:bg-slate-900/5 dark:hover:bg-white/8 transition-colors cursor-pointer"
             title="Expandir barra lateral"
             aria-label="Expandir barra lateral"
           >
             <PanelLeftOpen className="w-4 h-4" />
           </button>
         )}
+
+        <button
+          type="button"
+          onClick={() => logout()}
+          title={colapsado ? 'Cerrar sesión' : undefined}
+          className={`w-full flex items-center gap-3 rounded-xl text-xs font-sans font-medium text-text-muted hover:text-text hover:bg-slate-900/5 dark:hover:bg-white/6 transition-colors cursor-pointer ${
+            colapsado ? 'justify-center p-2.5' : 'px-3 py-2.5'
+          }`}
+        >
+          <LogOut className="w-4 h-4 shrink-0 text-text-muted" />
+          {!colapsado && <span>Cerrar sesión</span>}
+        </button>
       </div>
     </aside>
   );
