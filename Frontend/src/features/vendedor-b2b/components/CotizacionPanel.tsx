@@ -35,6 +35,8 @@ interface CotizacionPanelProps {
   onEnviarCotizacion: () => void;
   isSubmitting: boolean;
   errorFactura: string | null;
+  onRefrescarClientes?: () => void;
+  isRefreshingClientes?: boolean;
 }
 
 export function CotizacionPanel({
@@ -58,7 +60,14 @@ export function CotizacionPanel({
   onEnviarCotizacion,
   isSubmitting,
   errorFactura,
+  onRefrescarClientes,
+  isRefreshingClientes = false,
 }: CotizacionPanelProps) {
+  const excedeCupoDisponible =
+    medioPago === 'credito_corporativo' &&
+    Boolean(clienteSeleccionado?.creditoHabilitado) &&
+    (clienteSeleccionado?.cupoCreditoAprobado ?? 0) > 0 &&
+    total > (clienteSeleccionado?.cupoCreditoDisponible ?? 0);
   return (
     <aside className="w-full lg:w-96 flex flex-col gap-4">
       {/* Sección Selección de Cliente Corporativo */}
@@ -98,27 +107,47 @@ export function CotizacionPanel({
             <p className="text-white/60">
               {clienteSeleccionado.tipoDocumento}: {clienteSeleccionado.numeroDocumento} &bull; Tel: {clienteSeleccionado.telefono || 'N/A'}
             </p>
-            <div className="pt-1 flex flex-wrap items-center gap-1.5">
+            <div className="pt-1 flex flex-wrap items-center justify-between gap-1.5">
               <span
                 className={`px-2 py-0.5 rounded-full text-[10px] font-semibold ${
                   clienteSeleccionado.creditoHabilitado
                     ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
                     : clienteSeleccionado.estadoCredito === 'pendiente_aprobacion'
                     ? 'bg-sky-500/20 text-sky-300 border border-sky-500/30'
+                    : clienteSeleccionado.estadoCredito === 'rechazado'
+                    ? 'bg-red-500/20 text-red-300 border border-red-500/30'
                     : 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
                 }`}
               >
                 {clienteSeleccionado.creditoHabilitado
-                  ? `✓ Crédito Autorizado${
+                  ? `✓ Crédito Liberado${
                       (clienteSeleccionado.cupoCreditoAprobado ?? 0) > 0
                         ? ` ($${(clienteSeleccionado.cupoCreditoDisponible ?? 0).toLocaleString('es-CO')} disp.)`
                         : ''
                     }`
                   : clienteSeleccionado.estadoCredito === 'pendiente_aprobacion'
                   ? `⏳ Crédito en revisión Super Admin (Sug: $${(clienteSeleccionado.cupoCreditoSugerido ?? 0).toLocaleString('es-CO')})`
+                  : clienteSeleccionado.estadoCredito === 'rechazado'
+                  ? '✕ Crédito Rechazado por Super Admin'
                   : 'Sin Cupo de Crédito'}
               </span>
+              {onRefrescarClientes && (
+                <button
+                  type="button"
+                  disabled={isRefreshingClientes}
+                  onClick={onRefrescarClientes}
+                  className="text-[10px] text-[#E9B949] hover:underline cursor-pointer disabled:opacity-50"
+                >
+                  {isRefreshingClientes ? 'Actualizando...' : '↻ Actualizar cupo'}
+                </button>
+              )}
             </div>
+            {clienteSeleccionado.estadoCredito === 'rechazado' &&
+              clienteSeleccionado.motivoDecisionCredito && (
+                <p className="text-[10px] text-red-300/90">
+                  Motivo: {clienteSeleccionado.motivoDecisionCredito}
+                </p>
+              )}
           </div>
         )}
       </div>
@@ -220,7 +249,7 @@ export function CotizacionPanel({
                     : 'border-white/10 text-white/70 hover:bg-white/5'
                 }`}
               >
-                Crédito Corp. (30d)
+                Crédito Corp. ({clienteSeleccionado?.plazoCreditoDias ?? 30}d)
               </button>
 
               <button
@@ -272,6 +301,13 @@ export function CotizacionPanel({
             </div>
           </div>
 
+          {excedeCupoDisponible && (
+            <div className="p-2 rounded-xl bg-amber-500/20 border border-amber-500/40 text-amber-200 text-[11px]">
+              El total supera el cupo de crédito disponible ($
+              {(clienteSeleccionado?.cupoCreditoDisponible ?? 0).toLocaleString('es-CO')} COP). Ajusta los productos o selecciona Transferencia.
+            </div>
+          )}
+
           {errorFactura && (
             <div className="p-2 rounded-xl bg-red-500/20 border border-red-500/30 text-red-200 text-[11px]">
               {errorFactura}
@@ -281,10 +317,10 @@ export function CotizacionPanel({
           {/* Botón Modo A: Enviar Cotización a Aval del Admin de Sucursal */}
           <button
             type="button"
-            disabled={isSubmitting || items.length === 0 || !clienteSeleccionado}
+            disabled={isSubmitting || items.length === 0 || !clienteSeleccionado || excedeCupoDisponible}
             onClick={onEnviarCotizacion}
             className={`w-full py-3 rounded-xl font-semibold text-xs uppercase tracking-wider transition-all cursor-pointer shadow-lg ${
-              isSubmitting || items.length === 0 || !clienteSeleccionado
+              isSubmitting || items.length === 0 || !clienteSeleccionado || excedeCupoDisponible
                 ? 'bg-white/10 text-white/40 cursor-not-allowed'
                 : 'bg-gradient-to-r from-[#E9B949] to-[#b88a1f] hover:brightness-110 text-[#14213D]'
             }`}

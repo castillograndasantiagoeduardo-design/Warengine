@@ -76,7 +76,7 @@ export function CreditosB2BPendientesPanel() {
       });
       setMensajeOk(
         decision === 'aprobar'
-          ? `Crédito aprobado para ${cliente.nombreRazonSocial} por $${cupo.toLocaleString('es-CO')} COP.`
+          ? `Crédito liberado de inmediato para ${cliente.nombreRazonSocial} por $${cupo.toLocaleString('es-CO')} COP. El vendedor B2B ya puede cotizarle a crédito.`
           : `Solicitud de crédito rechazada para ${cliente.nombreRazonSocial}.`,
       );
       await cargar();
@@ -140,7 +140,11 @@ export function CreditosB2BPendientesPanel() {
                     <h4 className="text-sm font-semibold text-text">{cli.nombreRazonSocial}</h4>
                     <p className="text-text-muted font-mono text-[11px]">
                       {cli.tipoDocumento} {cli.numeroDocumento} • Tel: {cli.telefono || 'N/A'}
+                      {cli.email ? ` • ${cli.email}` : ''}
                     </p>
+                    {cli.direccion && (
+                      <p className="text-text-muted text-[11px]">Dirección: {cli.direccion}</p>
+                    )}
                   </div>
                   <span
                     className={`px-2.5 py-0.5 rounded-full text-[11px] ring-1 ring-inset uppercase ${RIESGO_BADGE[riesgo]}`}

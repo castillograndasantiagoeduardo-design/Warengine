@@ -6,7 +6,7 @@
  * solo tras el aval factura y pasa a Pedido en Proceso.
  */
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   VendedorB2BHeader,
   CatalogoMultiBodega,
@@ -23,6 +23,7 @@ import { useAuth } from '@/features/autenticacion';
 export default function VendedorB2BPage() {
   const [isHistorialOpen, setIsHistorialOpen] = useState(false);
   const [isCotizacionesOpen, setIsCotizacionesOpen] = useState(false);
+  const [creditoLiberadoMsg, setCreditoLiberadoMsg] = useState<string | null>(null);
   const { usuario, isLoading: isAuthLoading } = useAuth();
   const sucursalId = usuario?.sucursalId ?? null;
 
@@ -68,6 +69,7 @@ export default function VendedorB2BPage() {
 
   const {
     clientes,
+    isLoadingClientes,
     isModalOpen: isModalClienteOpen,
     setIsModalOpen: setIsModalClienteOpen,
     isGuardando: isGuardandoCliente,
@@ -80,7 +82,48 @@ export default function VendedorB2BPage() {
     setAlertaSuperAdminMsg,
     setCampo: setCampoCliente,
     registrarCliente,
+    recargarClientes,
   } = useClientesB2B();
+
+  // Sincronizar el cliente seleccionado apenas el Super Admin apruebe o rechace su cupo
+  useEffect(() => {
+    if (!clienteSeleccionado) return;
+    const actualizado = clientes.find((c) => c.id === clienteSeleccionado.id);
+    if (!actualizado) return;
+
+    const cambioCredito =
+      actualizado.creditoHabilitado !== clienteSeleccionado.creditoHabilitado ||
+      actualizado.estadoCredito !== clienteSeleccionado.estadoCredito ||
+      actualizado.cupoCreditoAprobado !== clienteSeleccionado.cupoCreditoAprobado ||
+      actualizado.cupoCreditoDisponible !== clienteSeleccionado.cupoCreditoDisponible ||
+      actualizado.plazoCreditoDias !== clienteSeleccionado.plazoCreditoDias;
+
+    if (cambioCredito) {
+      const recienAprobado =
+        !clienteSeleccionado.creditoHabilitado && actualizado.creditoHabilitado;
+      setClienteSeleccionado(actualizado);
+      if (recienAprobado) {
+        setMedioPago('credito_corporativo');
+        const cupoTxt = (
+          actualizado.cupoCreditoDisponible ??
+          actualizado.cupoCreditoAprobado ??
+          0
+        ).toLocaleString('es-CO');
+        setCreditoLiberadoMsg(
+          `¡Crédito liberado para ${actualizado.nombreRazonSocial}! Cupo disponible: $${cupoTxt} COP (${actualizado.plazoCreditoDias ?? 30} días). Ya puedes cotizar a crédito.`,
+        );
+      }
+    }
+  }, [clientes, clienteSeleccionado, setClienteSeleccionado, setMedioPago]);
+
+  // Mientras el cliente seleccionado espera aprobación del Super Admin, consultar cada 8s en segundo plano
+  useEffect(() => {
+    if (clienteSeleccionado?.estadoCredito !== 'pendiente_aprobacion') return;
+    const intervalo = setInterval(() => {
+      void recargarClientes(undefined, true);
+    }, 8000);
+    return () => clearInterval(intervalo);
+  }, [clienteSeleccionado?.id, clienteSeleccionado?.estadoCredito, recargarClientes]);
 
   return (
     <div className="min-h-screen bg-[#0d1630] text-white flex flex-col font-[family-name:var(--font-archivo)] selection:bg-[#E9B949] selection:text-[#14213D]">
@@ -109,6 +152,21 @@ export default function VendedorB2BPage() {
               type="button"
               onClick={() => setAlertaSuperAdminMsg(null)}
               className="text-amber-300 hover:text-white cursor-pointer"
+            >
+              ✕
+            </button>
+          </div>
+        </div>
+      )}
+
+      {creditoLiberadoMsg && (
+        <div className="max-w-7xl w-full mx-auto mt-4 px-4 sm:px-6">
+          <div className="p-3 rounded-xl bg-emerald-500/15 border border-emerald-500/40 text-emerald-200 text-xs flex items-center justify-between gap-3">
+            <span>{creditoLiberadoMsg}</span>
+            <button
+              type="button"
+              onClick={() => setCreditoLiberadoMsg(null)}
+              className="text-emerald-300 hover:text-white cursor-pointer"
             >
               ✕
             </button>
@@ -174,6 +232,8 @@ export default function VendedorB2BPage() {
           onEnviarCotizacion={enviarCotizacionAAval}
           isSubmitting={isSubmitting}
           errorFactura={errorFactura}
+          onRefrescarClientes={() => void recargarClientes(undefined, false)}
+          isRefreshingClientes={isLoadingClientes}
         />
       </main>
 

@@ -30,6 +30,9 @@ import {
   IAlertaAdminRepository,
 } from '../../src/modules/administracion/domain/repositories/IAlertaAdminRepository.ts';
 import { AlcanceSucursal } from '../../src/modules/autenticacion/domain/value-objects/AlcanceSucursal.ts';
+import type { ResolverAlcanceSucursalUseCase } from '../../src/modules/autenticacion/application/use-cases/ResolverAlcanceSucursalUseCase.ts';
+import type { CrearFacturaDatos, IFacturaRepository } from '../../src/modules/facturacion/domain/repositories/IFacturaRepository.ts';
+import type { ITurnoCajaRepository } from '../../src/modules/facturacion/domain/repositories/ITurnoCajaRepository.ts';
 import type { EventoAuditoria, IAuditor } from '../../src/modules/auditoria/domain/repositories/IAuditoriaRepository.ts';
 import type { EstadoPedidoB2B } from '@warengine/contracts';
 
@@ -262,7 +265,7 @@ class InMemoryCotizacionRepo implements ICotizacionB2BRepository {
 
 const mockAlcanceGlobal = {
   execute: () => Promise.resolve(Result.ok(AlcanceSucursal.global())),
-} as any;
+} as unknown as ResolverAlcanceSucursalUseCase;
 
 const mockSucursalOp = { obtenerSucursalId: () => Promise.resolve(1) };
 
@@ -356,12 +359,12 @@ Deno.test('Modo A Cotizacion B2B: vendedor no puede facturar sin aval; tras aval
   // 2. Facturar sin aval debe fallar con COTIZACION_SIN_AVAL
   const crearFacturaUc = new CrearFacturaUseCase(
     {
-      crear: (d: any) => Promise.resolve(new Factura(
+      crear: (d: CrearFacturaDatos) => Promise.resolve(new Factura(
         d.factura.id, 1, d.factura.clienteId, d.factura.usuarioId, d.factura.sucursalId,
         null, d.factura.subtotal, d.factura.iva, d.factura.total, 'emitida', null, new Date(), d.items, d.pagos,
       )),
-    } as any,
-    { buscarAbiertoDeUsuario: () => Promise.resolve(null) } as any,
+    } as unknown as IFacturaRepository,
+    { buscarAbiertoDeUsuario: () => Promise.resolve(null) } as unknown as ITurnoCajaRepository,
     clienteRepo,
     mockSucursalOp,
     auditor,
@@ -443,8 +446,8 @@ Deno.test('Credito B2B: bloquea factura a credito si supera el cupo disponible (
   });
 
   const crearFacturaUc = new CrearFacturaUseCase(
-    {} as any,
-    { buscarAbiertoDeUsuario: () => Promise.resolve(null) } as any,
+    {} as unknown as IFacturaRepository,
+    { buscarAbiertoDeUsuario: () => Promise.resolve(null) } as unknown as ITurnoCajaRepository,
     clienteRepo,
     mockSucursalOp,
     auditor,
@@ -458,4 +461,70 @@ Deno.test('Credito B2B: bloquea factura a credito si supera el cupo disponible (
   });
   assertEquals(res.isFailure, true);
   assertEquals(res.error.code, 'CUPO_CREDITO_INSUFICIENTE');
+});
+
+Deno.test('Credito B2B: preserva marcador [clienteId] en alerta y libera cupo de inmediato para cotizar a credito', async () => {
+  const clienteRepo = new InMemoryClienteRepo();
+  const cotRepo = new InMemoryCotizacionRepo();
+  const alertaRepo = new MockAlertaRepo();
+  const auditor = new MockAuditor();
+
+  const nombreLargo =
+    'Corporacion Internacional de Logistica Industrial, Distribucion Mayorista y Abastecimiento Estrategico de Colombia S.A.S. Zona Franca';
+  const registrarUc = new RegistrarClienteUseCase(clienteRepo, auditor, alertaRepo, mockSucursalOp);
+  const reg = await registrarUc.execute({
+    tipoDocumento: 'NIT',
+    numeroDocumento: '901555666-7',
+    nombreRazonSocial: nombreLargo,
+    tipoCliente: 'B2B',
+    email: 'finanzas@corp-larga.co',
+    telefono: '3205556677',
+    direccion: 'Zona Franca Bodega 18',
+    solicitarCredito: true,
+    gananciaNetaMensual: 15_000_000,
+    antiguedadEmpresaMeses: 18,
+    plazoCreditoDias: 30,
+    actor: { usuarioId: 'usr-vendedor', ip: '127.0.0.1' },
+  });
+
+  assertEquals(reg.isSuccess, true);
+  const clienteId = reg.value.cliente.id;
+  const descripcionAlerta = alertaRepo.alertas[0]?.descripcion ?? '';
+  assertEquals(descripcionAlerta.includes(`[clienteId:${clienteId}]`), true);
+
+  // Antes de la aprobación del Super Admin, NO se puede cotizar a crédito corporativo
+  const crearCotUc = new CrearCotizacionB2BUseCase(
+    cotRepo, clienteRepo, mockSucursalOp, auditor, alertaRepo,
+  );
+  const cotBloqueada = await crearCotUc.execute({
+    clienteId,
+    medioPagoSugerido: 'credito_corporativo',
+    items: [{ productoId: 'prod-1', cantidad: 5, precioUnitario: 200_000, descuento: 0 }],
+    actor: { usuarioId: 'usr-vendedor', ip: '127.0.0.1' },
+  });
+  assertEquals(cotBloqueada.isFailure, true);
+  assertEquals(cotBloqueada.error.code, 'CREDITO_NO_HABILITADO');
+
+  // Super Admin aprueba el crédito de una vez (sin necesidad de reescribir cupo -> usa cupo sugerido)
+  const decidirUc = new DecidirCreditoClienteB2BUseCase(clienteRepo, auditor);
+  const aprobacion = await decidirUc.execute({
+    clienteId,
+    decision: 'aprobar',
+    actor: { usuarioId: 'usr-superadmin', ip: '127.0.0.1' },
+  });
+  assertEquals(aprobacion.isSuccess, true);
+  assertEquals(aprobacion.value.creditoHabilitado, true);
+  assertEquals(aprobacion.value.estadoCredito, 'aprobado');
+  assertEquals(aprobacion.value.cupoCreditoAprobado, reg.value.cliente.cupoCreditoSugerido);
+
+  // Inmediatamente después, el Vendedor B2B ya puede cotizar a crédito corporativo
+  const cotLiberada = await crearCotUc.execute({
+    clienteId,
+    medioPagoSugerido: 'credito_corporativo',
+    items: [{ productoId: 'prod-1', cantidad: 5, precioUnitario: 200_000, descuento: 0 }],
+    actor: { usuarioId: 'usr-vendedor', ip: '127.0.0.1' },
+  });
+  assertEquals(cotLiberada.isSuccess, true);
+  assertEquals(cotLiberada.value.estado, 'pendiente_aval');
+  assertEquals(cotLiberada.value.medioPagoSugerido, 'credito_corporativo');
 });

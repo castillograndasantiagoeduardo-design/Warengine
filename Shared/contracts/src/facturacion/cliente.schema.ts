@@ -148,11 +148,11 @@ export const decidirCreditoClienteSchema = z
     ),
   })
   .superRefine((datos, ctx) => {
-    if (datos.decision === 'aprobar' && (datos.cupoAprobado === undefined || datos.cupoAprobado <= 0)) {
+    if (datos.decision === 'aprobar' && datos.cupoAprobado !== undefined && datos.cupoAprobado <= 0) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ['cupoAprobado'],
-        message: 'Al aprobar el crédito debes indicar un cupo aprobado mayor a 0.',
+        message: 'Al aprobar el crédito el cupo debe ser mayor a 0.',
       });
     }
     if (datos.decision === 'rechazar' && !datos.motivo) {

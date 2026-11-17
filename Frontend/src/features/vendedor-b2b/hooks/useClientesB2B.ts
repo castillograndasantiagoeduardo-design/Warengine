@@ -5,7 +5,7 @@
  * de crédito B2B según ganancia neta declarada.
  */
 
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { crearClienteSchema } from '@warengine/contracts';
 import type { ClienteDto, CrearClienteInput, EvaluacionCreditoB2BDto } from '../types';
 import { vendedorB2bService } from '../api';
@@ -39,21 +39,38 @@ export function useClientesB2B() {
   const [alertaSuperAdminMsg, setAlertaSuperAdminMsg] = useState<string | null>(null);
 
   const [formNuevoCliente, setFormNuevoCliente] = useState<CrearClienteInput>(ESTADO_INICIAL_FORM);
+  const busquedaRef = useRef<string>('');
 
-  const cargarClientes = useCallback(async (query = '') => {
-    setIsLoadingClientes(true);
+  const cargarClientes = useCallback(async (query?: string, silent = false) => {
+    const q = query !== undefined ? query : busquedaRef.current;
+    if (!silent) setIsLoadingClientes(true);
     try {
-      const data = await vendedorB2bService.buscarClientes(query);
+      const data = await vendedorB2bService.buscarClientes(q);
       setClientes(data.filter((c) => c.tipoCliente === 'B2B'));
     } catch {
-      setClientes([]);
+      if (!silent) setClientes([]);
     } finally {
-      setIsLoadingClientes(false);
+      if (!silent) setIsLoadingClientes(false);
     }
   }, []);
 
   useEffect(() => {
     cargarClientes();
+  }, [cargarClientes]);
+
+  // Al volver a la pestaña, refresca el listado de clientes para reflejar créditos recién aprobados
+  useEffect(() => {
+    const refrescar = () => {
+      if (document.visibilityState === 'visible') {
+        void cargarClientes(undefined, true);
+      }
+    };
+    window.addEventListener('focus', refrescar);
+    document.addEventListener('visibilitychange', refrescar);
+    return () => {
+      window.removeEventListener('focus', refrescar);
+      document.removeEventListener('visibilitychange', refrescar);
+    };
   }, [cargarClientes]);
 
   // Simulación en vivo contra el motor oficial del backend cuando el usuario ingresa ganancia neta
@@ -93,6 +110,7 @@ export function useClientesB2B() {
 
   const buscar = useCallback(
     (texto: string) => {
+      busquedaRef.current = texto;
       setBusqueda(texto);
       cargarClientes(texto);
     },

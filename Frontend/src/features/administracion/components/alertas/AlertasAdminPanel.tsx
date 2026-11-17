@@ -4,17 +4,28 @@
  * AlertasAdminPanel.tsx — Requerimientos operativos reportados a la dirección (RF-ADM-C15).
  */
 
+import { useState } from 'react';
+import { PERMISSIONS } from '@warengine/contracts';
 import { Forbidden } from '@/components/panel/Forbidden';
 import { Button3D } from '@/components/ui/Button3D';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { Pagination } from '@/components/ui/Pagination';
 import { SegmentedControl } from '@/components/ui/SegmentedControl';
 import { Skeleton } from '@/components/ui/Skeleton';
+import { usePermissions } from '@/features/autenticacion';
 import { FILTROS_ESTADO_ALERTA, useAlertasAdmin } from '../../hooks/useAlertas';
+import type { AlertaAdmin } from '../../types';
 import { AlertaCard } from './AlertaCard';
+import { RevisarCreditoAlertaModal } from './RevisarCreditoAlertaModal';
 
 export function AlertasAdminPanel() {
   const a = useAlertasAdmin();
+  const { tienePermiso } = usePermissions();
+  const puedeDecidirCredito = tienePermiso(PERMISSIONS.FACTURACION_APROBAR_CREDITO_B2B);
+  const [creditoEnRevision, setCreditoEnRevision] = useState<{
+    alerta: AlertaAdmin;
+    clienteId: string;
+  } | null>(null);
 
   return (
     <section aria-label="Alertas administrativas">
@@ -52,7 +63,17 @@ export function AlertasAdminPanel() {
       {!a.loading && !a.error && a.rows.length > 0 && (
         <div className="flex flex-col gap-3">
           {a.rows.map((alerta) => (
-            <AlertaCard key={alerta.id} alerta={alerta} procesando={a.procesando === alerta.id} onCambiar={(estado) => a.cambiarEstado(alerta, estado)} />
+            <AlertaCard
+              key={alerta.id}
+              alerta={alerta}
+              procesando={a.procesando === alerta.id}
+              onCambiar={(estado) => a.cambiarEstado(alerta, estado)}
+              onRevisarCredito={
+                puedeDecidirCredito
+                  ? (alertaObj, clienteId) => setCreditoEnRevision({ alerta: alertaObj, clienteId })
+                  : undefined
+              }
+            />
           ))}
           {a.totalPages > 1 && (
             <div className="panel-card">
@@ -61,6 +82,13 @@ export function AlertasAdminPanel() {
           )}
         </div>
       )}
+
+      <RevisarCreditoAlertaModal
+        alerta={creditoEnRevision?.alerta ?? null}
+        clienteId={creditoEnRevision?.clienteId ?? null}
+        onClose={() => setCreditoEnRevision(null)}
+        onResuelto={a.recargar}
+      />
     </section>
   );
 }

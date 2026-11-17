@@ -110,19 +110,21 @@ export class RegistrarClienteUseCase {
                 : null;
             const sucursalId = sucursalOperador ?? 1;
 
-            const descripcion = [
+            const marcadorCliente = ` [clienteId:${cliente.id}]`;
+            const cuerpoDescripcion = [
                 `ADVERTENCIA DE CRÉDITO B2B — Nueva empresa registrada: ${cliente.nombreRazonSocial}.`,
                 `Ganancia neta mensual declarada: $${evaluacionCredito.gananciaNetaMensual.toLocaleString('es-CO')} COP.`,
                 `Cupo sugerido por reglas de negocio: $${evaluacionCredito.cupoSugerido.toLocaleString('es-CO')} COP (Riesgo: ${evaluacionCredito.nivelRiesgo.toUpperCase()}, Plazo: ${evaluacionCredito.plazoCreditoDias} días).`,
-                `El crédito permanece BLOQUEADO hasta que el Super Admin lo apruebe o rechace. [clienteId:${cliente.id}]`,
+                `El crédito permanece BLOQUEADO hasta que el Super Admin lo apruebe o rechace.`,
             ].join(' ');
+            const descripcion = `${cuerpoDescripcion.slice(0, 500 - marcadorCliente.length)}${marcadorCliente}`;
 
             await this.alertaAdminRepository.crear({
                 usuarioId: request.actor.usuarioId,
                 sucursalId,
                 motivo: 'SOLICITUD_CREDITO_B2B',
                 prioridad: 'urgente',
-                descripcion: descripcion.slice(0, 500),
+                descripcion,
                 destinatarioRol: 'super-admin',
             });
             alertaSuperAdminEnviada = true;

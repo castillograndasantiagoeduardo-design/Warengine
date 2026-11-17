@@ -158,6 +158,7 @@ export interface AlertaAdmin {
   fechaAtencion: string | null;
   sucursalNombre?: string | null;
   usuarioEmail?: string | null;
+  destinatarioRol?: string | null;
 }
 
 export interface AlertaStock {

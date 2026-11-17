@@ -47,7 +47,12 @@ export class DecidirCreditoClienteB2BUseCase {
       );
     }
 
-    if (request.decision === 'aprobar' && (!request.cupoAprobado || request.cupoAprobado <= 0)) {
+    const aprobar = request.decision === 'aprobar';
+    const cupoSolicitado = aprobar
+      ? (request.cupoAprobado ?? cliente.cupoCreditoSugerido)
+      : 0;
+
+    if (aprobar && (!cupoSolicitado || cupoSolicitado <= 0)) {
       return Result.fail(
         new DecisionCreditoInvalidaError('Para aprobar el crédito debes definir un cupo mayor a 0.'),
       );
@@ -66,8 +71,7 @@ export class DecidirCreditoClienteB2BUseCase {
     }
 
     const ahora = new Date();
-    const aprobar = request.decision === 'aprobar';
-    const cupoFinal = aprobar ? Math.round((request.cupoAprobado ?? 0) * 100) / 100 : 0;
+    const cupoFinal = aprobar ? Math.round(cupoSolicitado * 100) / 100 : 0;
 
     const actualizado = await this.clienteRepository.decidirCredito(cliente.id, {
       creditoHabilitado: aprobar,

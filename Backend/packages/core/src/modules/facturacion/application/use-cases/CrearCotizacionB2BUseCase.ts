@@ -4,6 +4,8 @@ import type { MedioPago } from '../../domain/entities/FacturaPago.ts';
 import {
   ClienteNoEncontradoError,
   ClienteRequeridoParaVentaB2BError,
+  CreditoNoHabilitadoError,
+  CupoCreditoInsuficienteError,
   PagoInvalidoError,
 } from '../../domain/errors/FacturacionErrors.ts';
 import { OperadorSinSucursalError } from '../../domain/errors/TurnoCajaErrors.ts';
@@ -77,6 +79,20 @@ export class CrearCotizacionB2BUseCase {
     }
 
     const { subtotal, iva, total } = CotizacionB2B.calcularTotales(request.items);
+    const medioPagoSugerido = request.medioPagoSugerido ?? 'transferencia';
+
+    // Si el vendedor cotiza a crédito corporativo, el cliente debe tener crédito aprobado y cupo disponible.
+    if (medioPagoSugerido === 'credito_corporativo') {
+      if (!cliente.puedePagarConCredito) {
+        return Result.fail(new CreditoNoHabilitadoError());
+      }
+      if (!cliente.tieneCupoDisponible(total)) {
+        return Result.fail(
+          new CupoCreditoInsuficienteError(cliente.cupoCreditoDisponible, total),
+        );
+      }
+    }
+
     const cotizacionId = crypto.randomUUID();
     const ahora = new Date();
     const diasVigencia = Math.min(30, Math.max(1, request.diasVigencia ?? 7));
