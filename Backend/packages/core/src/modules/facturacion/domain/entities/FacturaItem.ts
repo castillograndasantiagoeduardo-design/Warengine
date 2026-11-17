@@ -7,6 +7,7 @@ export class FacturaItem {
         public readonly precioUnitario: number,
         public readonly descuento: number,
         public readonly subtotal: number,
+        public readonly productoNombre?: string | null,
     ) { }
 
     public static crear(
@@ -16,6 +17,7 @@ export class FacturaItem {
         cantidad: number,
         precioUnitario: number,
         descuento: number = 0,
+        productoNombre?: string | null,
     ): FacturaItem {
         const subtotal = Math.round(((cantidad * precioUnitario) - descuento) * 100) / 100;
         return new FacturaItem(
@@ -26,6 +28,7 @@ export class FacturaItem {
             precioUnitario,
             descuento,
             subtotal,
+            productoNombre,
         );
     }
 }

@@ -8,9 +8,19 @@ export interface FiltrosFacturas {
     usuarioId?: string;
     fechaInicio?: Date;
     fechaFin?: Date;
+    desde?: Date;
+    hasta?: Date;
     estado?: 'emitida' | 'anulada';
+    texto?: string;
+    tipo?: string;
+    page?: number;
     limite: number;
     offset: number;
+}
+
+export interface FacturasPaginadasResultado {
+    items: Factura[];
+    total: number;
 }
 
 export interface CrearFacturaDatos {
@@ -23,6 +33,7 @@ export interface IFacturaRepository {
     crear(datos: CrearFacturaDatos): Promise<Factura>;
     findById(id: string): Promise<Factura | null>;
     listar(filtros: FiltrosFacturas): Promise<Factura[]>;
+    listarPaginado?(filtros: FiltrosFacturas): Promise<FacturasPaginadasResultado>;
     obtenerSiguienteConsecutivo(sucursalId: number): Promise<number>;
     /**
      * Pasa la factura de 'emitida' a 'anulada' de forma atómica (RF-FMC-E10).

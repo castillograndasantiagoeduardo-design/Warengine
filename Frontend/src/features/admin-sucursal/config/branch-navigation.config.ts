@@ -157,4 +157,21 @@ export const INVENTORY_SECTION_TABS: readonly BranchTabItem[] = [
   },
 ] as const;
 
+/**
+ * Pestañas de navegación del submódulo de Facturación (/admin-sucursal/facturacion/**).
+ */
+export const INVOICING_SECTION_TABS: readonly BranchTabItem[] = [
+  {
+    id: 'facturas',
+    label: 'Facturas',
+    href: '/admin-sucursal/facturacion',
+    exact: true,
+  },
+  {
+    id: 'alertas',
+    label: 'Alertas',
+    href: '/admin-sucursal/facturacion/alertas',
+  },
+] as const;
+
 export const DEFAULT_DASHBOARD_PERIODO: DashboardPeriodo = 'hoy';

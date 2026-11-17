@@ -210,8 +210,9 @@ Deno.test('AtenderAlertaAdminUseCase: cambia estado a atendido y fija fechaAtenc
   const altRepo = crearAlertaRepoFalso();
   const { auditor, eventos } = crearAuditorFalso();
   const creada = await altRepo.crear({ usuarioId: 'u1', sucursalId: 1, motivo: 'Alerta' });
+  const resolverAlcance = crearAlcanceResolverFalso(false, [1]);
 
-  const useCase = new AtenderAlertaAdminUseCase(altRepo, auditor);
+  const useCase = new AtenderAlertaAdminUseCase(resolverAlcance, altRepo, auditor);
   const result = await useCase.execute({
     id: creada.id,
     estado: 'atendido',
@@ -227,11 +228,49 @@ Deno.test('AtenderAlertaAdminUseCase: cambia estado a atendido y fija fechaAtenc
   assertEquals(eventos[0].entidad, 'alertas_admin');
 });
 
+Deno.test('AtenderAlertaAdminUseCase: permite estado visto', async () => {
+  const altRepo = crearAlertaRepoFalso();
+  const { auditor, eventos } = crearAuditorFalso();
+  const creada = await altRepo.crear({ usuarioId: 'u1', sucursalId: 1, motivo: 'Alerta a ver' });
+  const resolverAlcance = crearAlcanceResolverFalso(false, [1]);
+
+  const useCase = new AtenderAlertaAdminUseCase(resolverAlcance, altRepo, auditor);
+  const result = await useCase.execute({
+    id: creada.id,
+    estado: 'visto',
+    actor,
+  });
+
+  assertEquals(result.isSuccess, true);
+  assertEquals(result.value.estado, 'visto');
+  assertEquals(eventos.length, 1);
+});
+
+Deno.test('AtenderAlertaAdminUseCase: falla con SucursalFueraDeAlcanceError si la alerta es de otra sede', async () => {
+  const altRepo = crearAlertaRepoFalso();
+  const { auditor, eventos } = crearAuditorFalso();
+  const creada = await altRepo.crear({ usuarioId: 'u1', sucursalId: 2, motivo: 'Alerta de sede 2' });
+  // Actor solo tiene alcance en sucursal 1
+  const resolverAlcance = crearAlcanceResolverFalso(false, [1]);
+
+  const useCase = new AtenderAlertaAdminUseCase(resolverAlcance, altRepo, auditor);
+  const result = await useCase.execute({
+    id: creada.id,
+    estado: 'atendido',
+    actor,
+  });
+
+  assertEquals(result.isFailure, true);
+  assertEquals(result.error instanceof SucursalFueraDeAlcanceError, true);
+  assertEquals(eventos.length, 0);
+});
+
 Deno.test('AtenderAlertaAdminUseCase: falla si la alerta no existe', async () => {
   const altRepo = crearAlertaRepoFalso();
   const { auditor, eventos } = crearAuditorFalso();
+  const resolverAlcance = crearAlcanceResolverFalso(true);
 
-  const useCase = new AtenderAlertaAdminUseCase(altRepo, auditor);
+  const useCase = new AtenderAlertaAdminUseCase(resolverAlcance, altRepo, auditor);
   const result = await useCase.execute({
     id: 'alt-inexistente',
     estado: 'visto',
