@@ -317,32 +317,28 @@ html[data-paleta="oro"] {
 
 :root,
 .dark {
-  --bg: var(--p-base, #070d1a);
+  --bg: var(--p-base);
   --surface: rgba(255, 255, 255, 0.025);
   --border: rgba(255, 255, 255, 0.08);
-  --border-top-brillo: rgba(255, 255, 255, 0.16);
-  --border-hover: rgba(255, 255, 255, 0.18);
+  --border-top-brillo: rgba(255, 255, 255, 0.14);
+  --border-hover: rgba(255, 255, 255, 0.16);
   --separador-tabla: rgba(255, 255, 255, 0.06);
   --hover-tabla: rgba(255, 255, 255, 0.04);
   --text: #f1f5f9;
   --text-muted: #a5b4cc;
-
-  /* CLAVE PARA QUE LAS TARJETAS SE VEAN TRANSPARENTES Y CRISTALINAS */
   --vidrio-bg: rgba(255, 255, 255, 0.025);
-  --vidrio-borde: rgba(255, 255, 255, 0.08);
-  --vidrio-sombra: 0 8px 32px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.08);
-
-  /* Barra superior y Sidebar al 94% para que no se transparente el texto al hacer scroll */
   --vidrio-fuerte-bg: color-mix(in srgb, var(--p-base, #070d1a) 94%, transparent);
   --vidrio-fuerte-borde: rgba(255, 255, 255, 0.12);
   --vidrio-fuerte-sombra: 0 4px 20px -2px rgba(0, 0, 0, 0.4), 0 1px 3px rgba(0, 0, 0, 0.2);
+  --vidrio-borde: rgba(255, 255, 255, 0.08);
+  --vidrio-sombra: 0 8px 32px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.08);
   --vidrio-fallback: rgba(17, 25, 45, 0.95);
   --superficie-ctrl-bg: rgba(255, 255, 255, 0.05);
   --superficie-ctrl-borde: rgba(255, 255, 255, 0.1);
 }
 
 .light {
-  --bg: var(--p-base-claro, #eef2f9);
+  --bg: var(--p-base-claro);
   --surface: rgba(255, 255, 255, 0.58);
   --border: rgba(15, 23, 42, 0.09);
   --border-top-brillo: rgba(255, 255, 255, 0.95);
@@ -352,11 +348,11 @@ html[data-paleta="oro"] {
   --text: #0f172a;
   --text-muted: #475569;
   --vidrio-bg: rgba(255, 255, 255, 0.58);
-  --vidrio-borde: rgba(255, 255, 255, 0.82);
-  --vidrio-sombra: 0 8px 28px rgba(15, 23, 42, 0.07), 0 0 0 1px rgba(15, 23, 42, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.95);
   --vidrio-fuerte-bg: color-mix(in srgb, #ffffff 92%, var(--p-base-claro, #f8fafc));
   --vidrio-fuerte-borde: rgba(15, 23, 42, 0.12);
   --vidrio-fuerte-sombra: 0 4px 20px -2px rgba(15, 23, 42, 0.08), 0 1px 3px rgba(15, 23, 42, 0.04);
+  --vidrio-borde: rgba(255, 255, 255, 0.82);
+  --vidrio-sombra: 0 8px 28px rgba(15, 23, 42, 0.07), 0 0 0 1px rgba(15, 23, 42, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.95);
   --vidrio-fallback: rgba(255, 255, 255, 0.95);
   --superficie-ctrl-bg: rgba(255, 255, 255, 0.65);
   --superficie-ctrl-borde: rgba(15, 23, 42, 0.12);
@@ -368,9 +364,7 @@ html[data-paleta="oro"] {
 
 .vidrio {
   position: relative;
-  background-color: var(--vidrio-bg) !important;
-  backdrop-filter: blur(20px) saturate(160%);
-  -webkit-backdrop-filter: blur(20px) saturate(160%);
+  background-color: var(--vidrio-bg);
   border: 1px solid var(--vidrio-borde);
   border-top-color: var(--border-top-brillo);
   border-radius: 1rem;
@@ -388,7 +382,7 @@ html[data-paleta="oro"] {
   background: linear-gradient(
     90deg,
     transparent 0%,
-    rgba(255, 255, 255, 0.22) 50%,
+    rgba(255, 255, 255, 0.2) 50%,
     transparent 100%
   );
   pointer-events: none;
@@ -402,8 +396,6 @@ html[data-paleta="oro"] {
 .vidrio-fuerte {
   position: relative;
   background-color: var(--vidrio-fuerte-bg);
-  backdrop-filter: blur(28px) saturate(150%);
-  -webkit-backdrop-filter: blur(28px) saturate(150%);
   border: 1px solid var(--vidrio-fuerte-borde, var(--vidrio-borde));
   border-bottom: 1px solid var(--vidrio-fuerte-borde, var(--border));
   border-top-color: var(--border-top-brillo);
@@ -471,15 +463,15 @@ html[data-paleta="oro"] {
 /* Retícula arquitectónica tenue para la variante de fondo "malla" */
 .trama-malla {
   background-image:
-    linear-gradient(to right, rgba(255, 255, 255, 0.035) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(255, 255, 255, 0.035) 1px, transparent 1px);
+    linear-gradient(to right, rgba(255, 255, 255, 0.04) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
   background-size: 56px 56px;
 }
 
 .light .trama-malla {
   background-image:
-    linear-gradient(to right, rgba(15, 23, 42, 0.035) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(15, 23, 42, 0.035) 1px, transparent 1px);
+    linear-gradient(to right, rgba(15, 23, 42, 0.04) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(15, 23, 42, 0.04) 1px, transparent 1px);
   background-size: 56px 56px;
 }
 

@@ -3,63 +3,25 @@
 /**
  * FondoAmbiental.tsx — Capa fija de iluminación ambiental, aurora, retícula y ruido de cristal.
  *
- * Implementación con style explícito de filter: blur(125px-130px) y opacidades suaves (0.16 a 0.22)
- * para lograr una luz atmosférica, suave y pareja sin teñir ni saturar las tarjetas.
+ * Copia exacta de prueba-diseno-warengine/src/app/page.tsx (localhost:3005).
  */
 
 import React from 'react';
 
 export function FondoAmbiental() {
   return (
-    /* CAPA DE FONDO AMBIENTAL FIJA */
-    <div
-      className="fixed inset-0 pointer-events-none -z-10 overflow-hidden"
-      aria-hidden="true"
-    >
-      {/* 1. Orbe superior izquierdo — suave y muy difuminado */}
-      <div
-        className="mancha-luz mancha-aurora-1 absolute -top-24 -left-24 w-[520px] h-[520px] rounded-full"
-        style={{
-          backgroundColor: 'var(--p-luz-1, #2551d6)',
-          opacity: 0.22,
-          filter: 'blur(125px)',
-        }}
-      />
-
-      {/* 2. Orbe central-izquierdo detrás de los KPIs — opacidad controlada (0.20) para NO teñir de azul fuerte la primera tarjeta */}
-      <div
-        className="mancha-luz mancha-aurora-2 absolute top-[12%] left-[24%] w-[560px] h-[360px] rounded-full"
-        style={{
-          backgroundColor: 'var(--p-500, #3b6cf2)',
-          opacity: 0.20,
-          filter: 'blur(130px)',
-        }}
-      />
-
-      {/* 3. Orbe central-derecho detrás del gráfico y Requiere atención */}
-      <div
-        className="mancha-luz mancha-aurora-3 absolute top-[32%] right-[8%] w-[600px] h-[460px] rounded-full"
-        style={{
-          backgroundColor: 'var(--p-luz-2, #4f46e5)',
-          opacity: 0.22,
-          filter: 'blur(130px)',
-        }}
-      />
-
-      {/* 4. Orbe inferior derecho detrás de Métodos de pago / Activos */}
-      <div
-        className="mancha-luz absolute bottom-[6%] right-[4%] w-[520px] h-[440px] rounded-full"
-        style={{
-          backgroundColor: 'var(--p-luz-3, #06b6d4)',
-          opacity: 0.16,
-          filter: 'blur(125px)',
-        }}
-      />
-
-      {/* Capa para la variante de fondo "malla" (retícula muy tenue al 3.5%) */}
+    <div className="fixed inset-0 pointer-events-none -z-10 overflow-hidden" aria-hidden="true">
+      {/* (d) Arriba a la izquierda (--p-luz-1) */}
+      <div className="mancha-luz mancha-aurora-1 absolute -top-16 -left-16 w-[480px] h-[480px] rounded-full bg-luz-1/22 dark:bg-luz-1/35 blur-[110px]" />
+      {/* (a) Detrás de la fila de KPIs (--p-500, a la izquierda del centro) */}
+      <div className="mancha-luz mancha-aurora-2 absolute top-[11%] left-[22%] w-[540px] h-[350px] rounded-full bg-brand-500/22 dark:bg-brand-500/34 blur-[110px]" />
+      {/* (b) Detrás del gráfico de ventas (--p-luz-2, a la derecha) */}
+      <div className="mancha-luz mancha-aurora-3 absolute top-[33%] right-[10%] w-[580px] h-[440px] rounded-full bg-luz-2/20 dark:bg-luz-2/32 blur-[110px]" />
+      {/* (c) Detrás de métodos de pago / abajo a la derecha (--p-luz-3) */}
+      <div className="mancha-luz absolute bottom-[6%] right-[4%] w-[500px] h-[440px] rounded-full bg-luz-3/16 dark:bg-luz-3/22 blur-[110px]" />
+      {/* Capa para la variante de fondo "malla" */}
       <div className="capa-malla absolute inset-0 trama-malla" />
-
-      {/* Textura de ruido sutil */}
+      {/* Textura de ruido muy tenue (< 0.04) */}
       <div className="absolute inset-0 textura-ruido" />
     </div>
   );
