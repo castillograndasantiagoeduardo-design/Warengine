@@ -1,0 +1,116 @@
+### ============================================================================
+### 26. Cotizaciones B2B (Modo A: Cotizar -> Aval -> Facturar / Pedido en Proceso)
+###     + Evaluación Crediticia B2B por Ganancia Neta + Alerta al Super Admin
+### ============================================================================
+
+@baseUrl = http://localhost:3001
+@tokenVendedor = REEMPLAZAR_TOKEN_VENDEDOR_B2B
+@tokenAdminSucursal = REEMPLAZAR_TOKEN_ADMIN_SUCURSAL
+@tokenSuperAdmin = REEMPLAZAR_TOKEN_SUPER_ADMIN
+@clienteId = REEMPLAZAR_ID_CLIENTE_B2B
+@productoId = REEMPLAZAR_ID_PRODUCTO
+@cotizacionId = REEMPLAZAR_ID_COTIZACION
+
+### 1. Simular cupo de crédito B2B según ganancia neta declarada
+POST {{baseUrl}}/ventas/clientes/simular-credito
+Authorization: Bearer {{tokenVendedor}}
+Content-Type: application/json
+
+{
+  "gananciaNetaMensual": 20000000,
+  "antiguedadEmpresaMeses": 24,
+  "plazoCreditoDias": 30
+}
+
+### 2. Registrar nuevo cliente B2B con estudio financiero (dispara alerta urgente al Super Admin)
+POST {{baseUrl}}/ventas/clientes
+Authorization: Bearer {{tokenVendedor}}
+Content-Type: application/json
+
+{
+  "tipoDocumento": "NIT",
+  "numeroDocumento": "901987654-3",
+  "nombreRazonSocial": "Inversiones Andinas B2B S.A.S.",
+  "tipoCliente": "B2B",
+  "email": "compras@andinasb2b.com",
+  "telefono": "3157778899",
+  "direccion": "Zona Industrial Bodega 12",
+  "solicitarCredito": true,
+  "gananciaNetaMensual": 20000000,
+  "antiguedadEmpresaMeses": 24,
+  "plazoCreditoDias": 30,
+  "observacionFinanciera": "Estados financieros 2025 y cámara de comercio vigentes"
+}
+
+### 3. Super Admin consulta solicitudes de crédito B2B pendientes
+GET {{baseUrl}}/ventas/clientes/creditos-pendientes
+Authorization: Bearer {{tokenSuperAdmin}}
+
+### 4. Super Admin aprueba y libera el cupo de crédito
+PUT {{baseUrl}}/ventas/clientes/{{clienteId}}/credito
+Authorization: Bearer {{tokenSuperAdmin}}
+Content-Type: application/json
+
+{
+  "decision": "aprobar",
+  "cupoAprobado": 4500000,
+  "plazoCreditoDias": 30,
+  "motivo": "Aprobado por gerencia tras verificación financiera"
+}
+
+### 5. Vendedor B2B intenta facturar directo sin cotización avalada (DEBE FALLAR 403)
+POST {{baseUrl}}/ventas/facturas/b2b
+Authorization: Bearer {{tokenVendedor}}
+Content-Type: application/json
+
+{
+  "clienteId": "{{clienteId}}",
+  "items": [
+    { "productoId": "{{productoId}}", "cantidad": 2, "precioUnitario": 100000, "descuento": 0 }
+  ],
+  "pagos": [
+    { "medioPago": "transferencia", "monto": 200000 }
+  ]
+}
+
+### 6. Vendedor B2B crea Cotización B2B (estado: pendiente_aval, NO descuenta stock)
+POST {{baseUrl}}/ventas/cotizaciones-b2b
+Authorization: Bearer {{tokenVendedor}}
+Content-Type: application/json
+
+{
+  "clienteId": "{{clienteId}}",
+  "medioPagoSugerido": "credito_corporativo",
+  "diasVigencia": 7,
+  "observaciones": "Entrega priorizada en bodega principal",
+  "items": [
+    { "productoId": "{{productoId}}", "cantidad": 5, "precioUnitario": 100000, "descuento": 0 }
+  ]
+}
+
+### 7. Vendedor B2B intenta facturar cotización SIN aval (DEBE FALLAR 409 COTIZACION_SIN_AVAL)
+POST {{baseUrl}}/ventas/cotizaciones-b2b/{{cotizacionId}}/facturar
+Authorization: Bearer {{tokenVendedor}}
+Content-Type: application/json
+
+{}
+
+### 8. Admin de Sucursal otorga el AVAL a la cotización (estado: aprobada)
+PUT {{baseUrl}}/ventas/cotizaciones-b2b/{{cotizacionId}}/avalar
+Authorization: Bearer {{tokenAdminSucursal}}
+
+### 9. Vendedor B2B factura la cotización avalada (emite Factura, descuenta stock y cupo, estadoPedido: en_proceso)
+POST {{baseUrl}}/ventas/cotizaciones-b2b/{{cotizacionId}}/facturar
+Authorization: Bearer {{tokenVendedor}}
+Content-Type: application/json
+
+{}
+
+### 10. Admin de Sucursal avanza el estado del pedido: en_proceso -> despachado -> entregado
+PUT {{baseUrl}}/ventas/cotizaciones-b2b/{{cotizacionId}}/estado-pedido
+Authorization: Bearer {{tokenAdminSucursal}}
+Content-Type: application/json
+
+{
+  "estadoPedido": "despachado"
+}

@@ -1,10 +1,11 @@
-import { and, eq, isNull, like, or, type SQL } from 'drizzle-orm';
+import { and, eq, isNull, like, or, sql, type SQL } from 'drizzle-orm';
 import { Database } from '../../client.ts';
 import { clientes } from '../../schema/facturacion.schema.ts';
 import {
     Cliente,
     DatosActualizarCliente,
     DatosCliente,
+    DatosDecisionCreditoCliente,
     FiltrosClientes,
     IClienteRepository,
     TipoDocumentoCliente,
@@ -69,6 +70,19 @@ export class DrizzleClienteRepository implements IClienteRepository {
                 email: datos.email,
                 telefono: datos.telefono,
                 direccion: datos.direccion,
+                credito_habilitado: 0,
+                ganancia_neta_mensual:
+                    datos.gananciaNetaMensual !== undefined && datos.gananciaNetaMensual !== null
+                        ? datos.gananciaNetaMensual.toFixed(2)
+                        : null,
+                antiguedad_empresa_meses: datos.antiguedadEmpresaMeses ?? null,
+                plazo_credito_dias: datos.plazoCreditoDias ?? 30,
+                cupo_credito_sugerido: (datos.cupoCreditoSugerido ?? 0).toFixed(2),
+                cupo_credito_aprobado: '0.00',
+                cupo_credito_utilizado: '0.00',
+                nivel_riesgo_credito: datos.nivelRiesgoCredito ?? null,
+                estado_credito: datos.estadoCredito ?? 'sin_solicitud',
+                observacion_financiera: datos.observacionFinanciera ?? null,
             });
         } catch (error) {
             // Dos cajeros registrando el mismo documento a la vez: gana el primero y
@@ -121,5 +135,50 @@ export class DrizzleClienteRepository implements IClienteRepository {
             throw new Error(`Cliente no encontrado tras actualización: ${id}`);
         }
         return actualizado;
+    }
+
+    public async decidirCredito(id: string, datos: DatosDecisionCreditoCliente): Promise<Cliente> {
+        await this.db
+            .update(clientes)
+            .set({
+                credito_habilitado: datos.creditoHabilitado ? 1 : 0,
+                estado_credito: datos.estadoCredito,
+                cupo_credito_aprobado: datos.cupoCreditoAprobado.toFixed(2),
+                plazo_credito_dias: datos.plazoCreditoDias ?? 30,
+                credito_aprobado_por: datos.creditoAprobadoPor,
+                credito_aprobado_en: datos.creditoAprobadoEn,
+                motivo_decision_credito: datos.motivoDecisionCredito,
+            })
+            .where(eq(clientes.id_cliente, id));
+
+        const actualizado = await this.findById(id);
+        if (!actualizado) {
+            throw new Error(`Cliente no encontrado tras decisión de crédito: ${id}`);
+        }
+        return actualizado;
+    }
+
+    public async listarCreditosPendientes(): Promise<Cliente[]> {
+        const rows = await this.db
+            .select()
+            .from(clientes)
+            .where(
+                and(
+                    eq(clientes.tipo_cliente, 'B2B'),
+                    eq(clientes.estado_credito, 'pendiente_aprobacion'),
+                    isNull(clientes.deleted_at),
+                ),
+            )
+            .orderBy(clientes.nombre_razon_social);
+        return rows.map(clienteFromRow);
+    }
+
+    public async registrarConsumoCredito(id: string, monto: number): Promise<void> {
+        await this.db
+            .update(clientes)
+            .set({
+                cupo_credito_utilizado: sql`${clientes.cupo_credito_utilizado} + ${monto.toFixed(2)}`,
+            })
+            .where(eq(clientes.id_cliente, id));
     }
 }

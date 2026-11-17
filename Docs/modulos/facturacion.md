@@ -686,3 +686,13 @@ para:
 4. Enviar documento duplicado para comprobar la reutilización (HTTP 200
    `{ yaExistia: true }`).
 5. Búsqueda y paginación con filtros en `/ventas/clientes`.
+
+El archivo [Http/26-cotizaciones-b2b-y-credito.http](../../Http/26-cotizaciones-b2b-y-credito.http) incluye el flujo completo del **Vendedor B2B (Modo A)** y la **evaluación crediticia por ganancia neta**:
+
+1. `POST /ventas/clientes/simular-credito`: cálculo de cupo sugerido y nivel de riesgo según ganancia neta, antigüedad (15%/25%/35%) y plazo (15/30/45/60 días).
+2. `POST /ventas/clientes`: creación de cliente B2B con estudio financiero (crédito bloqueado + alerta `urgente` en `alertas_admin` dirigida al `super-admin` con motivo `SOLICITUD_CREDITO_B2B`).
+3. `GET /ventas/clientes/creditos-pendientes` y `PUT /ventas/clientes/:id/credito`: aprobación/rechazo exclusivo del Super Admin (`facturacion:aprobar-credito-b2b`).
+4. `POST /ventas/cotizaciones-b2b`: creación de cotización por el Vendedor B2B (`pendiente_aval`, sin descontar inventario, notificando al `admin-sucursal`).
+5. `PUT /ventas/cotizaciones-b2b/:id/avalar` y `PUT /ventas/cotizaciones-b2b/:id/rechazar`: aval o rechazo por el Admin de Sucursal (`facturacion:avalar-cotizacion-b2b`).
+6. `POST /ventas/cotizaciones-b2b/:id/facturar`: conversión de cotización avalada a factura emitida (descontando Kardex y cupo) y transición a `estadoPedido: 'en_proceso'`.
+7. `PUT /ventas/cotizaciones-b2b/:id/estado-pedido`: seguimiento de despacho (`en_proceso` → `despachado` → `entregado`).

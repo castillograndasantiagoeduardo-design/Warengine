@@ -23,6 +23,7 @@ const ROLES_PERMISOS = {
         PERMISSIONS.INVENTARIO_LEER,
         PERMISSIONS.FACTURACION_CONSULTAR,
         PERMISSIONS.FACTURACION_GESTIONAR_CLIENTES,
+        PERMISSIONS.FACTURACION_COTIZAR_B2B,
         PERMISSIONS.FACTURACION_VENDER_B2B,
         PERMISSIONS.FACTURACION_ALERTAR_ADMIN,
         PERMISSIONS.MCP_CONSULTAR,
@@ -34,6 +35,8 @@ const ROLES_PERMISOS = {
         PERMISSIONS.FACTURACION_FACTURAR,
         PERMISSIONS.FACTURACION_GESTIONAR_CLIENTES,
         PERMISSIONS.FACTURACION_ABRIR_TURNO,
+        PERMISSIONS.FACTURACION_COTIZAR_B2B,
+        PERMISSIONS.FACTURACION_AVALAR_COTIZACION_B2B,
         PERMISSIONS.FACTURACION_VENDER_B2B,
         PERMISSIONS.FACTURACION_ALERTAR_ADMIN,
         PERMISSIONS.FACTURACION_ANULAR,
@@ -140,6 +143,18 @@ function crearMockContainer(cajeroTieneTurno = true): AppContainer {
                 execute: (req: { motivo: string }) =>
                     Promise.resolve(Result.ok({ id: 'alerta-1', motivo: req.motivo } as any)),
             },
+            crearCotizacionB2B: {
+                execute: () => Promise.resolve(Result.ok({ id: 'cot-1', estado: 'pendiente_aval' } as any)),
+            },
+            avalarCotizacionB2B: {
+                execute: () => Promise.resolve(Result.ok({ id: 'cot-1', estado: 'aprobada' } as any)),
+            },
+            facturarCotizacionB2B: {
+                execute: () => Promise.resolve(Result.ok({ cotizacion: { id: 'cot-1', estado: 'facturada', estadoPedido: 'en_proceso' }, factura: makeFacturaMock() } as any)),
+            },
+            decidirCreditoClienteB2B: {
+                execute: () => Promise.resolve(Result.ok({ id: 'cli-1', creditoHabilitado: true } as any)),
+            },
         },
     } as unknown as AppContainer;
 }
@@ -216,14 +231,61 @@ Deno.test('Matriz Cajero: 201 al emitir alerta operativa al admin', async () => 
 });
 
 // ─── 2. MATRIZ VENDEDOR B2B ──────────────────────────────────────────────────
-Deno.test('Matriz Vendedor-B2B: 201 en facturar B2B sin requerir turno', async () => {
+Deno.test('Matriz Vendedor-B2B: 403 Forbidden al intentar facturar B2B directo sin aval (/facturas/b2b)', async () => {
     const app = createFacturacionRoutes(crearMockContainer());
     const res = await app.request('/facturas/b2b', {
         method: 'POST',
         headers: { 'Authorization': 'Bearer token-vendedor-b2b', 'Content-Type': 'application/json' },
         body: JSON.stringify(payloadFacturaValida),
     });
-    assertEquals(res.status, 201);
+    assertEquals(res.status, 403);
+});
+
+Deno.test('Matriz Vendedor-B2B: 201 al crear cotizacion B2B y 403 al intentar auto-avalarse', async () => {
+    const app = createFacturacionRoutes(crearMockContainer());
+    const resCot = await app.request('/cotizaciones-b2b', {
+        method: 'POST',
+        headers: { 'Authorization': 'Bearer token-vendedor-b2b', 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            clienteId: payloadFacturaValida.clienteId,
+            items: payloadFacturaValida.items,
+        }),
+    });
+    assertEquals(resCot.status, 201);
+
+    const resAval = await app.request('/cotizaciones-b2b/cot-1/avalar', {
+        method: 'PUT',
+        headers: { 'Authorization': 'Bearer token-vendedor-b2b' },
+    });
+    assertEquals(resAval.status, 403);
+
+    const resFacturarAvalada = await app.request('/cotizaciones-b2b/cot-1/facturar', {
+        method: 'POST',
+        headers: { 'Authorization': 'Bearer token-vendedor-b2b', 'Content-Type': 'application/json' },
+        body: JSON.stringify({}),
+    });
+    assertEquals(resFacturarAvalada.status, 201);
+});
+
+Deno.test('Matriz Credito B2B: solo Super-Admin puede aprobar credito (Admin-Sucursal y Vendedor reciben 403)', async () => {
+    const app = createFacturacionRoutes(crearMockContainer());
+    const body = JSON.stringify({ decision: 'aprobar', cupoAprobado: 5_000_000 });
+
+    for (const token of ['token-vendedor-b2b', 'token-admin-sucursal', 'token-cajero']) {
+        const res = await app.request('/clientes/cli-1/credito', {
+            method: 'PUT',
+            headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+            body,
+        });
+        assertEquals(res.status, 403);
+    }
+
+    const resSuper = await app.request('/clientes/cli-1/credito', {
+        method: 'PUT',
+        headers: { 'Authorization': 'Bearer token-super-admin', 'Content-Type': 'application/json' },
+        body,
+    });
+    assertEquals(resSuper.status, 200);
 });
 
 Deno.test('Matriz Vendedor-B2B: 403 Forbidden al intentar facturar en mostrador (/facturas)', async () => {

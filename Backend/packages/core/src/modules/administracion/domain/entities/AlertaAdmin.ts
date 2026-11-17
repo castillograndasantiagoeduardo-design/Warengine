@@ -9,6 +9,7 @@
 
 export type PrioridadAlerta = 'urgente' | 'normal';
 export type EstadoAlerta = 'pendiente' | 'visto' | 'atendido';
+export type DestinatarioRolAlerta = 'super-admin' | 'admin-sucursal';
 
 export class AlertaAdmin {
   constructor(
@@ -23,5 +24,6 @@ export class AlertaAdmin {
     public readonly fechaAtencion: Date | null,
     public readonly sucursalNombre?: string | null,
     public readonly usuarioEmail?: string | null,
+    public readonly destinatarioRol?: DestinatarioRolAlerta | null,
   ) {}
 }

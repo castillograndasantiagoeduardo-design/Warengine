@@ -24,13 +24,15 @@ interface CotizacionPanelProps {
   setMedioPago: (medio: MedioPago) => void;
   referenciaPago: string;
   setReferenciaPago: (ref: string) => void;
+  observaciones?: string;
+  setObservaciones?: (obs: string) => void;
   subtotal: number;
   iva: number;
   total: number;
   onActualizarCantidad: (productoId: string, cantidad: number) => void;
   onRemoverItem: (productoId: string) => void;
   onLimpiar: () => void;
-  onEmitirFactura: () => void;
+  onEnviarCotizacion: () => void;
   isSubmitting: boolean;
   errorFactura: string | null;
 }
@@ -45,13 +47,15 @@ export function CotizacionPanel({
   setMedioPago,
   referenciaPago,
   setReferenciaPago,
+  observaciones = '',
+  setObservaciones,
   subtotal,
   iva,
   total,
   onActualizarCantidad,
   onRemoverItem,
   onLimpiar,
-  onEmitirFactura,
+  onEnviarCotizacion,
   isSubmitting,
   errorFactura,
 }: CotizacionPanelProps) {
@@ -94,15 +98,25 @@ export function CotizacionPanel({
             <p className="text-white/60">
               {clienteSeleccionado.tipoDocumento}: {clienteSeleccionado.numeroDocumento} &bull; Tel: {clienteSeleccionado.telefono || 'N/A'}
             </p>
-            <div className="pt-1 flex items-center gap-1.5">
+            <div className="pt-1 flex flex-wrap items-center gap-1.5">
               <span
-                className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                className={`px-2 py-0.5 rounded-full text-[10px] font-semibold ${
                   clienteSeleccionado.creditoHabilitado
                     ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
+                    : clienteSeleccionado.estadoCredito === 'pendiente_aprobacion'
+                    ? 'bg-sky-500/20 text-sky-300 border border-sky-500/30'
                     : 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
                 }`}
               >
-                {clienteSeleccionado.creditoHabilitado ? '✓ Crédito Autorizado' : 'Sin Cupo de Crédito'}
+                {clienteSeleccionado.creditoHabilitado
+                  ? `✓ Crédito Autorizado${
+                      (clienteSeleccionado.cupoCreditoAprobado ?? 0) > 0
+                        ? ` ($${(clienteSeleccionado.cupoCreditoDisponible ?? 0).toLocaleString('es-CO')} disp.)`
+                        : ''
+                    }`
+                  : clienteSeleccionado.estadoCredito === 'pendiente_aprobacion'
+                  ? `⏳ Crédito en revisión Super Admin (Sug: $${(clienteSeleccionado.cupoCreditoSugerido ?? 0).toLocaleString('es-CO')})`
+                  : 'Sin Cupo de Crédito'}
               </span>
             </div>
           </div>
@@ -231,21 +245,30 @@ export function CotizacionPanel({
                 className="w-full mt-2 bg-[#0d1630] border border-white/10 rounded-xl px-3 py-1.5 text-xs text-white focus:outline-none focus:border-[#E9B949]"
               />
             )}
+            {setObservaciones && (
+              <input
+                type="text"
+                placeholder="Observaciones para el Admin de Sucursal (opcional)..."
+                value={observaciones}
+                onChange={(e) => setObservaciones(e.target.value)}
+                className="w-full mt-2 bg-[#0d1630] border border-white/10 rounded-xl px-3 py-1.5 text-xs text-white focus:outline-none focus:border-[#E9B949]"
+              />
+            )}
           </div>
 
           {/* Desglose de Totales */}
           <div className="space-y-1 text-xs">
             <div className="flex justify-between text-white/60">
               <span>Subtotal:</span>
-              <span className="font-mono">${subtotal.toLocaleString('es-CO')}</span>
+              <span className="tabular-nums">${subtotal.toLocaleString('es-CO')}</span>
             </div>
             <div className="flex justify-between text-white/60">
               <span>IVA:</span>
-              <span className="font-mono">${iva.toLocaleString('es-CO')}</span>
+              <span className="tabular-nums">${iva.toLocaleString('es-CO')}</span>
             </div>
-            <div className="flex justify-between text-sm font-bold text-white pt-1 border-t border-white/10">
-              <span>Total Comercial:</span>
-              <span className="font-mono text-[#E9B949]">${total.toLocaleString('es-CO')}</span>
+            <div className="flex justify-between text-sm font-semibold text-white pt-1 border-t border-white/10">
+              <span>Total Cotizado:</span>
+              <span className="tabular-nums text-[#E9B949]">${total.toLocaleString('es-CO')}</span>
             </div>
           </div>
 
@@ -255,19 +278,22 @@ export function CotizacionPanel({
             </div>
           )}
 
-          {/* Botón de Despacho de Factura B2B */}
+          {/* Botón Modo A: Enviar Cotización a Aval del Admin de Sucursal */}
           <button
             type="button"
             disabled={isSubmitting || items.length === 0 || !clienteSeleccionado}
-            onClick={onEmitirFactura}
-            className={`w-full py-3 rounded-xl font-bold text-xs uppercase tracking-wider transition-all cursor-pointer shadow-lg ${
+            onClick={onEnviarCotizacion}
+            className={`w-full py-3 rounded-xl font-semibold text-xs uppercase tracking-wider transition-all cursor-pointer shadow-lg ${
               isSubmitting || items.length === 0 || !clienteSeleccionado
                 ? 'bg-white/10 text-white/40 cursor-not-allowed'
                 : 'bg-gradient-to-r from-[#E9B949] to-[#b88a1f] hover:brightness-110 text-[#14213D]'
             }`}
           >
-            {isSubmitting ? 'Emitiendo Factura...' : 'Emitir Factura B2B (Sin Turno)'}
+            {isSubmitting ? 'Enviando Cotización...' : 'Enviar Cotización a Aval'}
           </button>
+          <p className="text-[10px] text-center text-white/50">
+            El Admin de Sucursal debe dar el aval antes de poder facturar y pasar a pedido en proceso.
+          </p>
         </div>
       </div>
     </aside>

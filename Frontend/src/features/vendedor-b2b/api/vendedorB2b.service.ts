@@ -10,11 +10,17 @@ import { IHttpClient, apiClient } from '@/lib/api';
 import type { IVendedorB2bService } from './vendedorB2b.service.interface';
 import type {
   ClienteDto,
+  CotizacionB2BDto,
   CrearClienteInput,
+  CrearClienteResultadoDto,
+  CrearCotizacionB2BInput,
+  EvaluacionCreditoB2BDto,
   FacturaDto,
+  FacturarCotizacionResultadoDto,
+  MedioPago,
   ProductoResponse,
   ProductoCatalogoB2B,
-  CrearOrdenB2BPayload,
+  SimularCreditoB2BInput,
 } from '../types';
 import type { StockSucursalResponseDTO } from '@warengine/contracts';
 
@@ -76,18 +82,35 @@ export class VendedorB2bService implements IVendedorB2bService {
     return [];
   }
 
-  public async crearCliente(cliente: CrearClienteInput): Promise<ClienteDto> {
-    // La API responde { cliente, yaExistia } (200 si el documento ya estaba registrado)
-    const res = await this.http.post<{ cliente: ClienteDto; yaExistia: boolean }>('/ventas/clientes', cliente);
-    return res.cliente;
+  public async crearCliente(cliente: CrearClienteInput): Promise<CrearClienteResultadoDto> {
+    return this.http.post<CrearClienteResultadoDto>('/ventas/clientes', cliente);
   }
 
-  public async crearFacturaB2B(payload: CrearOrdenB2BPayload): Promise<FacturaDto> {
-    // Endpoint especializado para emisión B2B sin requisito de turno físico
-    return this.http.post<FacturaDto>('/ventas/facturas/b2b', {
-      ...payload,
-      esB2B: true,
-    });
+  public async simularCreditoB2B(payload: SimularCreditoB2BInput): Promise<EvaluacionCreditoB2BDto> {
+    return this.http.post<EvaluacionCreditoB2BDto>('/ventas/clientes/simular-credito', payload);
+  }
+
+  public async crearCotizacionB2B(payload: CrearCotizacionB2BInput): Promise<CotizacionB2BDto> {
+    return this.http.post<CotizacionB2BDto>('/ventas/cotizaciones-b2b', payload);
+  }
+
+  public async listarCotizacionesB2B(): Promise<CotizacionB2BDto[]> {
+    try {
+      const response = await this.http.get<CotizacionB2BDto[]>('/ventas/cotizaciones-b2b');
+      return Array.isArray(response) ? response : [];
+    } catch {
+      return [];
+    }
+  }
+
+  public async facturarCotizacionB2B(
+    cotizacionId: string,
+    payload?: { medioPago?: MedioPago; referenciaTransaccion?: string | null },
+  ): Promise<FacturarCotizacionResultadoDto> {
+    return this.http.post<FacturarCotizacionResultadoDto>(
+      `/ventas/cotizaciones-b2b/${cotizacionId}/facturar`,
+      payload ?? {},
+    );
   }
 
   public async listarFacturasB2B(limite = 20): Promise<FacturaDto[]> {

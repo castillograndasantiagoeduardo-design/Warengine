@@ -32,6 +32,7 @@ const SELECCION = {
   fechaAtencion: alertas_admin.fecha_atencion,
   sucursalNombre: sucursales.nombre,
   usuarioEmail: usuarios.email,
+  destinatarioRol: alertas_admin.destinatario_rol,
 };
 
 export class DrizzleAlertaAdminRepository implements IAlertaAdminRepository {
@@ -56,6 +57,9 @@ export class DrizzleAlertaAdminRepository implements IAlertaAdminRepository {
     }
     if (filtros?.prioridad !== undefined) {
       condiciones.push(eq(alertas_admin.prioridad, filtros.prioridad));
+    }
+    if (filtros?.destinatarioRol !== undefined) {
+      condiciones.push(eq(alertas_admin.destinatario_rol, filtros.destinatarioRol));
     }
 
     const rows = await this.consulta()
@@ -86,6 +90,7 @@ export class DrizzleAlertaAdminRepository implements IAlertaAdminRepository {
       prioridad: data.prioridad ?? 'normal',
       descripcion: data.descripcion ?? null,
       estado: 'pendiente',
+      destinatario_rol: data.destinatarioRol ?? null,
     });
 
     const creada = await this.findById(id);

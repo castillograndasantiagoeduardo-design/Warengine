@@ -85,11 +85,22 @@ export function presentResult<T>(c: Context, result: Result<T, DomainError>, suc
     case 'FACTURACION_SIN_TURNO_ABIERTO':
       status = 400; // Bad request
       break;
-      case 'FACTURA_ANULADA':
-      case 'CANTIDAD_DEVOLUCION_EXCEDIDA':
-      status = 409; break;
-      case 'ITEM_FACTURA_NO_ENCONTRADO':
-      status = 404; break;
+    case 'FACTURA_ANULADA':
+    case 'CANTIDAD_DEVOLUCION_EXCEDIDA':
+    case 'COTIZACION_SIN_AVAL':
+    case 'COTIZACION_ESTADO_INVALIDO':
+    case 'COTIZACION_VENCIDA':
+      status = 409;
+      break;
+    case 'CUPO_CREDITO_INSUFICIENTE':
+    case 'DECISION_CREDITO_INVALIDA':
+    case 'ESTADO_PEDIDO_INVALIDO':
+      status = 422;
+      break;
+    case 'ITEM_FACTURA_NO_ENCONTRADO':
+    case 'COTIZACION_NO_ENCONTRADA':
+      status = 404;
+      break;
     default:
       if (error.code.endsWith('_NO_ENCONTRADO') || error.code.endsWith('_NO_ENCONTRADA')) {
         status = 404;

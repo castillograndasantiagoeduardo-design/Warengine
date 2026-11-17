@@ -12,6 +12,7 @@
 import React, { useState } from 'react';
 import { useBranchInvoicing } from '../hooks/useBranchInvoicing';
 import { GlassCard } from './GlassCard';
+import { BranchCotizacionesB2BPanel } from './BranchCotizacionesB2BPanel';
 import { InvoiceDetailModal } from './InvoiceDetailModal';
 import { VoidInvoiceModal } from './VoidInvoiceModal';
 import {
@@ -220,10 +221,26 @@ export function BranchInvoicingView({
             </span>
           )}
         </button>
+
+        <button
+          onClick={() => setTabActiva('cotizaciones')}
+          className={`
+            px-4 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer font-[family-name:var(--font-archivo)]
+            ${
+              tabActiva === 'cotizaciones'
+                ? 'bg-[#e3b341]/15 text-[#e3b341] border border-[#e3b341]/30 shadow-sm'
+                : 'text-slate-400 hover:text-white hover:bg-white/[0.04]'
+            }
+          `}
+        >
+          📋 Avales Cotizaciones B2B
+        </button>
       </div>
 
       {/* 4. Contenido de la Pestaña Activa */}
-      {tabActiva === 'facturas' ? (
+      {tabActiva === 'cotizaciones' ? (
+        <BranchCotizacionesB2BPanel sucursalId={sucursalId} />
+      ) : tabActiva === 'facturas' ? (
         
         /* ── SECCIÓN A: TABLA DE FACTURAS ── */
         <GlassCard padding="lg" className="space-y-4">

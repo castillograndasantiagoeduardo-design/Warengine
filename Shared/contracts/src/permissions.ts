@@ -24,6 +24,9 @@ export const PERMISSIONS = {
   FACTURACION_DEVOLUCION: 'facturacion:devolucion',
   FACTURACION_CONSULTAR: 'facturacion:consultar',
   FACTURACION_GESTIONAR_CLIENTES: 'facturacion:gestionar-clientes',
+  FACTURACION_COTIZAR_B2B: 'facturacion:cotizar-b2b',
+  FACTURACION_AVALAR_COTIZACION_B2B: 'facturacion:avalar-cotizacion-b2b',
+  FACTURACION_APROBAR_CREDITO_B2B: 'facturacion:aprobar-credito-b2b',
 
   // Administración
   ADMIN_GESTIONAR_SUCURSALES: 'administracion:gestionar-sucursales',

@@ -205,6 +205,18 @@ export * from './src/modules/facturacion/application/use-cases/AnularFacturaUseC
 export * from './src/modules/facturacion/application/use-cases/ListarFacturasUseCase.ts';
 export * from './src/modules/facturacion/application/use-cases/ObtenerFacturaPorIdUseCase.ts';
 export * from './src/modules/facturacion/application/use-cases/EmitirAlertaFacturacionUseCase.ts';
+export * from './src/modules/facturacion/domain/services/EvaluadorCreditoB2B.ts';
+export * from './src/modules/facturacion/domain/entities/CotizacionB2B.ts';
+export * from './src/modules/facturacion/domain/repositories/ICotizacionB2BRepository.ts';
+export * from './src/modules/facturacion/application/use-cases/SimularCreditoClienteB2BUseCase.ts';
+export * from './src/modules/facturacion/application/use-cases/DecidirCreditoClienteB2BUseCase.ts';
+export * from './src/modules/facturacion/application/use-cases/ListarCreditosPendientesUseCase.ts';
+export * from './src/modules/facturacion/application/use-cases/CrearCotizacionB2BUseCase.ts';
+export * from './src/modules/facturacion/application/use-cases/ListarCotizacionesB2BUseCase.ts';
+export * from './src/modules/facturacion/application/use-cases/ObtenerCotizacionB2BUseCase.ts';
+export * from './src/modules/facturacion/application/use-cases/AvalarCotizacionB2BUseCase.ts';
+export * from './src/modules/facturacion/application/use-cases/FacturarCotizacionB2BUseCase.ts';
+export * from './src/modules/facturacion/application/use-cases/ActualizarEstadoPedidoB2BUseCase.ts';
 
 // ─── Módulo: MCP Server & Auditoría IA ───────────────────────────────────────
 export * from './src/modules/mcp-audit/domain/entities/LogMcpTool.ts';

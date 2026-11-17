@@ -7,13 +7,41 @@
 
 import type {
   ClienteDto,
+  CotizacionB2BDto,
   CrearClienteInput,
+  CrearCotizacionB2BInput,
+  EvaluacionCreditoB2BDto,
   FacturaDto,
   MedioPago,
+  PlazoCreditoDias,
   ProductoResponse,
+  SimularCreditoB2BInput,
 } from '@warengine/contracts';
 
-export type { ClienteDto, CrearClienteInput, FacturaDto, MedioPago, ProductoResponse };
+export type {
+  ClienteDto,
+  CotizacionB2BDto,
+  CrearClienteInput,
+  CrearCotizacionB2BInput,
+  EvaluacionCreditoB2BDto,
+  FacturaDto,
+  MedioPago,
+  PlazoCreditoDias,
+  ProductoResponse,
+  SimularCreditoB2BInput,
+};
+
+export interface CrearClienteResultadoDto {
+  cliente: ClienteDto;
+  yaExistia: boolean;
+  evaluacionCredito?: EvaluacionCreditoB2BDto | null;
+  alertaSuperAdminEnviada?: boolean;
+}
+
+export interface FacturarCotizacionResultadoDto {
+  cotizacion: CotizacionB2BDto;
+  factura: FacturaDto;
+}
 
 export interface ItemCotizacionB2B {
   productoId: string;

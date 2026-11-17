@@ -33,7 +33,7 @@ export function useBranchInvoicing(
   const [error, setError] = useState<string | null>(null);
 
   // Filtros reactivos
-  const [tabActiva, setTabActiva] = useState<'facturas' | 'alertas'>('facturas');
+  const [tabActiva, setTabActiva] = useState<'facturas' | 'alertas' | 'cotizaciones'>('facturas');
   const [busqueda, setBusqueda] = useState('');
   const [filtroEstado, setFiltroEstado] = useState<'todas' | 'emitida' | 'anulada'>('todas');
   const [filtroPrioridadAlerta, setFiltroPrioridadAlerta] = useState<'todas' | 'urgente' | 'normal'>('todas');

@@ -7,7 +7,12 @@
  * - RF-ADM-C13: Gestión de alertas administrativas.
  */
 
-import { AlertaAdmin, EstadoAlerta, PrioridadAlerta } from '@warengine/core';
+import {
+  AlertaAdmin,
+  DestinatarioRolAlerta,
+  EstadoAlerta,
+  PrioridadAlerta,
+} from '@warengine/core';
 
 export interface AlertaAdminRow {
   id: string;
@@ -21,6 +26,7 @@ export interface AlertaAdminRow {
   fechaAtencion: Date | null;
   sucursalNombre?: string | null;
   usuarioEmail?: string | null;
+  destinatarioRol?: string | null;
 }
 
 export function alertaAdminFromRow(row: AlertaAdminRow): AlertaAdmin {
@@ -36,5 +42,6 @@ export function alertaAdminFromRow(row: AlertaAdminRow): AlertaAdmin {
     row.fechaAtencion,
     row.sucursalNombre ?? null,
     row.usuarioEmail ?? null,
+    (row.destinatarioRol as DestinatarioRolAlerta | null) ?? null,
   );
 }

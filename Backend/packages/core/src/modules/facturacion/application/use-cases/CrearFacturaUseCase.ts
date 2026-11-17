@@ -6,6 +6,7 @@ import {
     ClienteNoEncontradoError,
     ClienteRequeridoParaVentaB2BError,
     CreditoNoHabilitadoError,
+    CupoCreditoInsuficienteError,
     FacturacionSinTurnoAbiertoError,
     PagoInvalidoError,
 } from '../../domain/errors/FacturacionErrors.ts';
@@ -92,9 +93,19 @@ export class CrearFacturaUseCase {
             return Result.fail(new ClienteRequeridoParaVentaB2BError());
         }
 
-        const tienePagoCredito = request.pagos.some((p) => p.medioPago === 'credito_corporativo');
+        const montoCredito = Math.round(
+            request.pagos
+                .filter((p) => p.medioPago === 'credito_corporativo')
+                .reduce((acc, p) => acc + p.monto, 0) * 100,
+        ) / 100;
+        const tienePagoCredito = montoCredito > 0;
         if (tienePagoCredito && !cliente.puedePagarConCredito) {
             return Result.fail(new CreditoNoHabilitadoError());
+        }
+        if (tienePagoCredito && !cliente.tieneCupoDisponible(montoCredito)) {
+            return Result.fail(
+                new CupoCreditoInsuficienteError(cliente.cupoCreditoDisponible, montoCredito),
+            );
         }
 
         // 4. Totales calculados en el dominio
@@ -167,6 +178,11 @@ export class CrearFacturaUseCase {
                 return Result.fail(error);
             }
             throw error;
+        }
+
+        // 6.b Registrar consumo del cupo de crédito corporativo aprobado si aplica
+        if (tienePagoCredito && this.clienteRepository.registrarConsumoCredito) {
+            await this.clienteRepository.registrarConsumoCredito(cliente.id, montoCredito);
         }
 
         // 7. Registro de auditoría

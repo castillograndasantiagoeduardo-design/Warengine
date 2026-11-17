@@ -152,6 +152,7 @@ export const alertas_admin = mysqlTable('alertas_admin', {
   prioridad: varchar('prioridad', { length: 10 }).notNull().default('normal'),
   descripcion: varchar('descripcion', { length: 500 }),
   estado: varchar('estado', { length: 20 }).notNull().default('pendiente'),
+  destinatario_rol: varchar('destinatario_rol', { length: 30 }),
   fecha_creacion: datetime('fecha_creacion', { mode: 'date' })
     .notNull()
     .default(sql.raw('CURRENT_TIMESTAMP')),
@@ -160,8 +161,13 @@ export const alertas_admin = mysqlTable('alertas_admin', {
   index('idx_alertas_usuario_id').on(table.usuario_id),
   index('idx_alertas_sucursal_id').on(table.sucursal_id),
   index('idx_alertas_estado').on(table.estado),
+  index('idx_alertas_destinatario_rol').on(table.destinatario_rol),
   check('chk_alertas_prioridad', sql`${table.prioridad} IN ('urgente', 'normal')`),
   check('chk_alertas_estado', sql`${table.estado} IN ('pendiente', 'visto', 'atendido')`),
+  check(
+    'chk_alertas_destinatario_rol',
+    sql`${table.destinatario_rol} IS NULL OR ${table.destinatario_rol} IN ('super-admin', 'admin-sucursal')`,
+  ),
 ]);
 
 /**

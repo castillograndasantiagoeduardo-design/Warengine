@@ -7,12 +7,18 @@
  * - RF-ADM-C13: Gestión de alertas administrativas (alertas_admin).
  */
 
-import { AlertaAdmin, EstadoAlerta, PrioridadAlerta } from '../entities/AlertaAdmin.ts';
+import {
+  AlertaAdmin,
+  DestinatarioRolAlerta,
+  EstadoAlerta,
+  PrioridadAlerta,
+} from '../entities/AlertaAdmin.ts';
 
 export interface FiltrosAlertasAdmin {
   sucursalIds?: number[];
   estado?: EstadoAlerta;
   prioridad?: PrioridadAlerta;
+  destinatarioRol?: DestinatarioRolAlerta;
 }
 
 export interface CrearAlertaAdminData {
@@ -21,6 +27,7 @@ export interface CrearAlertaAdminData {
   motivo: string;
   prioridad?: PrioridadAlerta;
   descripcion?: string | null;
+  destinatarioRol?: DestinatarioRolAlerta | null;
 }
 
 export interface IAlertaAdminRepository {

@@ -39,6 +39,7 @@ import { DrizzleMetricasAdminRepository } from '../../database/src/repositories/
 
 import { DrizzleSucursalOperadorRepository } from '../../database/src/repositories/facturacion/drizzle-sucursal-operador.repository.ts';
 import { DrizzleFacturaRepository } from '../../database/src/repositories/facturacion/drizzle-factura.repository.ts';
+import { DrizzleCotizacionB2BRepository } from '../../database/src/repositories/facturacion/drizzle-cotizacion-b2b.repository.ts';
 import { DrizzleDevolucionVentaRepository } from '../../database/src/repositories/facturacion/drizzle-devolucion-venta.repository.ts';
 import { DrizzlePasswordResetRepository } from '../../database/src/repositories/autenticacion/drizzle-password-reset.repository.ts';
 import { DrizzleLogMcpToolRepository } from '../../database/src/repositories/mcp-audit/drizzle-log-mcp-tool.repository.ts';
@@ -105,6 +106,16 @@ import {
   ActualizarClienteUseCase,
   ObtenerClientePorIdUseCase,
   BuscarClientesUseCase,
+  EvaluadorCreditoB2B,
+  SimularCreditoClienteB2BUseCase,
+  DecidirCreditoClienteB2BUseCase,
+  ListarCreditosPendientesUseCase,
+  CrearCotizacionB2BUseCase,
+  ListarCotizacionesB2BUseCase,
+  ObtenerCotizacionB2BUseCase,
+  AvalarCotizacionB2BUseCase,
+  FacturarCotizacionB2BUseCase,
+  ActualizarEstadoPedidoB2BUseCase,
   ListarCategoriasUseCase,
   ObtenerCategoriaPorIdUseCase,
   CrearCategoriaUseCase,
@@ -289,6 +300,9 @@ export interface AppContainer {
     actualizarCliente: ActualizarClienteUseCase;
     obtenerClientePorId: ObtenerClientePorIdUseCase;
     buscarClientes: BuscarClientesUseCase;
+    simularCreditoB2B: SimularCreditoClienteB2BUseCase;
+    decidirCreditoClienteB2B: DecidirCreditoClienteB2BUseCase;
+    listarCreditosPendientes: ListarCreditosPendientesUseCase;
     abrirTurnoCaja: AbrirTurnoCajaUseCase;
     cerrarTurnoCaja: CerrarTurnoCajaUseCase;
     obtenerTurnoActual: ObtenerTurnoActualUseCase;
@@ -299,6 +313,12 @@ export interface AppContainer {
     emitirAlertaFacturacion: EmitirAlertaFacturacionUseCase;
     anularFactura: AnularFacturaUseCase;
     registrarDevolucion: RegistrarDevolucionUseCase;
+    crearCotizacionB2B: CrearCotizacionB2BUseCase;
+    listarCotizacionesB2B: ListarCotizacionesB2BUseCase;
+    obtenerCotizacionB2B: ObtenerCotizacionB2BUseCase;
+    avalarCotizacionB2B: AvalarCotizacionB2BUseCase;
+    facturarCotizacionB2B: FacturarCotizacionB2BUseCase;
+    actualizarEstadoPedidoB2B: ActualizarEstadoPedidoB2BUseCase;
   };
   logistica: {
     crearCategoriaActivo: CrearCategoriaActivoUseCase;
@@ -383,6 +403,7 @@ export function createContainer(_env?: Record<string, string>): AppContainer {
   const turnoCajaRepository = new DrizzleTurnoCajaRepository(db);
   const sucursalOperadorRepository = new DrizzleSucursalOperadorRepository(db);
   const facturaRepository = new DrizzleFacturaRepository(db);
+  const cotizacionB2BRepository = new DrizzleCotizacionB2BRepository(db);
   const devolucionVentaRepository = new DrizzleDevolucionVentaRepository(db);
   const passwordResetRepository = new DrizzlePasswordResetRepository(db);
   const categoriaActivoRepository = new DrizzleCategoriaActivoRepository(db);
@@ -812,10 +833,59 @@ export function createContainer(_env?: Record<string, string>): AppContainer {
     resolverAlcanceSucursalUseCase,
   );
 
-  const registrarClienteUseCase = new RegistrarClienteUseCase(clienteRepository, auditoriaRepository);
+  const topeCreditoB2B = leerEnteroPositivo(
+    getEnv('CREDITO_B2B_TOPE_MAXIMO'),
+    EvaluadorCreditoB2B.TOPE_POLITICA_DEFAULT,
+    'CREDITO_B2B_TOPE_MAXIMO',
+  );
+  const registrarClienteUseCase = new RegistrarClienteUseCase(
+    clienteRepository,
+    auditoriaRepository,
+    alertaAdminRepository,
+    sucursalOperadorRepository,
+    topeCreditoB2B,
+  );
   const actualizarClienteUseCase = new ActualizarClienteUseCase(clienteRepository, auditoriaRepository);
   const obtenerClientePorIdUseCase = new ObtenerClientePorIdUseCase(clienteRepository);
   const buscarClientesUseCase = new BuscarClientesUseCase(clienteRepository);
+  const simularCreditoB2BUseCase = new SimularCreditoClienteB2BUseCase(topeCreditoB2B);
+  const decidirCreditoClienteB2BUseCase = new DecidirCreditoClienteB2BUseCase(
+    clienteRepository,
+    auditoriaRepository,
+  );
+  const listarCreditosPendientesUseCase = new ListarCreditosPendientesUseCase(clienteRepository);
+
+  const crearCotizacionB2BUseCase = new CrearCotizacionB2BUseCase(
+    cotizacionB2BRepository,
+    clienteRepository,
+    sucursalOperadorRepository,
+    auditoriaRepository,
+    alertaAdminRepository,
+  );
+  const listarCotizacionesB2BUseCase = new ListarCotizacionesB2BUseCase(
+    cotizacionB2BRepository,
+    resolverAlcanceSucursalUseCase,
+  );
+  const obtenerCotizacionB2BUseCase = new ObtenerCotizacionB2BUseCase(
+    cotizacionB2BRepository,
+    resolverAlcanceSucursalUseCase,
+  );
+  const avalarCotizacionB2BUseCase = new AvalarCotizacionB2BUseCase(
+    cotizacionB2BRepository,
+    resolverAlcanceSucursalUseCase,
+    auditoriaRepository,
+  );
+  const facturarCotizacionB2BUseCase = new FacturarCotizacionB2BUseCase(
+    cotizacionB2BRepository,
+    crearFacturaUseCase,
+    resolverAlcanceSucursalUseCase,
+    auditoriaRepository,
+  );
+  const actualizarEstadoPedidoB2BUseCase = new ActualizarEstadoPedidoB2BUseCase(
+    cotizacionB2BRepository,
+    resolverAlcanceSucursalUseCase,
+    auditoriaRepository,
+  );
 
   const logMcpToolRepository = new DrizzleLogMcpToolRepository(db);
   const registrarLogMcpToolUseCase = new RegistrarLogMcpToolUseCase(logMcpToolRepository);
@@ -944,6 +1014,9 @@ export function createContainer(_env?: Record<string, string>): AppContainer {
       actualizarCliente: actualizarClienteUseCase,
       obtenerClientePorId: obtenerClientePorIdUseCase,
       buscarClientes: buscarClientesUseCase,
+      simularCreditoB2B: simularCreditoB2BUseCase,
+      decidirCreditoClienteB2B: decidirCreditoClienteB2BUseCase,
+      listarCreditosPendientes: listarCreditosPendientesUseCase,
       abrirTurnoCaja: abrirTurnoCajaUseCase,
       cerrarTurnoCaja: cerrarTurnoCajaUseCase,
       obtenerTurnoActual: obtenerTurnoActualUseCase,
@@ -954,6 +1027,12 @@ export function createContainer(_env?: Record<string, string>): AppContainer {
       emitirAlertaFacturacion: emitirAlertaFacturacionUseCase,
       anularFactura: anularFacturaUseCase,
       registrarDevolucion: registrarDevolucionUseCase,
+      crearCotizacionB2B: crearCotizacionB2BUseCase,
+      listarCotizacionesB2B: listarCotizacionesB2BUseCase,
+      obtenerCotizacionB2B: obtenerCotizacionB2BUseCase,
+      avalarCotizacionB2B: avalarCotizacionB2BUseCase,
+      facturarCotizacionB2B: facturarCotizacionB2BUseCase,
+      actualizarEstadoPedidoB2B: actualizarEstadoPedidoB2BUseCase,
     },  
     logistica: {
       crearCategoriaActivo: crearCategoriaActivoUseCase,

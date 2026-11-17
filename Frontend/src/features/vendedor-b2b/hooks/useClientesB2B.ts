@@ -1,17 +1,30 @@
 'use client';
 
 /**
- * useClientesB2B.ts — Custom hook para búsqueda y registro validado de clientes B2B.
- *
- * Utiliza crearClienteSchema de @warengine/contracts como única fuente de verdad
- * para validar NIT, razón social, teléfono y dirección obligatorios.
+ * useClientesB2B.ts — Custom hook para búsqueda, registro y evaluación preliminar
+ * de crédito B2B según ganancia neta declarada.
  */
 
 import { useState, useCallback, useEffect } from 'react';
 import { crearClienteSchema } from '@warengine/contracts';
-import type { ClienteDto, CrearClienteInput } from '../types';
+import type { ClienteDto, CrearClienteInput, EvaluacionCreditoB2BDto } from '../types';
 import { vendedorB2bService } from '../api';
 import { ApiError } from '@/lib/api';
+
+const ESTADO_INICIAL_FORM: CrearClienteInput = {
+  tipoDocumento: 'NIT',
+  numeroDocumento: '',
+  nombreRazonSocial: '',
+  tipoCliente: 'B2B',
+  email: '',
+  telefono: '',
+  direccion: '',
+  solicitarCredito: false,
+  gananciaNetaMensual: undefined,
+  antiguedadEmpresaMeses: undefined,
+  plazoCreditoDias: 30,
+  observacionFinanciera: '',
+};
 
 export function useClientesB2B() {
   const [clientes, setClientes] = useState<ClienteDto[]>([]);
@@ -21,22 +34,16 @@ export function useClientesB2B() {
   const [isGuardando, setIsGuardando] = useState<boolean>(false);
   const [erroresForm, setErroresForm] = useState<Record<string, string>>({});
   const [errorGeneral, setErrorGeneral] = useState<string | null>(null);
+  const [evaluacionCredito, setEvaluacionCredito] = useState<EvaluacionCreditoB2BDto | null>(null);
+  const [isSimulandoCredito, setIsSimulandoCredito] = useState<boolean>(false);
+  const [alertaSuperAdminMsg, setAlertaSuperAdminMsg] = useState<string | null>(null);
 
-  const [formNuevoCliente, setFormNuevoCliente] = useState<CrearClienteInput>({
-    tipoDocumento: 'NIT',
-    numeroDocumento: '',
-    nombreRazonSocial: '',
-    tipoCliente: 'B2B',
-    email: '',
-    telefono: '',
-    direccion: '',
-  });
+  const [formNuevoCliente, setFormNuevoCliente] = useState<CrearClienteInput>(ESTADO_INICIAL_FORM);
 
   const cargarClientes = useCallback(async (query = '') => {
     setIsLoadingClientes(true);
     try {
       const data = await vendedorB2bService.buscarClientes(query);
-      // Solo clientes corporativos: la API rechaza ventas B2B a clientes B2C
       setClientes(data.filter((c) => c.tipoCliente === 'B2B'));
     } catch {
       setClientes([]);
@@ -48,6 +55,41 @@ export function useClientesB2B() {
   useEffect(() => {
     cargarClientes();
   }, [cargarClientes]);
+
+  // Simulación en vivo contra el motor oficial del backend cuando el usuario ingresa ganancia neta
+  useEffect(() => {
+    if (
+      !formNuevoCliente.solicitarCredito ||
+      !formNuevoCliente.gananciaNetaMensual ||
+      formNuevoCliente.gananciaNetaMensual <= 0
+    ) {
+      setEvaluacionCredito(null);
+      return;
+    }
+
+    const timer = setTimeout(async () => {
+      setIsSimulandoCredito(true);
+      try {
+        const res = await vendedorB2bService.simularCreditoB2B({
+          gananciaNetaMensual: formNuevoCliente.gananciaNetaMensual!,
+          antiguedadEmpresaMeses: formNuevoCliente.antiguedadEmpresaMeses,
+          plazoCreditoDias: formNuevoCliente.plazoCreditoDias ?? 30,
+        });
+        setEvaluacionCredito(res);
+      } catch {
+        setEvaluacionCredito(null);
+      } finally {
+        setIsSimulandoCredito(false);
+      }
+    }, 350);
+
+    return () => clearTimeout(timer);
+  }, [
+    formNuevoCliente.solicitarCredito,
+    formNuevoCliente.gananciaNetaMensual,
+    formNuevoCliente.antiguedadEmpresaMeses,
+    formNuevoCliente.plazoCreditoDias,
+  ]);
 
   const buscar = useCallback(
     (texto: string) => {
@@ -64,17 +106,10 @@ export function useClientesB2B() {
   }, []);
 
   const resetForm = useCallback(() => {
-    setFormNuevoCliente({
-      tipoDocumento: 'NIT',
-      numeroDocumento: '',
-      nombreRazonSocial: '',
-      tipoCliente: 'B2B',
-      email: '',
-      telefono: '',
-      direccion: '',
-    });
+    setFormNuevoCliente(ESTADO_INICIAL_FORM);
     setErroresForm({});
     setErrorGeneral(null);
+    setEvaluacionCredito(null);
   }, []);
 
   const registrarCliente = useCallback(
@@ -82,7 +117,6 @@ export function useClientesB2B() {
       setErrorGeneral(null);
       setErroresForm({});
 
-      // Validación con Zod Contract
       const resultado = crearClienteSchema.safeParse(formNuevoCliente);
       if (!resultado.success) {
         const nuevosErrores: Record<string, string> = {};
@@ -98,11 +132,17 @@ export function useClientesB2B() {
 
       setIsGuardando(true);
       try {
-        const nuevo = await vendedorB2bService.crearCliente(resultado.data);
-        setClientes((prev) => [nuevo, ...prev]);
+        const resp = await vendedorB2bService.crearCliente(resultado.data);
+        setClientes((prev) => [resp.cliente, ...prev.filter((c) => c.id !== resp.cliente.id)]);
+        if (resp.alertaSuperAdminEnviada) {
+          const cupoTxt = (resp.evaluacionCredito?.cupoSugerido ?? 0).toLocaleString('es-CO');
+          setAlertaSuperAdminMsg(
+            `Cliente ${resp.cliente.nombreRazonSocial} creado. Se envió advertencia urgente al Super Admin con cupo sugerido de $${cupoTxt} COP para su aprobación.`,
+          );
+        }
         resetForm();
         setIsModalOpen(false);
-        if (onSuccess) onSuccess(nuevo);
+        if (onSuccess) onSuccess(resp.cliente);
         return true;
       } catch (err) {
         if (err instanceof ApiError) {
@@ -128,6 +168,10 @@ export function useClientesB2B() {
     formNuevoCliente,
     erroresForm,
     errorGeneral,
+    evaluacionCredito,
+    isSimulandoCredito,
+    alertaSuperAdminMsg,
+    setAlertaSuperAdminMsg,
     buscar,
     setCampo,
     resetForm,

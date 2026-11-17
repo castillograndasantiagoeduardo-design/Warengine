@@ -86,3 +86,54 @@ export class DevolucionInvalidaError extends DomainError {
   public readonly code = 'DEVOLUCION_INVALIDA';
   constructor(mensaje = 'La devolución no es válida.') { super(mensaje); }
 }
+
+export class CupoCreditoInsuficienteError extends DomainError {
+  public readonly code = 'CUPO_CREDITO_INSUFICIENTE';
+  constructor(disponible: number, solicitado: number) {
+    super(
+      `Cupo de crédito corporativo insuficiente. Disponible: $${disponible.toLocaleString('es-CO')}, solicitado: $${solicitado.toLocaleString('es-CO')}.`,
+    );
+  }
+}
+
+export class DecisionCreditoInvalidaError extends DomainError {
+  public readonly code = 'DECISION_CREDITO_INVALIDA';
+  constructor(mensaje = 'La decisión sobre el crédito corporativo no es válida para este cliente.') {
+    super(mensaje);
+  }
+}
+
+export class CotizacionNoEncontradaError extends DomainError {
+  public readonly code = 'COTIZACION_NO_ENCONTRADA';
+  constructor() {
+    super('La cotización B2B no existe.');
+  }
+}
+
+export class CotizacionSinAvalError extends DomainError {
+  public readonly code = 'COTIZACION_SIN_AVAL';
+  constructor(mensaje = 'La cotización B2B requiere aval del Administrador de Sucursal antes de facturar.') {
+    super(mensaje);
+  }
+}
+
+export class CotizacionEstadoInvalidoError extends DomainError {
+  public readonly code = 'COTIZACION_ESTADO_INVALIDO';
+  constructor(mensaje = 'El estado actual de la cotización B2B no permite ejecutar esta acción.') {
+    super(mensaje);
+  }
+}
+
+export class CotizacionVencidaError extends DomainError {
+  public readonly code = 'COTIZACION_VENCIDA';
+  constructor() {
+    super('La cotización B2B ha superado su fecha de vigencia y no puede procesarse.');
+  }
+}
+
+export class EstadoPedidoInvalidoError extends DomainError {
+  public readonly code = 'ESTADO_PEDIDO_INVALIDO';
+  constructor(mensaje = 'La transición del estado del pedido B2B no es válida.') {
+    super(mensaje);
+  }
+}

@@ -58,13 +58,16 @@ Deno.test('Seed de Autenticación: especificación de roles y permisos en códig
   const esperadoVendedorB2b = [
     'inventario:leer',
     'facturacion:consultar',
-    'facturacion:facturar',
     'facturacion:gestionar-clientes',
+    'facturacion:cotizar-b2b',
     'facturacion:vender-b2b',
     'facturacion:alertar-admin',
     'mcp:consultar',
   ].sort();
   assertEquals([...ASIGNACIONES['vendedor-b2b']].sort(), esperadoVendedorB2b);
+  assertEquals(ASIGNACIONES['vendedor-b2b'].includes('facturacion:facturar'), false);
+  assertEquals(ASIGNACIONES['vendedor-b2b'].includes('facturacion:avalar-cotizacion-b2b'), false);
+  assertEquals(ASIGNACIONES['vendedor-b2b'].includes('facturacion:aprobar-credito-b2b'), false);
   assertEquals(ASIGNACIONES['vendedor-b2b'].includes('facturacion:abrir-turno'), false);
   assertEquals(ASIGNACIONES['vendedor-b2b'].includes('logistica:leer'), false);
 
@@ -76,6 +79,8 @@ Deno.test('Seed de Autenticación: especificación de roles y permisos en códig
     'inventario:ver-kardex',
     'facturacion:facturar',
     'facturacion:abrir-turno',
+    'facturacion:cotizar-b2b',
+    'facturacion:avalar-cotizacion-b2b',
     'facturacion:vender-b2b',
     'facturacion:consultar',
     'facturacion:gestionar-clientes',
@@ -92,6 +97,7 @@ Deno.test('Seed de Autenticación: especificación de roles y permisos en códig
     'mcp:ejecutar-herramientas',
   ].sort();
   assertEquals([...ASIGNACIONES['admin-sucursal']].sort(), esperadoAdminSucursal);
+  assertEquals(ASIGNACIONES['admin-sucursal'].includes('facturacion:aprobar-credito-b2b'), false);
   assertEquals(ASIGNACIONES['super-admin'].length, PERMISOS.length);
 });
 
@@ -151,6 +157,8 @@ Deno.test('Seed de Autenticación: matriz rol -> permisos exacta en base de dato
       'inventario:ver-kardex',
       'facturacion:facturar',
       'facturacion:abrir-turno',
+      'facturacion:cotizar-b2b',
+      'facturacion:avalar-cotizacion-b2b',
       'facturacion:vender-b2b',
       'facturacion:consultar',
       'facturacion:gestionar-clientes',
@@ -186,13 +194,14 @@ Deno.test('Seed de Autenticación: matriz rol -> permisos exacta en base de dato
     const esperadoVendedorB2b = [
       'inventario:leer',
       'facturacion:consultar',
-      'facturacion:facturar',
       'facturacion:gestionar-clientes',
+      'facturacion:cotizar-b2b',
       'facturacion:vender-b2b',
       'facturacion:alertar-admin',
       'mcp:consultar',
     ].sort();
     assertEquals(permisosVendedorB2b, esperadoVendedorB2b);
+    assertEquals(permisosVendedorB2b.includes('facturacion:facturar'), false);
     assertEquals(permisosVendedorB2b.includes('facturacion:abrir-turno'), false);
     assertEquals(permisosVendedorB2b.includes('logistica:leer'), false);
   } finally {

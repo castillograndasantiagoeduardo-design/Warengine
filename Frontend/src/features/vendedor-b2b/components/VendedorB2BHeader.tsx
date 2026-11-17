@@ -10,9 +10,15 @@ import { useAuth } from '@/features/autenticacion';
 
 interface VendedorB2BHeaderProps {
   onAbrirHistorial: () => void;
+  onAbrirCotizaciones: () => void;
+  cotizacionesAprobadasCount?: number;
 }
 
-export function VendedorB2BHeader({ onAbrirHistorial }: VendedorB2BHeaderProps) {
+export function VendedorB2BHeader({
+  onAbrirHistorial,
+  onAbrirCotizaciones,
+  cotizacionesAprobadasCount = 0,
+}: VendedorB2BHeaderProps) {
   const router = useRouter();
   const { usuario, logout } = useAuth();
 
@@ -48,6 +54,19 @@ export function VendedorB2BHeader({ onAbrirHistorial }: VendedorB2BHeaderProps) 
 
         {/* Acciones y control de sesión */}
         <div className="flex items-center gap-2.5">
+          <button
+            type="button"
+            onClick={onAbrirCotizaciones}
+            className="px-3.5 py-1.5 rounded-xl border border-[#E9B949]/40 bg-[#E9B949]/15 hover:bg-[#E9B949]/25 text-[#E9B949] text-xs font-medium transition-colors flex items-center gap-1.5 cursor-pointer"
+          >
+            <span>Mis Cotizaciones</span>
+            {cotizacionesAprobadasCount > 0 && (
+              <span className="px-1.5 py-0.5 rounded-full bg-emerald-500 text-[#070d1a] text-[10px] font-semibold tabular-nums">
+                {cotizacionesAprobadasCount}
+              </span>
+            )}
+          </button>
+
           <button
             type="button"
             onClick={onAbrirHistorial}

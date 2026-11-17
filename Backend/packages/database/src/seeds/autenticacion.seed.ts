@@ -115,6 +115,24 @@ export const PERMISOS = [
     modulo: 'facturacion',
     descripcion: 'Emitir alertas directas al administrador de sucursal',
   },
+  {
+    id_permiso: 30,
+    codigo: 'facturacion:cotizar-b2b',
+    modulo: 'facturacion',
+    descripcion: 'Crear y gestionar cotizaciones comerciales B2B para aval',
+  },
+  {
+    id_permiso: 31,
+    codigo: 'facturacion:avalar-cotizacion-b2b',
+    modulo: 'facturacion',
+    descripcion: 'Aprobar o rechazar cotizaciones B2B y gestionar pedidos en proceso',
+  },
+  {
+    id_permiso: 32,
+    codigo: 'facturacion:aprobar-credito-b2b',
+    modulo: 'facturacion',
+    descripcion: 'Aprobar o rechazar cupos de crédito corporativo B2B (exclusivo Super Admin)',
+  },
 
   // Módulo: Administración
   {
@@ -222,8 +240,8 @@ export const ASIGNACIONES: Record<string, string[]> = {
   'vendedor-b2b': [
     'inventario:leer',
     'facturacion:consultar',
-    'facturacion:facturar',
     'facturacion:gestionar-clientes',
+    'facturacion:cotizar-b2b',
     'facturacion:vender-b2b',
     'facturacion:alertar-admin',
     'mcp:consultar',
@@ -236,6 +254,8 @@ export const ASIGNACIONES: Record<string, string[]> = {
     'inventario:ver-kardex',
     'facturacion:facturar',
     'facturacion:abrir-turno',
+    'facturacion:cotizar-b2b',
+    'facturacion:avalar-cotizacion-b2b',
     'facturacion:vender-b2b',
     'facturacion:consultar',
     'facturacion:gestionar-clientes',
