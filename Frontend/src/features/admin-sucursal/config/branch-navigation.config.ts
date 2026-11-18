@@ -155,6 +155,11 @@ export const INVENTORY_SECTION_TABS: readonly BranchTabItem[] = [
     label: 'Proveedores',
     href: '/admin-sucursal/inventario/proveedores',
   },
+  {
+    id: 'categorias',
+    label: 'Categorías',
+    href: '/admin-sucursal/inventario/categorias',
+  },
 ] as const;
 
 /**

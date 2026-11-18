@@ -21,6 +21,7 @@ import type {
   RegistrarSalidaDTO,
   AjustarInventarioDTO,
   FiltrosKardexDTO,
+  MovimientoKardexItem,
   ResultadoKardexPaginado,
   ResultadoEntradasPaginado,
 } from '../types/branch-inventory.types';
@@ -37,81 +38,48 @@ export class BranchInventoryService implements IBranchInventoryService {
     page: number;
     limit: number;
     totalPages: number;
+    resumen?: import('../types/branch-inventory.types').ResumenInventarioSede;
   }> {
     const page = filtros?.page ?? 1;
     const limit = filtros?.limit ?? 25;
 
-    // 1. Peticiones simultáneas a los endpoints de backend
-    const [productosRes, existenciasRes, categoriasRes, proveedoresRes] = await Promise.all([
-      this.http.get<any>('/inventario/productos', {
-        params: {
-          texto: filtros?.texto || undefined,
-          categoriaId: filtros?.categoriaId && filtros.categoriaId !== -1 ? filtros.categoriaId : undefined,
-          proveedorId: filtros?.proveedorId || undefined,
-          isActive: filtros?.isActive !== undefined ? filtros.isActive : undefined,
-          page,
-          limit,
-        },
-      }),
-      this.http.get<any>('/administracion/dashboard/inventario', {
-        params: { sucursalIds: sucursalId },
-      }).catch((err) => {
-        console.warn('[branchInventoryService] No se pudieron obtener existencias consolidadas:', err?.message);
-        return [];
-      }),
-      this.listarCategorias().catch(() => [] as CategoriaInventario[]),
-      this.listarProveedores().catch(() => [] as ProveedorInventario[]),
-    ]);
+    const params: Record<string, any> = {
+      sucursalId,
+      page,
+      limit,
+    };
 
-    const rawProducts: any[] = productosRes?.items || [];
-    const rawExistencias: any[] = Array.isArray(existenciasRes) ? existenciasRes : [];
-
-    // Mapas para resolución O(1) de nombres de categoría, proveedor y stock en sede
-    const categoriaMap = new Map<number, string>(
-      categoriasRes.map((c) => [c.id, c.nombre]),
-    );
-    const proveedorMap = new Map<number, string>(
-      proveedoresRes.map((p) => [p.id, p.nombre]),
-    );
-
-    // Mapa de stock por productoId para la sucursal actual
-    const stockMap = new Map<
-      string,
-      { stockActual: number; stockMinimo: number; estado: string }
-    >();
-
-    for (const item of rawExistencias) {
-      const prodId = item.productoId;
-      const sedesList: any[] = item.existenciasPorSucursal || [];
-      const currentBranchData = sedesList.find(
-        (s: any) => Number(s.sucursalId) === Number(sucursalId),
-      );
-
-      if (currentBranchData) {
-        stockMap.set(prodId, {
-          stockActual: Number(currentBranchData.stockActual ?? 0),
-          stockMinimo: Number(currentBranchData.stockMinimo ?? 0),
-          estado: currentBranchData.estadoStock || 'optimo',
-        });
-      }
+    if (filtros?.texto) params.texto = filtros.texto;
+    if (filtros?.categoriaId !== undefined && filtros.categoriaId !== -1) {
+      params.categoriaId = filtros.categoriaId;
+    }
+    if (filtros?.soloSinCategoria || filtros?.sinCategoria || filtros?.categoriaId === -1) {
+      params.sinCategoria = true;
+    }
+    if (filtros?.proveedorId) params.proveedorId = filtros.proveedorId;
+    if (filtros?.nivelStock && filtros.nivelStock !== 'todos') {
+      params.nivelStock = filtros.nivelStock;
+    }
+    if (filtros?.estado && filtros.estado !== 'todos') {
+      params.estado = filtros.estado;
+    } else if (filtros?.isActive !== undefined) {
+      params.isActive = filtros.isActive;
     }
 
-    // 2. Mapeo estructurado por producto
-    let items: ProductoInventarioSede[] = rawProducts.map((p) => {
-      const branchStock = stockMap.get(p.id) || {
-        stockActual: 0,
-        stockMinimo: 0,
-        estado: 'critico',
-      };
+    const productosRes = await this.http.get<any>('/inventario/productos', { params });
+    const rawProducts: any[] = productosRes?.items || (Array.isArray(productosRes) ? productosRes : []);
 
-      const stockActual = branchStock.stockActual;
-      const stockMinimo = branchStock.stockMinimo;
+    const items: ProductoInventarioSede[] = rawProducts.map((p) => {
+      const stockActual = Number(p.stockActual ?? p.stock_actual ?? 0);
+      const stockMinimo = Number(p.stockMinimo ?? p.stock_minimo ?? 0);
 
-      let estadoStock: 'optimo' | 'bajo' | 'critico' | 'agotado' = 'optimo';
-      if (stockActual <= 0) {
-        estadoStock = 'agotado';
-      } else if (stockActual <= stockMinimo) {
-        estadoStock = 'bajo';
+      let estadoStock: 'optimo' | 'bajo' | 'critico' | 'agotado' = p.estadoStock ?? 'optimo';
+      if (!p.estadoStock) {
+        if (stockActual <= 0) {
+          estadoStock = 'agotado';
+        } else if (stockActual <= stockMinimo) {
+          estadoStock = 'bajo';
+        }
       }
 
       const precioCompra = Number(p.precioCompra ?? 0);
@@ -126,9 +94,9 @@ export class BranchInventoryService implements IBranchInventoryService {
         sku: p.sku,
         nombre: p.nombre,
         categoriaId: p.categoriaId ?? null,
-        categoriaNombre: p.categoriaId ? categoriaMap.get(p.categoriaId) : undefined,
+        categoriaNombre: p.categoriaNombre ?? undefined,
         proveedorId: p.proveedorId ?? null,
-        proveedorNombre: p.proveedorId ? proveedorMap.get(p.proveedorId) : undefined,
+        proveedorNombre: p.proveedorNombre ?? undefined,
         precioCompra,
         precioVenta,
         precioCorporativo: p.precioCorporativo ? Number(p.precioCorporativo) : null,
@@ -140,27 +108,17 @@ export class BranchInventoryService implements IBranchInventoryService {
       };
     });
 
-    // 3. Filtro en memoria por sin categoría o nivel de stock si aplica
-    if (filtros?.soloSinCategoria || filtros?.categoriaId === -1) {
-      items = items.filter((i) => !i.categoriaId);
-    }
-
-    if (filtros?.nivelStock && filtros.nivelStock !== 'todos') {
-      if (filtros.nivelStock === 'optimo') {
-        items = items.filter((i) => i.estadoStock === 'optimo');
-      } else if (filtros.nivelStock === 'bajo') {
-        items = items.filter((i) => i.estadoStock === 'bajo' || i.estadoStock === 'critico');
-      } else if (filtros.nivelStock === 'agotado') {
-        items = items.filter((i) => i.estadoStock === 'agotado');
-      }
-    }
+    const total = Number(productosRes?.total ?? items.length);
+    const totalPages = Number(productosRes?.totalPages ?? (Math.ceil(total / limit) || 1));
+    const resumen = productosRes?.resumen || productosRes?.contadores;
 
     return {
       items,
-      total: productosRes?.total ?? items.length,
-      page: productosRes?.page ?? page,
-      limit: productosRes?.limit ?? limit,
-      totalPages: productosRes?.totalPages ?? (Math.ceil(items.length / limit) || 1),
+      total,
+      page: Number(productosRes?.page ?? page),
+      limit: Number(productosRes?.limit ?? limit),
+      totalPages,
+      resumen,
     };
   }
 
@@ -205,6 +163,30 @@ export class BranchInventoryService implements IBranchInventoryService {
     });
   }
 
+  public async ajustarStockMinimo(
+    productoId: string,
+    stockMinimo: number,
+    sucursalId: number = 1,
+  ): Promise<{ ok: boolean; error?: string }> {
+    try {
+      await this.configurarStockMinimo(productoId, sucursalId, stockMinimo);
+      return { ok: true };
+    } catch (err: any) {
+      return { ok: false, error: err?.message || 'Error al ajustar stock mínimo' };
+    }
+  }
+
+  public async consultarKardexSede(
+    sucursalId: number,
+    filtros?: { productoId?: string; limit?: number },
+  ): Promise<{ items: MovimientoKardexItem[]; total: number }> {
+    return await this.consultarKardex({
+      sucursalId,
+      productoId: filtros?.productoId,
+      limit: filtros?.limit ?? 20,
+    });
+  }
+
   public async listarCategorias(): Promise<CategoriaInventario[]> {
     const res = await this.http.get<any>('/inventario/categorias');
     const items = res?.items || (Array.isArray(res) ? res : []);
@@ -212,6 +194,8 @@ export class BranchInventoryService implements IBranchInventoryService {
       id: Number(c.id || c.id_categoria),
       nombre: c.nombre,
       isActive: Boolean(c.isActive ?? c.is_active ?? true),
+      totalProductos: Number(c.totalProductos ?? c.cantidadProductos ?? c.total_productos ?? 0),
+      cantidadProductos: Number(c.totalProductos ?? c.cantidadProductos ?? c.total_productos ?? 0),
     }));
   }
 
@@ -224,7 +208,64 @@ export class BranchInventoryService implements IBranchInventoryService {
       id: Number(res.id || res.id_categoria),
       nombre: res.nombre,
       isActive: Boolean(res.isActive ?? res.is_active ?? true),
+      totalProductos: 0,
+      cantidadProductos: 0,
     };
+  }
+
+  public async editarCategoria(id: number, data: { nombre?: string; isActive?: boolean }): Promise<void> {
+    const payload: Record<string, any> = {};
+    if (data.nombre !== undefined) payload.nombre = data.nombre.trim();
+    if (data.isActive !== undefined) payload.isActive = Boolean(data.isActive);
+    await this.http.put(`/inventario/categorias/${id}`, payload);
+  }
+
+  public async cambiarEstadoCategoria(id: number, isActive: boolean): Promise<void> {
+    await this.http.put(`/inventario/categorias/${id}/estado`, { isActive });
+  }
+
+  public async consultarHistorialPrecios(productoId: string): Promise<import('../types/branch-inventory.types').ItemHistorialPrecio[]> {
+    const res = await this.http.get<any>(`/inventario/productos/${productoId}/historial-precios`);
+    const items = res?.items || (Array.isArray(res) ? res : []);
+    return items.map((h: any) => ({
+      id: h.id,
+      fecha: h.fecha,
+      usuarioId: h.usuarioId ?? null,
+      usuarioNombre: h.usuarioNombre ?? null,
+      accion: h.accion,
+      precioCompraAnterior: h.precioCompraAnterior !== null ? Number(h.precioCompraAnterior) : null,
+      precioCompraNuevo: h.precioCompraNuevo !== null ? Number(h.precioCompraNuevo) : null,
+      precioVentaAnterior: h.precioVentaAnterior !== null ? Number(h.precioVentaAnterior) : null,
+      precioVentaNuevo: h.precioVentaNuevo !== null ? Number(h.precioVentaNuevo) : null,
+      precioCorporativoAnterior: h.precioCorporativoAnterior !== null && h.precioCorporativoAnterior !== undefined ? Number(h.precioCorporativoAnterior) : null,
+      precioCorporativoNuevo: h.precioCorporativoNuevo !== null && h.precioCorporativoNuevo !== undefined ? Number(h.precioCorporativoNuevo) : null,
+    }));
+  }
+
+  public async importarProductosCsv(archivo: File | string): Promise<import('../types/branch-inventory.types').ReporteImportacionProductos> {
+    if (archivo instanceof File) {
+      const formData = new FormData();
+      formData.append('archivo', archivo);
+      return await this.http.post<any>('/inventario/productos/importar-csv', formData);
+    }
+    return await this.http.post<any>('/inventario/productos/importar-csv', { csv: archivo });
+  }
+
+  public async exportarProductosCsv(filtros?: any): Promise<Blob> {
+    const params: Record<string, any> = {};
+    if (filtros?.texto) params.texto = filtros.texto;
+    if (filtros?.categoriaId && filtros.categoriaId !== -1) params.categoriaId = filtros.categoriaId;
+    if (filtros?.sinCategoria || filtros?.soloSinCategoria || filtros?.categoriaId === -1) params.sinCategoria = true;
+    if (filtros?.proveedorId) params.proveedorId = filtros.proveedorId;
+    if (filtros?.nivelStock && filtros.nivelStock !== 'todos') params.nivelStock = filtros.nivelStock;
+    if (filtros?.estado && filtros.estado !== 'todos') params.estado = filtros.estado;
+    if (filtros?.isActive !== undefined) params.isActive = filtros.isActive;
+    if (filtros?.sucursalId) params.sucursalId = filtros.sucursalId;
+
+    const csvTexto = await this.http.get<string>('/inventario/productos/exportar-csv', { params });
+    return new Blob(['\uFEFF', csvTexto ?? ''], {
+      type: 'text/csv;charset=utf-8',
+    });
   }
 
   public async listarProveedores(filtros?: { busqueda?: string; isActive?: boolean }): Promise<ProveedorInventario[]> {

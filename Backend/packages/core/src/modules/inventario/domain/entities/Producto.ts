@@ -17,6 +17,10 @@ export class Producto {
     public readonly precioCorporativoActualizadoEn: Date | null,
     public readonly isActive: boolean = true,
     advertencia?: string | null,
+    public readonly categoriaNombre?: string | null,
+    public readonly stockActual?: number,
+    public readonly stockMinimo?: number,
+    public readonly estadoStock?: 'optimo' | 'bajo' | 'agotado',
   ) {
     this.advertencia =
       advertencia !== undefined
@@ -46,6 +50,10 @@ export class Producto {
       this.precioCorporativoActualizadoEn,
       true,
       this.advertencia,
+      this.categoriaNombre,
+      this.stockActual,
+      this.stockMinimo,
+      this.estadoStock,
     );
   }
 
@@ -62,6 +70,10 @@ export class Producto {
       this.precioCorporativoActualizadoEn,
       false,
       this.advertencia,
+      this.categoriaNombre,
+      this.stockActual,
+      this.stockMinimo,
+      this.estadoStock,
     );
   }
 }

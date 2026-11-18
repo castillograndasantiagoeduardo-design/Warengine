@@ -27,12 +27,27 @@ export interface DatosActualizarProducto {
   isActive?: boolean;
 }
 
+export interface ResumenStockSede {
+  total: number;
+  optimo: number;
+  bajo: number;
+  agotado: number;
+}
+
+export interface ResultadoProductosPaginado extends ResultadoPaginado<Producto> {
+  resumen?: ResumenStockSede;
+  contadores?: ResumenStockSede;
+}
+
 export interface FiltrosListarProductos {
   texto?: string;
   categoriaId?: number;
   proveedorId?: number;
   isActive?: boolean;
   stockBajo?: boolean;
+  sinCategoria?: boolean;
+  nivelStock?: 'optimo' | 'bajo' | 'agotado' | 'todos';
+  estado?: 'activo' | 'inactivo' | 'todos';
   sucursalId?: number;
   page: number;
   limit: number;
@@ -41,7 +56,7 @@ export interface FiltrosListarProductos {
 export interface IProductoRepository {
   findById(id: string): Promise<Producto | null>;
   findBySku(sku: string): Promise<Producto | null>;
-  listar(filtros: FiltrosListarProductos): Promise<ResultadoPaginado<Producto>>;
+  listar(filtros: FiltrosListarProductos): Promise<ResultadoProductosPaginado>;
   crear(datos: DatosCrearProducto): Promise<Producto>;
   actualizar(id: string, cambios: DatosActualizarProducto): Promise<Producto>;
   cambiarEstado(id: string, isActive: boolean): Promise<Producto>;

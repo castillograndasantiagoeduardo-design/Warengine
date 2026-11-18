@@ -1,6 +1,6 @@
 import { and, count, eq, like, type SQL } from 'drizzle-orm';
 import { Database } from '../../client.ts';
-import { categorias } from '../../schema/inventario.schema.ts';
+import { categorias, productos } from '../../schema/inventario.schema.ts';
 import {
   Categoria,
   DatosActualizarCategoria,
@@ -35,9 +35,16 @@ export class DrizzleCategoriaRepository implements ICategoriaRepository {
     const offset = (page - 1) * limit;
 
     const rows = await this.db
-      .select()
+      .select({
+        id_categoria: categorias.id_categoria,
+        nombre: categorias.nombre,
+        is_active: categorias.is_active,
+        total_productos: count(productos.id_producto),
+      })
       .from(categorias)
+      .leftJoin(productos, eq(categorias.id_categoria, productos.categoria_id))
       .where(whereClause)
+      .groupBy(categorias.id_categoria, categorias.nombre, categorias.is_active)
       .orderBy(categorias.nombre)
       .limit(limit)
       .offset(offset);

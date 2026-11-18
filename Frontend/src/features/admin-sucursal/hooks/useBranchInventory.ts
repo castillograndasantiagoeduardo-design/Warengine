@@ -39,6 +39,7 @@ export function useBranchInventory({
   const [page, setPage] = useState(initialFiltros?.page ?? 1);
   const [limit, setLimit] = useState(initialFiltros?.limit ?? 25);
   const [totalPages, setTotalPages] = useState(1);
+  const [resumen, setResumen] = useState<import('../types/branch-inventory.types').ResumenInventarioSede | undefined>(undefined);
 
   const [categorias, setCategorias] = useState<CategoriaInventario[]>([]);
   const [proveedores, setProveedores] = useState<ProveedorInventario[]>([]);
@@ -80,6 +81,7 @@ export function useBranchInventory({
       setProductos(resp.items);
       setTotal(resp.total);
       setTotalPages(resp.totalPages);
+      setResumen(resp.resumen);
     } catch (err: any) {
       console.error('[useBranchInventory] Error al consultar inventario de sede:', err);
       setError(err?.message || 'Error al conectar con el inventario de la sucursal.');
@@ -201,6 +203,7 @@ export function useBranchInventory({
     page,
     limit,
     totalPages,
+    resumen,
     categorias,
     proveedores,
     isLoading,

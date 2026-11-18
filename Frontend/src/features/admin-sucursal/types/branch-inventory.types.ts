@@ -14,6 +14,13 @@ export interface SucursalStockInfo {
   estadoStock: 'optimo' | 'bajo' | 'critico' | 'agotado';
 }
 
+export interface ResumenInventarioSede {
+  total: number;
+  optimo: number;
+  bajo: number;
+  agotado: number;
+}
+
 export interface ProductoInventarioSede {
   id: string;
   sku: string;
@@ -36,17 +43,58 @@ export interface FiltrosInventarioSede {
   texto?: string;
   categoriaId?: number;
   soloSinCategoria?: boolean;
+  sinCategoria?: boolean;
   proveedorId?: number;
   nivelStock?: 'todos' | 'optimo' | 'bajo' | 'agotado';
+  estado?: 'todos' | 'activo' | 'inactivo';
   isActive?: boolean;
   page?: number;
   limit?: number;
+}
+
+export interface ResultadoInventarioPaginado {
+  items: ProductoInventarioSede[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+  resumen?: ResumenInventarioSede;
 }
 
 export interface CategoriaInventario {
   id: number;
   nombre: string;
   isActive: boolean;
+  totalProductos?: number;
+  cantidadProductos?: number;
+}
+
+export interface ItemHistorialPrecio {
+  id: string;
+  fecha: string;
+  usuarioId: string | null;
+  usuarioNombre: string | null;
+  accion: string;
+  precioCompraAnterior: number | null;
+  precioCompraNuevo: number | null;
+  precioVentaAnterior: number | null;
+  precioVentaNuevo: number | null;
+  precioCorporativoAnterior?: number | null;
+  precioCorporativoNuevo?: number | null;
+}
+
+export interface ReporteImportacionProductos {
+  totalFilas: number;
+  totalCargados: number;
+  totalRechazados: number;
+  filas: Array<{
+    fila: number;
+    sku?: string;
+    nombre?: string;
+    estado: 'cargado' | 'rechazado';
+    motivo?: string;
+    productoId?: string;
+  }>;
 }
 
 export interface CrearCategoriaDTO {

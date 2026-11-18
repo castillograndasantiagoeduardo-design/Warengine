@@ -85,7 +85,8 @@ describe('branch-navigation.config — Navegación de Admin de Sucursal', () => 
   });
 
   it('evalúa correctamente la pestaña activa en SectionTabs de Inventario', () => {
-    const [tabProductos, tabMovimientos, tabProveedores] = INVENTORY_SECTION_TABS;
+    assert.equal(INVENTORY_SECTION_TABS.length, 4);
+    const [tabProductos, tabMovimientos, tabProveedores, tabCategorias] = INVENTORY_SECTION_TABS;
 
     // En /admin-sucursal/inventario solo "Productos" está activa
     assert.equal(
@@ -129,6 +130,16 @@ describe('branch-navigation.config — Navegación de Admin de Sucursal', () => 
         '/admin-sucursal/inventario/proveedores',
         tabProveedores.href,
         Boolean(tabProveedores.exact),
+      ),
+      true,
+    );
+
+    // En /admin-sucursal/inventario/categorias solo "Categorías" está activa
+    assert.equal(
+      isBranchRouteActive(
+        '/admin-sucursal/inventario/categorias',
+        tabCategorias.href,
+        Boolean(tabCategorias.exact),
       ),
       true,
     );
