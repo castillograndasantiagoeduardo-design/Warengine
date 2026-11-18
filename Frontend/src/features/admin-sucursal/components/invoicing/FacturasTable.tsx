@@ -57,7 +57,7 @@ export function FacturasTable({ facturas, onVerDetalle }: FacturasTableProps) {
                     </span>
                   </td>
                   <td className="py-3 px-4 text-slate-300">
-                    {fac.cajeroNombre || 'Cajero'}
+                    {fac.cajeroNombre || '—'}
                   </td>
                   <td className="py-3 px-4 text-center">
                     <span
@@ -152,7 +152,7 @@ export function FacturasTable({ facturas, onVerDetalle }: FacturasTableProps) {
                 <div>
                   <span className="text-[10px] text-slate-400 font-mono block">Cajero</span>
                   <span className="text-slate-300 block truncate">
-                    {fac.cajeroNombre || 'Cajero'}
+                    {fac.cajeroNombre || '—'}
                   </span>
                 </div>
               </div>

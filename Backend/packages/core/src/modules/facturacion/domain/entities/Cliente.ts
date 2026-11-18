@@ -12,6 +12,8 @@ export class Cliente {
         public readonly telefono: string | null,
         public readonly direccion: string | null,
         public readonly creditoHabilitado: boolean,
+        public readonly saldoPendiente: number = 0,
+        public readonly totalCompras: number = 0,
     ) { }
 
     public get esB2B(): boolean {

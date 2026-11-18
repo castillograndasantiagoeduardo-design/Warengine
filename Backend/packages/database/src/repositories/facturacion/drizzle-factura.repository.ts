@@ -1,4 +1,5 @@
 import { and, desc, eq, gte, inArray, isNotNull, isNull, like, lte, or, sql, type SQL } from 'drizzle-orm';
+import { alias } from 'drizzle-orm/mysql-core';
 import { Database } from '../../client.ts';
 import {
     clientes,
@@ -7,6 +8,7 @@ import {
     factura_pagos,
     facturas,
 } from '../../schema/facturacion.schema.ts';
+import { turnos_caja } from '../../schema/turnos-caja.schema.ts';
 import { usuarios } from '../../schema/autenticacion.schema.ts';
 import { empleados } from '../../schema/administracion.schema.ts';
 import { productos } from '../../schema/inventario.schema.ts';
@@ -30,6 +32,9 @@ import {
 } from '../../mappers/facturacion/factura.mapper.ts';
 import { devolucionVentaFromRow } from '../../mappers/facturacion/devolucion-venta.mapper.ts';
 import { obtenerSqlMessage } from '../../errors/mysql-error-translator.ts';
+
+const turnoUsuarios = alias(usuarios, 'factura_turno_usuarios');
+const turnoEmpleados = alias(empleados, 'factura_turno_empleados');
 
 export class DrizzleFacturaRepository implements IFacturaRepository {
     constructor(private readonly db: Database) { }
@@ -181,11 +186,16 @@ export class DrizzleFacturaRepository implements IFacturaRepository {
                 clienteTipo: clientes.tipo_cliente,
                 empleadoNombre: empleados.nombre,
                 usuarioEmail: usuarios.email,
+                turnoEmpleadoNombre: turnoEmpleados.nombre,
+                turnoUsuarioEmail: turnoUsuarios.email,
             })
             .from(facturas)
             .leftJoin(clientes, eq(facturas.cliente_id, clientes.id_cliente))
             .leftJoin(usuarios, eq(facturas.usuario_id, usuarios.id_usuario))
             .leftJoin(empleados, eq(usuarios.empleado_id, empleados.id_empleado))
+            .leftJoin(turnos_caja, eq(facturas.turno_caja_id, turnos_caja.id_turno_caja))
+            .leftJoin(turnoUsuarios, eq(turnos_caja.usuario_id, turnoUsuarios.id_usuario))
+            .leftJoin(turnoEmpleados, eq(turnoUsuarios.empleado_id, turnoEmpleados.id_empleado))
             .where(and(eq(facturas.id_factura, id), isNull(facturas.deleted_at)))
             .limit(1);
 
@@ -210,7 +220,12 @@ export class DrizzleFacturaRepository implements IFacturaRepository {
             .from(devoluciones_ventas)
             .where(and(eq(devoluciones_ventas.factura_id, id), isNull(devoluciones_ventas.deleted_at)));
 
-        const cajeroNombre = row.empleadoNombre || row.usuarioEmail || 'Cajero';
+        const cajeroNombre =
+            row.empleadoNombre ||
+            row.turnoEmpleadoNombre ||
+            row.usuarioEmail ||
+            row.turnoUsuarioEmail ||
+            'Cajero';
         const clienteNombre = (row.clienteDocumento === '222222222222' || !row.clienteNombre) ? 'Consumidor Final' : row.clienteNombre;
         const clienteDocumento = row.clienteDocumento || '222222222222';
         const tipoVenta: 'POS' | 'B2B' = row.factura.turno_caja_id ? 'POS' : (row.clienteTipo === 'B2B' ? 'B2B' : 'POS');
@@ -291,11 +306,16 @@ export class DrizzleFacturaRepository implements IFacturaRepository {
                 clienteTipo: clientes.tipo_cliente,
                 empleadoNombre: empleados.nombre,
                 usuarioEmail: usuarios.email,
+                turnoEmpleadoNombre: turnoEmpleados.nombre,
+                turnoUsuarioEmail: turnoUsuarios.email,
             })
             .from(facturas)
             .leftJoin(clientes, eq(facturas.cliente_id, clientes.id_cliente))
             .leftJoin(usuarios, eq(facturas.usuario_id, usuarios.id_usuario))
             .leftJoin(empleados, eq(usuarios.empleado_id, empleados.id_empleado))
+            .leftJoin(turnos_caja, eq(facturas.turno_caja_id, turnos_caja.id_turno_caja))
+            .leftJoin(turnoUsuarios, eq(turnos_caja.usuario_id, turnoUsuarios.id_usuario))
+            .leftJoin(turnoEmpleados, eq(turnoUsuarios.empleado_id, turnoEmpleados.id_empleado))
             .where(and(...condiciones))
             .orderBy(desc(facturas.fecha))
             .limit(filtros.limite)
@@ -348,7 +368,12 @@ export class DrizzleFacturaRepository implements IFacturaRepository {
         }
 
         const items = rows.map((r) => {
-            const cajeroNombre = r.empleadoNombre || r.usuarioEmail || 'Cajero';
+            const cajeroNombre =
+                r.empleadoNombre ||
+                r.turnoEmpleadoNombre ||
+                r.usuarioEmail ||
+                r.turnoUsuarioEmail ||
+                'Cajero';
             const clienteNombre = (r.clienteDocumento === '222222222222' || !r.clienteNombre) ? 'Consumidor Final' : r.clienteNombre;
             const clienteDocumento = r.clienteDocumento || '222222222222';
             const tipoVenta: 'POS' | 'B2B' = r.factura.turno_caja_id ? 'POS' : (r.clienteTipo === 'B2B' ? 'B2B' : 'POS');

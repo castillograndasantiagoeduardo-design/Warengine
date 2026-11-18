@@ -92,7 +92,7 @@ export class BranchInvoicingService implements IBranchInvoicingService {
       clienteNombre: f.clienteNombre || 'Consumidor Final',
       clienteDocumento: f.clienteDocumento || '222222222222',
       usuarioId: String(f.usuarioId || f.usuario_id || ''),
-      cajeroNombre: f.cajeroNombre || 'Cajero',
+      cajeroNombre: f.cajeroNombre || '—',
       sucursalId: Number(f.sucursalId || f.sucursal_id || 0),
       turnoCajaId: f.turnoCajaId ? String(f.turnoCajaId) : null,
       tipoVenta: f.tipoVenta === 'B2B' ? 'B2B' : 'POS',
