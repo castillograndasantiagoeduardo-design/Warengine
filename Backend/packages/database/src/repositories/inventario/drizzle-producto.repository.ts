@@ -1,6 +1,7 @@
 import { and, count, eq, inArray, like, or, type SQL, sql } from 'drizzle-orm';
 import { Database } from '../../client.ts';
 import {
+  categorias,
   inventario_sucursal,
   movimientos_inventario,
   productos,
@@ -13,6 +14,8 @@ import {
   Producto,
   ReferenciaInvalidaError,
   ResultadoPaginado,
+  ResultadoProductosPaginado,
+  ResumenStockSede,
   SkuDuplicadoError,
 } from '@warengine/core';
 import { productoFromRow } from '../../mappers/inventario/producto.mapper.ts';
@@ -25,12 +28,12 @@ import {
 export class DrizzleProductoRepository implements IProductoRepository {
   constructor(private readonly db: Database) {}
 
-  public async listar(filtros: FiltrosListarProductos): Promise<ResultadoPaginado<Producto>> {
-    const condiciones: SQL[] = [];
+  public async listar(filtros: FiltrosListarProductos): Promise<ResultadoProductosPaginado> {
+    const condicionesBase: SQL[] = [];
 
     if (filtros.texto) {
       const patron = `%${escaparLike(filtros.texto)}%`;
-      condiciones.push(
+      condicionesBase.push(
         or(
           like(productos.nombre, patron),
           like(productos.sku, patron),
@@ -38,68 +41,172 @@ export class DrizzleProductoRepository implements IProductoRepository {
       );
     }
 
-    if (filtros.categoriaId !== undefined) {
-      condiciones.push(eq(productos.categoria_id, filtros.categoriaId));
+    if (filtros.sinCategoria || filtros.categoriaId === -1) {
+      condicionesBase.push(sql`${productos.categoria_id} IS NULL`);
+    } else if (filtros.categoriaId !== undefined) {
+      condicionesBase.push(eq(productos.categoria_id, filtros.categoriaId));
     }
 
     if (filtros.proveedorId !== undefined) {
-      condiciones.push(eq(productos.proveedor_id, filtros.proveedorId));
+      condicionesBase.push(eq(productos.proveedor_id, filtros.proveedorId));
     }
 
     if (filtros.isActive !== undefined) {
-      condiciones.push(eq(productos.is_active, filtros.isActive ? 1 : 0));
+      condicionesBase.push(eq(productos.is_active, filtros.isActive ? 1 : 0));
+    } else if (filtros.estado) {
+      if (filtros.estado === 'activo') condicionesBase.push(eq(productos.is_active, 1));
+      else if (filtros.estado === 'inactivo') condicionesBase.push(eq(productos.is_active, 0));
     }
 
-    if (filtros.stockBajo) {
-      if (filtros.sucursalId !== undefined) {
-        // Filtro específico para la sucursal indicada
-        const subquery = this.db
-          .select({ productoId: inventario_sucursal.producto_id })
-          .from(inventario_sucursal)
-          .where(
-            and(
-              eq(inventario_sucursal.sucursal_id, filtros.sucursalId),
-              sql`${inventario_sucursal.stock_actual} <= ${inventario_sucursal.stock_minimo}`,
-            ),
-          );
-        condiciones.push(inArray(productos.id_producto, subquery));
-      } else {
-        // Filtro general: productos con stock bajo en al menos una sucursal
-        const subquery = this.db
-          .select({ productoId: inventario_sucursal.producto_id })
-          .from(inventario_sucursal)
-          .where(sql`${inventario_sucursal.stock_actual} <= ${inventario_sucursal.stock_minimo}`);
-        condiciones.push(inArray(productos.id_producto, subquery));
+    const condiciones: SQL[] = [...condicionesBase];
+
+    if (filtros.sucursalId !== undefined) {
+      if (filtros.nivelStock && filtros.nivelStock !== 'todos') {
+        const stockActualSql = sql`COALESCE(${inventario_sucursal.stock_actual}, 0)`;
+        const stockMinimoSql = sql`COALESCE(${inventario_sucursal.stock_minimo}, 0)`;
+        if (filtros.nivelStock === 'agotado') {
+          condiciones.push(sql`${stockActualSql} <= 0`);
+        } else if (filtros.nivelStock === 'bajo') {
+          condiciones.push(sql`${stockActualSql} > 0 AND ${stockActualSql} <= ${stockMinimoSql}`);
+        } else if (filtros.nivelStock === 'optimo') {
+          condiciones.push(sql`${stockActualSql} > ${stockMinimoSql}`);
+        }
+      }
+    } else if (filtros.stockBajo) {
+      const subquery = this.db
+        .select({ productoId: inventario_sucursal.producto_id })
+        .from(inventario_sucursal)
+        .where(sql`${inventario_sucursal.stock_actual} <= ${inventario_sucursal.stock_minimo}`);
+      condiciones.push(inArray(productos.id_producto, subquery));
+    }
+
+    let resumen: ResumenStockSede | undefined = undefined;
+    if (filtros.sucursalId !== undefined) {
+      const whereBase = condicionesBase.length > 0 ? and(...condicionesBase) : undefined;
+      const stockActualSql = sql`COALESCE(${inventario_sucursal.stock_actual}, 0)`;
+      const stockMinimoSql = sql`COALESCE(${inventario_sucursal.stock_minimo}, 0)`;
+
+      const [resumenRow] = await this.db
+        .select({
+          total: count(),
+          agotado: sql<number>`COALESCE(SUM(CASE WHEN ${stockActualSql} <= 0 THEN 1 ELSE 0 END), 0)`,
+          bajo: sql<number>`COALESCE(SUM(CASE WHEN ${stockActualSql} > 0 AND ${stockActualSql} <= ${stockMinimoSql} THEN 1 ELSE 0 END), 0)`,
+          optimo: sql<number>`COALESCE(SUM(CASE WHEN ${stockActualSql} > ${stockMinimoSql} THEN 1 ELSE 0 END), 0)`,
+        })
+        .from(productos)
+        .leftJoin(
+          inventario_sucursal,
+          and(
+            eq(inventario_sucursal.producto_id, productos.id_producto),
+            eq(inventario_sucursal.sucursal_id, filtros.sucursalId),
+          ),
+        )
+        .where(whereBase);
+
+      if (resumenRow) {
+        resumen = {
+          total: Number(resumenRow.total ?? 0),
+          agotado: Number(resumenRow.agotado ?? 0),
+          bajo: Number(resumenRow.bajo ?? 0),
+          optimo: Number(resumenRow.optimo ?? 0),
+        };
       }
     }
 
     const whereClause = condiciones.length > 0 ? and(...condiciones) : undefined;
 
-    const [{ total }] = await this.db
-      .select({ total: count() })
-      .from(productos)
-      .where(whereClause);
+    let total = 0;
+    if (filtros.sucursalId !== undefined) {
+      const [{ totalCount }] = await this.db
+        .select({ totalCount: count() })
+        .from(productos)
+        .leftJoin(
+          inventario_sucursal,
+          and(
+            eq(inventario_sucursal.producto_id, productos.id_producto),
+            eq(inventario_sucursal.sucursal_id, filtros.sucursalId),
+          ),
+        )
+        .where(whereClause);
+      total = Number(totalCount ?? 0);
+    } else {
+      const [{ totalCount }] = await this.db
+        .select({ totalCount: count() })
+        .from(productos)
+        .where(whereClause);
+      total = Number(totalCount ?? 0);
+    }
 
     const limit = Math.max(1, filtros.limit);
     const page = Math.max(1, filtros.page);
     const offset = (page - 1) * limit;
 
-    const rows = await this.db
-      .select()
-      .from(productos)
-      .where(whereClause)
-      .orderBy(productos.nombre)
-      .limit(limit)
-      .offset(offset);
+    let rows: any[] = [];
+    if (filtros.sucursalId !== undefined) {
+      rows = await this.db
+        .select({
+          id_producto: productos.id_producto,
+          sku: productos.sku,
+          nombre: productos.nombre,
+          categoria_id: productos.categoria_id,
+          categoria_nombre: categorias.nombre,
+          proveedor_id: productos.proveedor_id,
+          precio_compra: productos.precio_compra,
+          precio_venta: productos.precio_venta,
+          precio_corporativo: productos.precio_corporativo,
+          precio_corporativo_actualizado_en: productos.precio_corporativo_actualizado_en,
+          is_active: productos.is_active,
+          stock_actual: sql<number>`COALESCE(${inventario_sucursal.stock_actual}, 0)`,
+          stock_minimo: sql<number>`COALESCE(${inventario_sucursal.stock_minimo}, 0)`,
+        })
+        .from(productos)
+        .leftJoin(categorias, eq(productos.categoria_id, categorias.id_categoria))
+        .leftJoin(
+          inventario_sucursal,
+          and(
+            eq(inventario_sucursal.producto_id, productos.id_producto),
+            eq(inventario_sucursal.sucursal_id, filtros.sucursalId),
+          ),
+        )
+        .where(whereClause)
+        .orderBy(productos.nombre)
+        .limit(limit)
+        .offset(offset);
+    } else {
+      rows = await this.db
+        .select({
+          id_producto: productos.id_producto,
+          sku: productos.sku,
+          nombre: productos.nombre,
+          categoria_id: productos.categoria_id,
+          categoria_nombre: categorias.nombre,
+          proveedor_id: productos.proveedor_id,
+          precio_compra: productos.precio_compra,
+          precio_venta: productos.precio_venta,
+          precio_corporativo: productos.precio_corporativo,
+          precio_corporativo_actualizado_en: productos.precio_corporativo_actualizado_en,
+          is_active: productos.is_active,
+          stock_actual: sql`NULL`,
+          stock_minimo: sql`NULL`,
+        })
+        .from(productos)
+        .leftJoin(categorias, eq(productos.categoria_id, categorias.id_categoria))
+        .where(whereClause)
+        .orderBy(productos.nombre)
+        .limit(limit)
+        .offset(offset);
+    }
 
     const totalPages = Math.ceil(total / limit) || 1;
 
     return {
       items: rows.map(productoFromRow),
-      total: Number(total),
+      total,
       page,
       limit,
       totalPages,
+      resumen,
+      contadores: resumen,
     };
   }
 

@@ -12,6 +12,7 @@
  */
 
 import React from 'react';
+import { useRouter } from 'next/navigation';
 import {
   DollarSign,
   Receipt,
@@ -29,19 +30,17 @@ import { TablaFacturas } from './TablaFacturas';
 import { MetodosPago } from './MetodosPago';
 import { TarjetaActivos } from './TarjetaActivos';
 import type { BranchDashboardData } from '../types/branch-dashboard.types';
-import type { BranchSection } from './BranchSidebar';
 
 interface BranchOverviewViewProps {
   data: BranchDashboardData;
-  onNavigateSection?: (section: BranchSection) => void;
   className?: string;
 }
 
 export function BranchOverviewView({
   data,
-  onNavigateSection,
   className = '',
 }: BranchOverviewViewProps) {
+  const router = useRouter();
   // Manejo de exportación rápida
   const handleExportar = () => {
     const csvContent =
@@ -115,7 +114,7 @@ export function BranchOverviewView({
           {/* Botón Primario: Ver inventario */}
           <button
             type="button"
-            onClick={() => onNavigateSection?.('inventario')}
+            onClick={() => router.push('/admin-sucursal/inventario')}
             className="rounded-xl px-4 py-2 text-xs font-sans font-semibold flex items-center gap-2 bg-gradient-to-b from-brand-500 to-brand-600 text-btn-primario-texto shadow-sm hover:brightness-110 active:brightness-95 transition-all cursor-pointer"
           >
             <Package className="w-4 h-4" />
@@ -196,9 +195,9 @@ export function BranchOverviewView({
             stockCritico={data.requiereAtencion?.stockCritico}
             facturasAnuladas={data.requiereAtencion?.facturasAnuladas}
             turnosAbiertos={data.requiereAtencion?.turnosAbiertos}
-            onVerInventario={() => onNavigateSection?.('inventario')}
-            onVerFacturas={() => onNavigateSection?.('facturacion')}
-            onVerTurnos={() => onNavigateSection?.('cajeros')}
+            onVerInventario={() => router.push('/admin-sucursal/inventario')}
+            onVerFacturas={() => router.push('/admin-sucursal/facturacion')}
+            onVerTurnos={() => router.push('/admin-sucursal/personal')}
             className="flex-1"
           />
         </div>
@@ -209,7 +208,7 @@ export function BranchOverviewView({
         <div className="lg:col-span-2 flex flex-col h-full">
           <TablaFacturas
             facturas={data.ultimasFacturas}
-            onVerTodas={() => onNavigateSection?.('facturacion')}
+            onVerTodas={() => router.push('/admin-sucursal/facturacion')}
             className="flex-1"
           />
         </div>

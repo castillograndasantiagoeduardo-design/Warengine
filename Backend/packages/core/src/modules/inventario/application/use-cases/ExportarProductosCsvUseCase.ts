@@ -10,6 +10,9 @@ export interface ExportarProductosCsvRequest {
   proveedorId?: number;
   isActive?: boolean;
   stockBajo?: boolean;
+  sinCategoria?: boolean;
+  nivelStock?: 'optimo' | 'bajo' | 'agotado' | 'todos';
+  estado?: 'activo' | 'inactivo' | 'todos';
   sucursalId?: number;
   limit?: number;
   actor?: ActorAuditoria;
@@ -42,6 +45,9 @@ export class ExportarProductosCsvUseCase {
       proveedorId: request.proveedorId,
       isActive: request.isActive,
       stockBajo: request.stockBajo,
+      sinCategoria: request.sinCategoria,
+      nivelStock: request.nivelStock,
+      estado: request.estado,
       sucursalId: request.sucursalId,
       page: 1,
       limit,

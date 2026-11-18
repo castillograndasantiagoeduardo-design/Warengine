@@ -30,6 +30,21 @@ export interface FacturaPagoSede {
   fecha: string;
 }
 
+export interface DevolucionItemSede {
+  id: string;
+  facturaId: string;
+  facturaItemId: string;
+  cantidad: number;
+  motivo: string;
+  montoReembolso: number;
+  montoReembolsoFormateado: string;
+  reingresaStock: boolean;
+  usuarioId: string;
+  sucursalId: number;
+  fecha: string;
+  fechaFormateada: string;
+}
+
 export interface FacturaSede {
   id: string;
   consecutivo: number;
@@ -41,6 +56,7 @@ export interface FacturaSede {
   cajeroNombre?: string;
   sucursalId: number;
   turnoCajaId: string | null;
+  tipoVenta?: 'POS' | 'B2B';
   subtotal: number;
   iva: number;
   total: number;
@@ -50,6 +66,7 @@ export interface FacturaSede {
   fechaFormateada: string;
   items: FacturaItemSede[];
   pagos: FacturaPagoSede[];
+  devoluciones?: DevolucionItemSede[];
 }
 
 export interface AlertaOperativa {
@@ -71,14 +88,39 @@ export interface AnularFacturaDTO {
   motivo: string;
 }
 
+export interface ItemDevolucionInput {
+  facturaItemId: string;
+  cantidad: number;
+}
+
+export interface RegistrarDevolucionPayload {
+  motivo: string;
+  reingresaStock: boolean;
+  devolverTodo: boolean;
+  items: ItemDevolucionInput[];
+}
+
 export interface FiltrosFacturasSede {
-  estado?: EstadoFacturaSede;
-  clienteId?: string;
+  texto?: string;
+  estado?: EstadoFacturaSede | 'todas';
+  tipo?: 'POS' | 'B2B' | 'todos';
+  desde?: string;
+  hasta?: string;
   fechaInicio?: string;
   fechaFin?: string;
+  page?: number;
+  limite?: number;
+}
+
+export interface FacturasPaginadasSede {
+  items: FacturaSede[];
+  total: number;
+  totalPaginas: number;
+  page: number;
+  limite: number;
 }
 
 export interface FiltrosAlertasSede {
-  estado?: EstadoAlertaOperativa;
-  prioridad?: PrioridadAlertaOperativa;
+  estado?: EstadoAlertaOperativa | 'todas';
+  prioridad?: PrioridadAlertaOperativa | 'todas';
 }

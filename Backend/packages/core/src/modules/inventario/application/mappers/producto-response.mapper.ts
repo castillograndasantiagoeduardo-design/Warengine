@@ -29,5 +29,9 @@ export function toProductoResponse(producto: Producto, permisos?: string[]): Pro
       : null,
     isActive: producto.isActive,
     ...(producto.advertencia ? { advertencia: producto.advertencia } : {}),
+    ...(producto.categoriaNombre !== undefined ? { categoriaNombre: producto.categoriaNombre } : {}),
+    ...(producto.stockActual !== undefined ? { stockActual: producto.stockActual } : {}),
+    ...(producto.stockMinimo !== undefined ? { stockMinimo: producto.stockMinimo } : {}),
+    ...(producto.estadoStock !== undefined ? { estadoStock: producto.estadoStock } : {}),
   };
 }

@@ -1,12 +1,30 @@
 import {
     actualizarClienteSchema,
+    ClienteDto,
     crearClienteSchema,
     filtrosClientesSchema,
 } from '@warengine/contracts';
 import { AppContainer } from '@warengine/composition';
+import { Cliente } from '@warengine/core';
 import { presentResult } from '../../presenters/result.presenter.ts';
 import { leerJson, safeHandler } from '../../utils/handler.ts';
 import { obtenerActor } from '../../utils/actor.ts';
+
+function toClienteDto(cliente: Cliente): ClienteDto {
+    return {
+        id: cliente.id,
+        tipoDocumento: cliente.tipoDocumento,
+        numeroDocumento: cliente.numeroDocumento,
+        nombreRazonSocial: cliente.nombreRazonSocial,
+        tipoCliente: cliente.tipoCliente,
+        email: cliente.email,
+        telefono: cliente.telefono,
+        direccion: cliente.direccion,
+        creditoHabilitado: cliente.creditoHabilitado,
+        saldoPendiente: cliente.saldoPendiente ?? 0,
+        totalCompras: cliente.totalCompras ?? 0,
+    };
+}
 
 export function buscarClientesController(container: AppContainer) {
     return safeHandler(async (c) => {
@@ -14,7 +32,26 @@ export function buscarClientesController(container: AppContainer) {
         if (!parsed.success) {
             return c.json({ error: 'VALIDATION_ERROR', issues: parsed.error.errors }, 400);
         }
-        return presentResult(c, await container.facturacion.buscarClientes.execute(parsed.data));
+        const result = await container.facturacion.buscarClientes.execute(parsed.data);
+        if (result.isFailure) {
+            return presentResult(c, result);
+        }
+
+        const val = result.value;
+        if (!Array.isArray(val)) {
+            const itemsDto = val.items.map(toClienteDto);
+            return c.json({
+                items: itemsDto,
+                clientes: itemsDto, // retrocompatibilidad pos.service.ts
+                total: val.total,
+                totalPaginas: val.totalPaginas,
+                page: val.page,
+                limite: val.limite,
+                resumen: val.resumen,
+            });
+        }
+
+        return c.json(val.map(toClienteDto));
     });
 }
 
@@ -24,7 +61,9 @@ export function obtenerClientePorIdController(container: AppContainer) {
         if (!id || id.trim() === '') {
             return c.json({ error: 'VALIDATION_ERROR', message: 'ID de cliente requerido.' }, 400);
         }
-        return presentResult(c, await container.facturacion.obtenerClientePorId.execute({ id }));
+        const result = await container.facturacion.obtenerClientePorId.execute({ id });
+        if (result.isFailure) return presentResult(c, result);
+        return c.json(toClienteDto(result.value));
     });
 }
 
@@ -43,7 +82,7 @@ export function registrarClienteController(container: AppContainer) {
 
         // 201 si se creó, 200 si se reutilizó uno existente.
         const { cliente, yaExistia } = result.value;
-        return c.json({ cliente, yaExistia }, yaExistia ? 200 : 201);
+        return c.json({ cliente: toClienteDto(cliente), yaExistia }, yaExistia ? 200 : 201);
     });
 }
 
@@ -63,6 +102,7 @@ export function actualizarClienteController(container: AppContainer) {
             ...parsed.data,
             actor,
         });
-        return presentResult(c, result);
+        if (result.isFailure) return presentResult(c, result);
+        return c.json(toClienteDto(result.value));
     });
 }

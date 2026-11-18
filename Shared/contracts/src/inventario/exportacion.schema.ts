@@ -6,10 +6,13 @@ import { transformIsActive } from '../common/index.ts';
  */
 export const filtrosExportarProductosSchema = z.object({
   texto: z.string().trim().optional(),
-  categoriaId: z.coerce.number().int().positive().optional(),
+  categoriaId: z.coerce.number().int().optional(),
   proveedorId: z.coerce.number().int().positive().optional(),
   isActive: transformIsActive,
   stockBajo: transformIsActive,
+  sinCategoria: transformIsActive,
+  nivelStock: z.enum(['optimo', 'bajo', 'agotado', 'todos']).optional(),
+  estado: z.enum(['activo', 'inactivo', 'todos']).optional(),
   sucursalId: z.coerce.number().int().positive().optional(),
   limit: z.coerce.number().int().positive().max(50000).default(10000),
   formato: z.enum(['csv', 'json']).default('csv'),

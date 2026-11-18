@@ -346,3 +346,18 @@ Deno.test('ListarCategoriasUseCase: paginación y filtros de búsqueda', async (
   const activos = await repo.listarActivos();
   assertEquals(activos.length, 2);
 });
+
+Deno.test('ListarCategoriasUseCase: devuelve totalProductos por categoría', async () => {
+  const repo = new FakeCategoriaRepository();
+  repo.categorias = [
+    new Categoria(1, 'Lácteos', true, 15),
+    new Categoria(2, 'Granos', true, 42),
+  ];
+
+  const useCase = new ListarCategoriasUseCase(repo);
+  const res = await useCase.execute({ page: 1, limit: 10 });
+
+  assertEquals(res.isSuccess, true);
+  assertEquals(res.value.items[0].totalProductos, 15);
+  assertEquals(res.value.items[1].totalProductos, 42);
+});

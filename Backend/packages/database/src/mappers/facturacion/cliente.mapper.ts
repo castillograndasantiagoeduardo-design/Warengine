@@ -1,7 +1,7 @@
 import { Cliente, TipoCliente, TipoDocumentoCliente } from '@warengine/core';
 import { ClienteRecord } from '../../schema/facturacion.schema.ts';
 
-export function clienteFromRow(row: ClienteRecord): Cliente {
+export function clienteFromRow(row: ClienteRecord, saldoPendiente = 0, totalCompras = 0): Cliente {
     return new Cliente(
         row.id_cliente,
         row.tipo_documento as TipoDocumentoCliente,
@@ -12,5 +12,7 @@ export function clienteFromRow(row: ClienteRecord): Cliente {
         row.telefono,
         row.direccion,
         row.credito_habilitado === 1,
+        saldoPendiente,
+        totalCompras,
     );
 }

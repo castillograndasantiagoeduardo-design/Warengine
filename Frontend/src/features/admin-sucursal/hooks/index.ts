@@ -4,3 +4,4 @@ export * from './useBranchSuppliers';
 export * from './useInventoryMovements';
 export * from './useBranchStaff';
 export * from './useBranchInvoicing';
+export * from './useBranchClients';
