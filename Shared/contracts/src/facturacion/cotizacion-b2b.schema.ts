@@ -76,6 +76,8 @@ export interface CotizacionB2BItemDto {
   precioUnitario: number;
   descuento: number;
   subtotal: number;
+  stockBodegaActual?: number | null;
+  tieneStockSuficiente?: boolean;
 }
 
 export interface CotizacionB2BDto {
@@ -105,6 +107,8 @@ export interface CotizacionB2BDto {
   createdAt: string;
   updatedAt: string;
   items: CotizacionB2BItemDto[];
+  tieneStockSuficiente?: boolean;
+  itemsSinStockCount?: number;
 }
 
 export type CrearCotizacionB2BInput = z.infer<typeof crearCotizacionB2BSchema>;

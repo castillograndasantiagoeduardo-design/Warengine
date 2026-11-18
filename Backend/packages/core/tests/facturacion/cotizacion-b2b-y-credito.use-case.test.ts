@@ -1,7 +1,7 @@
 import { assertEquals } from 'jsr:@std/assert@^1';
 import { Result } from '@warengine/shared-kernel';
 import { Cliente } from '../../src/modules/facturacion/domain/entities/Cliente.ts';
-import { CotizacionB2B } from '../../src/modules/facturacion/domain/entities/CotizacionB2B.ts';
+import { CotizacionB2B, CotizacionB2BItem } from '../../src/modules/facturacion/domain/entities/CotizacionB2B.ts';
 import { Factura } from '../../src/modules/facturacion/domain/entities/Factura.ts';
 import {
   DatosActualizarCliente,
@@ -527,4 +527,84 @@ Deno.test('Credito B2B: preserva marcador [clienteId] en alerta y libera cupo de
   assertEquals(cotLiberada.isSuccess, true);
   assertEquals(cotLiberada.value.estado, 'pendiente_aval');
   assertEquals(cotLiberada.value.medioPagoSugerido, 'credito_corporativo');
+});
+
+Deno.test('Aval Cotizacion B2B: admin de sucursal no puede avalar si stock es insuficiente en bodega y la rechaza', async () => {
+  const clienteRepo = new InMemoryClienteRepo();
+  const cotRepo = new InMemoryCotizacionRepo();
+  const auditor = new MockAuditor();
+
+  const cliente = await clienteRepo.crear({
+    tipoDocumento: 'NIT',
+    numeroDocumento: '900111222-3',
+    nombreRazonSocial: 'Cliente Prueba Stock S.A.S.',
+    tipoCliente: 'B2B',
+    email: 'contacto@pruebastock.co',
+    telefono: '3000000000',
+    direccion: 'Calle 10 # 20-30',
+  });
+
+  // Cotización con ítem que tiene stock insuficiente en bodega (solicitados: 10, stock: 3)
+  const itemConFaltaStock = new CotizacionB2BItem(
+    'item-1',
+    'cot-stock-1',
+    'prod-sin-stock',
+    10,
+    50_000,
+    0,
+    500_000,
+    'Producto Sin Stock',
+    'SKU-TEST-001',
+    3, // stockBodegaActual = 3 < 10
+  );
+  assertEquals(itemConFaltaStock.tieneStockSuficiente, false);
+
+  const cotizacion = new CotizacionB2B(
+    'cot-stock-1',
+    1,
+    cliente.id,
+    'usr-vendedor',
+    1,
+    500_000,
+    0,
+    500_000,
+    'transferencia',
+    null,
+    'pendiente_aval',
+    null,
+    new Date(Date.now() + 86400000),
+    'Cotización para verificar stock',
+    null,
+    null,
+    null,
+    null,
+    new Date(),
+    new Date(),
+    [itemConFaltaStock],
+  );
+  assertEquals(cotizacion.tieneStockSuficiente, false);
+  assertEquals(cotizacion.itemsSinStock.length, 1);
+
+  await cotRepo.crear({ cotizacion, items: [itemConFaltaStock] });
+
+  // 1. Intento de avalar: debe fallar con COTIZACION_STOCK_INSUFICIENTE
+  const avalarUc = new AvalarCotizacionB2BUseCase(cotRepo, mockAlcanceGlobal, auditor);
+  const falloAval = await avalarUc.execute({
+    cotizacionId: cotizacion.id,
+    accion: 'avalar',
+    actor: { usuarioId: 'usr-admin-sucursal', ip: '127.0.0.1' },
+  });
+  assertEquals(falloAval.isFailure, true);
+  assertEquals(falloAval.error.code, 'COTIZACION_STOCK_INSUFICIENTE');
+
+  // 2. Ante la falta de stock, el Admin de Sucursal procede a rechazar la cotización con motivo
+  const rechazo = await avalarUc.execute({
+    cotizacionId: cotizacion.id,
+    accion: 'rechazar',
+    motivoRechazo: 'Stock insuficiente en bodega para SKU-TEST-001 (solicitados: 10, disponibles: 3)',
+    actor: { usuarioId: 'usr-admin-sucursal', ip: '127.0.0.1' },
+  });
+  assertEquals(rechazo.isSuccess, true);
+  assertEquals(rechazo.value.estado, 'rechazada');
+  assertEquals(rechazo.value.motivoRechazo?.includes('Stock insuficiente'), true);
 });

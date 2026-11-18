@@ -131,6 +131,17 @@ export class CotizacionVencidaError extends DomainError {
   }
 }
 
+export class CotizacionStockInsuficienteParaAvalError extends DomainError {
+  public readonly code = 'COTIZACION_STOCK_INSUFICIENTE';
+  constructor(detalles?: string) {
+    super(
+      detalles
+        ? `No se puede otorgar el aval comercial: stock insuficiente en bodega (${detalles}). Debes rechazar la cotización o reabastecer inventario.`
+        : 'No se puede otorgar el aval comercial: uno o más productos no cuentan con stock suficiente en la bodega de la sucursal.',
+    );
+  }
+}
+
 export class EstadoPedidoInvalidoError extends DomainError {
   public readonly code = 'ESTADO_PEDIDO_INVALIDO';
   constructor(mensaje = 'La transición del estado del pedido B2B no es válida.') {

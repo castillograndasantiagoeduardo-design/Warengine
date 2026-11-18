@@ -16,6 +16,7 @@ export interface CotizacionB2BMetadatos {
 export interface CotizacionB2BItemMetadatos {
   productoNombre?: string | null;
   productoSku?: string | null;
+  stockBodegaActual?: number | null;
 }
 
 export function cotizacionB2BItemFromRow(
@@ -32,6 +33,7 @@ export function cotizacionB2BItemFromRow(
     Number(row.subtotal),
     meta?.productoNombre ?? null,
     meta?.productoSku ?? null,
+    meta?.stockBodegaActual !== undefined ? (meta.stockBodegaActual !== null ? Number(meta.stockBodegaActual) : null) : null,
   );
 }
 

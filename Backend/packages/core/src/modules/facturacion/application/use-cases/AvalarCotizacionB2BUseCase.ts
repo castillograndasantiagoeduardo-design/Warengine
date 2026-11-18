@@ -3,6 +3,7 @@ import { CotizacionB2B } from '../../domain/entities/CotizacionB2B.ts';
 import {
   CotizacionEstadoInvalidoError,
   CotizacionNoEncontradaError,
+  CotizacionStockInsuficienteParaAvalError,
   CotizacionVencidaError,
 } from '../../domain/errors/FacturacionErrors.ts';
 import { ICotizacionB2BRepository } from '../../domain/repositories/ICotizacionB2BRepository.ts';
@@ -58,8 +59,23 @@ export class AvalarCotizacionB2BUseCase {
     }
 
     const ahora = new Date();
-    if (request.accion === 'avalar' && cotizacion.estaVencida(ahora)) {
-      return Result.fail(new CotizacionVencidaError());
+    if (request.accion === 'avalar') {
+      if (cotizacion.estaVencida(ahora)) {
+        return Result.fail(new CotizacionVencidaError());
+      }
+
+      const itemsFaltantes = cotizacion.items.filter(
+        (i) => i.stockBodegaActual !== null && i.stockBodegaActual !== undefined && i.stockBodegaActual < i.cantidad,
+      );
+      if (itemsFaltantes.length > 0) {
+        const resumen = itemsFaltantes
+          .map(
+            (i) =>
+              `${i.productoSku ?? i.productoNombre ?? i.productoId} (solicitados: ${i.cantidad}, disponibles en bodega: ${i.stockBodegaActual})`,
+          )
+          .join(', ');
+        return Result.fail(new CotizacionStockInsuficienteParaAvalError(resumen));
+      }
     }
 
     if (

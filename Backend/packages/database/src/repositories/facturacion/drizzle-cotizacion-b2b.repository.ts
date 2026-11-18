@@ -13,7 +13,7 @@ import {
   cotizacion_b2b_items,
   cotizaciones_b2b,
 } from '../../schema/facturacion.schema.ts';
-import { productos } from '../../schema/inventario.schema.ts';
+import { inventario_sucursal, productos } from '../../schema/inventario.schema.ts';
 import { sucursales } from '../../schema/administracion.schema.ts';
 import { usuarios } from '../../schema/autenticacion.schema.ts';
 import {
@@ -229,9 +229,18 @@ export class DrizzleCotizacionB2BRepository implements ICotizacionB2BRepository 
           item: cotizacion_b2b_items,
           productoNombre: productos.nombre,
           productoSku: productos.sku,
+          stockActual: sql<number>`COALESCE(${inventario_sucursal.stock_actual}, 0)`,
         })
         .from(cotizacion_b2b_items)
+        .innerJoin(cotizaciones_b2b, eq(cotizacion_b2b_items.cotizacion_id, cotizaciones_b2b.id_cotizacion))
         .innerJoin(productos, eq(cotizacion_b2b_items.producto_id, productos.id_producto))
+        .leftJoin(
+          inventario_sucursal,
+          and(
+            eq(inventario_sucursal.producto_id, cotizacion_b2b_items.producto_id),
+            eq(inventario_sucursal.sucursal_id, cotizaciones_b2b.sucursal_id),
+          ),
+        )
         .where(inArray(cotizacion_b2b_items.cotizacion_id, ids)),
       this.db
         .select({
@@ -259,6 +268,7 @@ export class DrizzleCotizacionB2BRepository implements ICotizacionB2BRepository 
         cotizacionB2BItemFromRow(r.item, {
           productoNombre: r.productoNombre,
           productoSku: r.productoSku,
+          stockBodegaActual: Number(r.stockActual ?? 0),
         }),
       );
       itemsPorCotizacion.set(r.item.cotizacion_id, lista);

@@ -58,8 +58,13 @@ export function MisCotizacionesB2BModal({
   onFacturar,
 }: MisCotizacionesB2BModalProps) {
   const [errorAccion, setErrorAccion] = useState<string | null>(null);
+  const [itemsExpandidos, setItemsExpandidos] = useState<Record<string, boolean>>({});
 
   if (!isOpen) return null;
+
+  const toggleItems = (id: string) => {
+    setItemsExpandidos((prev) => ({ ...prev, [id]: !prev[id] }));
+  };
 
   const handleFacturar = async (id: string) => {
     setErrorAccion(null);
@@ -156,14 +161,48 @@ export function MisCotizacionesB2BModal({
                   </div>
 
                   <div className="flex flex-wrap items-center justify-between gap-2 text-white/70">
-                    <span>
-                      {cot.items.length} ítems • Pago: <strong>{cot.medioPagoSugerido}</strong> • Válida hasta:{' '}
-                      {new Date(cot.validaHasta).toLocaleDateString('es-CO')}
-                    </span>
+                    <div className="flex items-center gap-2">
+                      <span>
+                        {cot.items.length} ítems • Pago: <strong>{cot.medioPagoSugerido}</strong> • Válida hasta:{' '}
+                        {new Date(cot.validaHasta).toLocaleDateString('es-CO')}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => toggleItems(cot.id)}
+                        className="text-[11px] text-[#E9B949] hover:underline cursor-pointer"
+                      >
+                        {itemsExpandidos[cot.id] ? 'Ocultar productos' : 'Ver productos pedidos'}
+                      </button>
+                    </div>
                     <span className="text-sm font-semibold tabular-nums text-[#E9B949]">
                       ${cot.total.toLocaleString('es-CO')} COP
                     </span>
                   </div>
+
+                  {itemsExpandidos[cot.id] && (
+                    <div className="p-2.5 rounded-xl bg-black/30 border border-white/5 space-y-1.5">
+                      <div className="text-[10px] text-white/50 uppercase tracking-wider font-semibold">
+                        Detalle de productos cotizados
+                      </div>
+                      <div className="space-y-1">
+                        {cot.items.map((i) => (
+                          <div
+                            key={i.id}
+                            className="flex items-center justify-between text-[11px] py-1 border-b border-white/5 last:border-none"
+                          >
+                            <div>
+                              <span className="text-white font-medium">{i.productoNombre || 'Producto'}</span>
+                              <span className="text-white/40 font-mono ml-1.5">({i.productoSku || 'N/D'})</span>
+                              <span className="text-white/60 ml-2">× {i.cantidad} u.</span>
+                            </div>
+                            <span className="font-mono text-white/90">
+                              ${i.subtotal.toLocaleString('es-CO')}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
 
                   {cot.estado === 'rechazada' && cot.motivoRechazo && (
                     <div className="p-2.5 rounded-lg bg-red-500/15 border border-red-500/30 text-red-200 text-[11px]">

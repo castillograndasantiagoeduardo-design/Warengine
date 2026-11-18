@@ -90,6 +90,7 @@ export function presentResult<T>(c: Context, result: Result<T, DomainError>, suc
     case 'COTIZACION_SIN_AVAL':
     case 'COTIZACION_ESTADO_INVALIDO':
     case 'COTIZACION_VENCIDA':
+    case 'COTIZACION_STOCK_INSUFICIENTE':
       status = 409;
       break;
     case 'CUPO_CREDITO_INSUFICIENTE':
