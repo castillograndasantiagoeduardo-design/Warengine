@@ -316,3 +316,16 @@ Cuadrícula `grid grid-cols-1 lg:grid-cols-3 gap-6 items-stretch`:
 
 ### 7.5. FILA 4: Tarjeta Compacta "Activos" (`TarjetaActivos.tsx` — Ancho Completo)
 - Envuelto en `<Tarjeta>`, con barra segmentada horizontal fina (`h-2 rounded-full`) y cuadrícula de 4 contadores (`Disponible`, `Asignado`, `Mantenimiento`, `Baja`).
+
+---
+
+## 8. MÓDULO VENDEDOR B2B (`/vendedor-b2b`)
+
+La **Terminal Comercial B2B** (`/vendedor-b2b`) sigue estrictamente este mismo estándar visual y de arquitectura:
+- **Layout (`VendedorB2BLayout.tsx`)**: Reutiliza `FondoAmbiental`, `VendedorB2BSidebar` y `VendedorB2BHeader`.
+- **Sidebar (`VendedorB2BSidebar.tsx`)**: Basado en `vendedor-b2b.navigation.config.ts`, con secciones `MENÚ`, `OPERACIONES` y `SISTEMA`, colapso a dock y drawer en móvil.
+- **Header (`VendedorB2BHeader.tsx`)**: Barra flotante `.vidrio-fuerte` con `SelectorPaleta`, botón de cambio de tema y cápsula de usuario ejecutiva.
+- **Catálogo (`CatalogoMultiBodega.tsx`)**: Filtros con `superficie-control` y tarjetas en `.vidrio` con badges de stock e insignias.
+- **Cotización (`CotizacionPanel.tsx`)**: Gestión de cliente corporativo, evaluación de riesgo de crédito e inputs con `superficie-control`.
+- **Modales (`ModalVidrio.tsx`)**: Superficie `.vidrio-popover` con backdrop blur, bloqueo de scroll y soporte de tecla Escape.
+

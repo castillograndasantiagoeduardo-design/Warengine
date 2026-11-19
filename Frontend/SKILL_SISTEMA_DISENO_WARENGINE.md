@@ -230,3 +230,18 @@ Al construir o rediseñar cualquier dashboard o vista de módulo en WarEngine, r
    - Siempre acompañadas de ícono semántico (`CheckCircle2`, `AlertTriangle`, `XCircle`, `Info`) o punto de color, bordes suaves `ring-1 ring-inset` y `whitespace-nowrap`.
 6. **Formato Regional**:
    - Moneda y números en formato colombiano (`es-CO`): punto para miles (`$8.450.000`), coma para decimales (`12,5 %`, `$4,9 M`).
+
+---
+
+## 7. Módulo Vendedor B2B (`/vendedor-b2b`)
+
+El módulo de **Ventas Corporativas / Vendedor B2B** implementa el estándar oficial de Glassmorphism Ejecutivo con arquitectura idéntica a `/admin-sucursal`:
+
+### 7.1. Estructura y Componentes
+- **Layout (`VendedorB2BLayout.tsx`)**: Reutiliza `FondoAmbiental`, `VendedorB2BSidebar` y `VendedorB2BHeader`.
+- **Sidebar (`VendedorB2BSidebar.tsx`)**: Menú configurado declarativamente en `vendedor-b2b.navigation.config.ts`. Modos expandido (`w-64`) y colapsado (`w-20`), drawer móvil y contador de cotizaciones aprobadas con `<Insignia>`.
+- **Header (`VendedorB2BHeader.tsx`)**: Barra flotante `.vidrio-fuerte` con cápsula "Ventas corporativas", selector de apariencia (`SelectorPaleta`), alternador de tema (`dark`/`light`) y cápsula de perfil.
+- **Catálogo (`CatalogoMultiBodega.tsx`)**: Barra de filtros con `superficie-control` e `Insignia` informativa. Tarjetas de producto en `.vidrio` con elevación hover, badges de stock y botón primario de gradiente.
+- **Panel de Cotización (`CotizacionPanel.tsx`)**: Selector de clientes con tarjetas semánticas, insignias de estado de crédito (habilitado, en revisión, rechazado), orden comercial y totales en `tabular-nums`.
+- **Modales (`ModalVidrio.tsx`)**: Cascarón accesible con `.vidrio-popover`, portal en `document.body` y cierre con tecla Escape para `MisCotizacionesB2BModal`, `HistorialVentasB2BModal`, `ComprobanteB2BModal` y `NuevoClienteB2BModal`.
+
