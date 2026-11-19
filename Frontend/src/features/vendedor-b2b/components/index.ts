@@ -5,3 +5,4 @@ export * from './NuevoClienteB2BModal';
 export * from './ComprobanteB2BModal';
 export * from './HistorialVentasB2BModal';
 export * from './MisCotizacionesB2BModal';
+export * from './vendedor-b2b.navigation.config';
