@@ -6,6 +6,9 @@
  */
 
 import React, { useState } from 'react';
+import { RefreshCw, ChevronDown, ChevronUp } from 'lucide-react';
+import { ModalVidrio } from './ModalVidrio';
+import { Insignia } from '@/components/Insignia';
 import type { CotizacionB2BDto } from '../types';
 
 interface MisCotizacionesB2BModalProps {
@@ -18,26 +21,32 @@ interface MisCotizacionesB2BModalProps {
   onFacturar: (cotizacionId: string) => Promise<{ ok: boolean; error?: string }>;
 }
 
-const ESTADO_BADGE: Record<string, { label: string; cls: string }> = {
+const ESTADO_COTIZACION_CONFIG: Record<
+  string,
+  {
+    label: string;
+    variante: 'warning' | 'success' | 'danger' | 'info' | 'neutral';
+  }
+> = {
   pendiente_aval: {
     label: 'Pendiente de aval',
-    cls: 'bg-amber-500/20 text-amber-300 border-amber-500/40',
+    variante: 'warning',
   },
   aprobada: {
     label: 'Avalada — Lista para facturar',
-    cls: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40',
+    variante: 'success',
   },
   rechazada: {
     label: 'Rechazada',
-    cls: 'bg-red-500/20 text-red-300 border-red-500/40',
+    variante: 'danger',
   },
   facturada: {
     label: 'Facturada',
-    cls: 'bg-sky-500/20 text-sky-300 border-sky-500/40',
+    variante: 'info',
   },
   vencida: {
     label: 'Vencida',
-    cls: 'bg-white/10 text-white/50 border-white/20',
+    variante: 'neutral',
   },
 };
 
@@ -60,8 +69,6 @@ export function MisCotizacionesB2BModal({
   const [errorAccion, setErrorAccion] = useState<string | null>(null);
   const [itemsExpandidos, setItemsExpandidos] = useState<Record<string, boolean>>({});
 
-  if (!isOpen) return null;
-
   const toggleItems = (id: string) => {
     setItemsExpandidos((prev) => ({ ...prev, [id]: !prev[id] }));
   };
@@ -77,125 +84,133 @@ export function MisCotizacionesB2BModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-sm p-4">
-      <div className="w-full max-w-3xl max-h-[85vh] flex flex-col bg-[#14213D] border border-white/10 rounded-2xl shadow-2xl text-white">
-        <div className="flex items-center justify-between px-6 py-4 border-b border-white/10">
-          <div>
-            <h2 className="text-base font-semibold text-[#E9B949] uppercase tracking-wider">
-              Mis Cotizaciones y Pedidos B2B
-            </h2>
-            <p className="text-xs text-white/60">
-              Solo las cotizaciones con aval del Admin de Sucursal pueden facturarse y pasar a pedido en proceso.
-            </p>
-          </div>
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={onRecargar}
-              className="px-3 py-1.5 rounded-lg border border-white/15 text-xs text-white/80 hover:bg-white/5 cursor-pointer"
-            >
-              Actualizar
-            </button>
-            <button
-              type="button"
-              onClick={onClose}
-              className="text-white/50 hover:text-white text-xl px-1 cursor-pointer"
-            >
-              &times;
-            </button>
-          </div>
+    <ModalVidrio
+      open={isOpen}
+      onClose={onClose}
+      title="Mis cotizaciones y pedidos B2B"
+      description="Solo las cotizaciones con aval del Admin de Sucursal pueden facturarse y pasar a pedido en proceso."
+      size="2xl"
+    >
+      <div className="space-y-4">
+        {/* Barra superior de acciones dentro del modal */}
+        <div className="flex items-center justify-between gap-3">
+          <span className="text-xs font-sans text-text-muted">
+            Total cotizaciones registradas: <strong className="text-text tabular-nums font-semibold">{cotizaciones.length}</strong>
+          </span>
+          <button
+            type="button"
+            onClick={onRecargar}
+            className="superficie-control rounded-xl px-3 py-1.5 text-xs text-text hover:border-brand-400/40 flex items-center gap-1.5 transition-colors cursor-pointer"
+          >
+            <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? 'animate-spin' : ''}`} />
+            <span>Actualizar</span>
+          </button>
         </div>
 
-        <div className="p-5 overflow-y-auto space-y-3 flex-1">
-          {errorAccion && (
-            <div className="p-3 rounded-xl bg-red-500/20 border border-red-500/40 text-red-200 text-xs">
-              {errorAccion}
-            </div>
-          )}
+        {errorAccion && (
+          <div className="p-3 rounded-xl bg-red-500/10 border border-red-500/30 text-red-700 dark:text-red-300 text-xs">
+            {errorAccion}
+          </div>
+        )}
 
-          {isLoading ? (
-            <p className="text-center text-xs text-white/60 py-10">Cargando cotizaciones...</p>
-          ) : cotizaciones.length === 0 ? (
-            <p className="text-center text-xs text-white/50 py-10">
-              Aún no has enviado cotizaciones B2B.
-            </p>
-          ) : (
-            cotizaciones.map((cot) => {
-              const badge = ESTADO_BADGE[cot.estado] ?? {
+        {isLoading ? (
+          <p className="text-center text-xs text-text-muted py-12 font-mono">
+            Cargando cotizaciones corporativas...
+          </p>
+        ) : cotizaciones.length === 0 ? (
+          <p className="text-center text-xs text-text-muted py-12">
+            Aún no has enviado cotizaciones B2B.
+          </p>
+        ) : (
+          <div className="space-y-3">
+            {cotizaciones.map((cot) => {
+              const estadoConfig = ESTADO_COTIZACION_CONFIG[cot.estado] ?? {
                 label: cot.estado,
-                cls: 'bg-white/10 text-white/70 border-white/20',
+                variante: 'neutral' as const,
               };
               const isFacturando = facturandoId === cot.id;
+              const expandido = Boolean(itemsExpandidos[cot.id]);
 
               return (
                 <div
                   key={cot.id}
-                  className="p-4 rounded-xl bg-[#0d1630] border border-white/10 space-y-2.5 text-xs"
+                  className="p-4 rounded-xl superficie-control space-y-3 text-xs"
                 >
                   <div className="flex flex-wrap items-center justify-between gap-2">
-                    <div>
-                      <span className="font-mono text-[#E9B949] font-semibold">
+                    <div className="flex items-center gap-2">
+                      <span className="font-mono font-semibold text-text bg-bg/60 border border-border px-2 py-0.5 rounded-md">
                         COT-{String(cot.consecutivo).padStart(4, '0')}
                       </span>
-                      <span className="mx-2 text-white/30">•</span>
-                      <span className="font-medium text-white">
+                      <span className="font-sans font-medium text-text">
                         {cot.clienteNombre || cot.clienteId}
                       </span>
                       {cot.clienteDocumento && (
-                        <span className="ml-2 text-white/50 font-mono text-[11px]">
+                        <span className="text-text-muted font-mono text-[11px]">
                           ({cot.clienteDocumento})
                         </span>
                       )}
                     </div>
 
                     <div className="flex items-center gap-2">
-                      <span className={`px-2.5 py-0.5 rounded-full text-[11px] border ${badge.cls}`}>
-                        {badge.label}
-                      </span>
+                      <Insignia
+                        variante={estadoConfig.variante}
+                        conPunto
+                        tamano="sm"
+                      >
+                        {estadoConfig.label}
+                      </Insignia>
                       {cot.estadoPedido && (
-                        <span className="px-2.5 py-0.5 rounded-full text-[11px] border bg-indigo-500/20 text-indigo-200 border-indigo-400/40">
+                        <Insignia variante="brand" conPunto tamano="sm">
                           {PEDIDO_BADGE[cot.estadoPedido] ?? cot.estadoPedido}
-                        </span>
+                        </Insignia>
                       )}
                     </div>
                   </div>
 
-                  <div className="flex flex-wrap items-center justify-between gap-2 text-white/70">
-                    <div className="flex items-center gap-2">
+                  <div className="flex flex-wrap items-center justify-between gap-2 text-text-muted">
+                    <div className="flex items-center gap-3">
                       <span>
-                        {cot.items.length} ítems • Pago: <strong>{cot.medioPagoSugerido}</strong> • Válida hasta:{' '}
-                        {new Date(cot.validaHasta).toLocaleDateString('es-CO')}
+                        {cot.items.length} ítems • Pago: <strong className="text-text font-medium">{cot.medioPagoSugerido}</strong> • Válida hasta:{' '}
+                        <span className="tabular-nums">{new Date(cot.validaHasta).toLocaleDateString('es-CO')}</span>
                       </span>
                       <button
                         type="button"
                         onClick={() => toggleItems(cot.id)}
-                        className="text-[11px] text-[#E9B949] hover:underline cursor-pointer"
+                        className="text-[11px] text-brand-500 hover:text-brand-400 font-sans font-medium hover:underline cursor-pointer flex items-center gap-1 transition-colors"
                       >
-                        {itemsExpandidos[cot.id] ? 'Ocultar productos' : 'Ver productos pedidos'}
+                        <span>{expandido ? 'Ocultar productos' : 'Ver productos pedidos'}</span>
+                        {expandido ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
                       </button>
                     </div>
-                    <span className="text-sm font-semibold tabular-nums text-[#E9B949]">
+
+                    <span className="text-sm font-titulos font-semibold tabular-nums text-text">
                       ${cot.total.toLocaleString('es-CO')} COP
                     </span>
                   </div>
 
-                  {itemsExpandidos[cot.id] && (
-                    <div className="p-2.5 rounded-xl bg-black/30 border border-white/5 space-y-1.5">
-                      <div className="text-[10px] text-white/50 uppercase tracking-wider font-semibold">
+                  {expandido && (
+                    <div className="p-3 rounded-xl bg-bg/50 border border-border space-y-2">
+                      <div className="text-[11px] uppercase tracking-wider font-medium text-text-muted">
                         Detalle de productos cotizados
                       </div>
-                      <div className="space-y-1">
+                      <div className="space-y-1.5">
                         {cot.items.map((i) => (
                           <div
                             key={i.id}
-                            className="flex items-center justify-between text-[11px] py-1 border-b border-white/5 last:border-none"
+                            className="flex items-center justify-between text-xs py-1 border-b border-border/50 last:border-none"
                           >
                             <div>
-                              <span className="text-white font-medium">{i.productoNombre || 'Producto'}</span>
-                              <span className="text-white/40 font-mono ml-1.5">({i.productoSku || 'N/D'})</span>
-                              <span className="text-white/60 ml-2">× {i.cantidad} u.</span>
+                              <span className="text-text font-medium">
+                                {i.productoNombre || 'Producto'}
+                              </span>
+                              <span className="text-text-muted font-mono ml-1.5">
+                                ({i.productoSku || 'N/D'})
+                              </span>
+                              <span className="text-text-muted ml-2 font-sans tabular-nums">
+                                × {i.cantidad} u.
+                              </span>
                             </div>
-                            <span className="font-mono text-white/90">
+                            <span className="font-mono text-text tabular-nums">
                               ${i.subtotal.toLocaleString('es-CO')}
                             </span>
                           </div>
@@ -205,32 +220,32 @@ export function MisCotizacionesB2BModal({
                   )}
 
                   {cot.estado === 'rechazada' && cot.motivoRechazo && (
-                    <div className="p-2.5 rounded-lg bg-red-500/15 border border-red-500/30 text-red-200 text-[11px]">
-                      <strong>Motivo del rechazo:</strong> {cot.motivoRechazo}
+                    <div className="p-2.5 rounded-xl bg-red-500/10 border border-red-500/30 text-red-700 dark:text-red-300 text-xs">
+                      <strong className="font-medium">Motivo del rechazo:</strong> {cot.motivoRechazo}
                     </div>
                   )}
 
                   {cot.estado === 'aprobada' && (
-                    <div className="pt-2 border-t border-white/10 flex items-center justify-between gap-3">
-                      <span className="text-[11px] text-emerald-300">
+                    <div className="pt-2.5 border-t border-border flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                      <span className="text-xs text-green-700 dark:text-green-300 font-medium">
                         Aval otorgado por {cot.aprobadoPorEmail || 'Admin de Sucursal'}. Ya puedes facturar.
                       </span>
                       <button
                         type="button"
                         disabled={isFacturando}
                         onClick={() => handleFacturar(cot.id)}
-                        className="px-4 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-[#070d1a] font-semibold text-xs uppercase tracking-wider cursor-pointer disabled:opacity-50"
+                        className="px-4 py-2 rounded-xl bg-gradient-to-b from-brand-500 to-brand-600 hover:from-brand-600 hover:to-brand-700 text-btn-primario-texto font-sans font-medium text-xs transition-all cursor-pointer disabled:opacity-50 shadow-sm shadow-brand-600/30 shrink-0"
                       >
-                        {isFacturando ? 'Facturando...' : 'Facturar y pasar a Pedido en Proceso'}
+                        {isFacturando ? 'Facturando...' : 'Facturar y pasar a pedido en proceso'}
                       </button>
                     </div>
                   )}
                 </div>
               );
-            })
-          )}
-        </div>
+            })}
+          </div>
+        )}
       </div>
-    </div>
+    </ModalVidrio>
   );
 }
