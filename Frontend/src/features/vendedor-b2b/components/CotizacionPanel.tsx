@@ -8,6 +8,9 @@
  */
 
 import React from 'react';
+import { UserPlus, RefreshCw } from 'lucide-react';
+import { Tarjeta } from '@/components/Tarjeta';
+import { Insignia } from '@/components/Insignia';
 import type {
   ItemCotizacionB2B,
   ClienteDto,
@@ -69,88 +72,96 @@ export function CotizacionPanel({
     (clienteSeleccionado?.cupoCreditoAprobado ?? 0) > 0 &&
     total > (clienteSeleccionado?.cupoCreditoDisponible ?? 0);
   return (
-    <aside className="w-full lg:w-96 flex flex-col gap-4">
+    <aside className="w-full flex flex-col gap-4">
       {/* Sección Selección de Cliente Corporativo */}
-      <div className="p-4 rounded-2xl bg-[#14213D] border border-white/10 shadow-lg">
-        <div className="flex items-center justify-between mb-2">
-          <label className="text-xs font-bold text-[#E9B949] uppercase tracking-wider">
-            Cliente Corporativo (B2B)
-          </label>
+      <Tarjeta
+        titulo="Cliente corporativo (B2B)"
+        accion={
           <button
             type="button"
             onClick={onAbrirModalNuevoCliente}
-            className="text-[11px] text-[#E9B949] hover:underline cursor-pointer"
+            className="text-xs font-sans font-medium text-brand-500 hover:text-brand-400 transition-colors cursor-pointer flex items-center gap-1"
           >
-            + Nuevo Cliente
+            <UserPlus className="w-3.5 h-3.5" />
+            <span>+ Nuevo cliente</span>
           </button>
-        </div>
-
+        }
+        className="hover:translate-y-0"
+      >
         <select
           value={clienteSeleccionado?.id || ''}
           onChange={(e) => {
             const found = clientesDisponibles.find((c) => c.id === e.target.value);
             onSeleccionarCliente(found || null);
           }}
-          className="w-full bg-[#0d1630] border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-[#E9B949] transition-colors cursor-pointer mb-2"
+          className="w-full superficie-control rounded-xl px-3 py-2 text-xs text-text focus:outline-none cursor-pointer mb-2.5"
         >
-          <option value="">-- Selecciona un cliente B2B --</option>
+          <option value="" className="bg-bg text-text">-- Selecciona un cliente B2B --</option>
           {clientesDisponibles.map((cli) => (
-            <option key={cli.id} value={cli.id}>
+            <option key={cli.id} value={cli.id} className="bg-bg text-text">
               {cli.nombreRazonSocial} ({cli.tipoDocumento}: {cli.numeroDocumento})
             </option>
           ))}
         </select>
 
         {clienteSeleccionado && (
-          <div className="p-2.5 rounded-xl bg-black/20 border border-white/5 text-[11px] space-y-1">
-            <p className="text-white font-medium">{clienteSeleccionado.nombreRazonSocial}</p>
-            <p className="text-white/60">
-              {clienteSeleccionado.tipoDocumento}: {clienteSeleccionado.numeroDocumento} &bull; Tel: {clienteSeleccionado.telefono || 'N/A'}
+          <div className="p-3 rounded-xl superficie-control text-xs space-y-1.5">
+            <div className="flex items-center justify-between gap-2">
+              <p className="text-text font-medium truncate">{clienteSeleccionado.nombreRazonSocial}</p>
+              <span className="font-mono text-[11px] text-text-muted shrink-0">
+                {clienteSeleccionado.tipoDocumento}: {clienteSeleccionado.numeroDocumento}
+              </span>
+            </div>
+            <p className="text-xs text-text-muted">
+              Tel: <span className="tabular-nums">{clienteSeleccionado.telefono || 'N/A'}</span>
             </p>
-            <div className="pt-1 flex flex-wrap items-center justify-between gap-1.5">
-              <span
-                className={`px-2 py-0.5 rounded-full text-[10px] font-semibold ${
+            <div className="pt-1.5 flex flex-wrap items-center justify-between gap-2 border-t border-border">
+              <Insignia
+                variante={
                   clienteSeleccionado.creditoHabilitado
-                    ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
+                    ? 'success'
                     : clienteSeleccionado.estadoCredito === 'pendiente_aprobacion'
-                    ? 'bg-sky-500/20 text-sky-300 border border-sky-500/30'
+                    ? 'info'
                     : clienteSeleccionado.estadoCredito === 'rechazado'
-                    ? 'bg-red-500/20 text-red-300 border border-red-500/30'
-                    : 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
-                }`}
+                    ? 'danger'
+                    : 'warning'
+                }
+                conPunto
+                tamano="sm"
               >
                 {clienteSeleccionado.creditoHabilitado
-                  ? `✓ Crédito Liberado${
+                  ? `Crédito liberado${
                       (clienteSeleccionado.cupoCreditoAprobado ?? 0) > 0
                         ? ` ($${(clienteSeleccionado.cupoCreditoDisponible ?? 0).toLocaleString('es-CO')} disp.)`
                         : ''
                     }`
                   : clienteSeleccionado.estadoCredito === 'pendiente_aprobacion'
-                  ? `⏳ Crédito en revisión Super Admin (Sug: $${(clienteSeleccionado.cupoCreditoSugerido ?? 0).toLocaleString('es-CO')})`
+                  ? `En revisión Super Admin (Sug: $${(clienteSeleccionado.cupoCreditoSugerido ?? 0).toLocaleString('es-CO')})`
                   : clienteSeleccionado.estadoCredito === 'rechazado'
-                  ? '✕ Crédito Rechazado por Super Admin'
-                  : 'Sin Cupo de Crédito'}
-              </span>
+                  ? 'Crédito rechazado'
+                  : 'Sin cupo de crédito'}
+              </Insignia>
               {onRefrescarClientes && (
                 <button
                   type="button"
                   disabled={isRefreshingClientes}
                   onClick={onRefrescarClientes}
-                  className="text-[10px] text-[#E9B949] hover:underline cursor-pointer disabled:opacity-50"
+                  className="text-[11px] text-brand-500 hover:text-brand-400 font-sans font-medium hover:underline cursor-pointer disabled:opacity-50 flex items-center gap-1 transition-colors"
                 >
-                  {isRefreshingClientes ? 'Actualizando...' : '↻ Actualizar cupo'}
+                  <RefreshCw className={`w-3 h-3 ${isRefreshingClientes ? 'animate-spin' : ''}`} />
+                  <span>{isRefreshingClientes ? 'Actualizando...' : 'Actualizar cupo'}</span>
                 </button>
               )}
             </div>
             {clienteSeleccionado.estadoCredito === 'rechazado' &&
               clienteSeleccionado.motivoDecisionCredito && (
-                <p className="text-[10px] text-red-300/90">
+                <p className="text-[11px] text-red-600 dark:text-red-400 font-sans mt-1">
                   Motivo: {clienteSeleccionado.motivoDecisionCredito}
                 </p>
               )}
           </div>
         )}
-      </div>
+      </Tarjeta>
 
       {/* Carrito / Lista de Ítems */}
       <div className="p-4 rounded-2xl bg-[#14213D] border border-white/10 shadow-lg flex-1 flex flex-col justify-between">
