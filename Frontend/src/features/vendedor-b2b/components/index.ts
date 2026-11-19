@@ -1,3 +1,4 @@
+export * from './VendedorB2BLayout';
 export * from './VendedorB2BHeader';
 export * from './VendedorB2BSidebar';
 export * from './CatalogoMultiBodega';
