@@ -38,6 +38,8 @@ export const categoriaResponseSchema = z.object({
   id: z.number().int(),
   nombre: z.string(),
   isActive: z.boolean(),
+  totalProductos: z.number().int().nonnegative().optional(),
+  cantidadProductos: z.number().int().nonnegative().optional(),
 });
 
 export const categoriasPaginadasSchema = z.object({

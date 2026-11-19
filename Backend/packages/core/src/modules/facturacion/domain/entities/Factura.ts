@@ -1,5 +1,6 @@
 import { FacturaItem } from './FacturaItem.ts';
 import { FacturaPago } from './FacturaPago.ts';
+import type { DevolucionVenta } from './DevolucionVenta.ts';
 
 export type EstadoFactura = 'emitida' | 'anulada';
 
@@ -19,6 +20,11 @@ export class Factura {
         public readonly fecha: Date,
         public readonly items: FacturaItem[] = [],
         public readonly pagos: FacturaPago[] = [],
+        public readonly clienteNombre?: string | null,
+        public readonly clienteDocumento?: string | null,
+        public readonly cajeroNombre?: string | null,
+        public readonly tipoVenta?: 'POS' | 'B2B' | null,
+        public readonly devoluciones?: DevolucionVenta[],
     ) { }
 
     /**

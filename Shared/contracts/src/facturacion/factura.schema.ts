@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import type { DevolucionVentaDto } from './devolucion-venta.schema.ts';
 
 export const MEDIOS_PAGO = [
   'efectivo',
@@ -48,11 +49,16 @@ export const crearFacturaSchema = z.object({
 export const listarFacturasQuerySchema = z.object({
   clienteId: z.string().uuid().optional(),
   sucursalId: z.coerce.number().int().positive().optional(),
-  fechaInicio: z.string().datetime().optional(),
-  fechaFin: z.string().datetime().optional(),
+  fechaInicio: z.string().optional(),
+  fechaFin: z.string().optional(),
+  desde: z.string().optional(),
+  hasta: z.string().optional(),
   estado: z.enum(ESTADOS_FACTURA).optional(),
+  texto: z.string().trim().optional(),
+  tipo: z.string().trim().optional(),
+  page: z.coerce.number().int().min(1).default(1).optional(),
   limite: z.coerce.number().int().min(1).max(100).default(20),
-  offset: z.coerce.number().int().min(0).default(0),
+  offset: z.coerce.number().int().min(0).default(0).optional(),
 });
 
 export const anularFacturaSchema = z.object({
@@ -66,6 +72,7 @@ export const anularFacturaSchema = z.object({
 export interface FacturaItemDto {
   id: string;
   productoId: string;
+  productoNombre?: string;
   cantidad: number;
   precioUnitario: number;
   descuento: number;
@@ -84,9 +91,13 @@ export interface FacturaDto {
   id: string;
   consecutivo: number;
   clienteId: string;
+  clienteNombre?: string;
+  clienteDocumento?: string;
   usuarioId: string;
+  cajeroNombre?: string;
   sucursalId: number;
   turnoCajaId: string | null;
+  tipoVenta?: 'POS' | 'B2B';
   subtotal: number;
   iva: number;
   total: number;
@@ -94,6 +105,16 @@ export interface FacturaDto {
   fecha: string;
   items: FacturaItemDto[];
   pagos: FacturaPagoDto[];
+  devoluciones?: DevolucionVentaDto[];
+}
+
+export interface FacturasPaginadasDto {
+  items: FacturaDto[];
+  facturas: FacturaDto[];
+  total: number;
+  totalPaginas: number;
+  page: number;
+  limite: number;
 }
 
 export type ItemFacturaInput = z.infer<typeof itemFacturaInputSchema>;

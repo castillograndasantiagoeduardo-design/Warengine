@@ -550,6 +550,7 @@ export function createContainer(_env?: Record<string, string>): AppContainer {
     alertaAdminRepository,
   );
   const atenderAlertaAdminUseCase = new AtenderAlertaAdminUseCase(
+    resolverAlcanceSucursalUseCase,
     alertaAdminRepository,
     auditoriaRepository,
   );
@@ -669,7 +670,7 @@ export function createContainer(_env?: Record<string, string>): AppContainer {
   );
 
   // Casos de uso de Productos
-  const listarProductosUseCase = new ListarProductosUseCase(productoRepository);
+  const listarProductosUseCase = new ListarProductosUseCase(productoRepository, resolverAlcanceSucursalUseCase);
   const obtenerProductoPorIdUseCase = new ObtenerProductoPorIdUseCase(productoRepository);
   const crearProductoUseCase = new CrearProductoUseCase(
     productoRepository,

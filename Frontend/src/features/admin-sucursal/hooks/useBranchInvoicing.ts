@@ -1,76 +1,74 @@
 'use client';
 
 /**
- * useBranchInvoicing.ts — Hook para supervisión de facturas y alertas operativas de cajeros.
+ * useBranchInvoicing.ts — Hook para supervisión reactiva de facturas paginadas y operaciones.
  * 
  * Principios SOLID:
- * - Single Responsibility Principle (SRP): Gestión de estado de facturación, anulaciones y alertas.
- * - Dependency Inversion Principle (DIP): Inyección mediante IBranchInvoicingService.
+ * - Single Responsibility Principle (SRP): Encapsula la orquestación del estado de facturas,
+ *   filtros del servidor, paginación, anulación y devoluciones.
  */
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback } from 'react';
+import { useAuth } from '@/features/autenticacion';
 import { branchInvoicingService } from '../api/branch-invoicing.service';
 import type { IBranchInvoicingService } from '../api/branch-invoicing.interface';
 import type {
   FacturaSede,
-  AlertaOperativa,
-  EstadoFacturaSede,
+  FiltrosFacturasSede,
+  RegistrarDevolucionPayload,
 } from '../types/branch-invoicing.types';
 
-interface UseBranchInvoicingOptions {
-  sucursalId: number;
-}
-
 export function useBranchInvoicing(
-  options: UseBranchInvoicingOptions,
+  filtros: FiltrosFacturasSede,
   invoicingService: IBranchInvoicingService = branchInvoicingService,
 ) {
-  const { sucursalId } = options;
-  const [facturas, setFacturas] = useState<FacturaSede[]>([]);
-  const [alertas, setAlertas] = useState<AlertaOperativa[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isMutating, setIsMutating] = useState(false);
+  const { usuario } = useAuth();
+  const sucursalId = usuario?.sucursalId || 1;
+
+  const [datos, setDatos] = useState<FacturaSede[]>([]);
+  const [total, setTotal] = useState<number>(0);
+  const [totalPaginas, setTotalPaginas] = useState<number>(1);
+  const [page, setPage] = useState<number>(filtros.page ?? 1);
+  const [limite, setLimite] = useState<number>(filtros.limite ?? 10);
+  const [cargando, setCargando] = useState<boolean>(true);
+  const [isMutating, setIsMutating] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Filtros reactivos
-  const [tabActiva, setTabActiva] = useState<'facturas' | 'alertas' | 'cotizaciones'>('facturas');
-  const [busqueda, setBusqueda] = useState('');
-  const [filtroEstado, setFiltroEstado] = useState<'todas' | 'emitida' | 'anulada'>('todas');
-  const [filtroPrioridadAlerta, setFiltroPrioridadAlerta] = useState<'todas' | 'urgente' | 'normal'>('todas');
-  const [filtroEstadoAlerta, setFiltroEstadoAlerta] = useState<'todas' | 'pendiente' | 'atendido'>('todas');
-
-  const cargarDatos = useCallback(async () => {
-    setIsLoading(true);
+  const cargarFacturas = useCallback(async () => {
+    setCargando(true);
     setError(null);
     try {
-      const [facRes, alertRes] = await Promise.allSettled([
-        invoicingService.listarFacturas(sucursalId),
-        invoicingService.listarAlertas(sucursalId),
-      ]);
-
-      if (facRes.status === 'fulfilled') {
-        setFacturas(facRes.value);
-      } else {
-        console.error('[useBranchInvoicing] Error cargando facturas:', facRes.reason);
-      }
-
-      if (alertRes.status === 'fulfilled') {
-        setAlertas(alertRes.value);
-      } else {
-        console.error('[useBranchInvoicing] Error cargando alertas:', alertRes.reason);
-      }
+      const res = await invoicingService.listarFacturas(sucursalId, filtros);
+      setDatos(res.items);
+      setTotal(res.total);
+      setTotalPaginas(res.totalPaginas);
+      setPage(res.page);
+      setLimite(res.limite);
     } catch (err: any) {
+      console.error('[useBranchInvoicing] Error al consultar facturas:', err);
       setError(err?.message || 'Error al consultar operaciones de facturación.');
+      setDatos([]);
+      setTotal(0);
+      setTotalPaginas(1);
     } finally {
-      setIsLoading(false);
+      setCargando(false);
     }
-  }, [sucursalId, invoicingService]);
+  }, [
+    sucursalId,
+    filtros.page,
+    filtros.limite,
+    filtros.estado,
+    filtros.tipo,
+    filtros.texto,
+    filtros.desde,
+    filtros.hasta,
+    invoicingService,
+  ]);
 
   useEffect(() => {
-    cargarDatos();
-  }, [cargarDatos]);
+    cargarFacturas();
+  }, [cargarFacturas]);
 
-  // Anulación administrativa atómica con reposición de inventario (RF-FMC-E10)
   const anularFactura = async (
     id: string,
     motivo: string,
@@ -78,7 +76,7 @@ export function useBranchInvoicing(
     setIsMutating(true);
     try {
       const res = await invoicingService.anularFactura(id, motivo);
-      setFacturas((prev) =>
+      setDatos((prev) =>
         prev.map((f) => (f.id === id ? res.factura : f)),
       );
       return { ok: true };
@@ -92,98 +90,36 @@ export function useBranchInvoicing(
     }
   };
 
-  // Resolución de alerta de mostrador (RF-FMC-F1..F8)
-  const marcarAlerta = async (
+  const registrarDevolucion = async (
     id: string,
-    estado: 'visto' | 'atendido',
+    payload: RegistrarDevolucionPayload,
   ): Promise<{ ok: boolean; error?: string }> => {
     setIsMutating(true);
     try {
-      const res = await invoicingService.cambiarEstadoAlerta(id, estado);
-      setAlertas((prev) =>
-        prev.map((a) => (a.id === id ? res : a)),
-      );
+      await invoicingService.registrarDevolucion(id, payload);
+      await cargarFacturas();
       return { ok: true };
     } catch (err: any) {
       return {
         ok: false,
-        error: err?.message || 'Error al actualizar el estado de la alerta.',
+        error: err?.message || 'No fue posible registrar la devolución.',
       };
     } finally {
       setIsMutating(false);
     }
   };
 
-  // Filtrado de facturas en memoria
-  const facturasFiltradas = useMemo(() => {
-    return facturas.filter((fac) => {
-      if (filtroEstado !== 'todas' && fac.estado !== filtroEstado) return false;
-
-      if (busqueda.trim()) {
-        const term = busqueda.toLowerCase().trim();
-        const matchFolio = fac.folioFormateado.toLowerCase().includes(term);
-        const matchConsecutivo = String(fac.consecutivo).includes(term);
-        const matchCliente = (fac.clienteNombre || '').toLowerCase().includes(term);
-        const matchDoc = (fac.clienteDocumento || '').toLowerCase().includes(term);
-        const matchCajero = (fac.cajeroNombre || '').toLowerCase().includes(term);
-        return matchFolio || matchConsecutivo || matchCliente || matchDoc || matchCajero;
-      }
-
-      return true;
-    });
-  }, [facturas, filtroEstado, busqueda]);
-
-  // Filtrado de alertas en memoria
-  const alertasFiltradas = useMemo(() => {
-    return alertas.filter((alt) => {
-      if (filtroPrioridadAlerta !== 'todas' && alt.prioridad !== filtroPrioridadAlerta) return false;
-      if (filtroEstadoAlerta !== 'todas') {
-        if (filtroEstadoAlerta === 'pendiente' && alt.estado === 'atendido') return false;
-        if (filtroEstadoAlerta === 'atendido' && alt.estado !== 'atendido') return false;
-      }
-      return true;
-    });
-  }, [alertas, filtroPrioridadAlerta, filtroEstadoAlerta]);
-
-  // Métricas calculadas sobre datos verídicos
-  const kpis = useMemo(() => {
-    const facturasEmitidas = facturas.filter((f) => f.estado === 'emitida');
-    const totalVentas = facturasEmitidas.reduce((acc, f) => acc + f.total, 0);
-    const facturasAnuladasCount = facturas.filter((f) => f.estado === 'anulada').length;
-    const alertasPendientesCount = alertas.filter((a) => a.estado !== 'atendido').length;
-    const alertasUrgentesCount = alertas.filter((a) => a.estado !== 'atendido' && a.prioridad === 'urgente').length;
-
-    return {
-      totalVentas,
-      totalFacturas: facturas.length,
-      totalEmitidas: facturasEmitidas.length,
-      totalAnuladas: facturasAnuladasCount,
-      totalAlertasPendientes: alertasPendientesCount,
-      totalAlertasUrgentes: alertasUrgentesCount,
-    };
-  }, [facturas, alertas]);
-
   return {
-    facturas: facturasFiltradas,
-    alertas: alertasFiltradas,
-    totalFacturasOriginal: facturas.length,
-    totalAlertasOriginal: alertas.length,
-    kpis,
-    tabActiva,
-    setTabActiva,
-    busqueda,
-    setBusqueda,
-    filtroEstado,
-    setFiltroEstado,
-    filtroPrioridadAlerta,
-    setFiltroPrioridadAlerta,
-    filtroEstadoAlerta,
-    setFiltroEstadoAlerta,
-    isLoading,
+    datos,
+    total,
+    totalPaginas,
+    page,
+    limite,
+    cargando,
     isMutating,
     error,
-    recargar: cargarDatos,
+    recargar: cargarFacturas,
     anularFactura,
-    marcarAlerta,
+    registrarDevolucion,
   };
 }

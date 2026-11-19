@@ -2,15 +2,11 @@
 
 /**
  * BranchKardexModal.tsx — Visor y auditoría del historial de movimientos Kardex (RF-ADM-B10).
- * 
- * Principios SOLID:
- * - Single Responsibility Principle (SRP): Consulta, filtrado y exportación de trazabilidad de stock.
- * - Dependency Inversion Principle (DIP): Se nutre de useInventoryMovements.
+ * Migrado a Modal.tsx para accesibilidad y diseño unificado.
  */
 
 import React, { useState, useEffect } from 'react';
-import { Button3D } from '@/components/ui/Button3D';
-import { RefreshCwIcon, SearchIcon, BoxesIcon } from './Icons';
+import { Modal } from '@/components/ui/Modal';
 import type {
   ProductoInventarioSede,
   MovimientoKardexItem,
@@ -58,8 +54,6 @@ export function BranchKardexModal({
     }
   }, [isOpen, productoInicial, sucursalId, onConsultarKardex]);
 
-  if (!isOpen) return null;
-
   const handleFiltrar = (tipo?: string, prodId?: string) => {
     const t = tipo !== undefined ? tipo : tipoFiltro;
     const p = prodId !== undefined ? prodId : productoFiltro;
@@ -80,66 +74,36 @@ export function BranchKardexModal({
     });
   };
 
-  const formatearFecha = (fecha: string | Date) => {
-    const d = new Date(fecha);
-    return isNaN(d.getTime())
-      ? String(fecha)
-      : new Intl.DateTimeFormat('es-CO', {
-          dateStyle: 'short',
-          timeStyle: 'medium',
-        }).format(d);
-  };
-
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-black/80 backdrop-blur-md animate-in fade-in duration-200">
-      <div
-        className="
-          relative w-full max-w-5xl max-h-[90vh] flex flex-col overflow-hidden rounded-2xl
-          bg-[#0d1630] border border-white/[0.12] shadow-2xl
-          text-white font-[family-name:var(--font-archivo)]
-        "
-      >
-        {/* Cabecera */}
-        <div className="flex flex-wrap items-center justify-between gap-3 px-6 py-4 border-b border-white/[0.08] bg-[#111d3f]/60 shrink-0">
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#e3b341]/15 text-[#e3b341] border border-[#e3b341]/30">
-              <BoxesIcon size={20} />
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h2 className="text-base font-bold font-[family-name:var(--font-anton)] uppercase tracking-wide">
-                  Historial de Movimientos Kardex
-                </h2>
-                <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#e3b341]/10 text-[#e3b341] border border-[#e3b341]/30 font-mono">
-                  {sucursalNombre}
-                </span>
-              </div>
-              <p className="text-xs text-slate-400">
-                Trazabilidad inmutable de entradas, salidas y ajustes de almacén (RF-ADM-B10).
-              </p>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <button
-              onClick={handleDescargarCsv}
-              title="Descargar reporte en formato CSV"
-              className="px-3 py-1.5 rounded-xl bg-white/[0.04] border border-white/[0.1] hover:bg-white/[0.08] text-xs font-semibold text-slate-200 transition-colors cursor-pointer flex items-center gap-1.5"
-            >
-              <span>📥 Exportar CSV</span>
-            </button>
-            <button
-              onClick={onClose}
-              className="text-slate-400 hover:text-white text-lg font-bold p-1 rounded-lg transition-colors cursor-pointer"
-            >
-              ✕
-            </button>
-          </div>
+    <Modal
+      open={isOpen}
+      onClose={onClose}
+      title="Historial de Movimientos Kardex"
+      description={`Trazabilidad inmutable de almacén en ${sucursalNombre} (RF-ADM-B10)`}
+      size="xl"
+      footer={
+        <div className="flex items-center justify-between w-full">
+          <button
+            type="button"
+            onClick={handleDescargarCsv}
+            className="px-3.5 py-2 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-white text-xs font-semibold cursor-pointer flex items-center gap-1.5"
+          >
+            <span>📥</span>
+            <span>Descargar CSV</span>
+          </button>
+          <button
+            type="button"
+            onClick={onClose}
+            className="px-4 py-2 rounded-xl bg-white/10 hover:bg-white/15 text-white text-xs font-semibold cursor-pointer"
+          >
+            Cerrar
+          </button>
         </div>
-
-        {/* Filtros Superiores */}
-        <div className="px-6 py-3 border-b border-white/[0.06] bg-[#09132b]/50 shrink-0 grid grid-cols-1 sm:grid-cols-12 gap-3">
-          {/* Selector de Producto */}
+      }
+    >
+      <div className="space-y-4">
+        {/* Filtros */}
+        <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 pb-3 border-b border-white/5">
           <div className="sm:col-span-6">
             <select
               value={productoFiltro}
@@ -147,184 +111,107 @@ export function BranchKardexModal({
                 setProductoFiltro(e.target.value);
                 handleFiltrar(undefined, e.target.value);
               }}
-              className="w-full h-9 px-3 rounded-xl bg-[#09132b] border border-white/[0.1] text-xs text-white focus:outline-none focus:border-[#e3b341]"
+              className="w-full h-10 px-3 rounded-xl bg-white/5 border border-white/10 text-xs text-white focus:outline-none focus:border-rose-500 cursor-pointer"
             >
-              <option value="" className="bg-[#09132b] text-slate-400">
-                📦 Todos los productos de la sede
-              </option>
-              {productos.map((prod) => (
-                <option key={prod.id} value={prod.id} className="bg-[#09132b] text-white">
-                  {prod.sku} — {prod.nombre}
+              <option value="">Todos los productos de la sede</option>
+              {productos.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.nombre} ({p.sku})
                 </option>
               ))}
             </select>
           </div>
 
-          {/* Filtro por Tipo de Movimiento */}
-          <div className="sm:col-span-6 flex items-center gap-1.5">
-            {[
-              { id: 'todos', label: 'Todos' },
-              { id: 'entrada', label: 'Entradas' },
-              { id: 'salida', label: 'Salidas' },
-              { id: 'ajuste_entrada', label: 'Ajuste +' },
-              { id: 'ajuste_salida', label: 'Ajuste -' },
-            ].map((t) => (
-              <button
-                key={t.id}
-                onClick={() => {
-                  setTipoFiltro(t.id);
-                  handleFiltrar(t.id, undefined);
-                }}
-                className={`flex-1 py-1 px-2 rounded-lg text-[11px] font-semibold transition-colors cursor-pointer text-center ${
-                  tipoFiltro === t.id
-                    ? 'bg-[#e3b341]/20 text-[#e3b341] border border-[#e3b341]/40'
-                    : 'bg-white/[0.02] text-slate-400 hover:text-white border border-white/[0.06]'
-                }`}
-              >
-                {t.label}
-              </button>
-            ))}
+          <div className="sm:col-span-6">
+            <select
+              value={tipoFiltro}
+              onChange={(e) => {
+                setTipoFiltro(e.target.value);
+                handleFiltrar(e.target.value, undefined);
+              }}
+              className="w-full h-10 px-3 rounded-xl bg-white/5 border border-white/10 text-xs text-white focus:outline-none focus:border-rose-500 cursor-pointer"
+            >
+              <option value="todos">Todos los tipos de movimiento</option>
+              <option value="entrada">Entradas</option>
+              <option value="salida">Salidas</option>
+              <option value="ajuste_positivo">Ajustes (+)</option>
+              <option value="ajuste_negativo">Ajustes (-)</option>
+              <option value="venta">Ventas POS</option>
+              <option value="devolucion">Devoluciones</option>
+            </select>
           </div>
         </div>
 
-        {/* Tabla de Movimientos con Scroll */}
-        <div className="flex-1 overflow-y-auto min-h-[300px]">
-          {isLoading ? (
-            <div className="p-12 text-center space-y-3">
-              <div className="inline-block animate-spin text-[#e3b341]">
-                <RefreshCwIcon size={24} />
-              </div>
-              <p className="text-xs text-slate-400 font-mono">
-                Consultando registros del Kardex...
-              </p>
-            </div>
-          ) : movimientos.length === 0 ? (
-            <div className="p-16 text-center max-w-md mx-auto space-y-3">
-              <div className="w-12 h-12 mx-auto rounded-2xl bg-white/[0.03] border border-white/[0.08] flex items-center justify-center text-slate-400">
-                <BoxesIcon size={24} />
-              </div>
-              <h3 className="text-sm font-bold text-white uppercase tracking-wide">
-                Sin movimientos registrados
-              </h3>
-              <p className="text-xs text-slate-400">
-                No existen registros de movimientos en el Kardex para los filtros aplicados.
-              </p>
-            </div>
-          ) : (
-            <table className="w-full text-left text-xs border-collapse">
-              <thead className="sticky top-0 bg-[#0d1630] border-b border-white/[0.08] z-10">
-                <tr className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider font-[family-name:var(--font-ui)]">
-                  <th className="py-2.5 px-4 w-36">Fecha / Hora</th>
-                  <th className="py-2.5 px-4 w-28 text-center">Tipo</th>
-                  <th className="py-2.5 px-4">Producto & SKU</th>
-                  <th className="py-2.5 px-4 text-center w-24">Cantidad</th>
-                  <th className="py-2.5 px-4 text-center w-24">Saldo</th>
-                  <th className="py-2.5 px-4">Motivo / Causa</th>
-                  <th className="py-2.5 px-4 w-32">Responsable</th>
+        {/* Tabla Kardex */}
+        {isLoading ? (
+          <div className="space-y-2 py-8">
+            <div className="h-6 bg-white/5 rounded animate-pulse w-full" />
+            <div className="h-6 bg-white/5 rounded animate-pulse w-4/5" />
+            <div className="h-6 bg-white/5 rounded animate-pulse w-3/4" />
+          </div>
+        ) : movimientos.length === 0 ? (
+          <div className="py-12 text-center text-white/50 text-xs">
+            No se encontraron movimientos registrados para este criterio de búsqueda.
+          </div>
+        ) : (
+          <div className="overflow-x-auto max-h-[50vh]">
+            <table className="w-full text-left border-collapse text-xs">
+              <thead className="sticky top-0 bg-[#0d0914] z-10">
+                <tr className="border-b border-white/10 text-white/50 text-[11px] uppercase tracking-wider">
+                  <th className="py-2.5 px-3">Fecha / Hora</th>
+                  <th className="py-2.5 px-3">Producto</th>
+                  <th className="py-2.5 px-3">Tipo</th>
+                  <th className="py-2.5 px-3 text-right">Cantidad</th>
+                  <th className="py-2.5 px-3 text-right">Saldo</th>
+                  <th className="py-2.5 px-3">Motivo / Documento</th>
+                  <th className="py-2.5 px-3">Responsable</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-white/[0.04]">
-                {movimientos.map((mov) => {
-                  const esPositivo =
-                    mov.tipo === 'entrada' || mov.tipo === 'ajuste_entrada';
-
+              <tbody className="divide-y divide-white/5">
+                {movimientos.map((m) => {
+                  const isPositive = m.cantidad > 0;
                   return (
-                    <tr
-                      key={mov.id}
-                      className="hover:bg-white/[0.02] transition-colors font-[family-name:var(--font-archivo)]"
-                    >
-                      {/* Fecha */}
-                      <td className="py-2.5 px-4 font-mono text-[11px] text-slate-400">
-                        {formatearFecha(mov.fecha)}
+                    <tr key={m.id} className="hover:bg-white/[0.02]">
+                      <td className="py-2.5 px-3 text-white/60 whitespace-nowrap">
+                        {new Date(m.fecha).toLocaleString()}
                       </td>
-
-                      {/* Tipo */}
-                      <td className="py-2.5 px-4 text-center">
-                        <span
-                          className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-wider font-mono border ${
-                            mov.tipo === 'entrada'
-                              ? 'bg-[#10b981]/15 text-[#10b981] border-[#10b981]/30'
-                              : mov.tipo === 'salida'
-                              ? 'bg-red-500/15 text-red-400 border-red-500/30'
-                              : mov.tipo === 'ajuste_entrada'
-                              ? 'bg-amber-500/15 text-amber-400 border-amber-500/30'
-                              : 'bg-orange-500/15 text-orange-400 border-orange-500/30'
-                          }`}
-                        >
-                          {mov.tipo === 'entrada'
-                            ? 'Entrada'
-                            : mov.tipo === 'salida'
-                            ? 'Salida'
-                            : mov.tipo === 'ajuste_entrada'
-                            ? 'Ajuste +'
-                            : 'Ajuste -'}
-                        </span>
-                      </td>
-
-                      {/* Producto */}
-                      <td className="py-2.5 px-4">
-                        <p className="font-semibold text-white text-xs">
-                          {mov.productoNombre || 'Producto sin nombre'}
-                        </p>
-                        {mov.productoSku && (
-                          <span className="font-mono text-[10px] text-slate-400">
-                            {mov.productoSku}
-                          </span>
+                      <td className="py-2.5 px-3">
+                        <div className="font-semibold text-white">
+                          {m.productoNombre || `ID: ${m.productoId}`}
+                        </div>
+                        {m.productoSku && (
+                          <div className="text-[10px] font-mono text-white/40">
+                            {m.productoSku}
+                          </div>
                         )}
                       </td>
-
-                      {/* Cantidad */}
-                      <td className="py-2.5 px-4 text-center font-mono font-bold">
-                        <span
-                          className={esPositivo ? 'text-[#10b981]' : 'text-red-400'}
-                        >
-                          {esPositivo ? `+${mov.cantidad}` : `-${mov.cantidad}`}
+                      <td className="py-2.5 px-3">
+                        <span className="px-2 py-0.5 rounded text-[10px] font-semibold uppercase bg-white/5 text-white/80 border border-white/10">
+                          {m.tipo.replace('_', ' ')}
                         </span>
                       </td>
-
-                      {/* Saldo Resultante */}
-                      <td className="py-2.5 px-4 text-center font-mono text-slate-300">
-                        {mov.stockResultante !== undefined
-                          ? `${mov.stockResultante} unid.`
-                          : '—'}
+                      <td className="py-2.5 px-3 text-right font-mono font-bold">
+                        <span className={isPositive ? 'text-emerald-400' : 'text-red-400'}>
+                          {isPositive ? `+${m.cantidad}` : m.cantidad}
+                        </span>
                       </td>
-
-                      {/* Motivo */}
-                      <td className="py-2.5 px-4 text-slate-300 text-[11px]">
-                        {mov.motivo ? (
-                          <span>{mov.motivo}</span>
-                        ) : mov.proveedorNombre ? (
-                          <span className="text-slate-400 italic">
-                            Prov: {mov.proveedorNombre}
-                          </span>
-                        ) : (
-                          <span className="text-slate-500 italic">Sin detalle</span>
-                        )}
+                      <td className="py-2.5 px-3 text-right font-mono text-white/70 tabular-nums">
+                        {m.stockResultante !== undefined ? m.stockResultante : '-'}
                       </td>
-
-                      {/* Responsable */}
-                      <td className="py-2.5 px-4 text-[11px] text-slate-400">
-                        {mov.usuarioNombre || 'Admin Sede'}
+                      <td className="py-2.5 px-3 text-white/70 max-w-xs truncate">
+                        {m.motivo || (m.facturaId ? `Factura #${m.facturaId}` : '-')}
+                      </td>
+                      <td className="py-2.5 px-3 text-white/60">
+                        {m.usuarioNombre || (m.usuarioId ? `Usuario #${m.usuarioId}` : '-')}
                       </td>
                     </tr>
                   );
                 })}
               </tbody>
             </table>
-          )}
-        </div>
-
-        {/* Pie del Modal */}
-        <div className="flex items-center justify-between px-6 py-3 border-t border-white/[0.08] bg-[#111d3f]/40 shrink-0 text-xs text-slate-400 font-mono">
-          <span>Total movimientos listados: {movimientos.length}</span>
-          <button
-            onClick={onClose}
-            className="px-4 py-1.5 rounded-xl border border-white/20 text-slate-300 hover:text-white hover:bg-white/[0.04] transition-colors cursor-pointer"
-          >
-            Cerrar Visor
-          </button>
-        </div>
+          </div>
+        )}
       </div>
-    </div>
+    </Modal>
   );
 }

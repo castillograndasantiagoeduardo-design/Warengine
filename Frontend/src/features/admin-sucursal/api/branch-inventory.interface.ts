@@ -16,6 +16,7 @@ import type {
   RegistrarSalidaDTO,
   AjustarInventarioDTO,
   FiltrosKardexDTO,
+  MovimientoKardexItem,
   ResultadoKardexPaginado,
   ResultadoEntradasPaginado,
 } from '../types/branch-inventory.types';
@@ -30,16 +31,24 @@ export interface IBranchInventoryService {
     page: number;
     limit: number;
     totalPages: number;
+    resumen?: import('../types/branch-inventory.types').ResumenInventarioSede;
   }>;
   editarProducto(productoId: string, data: ActualizarProductoDTO, sucursalId?: number): Promise<void>;
   cambiarEstadoProducto(productoId: string, isActive: boolean): Promise<void>;
   configurarStockMinimo(productoId: string, sucursalId: number, stockMinimo: number): Promise<void>;
+  ajustarStockMinimo(productoId: string, stockMinimo: number, sucursalId?: number): Promise<{ ok: boolean; error?: string }>;
+  consultarKardexSede(sucursalId: number, filtros?: { productoId?: string; limit?: number }): Promise<{ items: MovimientoKardexItem[]; total: number }>;
   listarCategorias(): Promise<CategoriaInventario[]>;
   crearCategoria(data: CrearCategoriaDTO | string): Promise<CategoriaInventario>;
+  editarCategoria(id: number, data: { nombre?: string; isActive?: boolean }): Promise<void>;
+  cambiarEstadoCategoria(id: number, isActive: boolean): Promise<void>;
   listarProveedores(filtros?: { busqueda?: string; isActive?: boolean }): Promise<ProveedorInventario[]>;
   crearProveedor(data: CrearProveedorDTO): Promise<ProveedorInventario>;
   editarProveedor(id: number, data: { nombre?: string; contacto?: string; isActive?: boolean }): Promise<void>;
   cambiarEstadoProveedor(id: number, isActive: boolean): Promise<void>;
+  consultarHistorialPrecios(productoId: string): Promise<import('../types/branch-inventory.types').ItemHistorialPrecio[]>;
+  importarProductosCsv(archivo: File | string): Promise<import('../types/branch-inventory.types').ReporteImportacionProductos>;
+  exportarProductosCsv(filtros?: any): Promise<Blob>;
 
   // Fase 2: Movimientos de inventario, ajustes y kardex
   registrarEntrada(dto: RegistrarEntradaDTO): Promise<{ id?: string; mensaje?: string }>;

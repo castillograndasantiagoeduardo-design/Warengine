@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { DomainError, Result } from '@warengine/shared-kernel';
 import { PERMISSIONS, TOOL_NAMES, estadoFacturaMcpSchema, type EstadoFacturaMcpDTO } from '@warengine/contracts';
-import { FacturaNoEncontradaError } from '@warengine/core';
+import { Factura, FacturaNoEncontradaError } from '@warengine/core';
 import type { AppContainer } from '@warengine/composition';
 import type { DefinicionToolMcp } from '../../catalog/tool-definition.ts';
 import type { McpSessionContext } from '../../session/index.ts';
@@ -93,7 +93,11 @@ export const estadoFacturaTool: DefinicionToolMcp<EstadoFacturaMcpDTO, DetalleFa
       return Result.fail(facturasResult.error);
     }
 
-    const factura = facturasResult.value.find((f) => {
+    const listaFacturas: Factura[] = Array.isArray(facturasResult.value)
+      ? facturasResult.value
+      : facturasResult.value.items;
+
+    const factura = listaFacturas.find((f: Factura) => {
       if (!Number.isNaN(consecutivoBuscado)) {
         return f.consecutivo === consecutivoBuscado;
       }

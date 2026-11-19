@@ -100,13 +100,28 @@ export const cambiarEstadoProductoSchema = z.object({
   isActive: z.boolean({ required_error: 'El campo isActive es obligatorio.' }),
 });
 
+export const nivelStockEnum = z.enum(['optimo', 'bajo', 'agotado', 'todos']);
+export type NivelStock = z.infer<typeof nivelStockEnum>;
+
+export const resumenInventarioSedeSchema = z.object({
+  total: z.number().int().nonnegative(),
+  optimo: z.number().int().nonnegative(),
+  bajo: z.number().int().nonnegative(),
+  agotado: z.number().int().nonnegative(),
+});
+export type ResumenInventarioSede = z.infer<typeof resumenInventarioSedeSchema>;
+
 export const filtrosProductosSchema = z
   .object({
     texto: z.string().trim().optional(),
-    categoriaId: z.coerce.number().int().positive().optional(),
+    categoriaId: z.coerce.number().int().optional(),
     proveedorId: z.coerce.number().int().positive().optional(),
     isActive: transformIsActive,
     stockBajo: transformIsActive,
+    sinCategoria: transformIsActive,
+    nivelStock: z.enum(['optimo', 'bajo', 'agotado', 'todos']).optional(),
+    estado: z.enum(['activo', 'inactivo', 'todos']).optional(),
+    sucursalId: z.coerce.number().int().positive().optional(),
   })
   .merge(paginacionSchema);
 
@@ -115,6 +130,7 @@ export const productoResponseSchema = z.object({
   sku: z.string(),
   nombre: z.string(),
   categoriaId: z.number().int().nullable(),
+  categoriaNombre: z.string().nullable().optional(),
   proveedorId: z.number().int().nullable().optional(),
   precioCompra: z.number().optional(),
   precioVenta: z.number(),
@@ -122,6 +138,9 @@ export const productoResponseSchema = z.object({
   precioCorporativoActualizadoEn: z.string().nullable(),
   isActive: z.boolean(),
   advertencia: z.string().nullable().optional(),
+  stockActual: z.number().optional(),
+  stockMinimo: z.number().optional(),
+  estadoStock: z.enum(['optimo', 'bajo', 'agotado']).optional(),
 });
 
 export const productosPaginadosSchema = z.object({
@@ -130,6 +149,8 @@ export const productosPaginadosSchema = z.object({
   page: z.number().int(),
   limit: z.number().int(),
   totalPages: z.number().int(),
+  resumen: resumenInventarioSedeSchema.optional(),
+  contadores: resumenInventarioSedeSchema.optional(),
 });
 
 export const itemHistorialPrecioSchema = z.object({

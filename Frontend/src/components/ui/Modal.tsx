@@ -17,12 +17,12 @@ interface ModalProps {
   children: React.ReactNode;
   /** Botones de acción del pie (Cancelar / Guardar). */
   footer?: React.ReactNode;
-  size?: 'sm' | 'md' | 'lg';
+  size?: 'sm' | 'md' | 'lg' | 'xl';
   /** Impide cerrar con Esc o clic en el fondo (ej. mientras se envía un formulario). */
   locked?: boolean;
 }
 
-const SIZE_CLASSES = { sm: 'max-w-sm', md: 'max-w-lg', lg: 'max-w-3xl' } as const;
+const SIZE_CLASSES = { sm: 'max-w-sm', md: 'max-w-lg', lg: 'max-w-3xl', xl: 'max-w-5xl' } as const;
 
 export function Modal({ open, onClose, title, description, children, footer, size = 'md', locked = false }: ModalProps) {
   const titleId = useId();

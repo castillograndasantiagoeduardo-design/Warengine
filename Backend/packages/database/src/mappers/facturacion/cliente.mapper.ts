@@ -2,7 +2,7 @@ import type { EstadoCreditoCliente, NivelRiesgoCredito } from '@warengine/contra
 import { Cliente, TipoCliente, TipoDocumentoCliente } from '@warengine/core';
 import { ClienteRecord } from '../../schema/facturacion.schema.ts';
 
-export function clienteFromRow(row: ClienteRecord): Cliente {
+export function clienteFromRow(row: ClienteRecord, saldoPendiente = 0, totalCompras = 0): Cliente {
     return new Cliente(
         row.id_cliente,
         row.tipo_documento as TipoDocumentoCliente,
@@ -27,5 +27,7 @@ export function clienteFromRow(row: ClienteRecord): Cliente {
         row.credito_aprobado_en ?? null,
         row.motivo_decision_credito ?? null,
         row.observacion_financiera ?? null,
+        saldoPendiente,
+        totalCompras,
     );
 }

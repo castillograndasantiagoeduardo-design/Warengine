@@ -168,7 +168,15 @@ export const decidirCreditoClienteSchema = z
 export const filtrosClientesSchema = z.object({
   texto: z.string().trim().max(100).optional(),
   tipoDocumento: z.enum(TIPOS_DOCUMENTO_CLIENTE).optional(),
-  limite: z.coerce.number().int().min(1).max(50).default(20),
+  tipoCliente: z.enum(TIPOS_CLIENTE).optional(),
+  creditoHabilitado: z.preprocess(
+    (val) => (val === 'true' || val === true ? true : val === 'false' || val === false ? false : undefined),
+    z.boolean().optional(),
+  ),
+  estado: z.enum(['activo', 'inactivo']).optional(),
+  page: z.coerce.number().int().min(1).optional(),
+  limite: z.coerce.number().int().min(1).max(100).default(20),
+  paginado: z.preprocess((val) => val === 'true' || val === true, z.boolean().optional()),
 });
 
 export interface EvaluacionCreditoB2BDto {
@@ -196,6 +204,8 @@ export interface ClienteDto {
   telefono: string | null;
   direccion: string | null;
   creditoHabilitado: boolean;
+  saldoPendiente?: number;
+  totalCompras?: number;
   gananciaNetaMensual?: number | null;
   antiguedadEmpresaMeses?: number | null;
   plazoCreditoDias?: number | null;
@@ -209,6 +219,24 @@ export interface ClienteDto {
   creditoAprobadoEn?: string | null;
   motivoDecisionCredito?: string | null;
   observacionFinanciera?: string | null;
+}
+
+export interface ResumenClientesDto {
+  total: number;
+  b2b: number;
+  b2c: number;
+  conCredito: number;
+  saldoPendienteTotal: number;
+}
+
+export interface ClientesPaginadosDto {
+  items: ClienteDto[];
+  clientes: ClienteDto[];
+  total: number;
+  totalPaginas: number;
+  page: number;
+  limite: number;
+  resumen: ResumenClientesDto;
 }
 
 export const actualizarClienteSchema = z.object({

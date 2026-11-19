@@ -7,6 +7,8 @@
 import { DomainError, Result } from '@warengine/shared-kernel';
 import { AlertaAdmin, EstadoAlerta } from '../../domain/entities/AlertaAdmin.ts';
 import { IAlertaAdminRepository } from '../../domain/repositories/IAlertaAdminRepository.ts';
+import { ResolverAlcanceSucursalUseCase } from '../../../autenticacion/application/use-cases/ResolverAlcanceSucursalUseCase.ts';
+import { SucursalFueraDeAlcanceError } from '../../../autenticacion/domain/errors/AlcanceErrors.ts';
 import { IAuditor } from '../../../auditoria/domain/repositories/IAuditoriaRepository.ts';
 import {
   ACCIONES_AUDITORIA,
@@ -25,6 +27,7 @@ export type AtenderAlertaAdminResponse = Result<AlertaAdmin, DomainError>;
 
 export class AtenderAlertaAdminUseCase {
   constructor(
+    private readonly resolverAlcance: ResolverAlcanceSucursalUseCase,
     private readonly alertaAdminRepository: IAlertaAdminRepository,
     private readonly auditor: IAuditor,
   ) {}
@@ -33,6 +36,17 @@ export class AtenderAlertaAdminUseCase {
     const actual = await this.alertaAdminRepository.findById(request.id);
     if (!actual) {
       return Result.fail(new AlertaAdminNoEncontradaError());
+    }
+
+    if (actual.sucursalId !== null && actual.sucursalId !== undefined) {
+      const alcanceResult = await this.resolverAlcance.execute({ usuarioId: request.actor.usuarioId });
+      if (alcanceResult.isFailure) {
+        return Result.fail(alcanceResult.error);
+      }
+      const alcance = alcanceResult.value;
+      if (!alcance.permite(actual.sucursalId)) {
+        return Result.fail(new SucursalFueraDeAlcanceError());
+      }
     }
 
     const fechaAtencion = request.estado === 'atendido' ? new Date() : actual.fechaAtencion;

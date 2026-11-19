@@ -32,7 +32,7 @@ class FakeProductoRepository implements IProductoRepository {
   public productosConStockBajo = new Set<string>();
   private nextId = 1;
 
-  public listar(params: FiltrosListarProductos): Promise<ResultadoPaginado<Producto>> {
+  public listar(params: FiltrosListarProductos): Promise<any> {
     let filtradas = [...this.productos];
 
     if (params.texto) {
@@ -42,7 +42,9 @@ class FakeProductoRepository implements IProductoRepository {
       );
     }
 
-    if (params.categoriaId !== undefined) {
+    if (params.sinCategoria || params.categoriaId === -1) {
+      filtradas = filtradas.filter((p) => p.categoriaId === null || p.categoriaId === undefined);
+    } else if (params.categoriaId !== undefined) {
       filtradas = filtradas.filter((p) => p.categoriaId === params.categoriaId);
     }
 
@@ -52,6 +54,13 @@ class FakeProductoRepository implements IProductoRepository {
 
     if (params.isActive !== undefined) {
       filtradas = filtradas.filter((p) => p.isActive === params.isActive);
+    } else if (params.estado) {
+      if (params.estado === 'activo') filtradas = filtradas.filter((p) => p.isActive);
+      else if (params.estado === 'inactivo') filtradas = filtradas.filter((p) => !p.isActive);
+    }
+
+    if (params.nivelStock && params.nivelStock !== 'todos') {
+      filtradas = filtradas.filter((p) => p.estadoStock === params.nivelStock);
     }
 
     if (params.stockBajo) {
@@ -65,7 +74,14 @@ class FakeProductoRepository implements IProductoRepository {
     const offset = (page - 1) * limit;
     const items = filtradas.slice(offset, offset + limit);
 
-    return Promise.resolve({ items, total, page, limit, totalPages });
+    const resumen = params.sucursalId !== undefined ? {
+      total: this.productos.length,
+      optimo: this.productos.filter((p) => p.estadoStock === 'optimo').length,
+      bajo: this.productos.filter((p) => p.estadoStock === 'bajo').length,
+      agotado: this.productos.filter((p) => p.estadoStock === 'agotado').length,
+    } : undefined;
+
+    return Promise.resolve({ items, total, page, limit, totalPages, resumen, contadores: resumen });
   }
 
   public findById(id: string): Promise<Producto | null> {
@@ -717,4 +733,60 @@ Deno.test('EditarProductoUseCase (RF-ADM-B13): permite editar producto con preci
   assertEquals(res.value.tieneMargenNegativo, true);
   assertEquals(res.value.advertencia !== null && res.value.advertencia !== undefined, true);
   assertEquals(res.value.advertencia?.includes('Margen negativo'), true);
+});
+
+Deno.test('ListarProductosUseCase: soporta sinCategoria, nivelStock y contadores de resumen', async () => {
+  const prodRepo = new FakeProductoRepository();
+  prodRepo.productos = [
+    new Producto('p-1', 'SKU-1', 'Prod Optimo', 1, 1, 1000, 2000, null, null, true, null, 'Granos', 50, 10, 'optimo'),
+    new Producto('p-2', 'SKU-2', 'Prod Bajo', 1, 1, 1000, 2000, null, null, true, null, 'Granos', 5, 10, 'bajo'),
+    new Producto('p-3', 'SKU-3', 'Prod Agotado', null, 1, 1000, 2000, null, null, true, null, null, 0, 10, 'agotado'),
+  ];
+
+  const useCase = new ListarProductosUseCase(prodRepo);
+
+  // 1. Filtro sin categoría
+  const resSinCat = await useCase.execute({ sinCategoria: true, page: 1, limit: 10 });
+  assertEquals(resSinCat.isSuccess, true);
+  assertEquals(resSinCat.value.items.length, 1);
+  assertEquals(resSinCat.value.items[0].sku, 'SKU-3');
+
+  // 2. Filtro nivelStock agotado
+  const resAgotado = await useCase.execute({ nivelStock: 'agotado', page: 1, limit: 10 });
+  assertEquals(resAgotado.isSuccess, true);
+  assertEquals(resAgotado.value.items.length, 1);
+  assertEquals(resAgotado.value.items[0].estadoStock, 'agotado');
+
+  // 3. Contadores resumen por sucursal
+  const resSede = await useCase.execute({ sucursalId: 1, page: 1, limit: 10 });
+  assertEquals(resSede.isSuccess, true);
+  assertEquals(resSede.value.resumen?.total, 3);
+  assertEquals(resSede.value.resumen?.optimo, 1);
+  assertEquals(resSede.value.resumen?.bajo, 1);
+  assertEquals(resSede.value.resumen?.agotado, 1);
+});
+
+Deno.test('ListarProductosUseCase: valida alcance de sucursal con ResolverAlcanceSucursalUseCase', async () => {
+  const prodRepo = new FakeProductoRepository();
+  const alcanceMock = {
+    execute: () => Promise.resolve({
+      isFailure: false,
+      value: {
+        esGlobal: false,
+        permite: (id: number) => id === 1,
+        sucursalesPermitidas: () => [1],
+      },
+    }),
+  } as any;
+
+  const useCase = new ListarProductosUseCase(prodRepo, alcanceMock);
+
+  // Sede 1 permitida
+  const resPermitida = await useCase.execute({ sucursalId: 1, page: 1, limit: 10, actor });
+  assertEquals(resPermitida.isSuccess, true);
+
+  // Sede 2 prohibida
+  const resProhibida = await useCase.execute({ sucursalId: 2, page: 1, limit: 10, actor });
+  assertEquals(resProhibida.isFailure, true);
+  assertEquals(resProhibida.error.code, 'SUCURSAL_FUERA_DE_ALCANCE');
 });

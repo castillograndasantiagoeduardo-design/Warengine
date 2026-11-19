@@ -14,7 +14,7 @@ import "./globals.css";
 // Títulos, encabezados y cifras KPI: Plus Jakarta Sans
 const plusJakartaSans = Plus_Jakarta_Sans({
   subsets: ["latin"],
-  weight: ["400", "500", "600"],
+  weight: ["400", "500", "600", "700"],
   variable: "--font-plus-jakarta",
   display: "swap",
 });
@@ -57,6 +57,7 @@ const outfit = Outfit({
 });
 
 const bodoni = Bodoni_Moda({
+  weight: ["400", "700"],
   style: ["italic"],
   subsets: ["latin"],
   variable: "--font-bodoni",

@@ -2,15 +2,12 @@
 
 /**
  * CreateProductModal.tsx — Modal para el registro rápido de producto en inventario.
- *
- * Principio SOLID: Single Responsibility Principle (SRP).
- * Encapsula el formulario de alta de producto con validaciones de frontera,
- * estética Glassmorphism y botón táctil mecánico 3D en oro WarEngine.
+ * Migrado a Modal.tsx para accesibilidad, scroll locking y diseño unificado.
  */
 
 import React, { useState, useEffect } from 'react';
 import { crearProductoSchema } from '@warengine/contracts';
-import { Button3D } from '@/components/ui/Button3D';
+import { Modal } from '@/components/ui/Modal';
 import { apiClient, ApiError } from '@/lib/api';
 import type { CategoriaInventario } from '../types/branch-inventory.types';
 
@@ -24,7 +21,6 @@ interface CreateProductModalProps {
   categoriaPreseleccionadaId?: number | null;
 }
 
-/** Mensaje legible de un error de la API (incluye la primera validación de Zod si la hay). */
 function mensajeDeError(err: unknown, porDefecto: string): string {
   if (err instanceof ApiError) {
     return err.issues?.[0]?.message ?? err.message ?? porDefecto;
@@ -59,59 +55,71 @@ export function CreateProductModal({
     }
   }, [categoriaPreseleccionadaId]);
 
-  if (!isOpen) return null;
+  const resetForm = () => {
+    setSku('');
+    setNombre('');
+    setCategoriaId(categoriaPreseleccionadaId ?? '');
+    setPrecioVenta('');
+    setPrecioCompra('');
+    setPrecioCorporativo('');
+    setStockMinimo('');
+    setErrorMsg(null);
+    setSuccessMsg(null);
+  };
+
+  const handleClose = () => {
+    resetForm();
+    onClose();
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg(null);
     setSuccessMsg(null);
 
-    // Mismo contrato que valida la API (categoría y proveedor son opcionales)
-    const parsed = crearProductoSchema.safeParse({
-      sku: sku.trim().toUpperCase(),
+    const parseado = crearProductoSchema.safeParse({
+      sku: sku.trim(),
       nombre: nombre.trim(),
-      categoriaId: categoriaId !== '' ? Number(categoriaId) : null,
+      categoriaId: categoriaId === '' ? undefined : Number(categoriaId),
+      precioVenta: Number(precioVenta),
       precioCompra: aNumeroOpcional(precioCompra),
-      precioVenta: aNumeroOpcional(precioVenta),
-      precioCorporativo: aNumeroOpcional(precioCorporativo) ?? null,
+      precioCorporativo: aNumeroOpcional(precioCorporativo),
     });
-    if (!parsed.success) {
-      setErrorMsg(parsed.error.issues[0]?.message ?? 'Revisa los datos del producto.');
-      return;
-    }
 
-    const sMin = aNumeroOpcional(stockMinimo);
-    if (sMin !== undefined && (!Number.isInteger(sMin) || sMin < 0)) {
-      setErrorMsg('El stock mínimo debe ser un número entero mayor o igual a 0.');
+    if (!parseado.success) {
+      setErrorMsg(parseado.error.issues[0]?.message ?? 'Datos de producto inválidos');
       return;
     }
 
     setIsSubmitting(true);
     try {
-      const creado = await apiClient.post<{ id: string }>('/inventario/productos', parsed.data);
+      const resp = await apiClient.post<{ id?: string }>('/inventario/productos', parseado.data);
+      const nuevoId = resp?.id;
 
-      // El umbral se guarda por sede con su propio endpoint (el alta de producto es global)
-      if (sMin !== undefined) {
-        try {
-          await apiClient.put('/inventario/stock-minimo', {
-            productoId: creado.id,
-            sucursalId,
-            stockMinimo: sMin,
-          });
-        } catch (err) {
-          setErrorMsg(
-            `Producto creado, pero no se pudo guardar el stock mínimo: ${mensajeDeError(err, 'error desconocido')}`,
-          );
-          onProductoCreado?.();
-          return;
+      if (nuevoId && stockMinimo.trim() !== '') {
+        const umbral = Number(stockMinimo);
+        if (Number.isFinite(umbral) && umbral >= 0) {
+          try {
+            await apiClient.put('/inventario/stock-minimo', {
+              productoId: nuevoId,
+              sucursalId,
+              stockMinimo: umbral,
+            });
+          } catch (err) {
+            setErrorMsg(
+              `Producto creado, pero no se pudo guardar el stock mínimo: ${mensajeDeError(err, 'error desconocido')}`,
+            );
+            onProductoCreado?.();
+            return;
+          }
         }
       }
 
-      setSuccessMsg('Producto registrado en el catálogo.');
+      setSuccessMsg('Producto registrado exitosamente en el catálogo.');
       setTimeout(() => {
         onProductoCreado?.();
-        onClose();
-      }, 900);
+        handleClose();
+      }, 700);
     } catch (err) {
       setErrorMsg(mensajeDeError(err, 'No se pudo registrar el producto.'));
     } finally {
@@ -120,130 +128,133 @@ export function CreateProductModal({
   };
 
   return (
-    <div
-      role="dialog"
-      aria-modal="true"
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-md transition-opacity duration-200"
-    >
-      <div className="relative w-full max-w-md overflow-hidden rounded-2xl bg-[#0d1630] border border-white/[0.12] p-6 shadow-2xl text-slate-100 font-[family-name:var(--font-archivo)]">
-        {/* Luz difusa superior */}
-        <div className="pointer-events-none absolute inset-x-0 top-0 h-[1px] bg-gradient-to-r from-transparent via-[#e3b341]/40 to-transparent" />
-
-        {/* Encabezado */}
-        <div className="flex items-center justify-between pb-4 border-b border-white/[0.08] mb-4">
-          <div>
-            <h2 className="text-lg font-bold text-white font-[family-name:var(--font-anton)] uppercase tracking-wider">
-              Nuevo Producto
-            </h2>
-            <p className="text-xs text-slate-400">
-              Alta inmediata de artículo en inventario de la sede
-            </p>
-          </div>
+    <Modal
+      open={isOpen}
+      onClose={handleClose}
+      title="Nuevo Producto"
+      description="Alta inmediata de artículo en catálogo y umbrales de sede"
+      size="lg"
+      locked={isSubmitting}
+      footer={
+        <div className="flex gap-2 justify-end w-full">
           <button
-            onClick={onClose}
-            className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 hover:text-white hover:bg-white/[0.08] transition-colors cursor-pointer text-lg"
+            type="button"
+            onClick={handleClose}
+            disabled={isSubmitting}
+            className="px-4 py-2 rounded-xl bg-white/10 hover:bg-white/15 text-white text-xs font-semibold cursor-pointer disabled:opacity-40"
           >
-            &times;
+            Cancelar
+          </button>
+          <button
+            type="button"
+            onClick={handleSubmit}
+            disabled={isSubmitting}
+            className="px-4 py-2 rounded-xl bg-rose-500 hover:bg-rose-600 text-white text-xs font-semibold cursor-pointer disabled:opacity-40 shadow-lg shadow-rose-500/20"
+          >
+            {isSubmitting ? 'Guardando...' : 'Guardar Producto'}
           </button>
         </div>
-
-        {/* Notificaciones de Feedback */}
+      }
+    >
+      <form onSubmit={handleSubmit} className="space-y-4">
         {errorMsg && (
-          <div className="p-3 mb-4 rounded-xl bg-red-500/10 border border-red-500/25 text-red-300 text-xs">
+          <div className="p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-300 text-xs">
             {errorMsg}
           </div>
         )}
         {successMsg && (
-          <div className="p-3 mb-4 rounded-xl bg-[#10b981]/10 border border-[#10b981]/25 text-[#10b981] text-xs">
+          <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-300 text-xs">
             {successMsg}
           </div>
         )}
 
-        {/* Formulario */}
-        <form onSubmit={handleSubmit} className="space-y-3.5 text-xs">
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="block text-[11px] font-semibold text-slate-300 mb-1">
-                Código SKU *
-              </label>
-              <input
-                type="text"
-                placeholder="Ej. HER-045"
-                value={sku}
-                onChange={(e) => setSku(e.target.value)}
-                className="w-full h-9 px-3 rounded-xl bg-[#09132b]/80 border border-white/[0.08] text-white focus:outline-none focus:border-[#e3b341]/60 font-mono text-xs uppercase"
-                required
-              />
-            </div>
-            <div>
-              <label className="block text-[11px] font-semibold text-slate-300 mb-1">
-                Precio Venta (COP) *
-              </label>
-              <input
-                type="number"
-                placeholder="Ej. 185000"
-                value={precioVenta}
-                onChange={(e) => setPrecioVenta(e.target.value)}
-                className="w-full h-9 px-3 rounded-xl bg-[#09132b]/80 border border-white/[0.08] text-white focus:outline-none focus:border-[#e3b341]/60 font-mono text-xs"
-                required
-              />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="block text-[11px] font-semibold text-slate-300 mb-1">
-                Precio Compra (COP) *
-              </label>
-              <input
-                type="number"
-                min="0"
-                step="0.01"
-                placeholder="Ej. 120000"
-                value={precioCompra}
-                onChange={(e) => setPrecioCompra(e.target.value)}
-                className="w-full h-9 px-3 rounded-xl bg-[#09132b]/80 border border-white/[0.08] text-white focus:outline-none focus:border-[#e3b341]/60 font-mono text-xs"
-                required
-              />
-            </div>
-            <div>
-              <label className="block text-[11px] font-semibold text-slate-300 mb-1">
-                Precio Corporativo B2B
-              </label>
-              <input
-                type="number"
-                min="0"
-                step="0.01"
-                placeholder="Opcional"
-                value={precioCorporativo}
-                onChange={(e) => setPrecioCorporativo(e.target.value)}
-                className="w-full h-9 px-3 rounded-xl bg-[#09132b]/80 border border-white/[0.08] text-white focus:outline-none focus:border-[#e3b341]/60 font-mono text-xs"
-              />
-            </div>
-          </div>
-
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
-            <label className="block text-[11px] font-semibold text-slate-300 mb-1">
-              Nombre del Producto *
+            <label className="block text-xs font-semibold text-white/70 mb-1">
+              Código SKU / Barras *
             </label>
             <input
               type="text"
-              placeholder="Ej. Taladro Percutor Industrial 1/2”"
-              value={nombre}
-              onChange={(e) => setNombre(e.target.value)}
-              className="w-full h-9 px-3 rounded-xl bg-[#09132b]/80 border border-white/[0.08] text-white focus:outline-none focus:border-[#e3b341]/60 text-xs"
+              placeholder="Ej. 7701234000011"
+              value={sku}
+              onChange={(e) => setSku(e.target.value)}
+              className="w-full h-10 px-3 rounded-xl bg-white/5 border border-white/10 text-white font-mono text-xs focus:outline-none focus:border-rose-500"
               required
             />
           </div>
 
           <div>
-            <label className="block text-[11px] font-semibold text-slate-300 mb-1">
+            <label className="block text-xs font-semibold text-white/70 mb-1">
+              Nombre comercial *
+            </label>
+            <input
+              type="text"
+              placeholder="Ej. Arroz Diana 500g"
+              value={nombre}
+              onChange={(e) => setNombre(e.target.value)}
+              className="w-full h-10 px-3 rounded-xl bg-white/5 border border-white/10 text-white text-xs focus:outline-none focus:border-rose-500"
+              required
+            />
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div>
+            <label className="block text-xs font-semibold text-white/70 mb-1">
+              Precio Venta POS *
+            </label>
+            <input
+              type="number"
+              min="0"
+              step="0.01"
+              placeholder="Ej. 4200"
+              value={precioVenta}
+              onChange={(e) => setPrecioVenta(e.target.value)}
+              className="w-full h-10 px-3 rounded-xl bg-white/5 border border-white/10 text-white font-mono text-xs focus:outline-none focus:border-rose-500"
+              required
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-white/70 mb-1">
+              Precio Compra
+            </label>
+            <input
+              type="number"
+              min="0"
+              step="0.01"
+              placeholder="Ej. 3200"
+              value={precioCompra}
+              onChange={(e) => setPrecioCompra(e.target.value)}
+              className="w-full h-10 px-3 rounded-xl bg-white/5 border border-white/10 text-white font-mono text-xs focus:outline-none focus:border-rose-500"
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-white/70 mb-1">
+              Precio B2B Corporativo
+            </label>
+            <input
+              type="number"
+              min="0"
+              step="0.01"
+              placeholder="Opcional"
+              value={precioCorporativo}
+              onChange={(e) => setPrecioCorporativo(e.target.value)}
+              className="w-full h-10 px-3 rounded-xl bg-white/5 border border-white/10 text-white font-mono text-xs focus:outline-none focus:border-rose-500"
+            />
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label className="block text-xs font-semibold text-white/70 mb-1">
               Categoría
             </label>
             <select
               value={categoriaId}
               onChange={(e) => setCategoriaId(e.target.value ? Number(e.target.value) : '')}
-              className="w-full h-9 px-3 rounded-xl bg-[#09132b]/80 border border-white/[0.08] text-white focus:outline-none focus:border-[#e3b341]/60 text-xs cursor-pointer"
+              className="w-full h-10 px-3 rounded-xl bg-white/5 border border-white/10 text-white text-xs focus:outline-none focus:border-rose-500 cursor-pointer"
             >
               <option value="">Sin categoría asignada</option>
               {categorias.map((c) => (
@@ -255,44 +266,20 @@ export function CreateProductModal({
           </div>
 
           <div>
-            <label className="block text-[11px] font-semibold text-slate-300 mb-1">
-              Stock Mínimo de Sede (Umbral de alerta)
+            <label className="block text-xs font-semibold text-white/70 mb-1">
+              Stock Mínimo (Umbral de alerta en sede)
             </label>
             <input
               type="number"
               min="0"
-              placeholder="Opcional (ej. 5)"
+              placeholder="Ej. 15"
               value={stockMinimo}
               onChange={(e) => setStockMinimo(e.target.value)}
-              className="w-full h-9 px-3 rounded-xl bg-[#09132b]/80 border border-white/[0.08] text-white focus:outline-none focus:border-[#e3b341]/60 font-mono text-xs"
+              className="w-full h-10 px-3 rounded-xl bg-white/5 border border-white/10 text-white font-mono text-xs focus:outline-none focus:border-rose-500"
             />
-            <p className="text-[10px] text-slate-400 mt-1">
-              Las existencias iniciales se ingresan formalmente desde &quot;Registrar Entrada&quot; con factura o remisión de proveedor.
-            </p>
           </div>
-
-          {/* Botones de Acción */}
-          <div className="flex items-center justify-end gap-3 pt-4 border-t border-white/[0.08] mt-4">
-            <button
-              type="button"
-              onClick={onClose}
-              disabled={isSubmitting}
-              className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-400 hover:text-white hover:bg-white/[0.04] transition-colors cursor-pointer"
-            >
-              Cancelar
-            </button>
-
-            <Button3D
-              size="sm"
-              type="submit"
-              disabled={isSubmitting}
-              className="cursor-pointer font-bold"
-            >
-              {isSubmitting ? 'Guardando...' : 'Guardar Producto'}
-            </Button3D>
-          </div>
-        </form>
-      </div>
-    </div>
+        </div>
+      </form>
+    </Modal>
   );
 }

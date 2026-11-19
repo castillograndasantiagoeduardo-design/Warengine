@@ -26,6 +26,8 @@ export class Cliente {
         public readonly creditoAprobadoEn: Date | null = null,
         public readonly motivoDecisionCredito: string | null = null,
         public readonly observacionFinanciera: string | null = null,
+        public readonly saldoPendiente: number = 0,
+        public readonly totalCompras: number = 0,
     ) { }
 
     public get esB2B(): boolean {
@@ -80,6 +82,8 @@ export class Cliente {
             creditoAprobadoEn: this.creditoAprobadoEn,
             motivoDecisionCredito: this.motivoDecisionCredito,
             observacionFinanciera: this.observacionFinanciera,
+            saldoPendiente: this.saldoPendiente,
+            totalCompras: this.totalCompras,
         };
     }
 }

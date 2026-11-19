@@ -1,16 +1,25 @@
-import { and, desc, eq, gte, inArray, isNull, lte, sql, type SQL } from 'drizzle-orm';
+import { and, desc, eq, gte, inArray, isNotNull, isNull, like, lte, or, sql, type SQL } from 'drizzle-orm';
+import { alias } from 'drizzle-orm/mysql-core';
 import { Database } from '../../client.ts';
 import {
+    clientes,
+    devoluciones_ventas,
     factura_items,
     factura_pagos,
     facturas,
 } from '../../schema/facturacion.schema.ts';
+import { turnos_caja } from '../../schema/turnos-caja.schema.ts';
+import { usuarios } from '../../schema/autenticacion.schema.ts';
+import { empleados } from '../../schema/administracion.schema.ts';
+import { productos } from '../../schema/inventario.schema.ts';
 import {
     CrearFacturaDatos,
     CreditoNoHabilitadoError,
+    DevolucionVenta,
     Factura,
     FacturaItem,
     FacturaPago,
+    FacturasPaginadasResultado,
     FiltrosFacturas,
     IFacturaRepository,
     PagoInvalidoError,
@@ -21,7 +30,11 @@ import {
     facturaItemFromRow,
     facturaPagoFromRow,
 } from '../../mappers/facturacion/factura.mapper.ts';
+import { devolucionVentaFromRow } from '../../mappers/facturacion/devolucion-venta.mapper.ts';
 import { obtenerSqlMessage } from '../../errors/mysql-error-translator.ts';
+
+const turnoUsuarios = alias(usuarios, 'factura_turno_usuarios');
+const turnoEmpleados = alias(empleados, 'factura_turno_empleados');
 
 export class DrizzleFacturaRepository implements IFacturaRepository {
     constructor(private readonly db: Database) { }
@@ -158,7 +171,7 @@ export class DrizzleFacturaRepository implements IFacturaRepository {
 
             return facturaFromRow(
                 row,
-                itemRows.map(facturaItemFromRow),
+                itemRows.map((r) => facturaItemFromRow(r)),
                 pagoRows.map(facturaPagoFromRow),
             );
         });
@@ -166,16 +179,35 @@ export class DrizzleFacturaRepository implements IFacturaRepository {
 
     public async findById(id: string): Promise<Factura | null> {
         const [row] = await this.db
-            .select()
+            .select({
+                factura: facturas,
+                clienteNombre: clientes.nombre_razon_social,
+                clienteDocumento: clientes.numero_documento,
+                clienteTipo: clientes.tipo_cliente,
+                empleadoNombre: empleados.nombre,
+                usuarioEmail: usuarios.email,
+                turnoEmpleadoNombre: turnoEmpleados.nombre,
+                turnoUsuarioEmail: turnoUsuarios.email,
+            })
             .from(facturas)
+            .leftJoin(clientes, eq(facturas.cliente_id, clientes.id_cliente))
+            .leftJoin(usuarios, eq(facturas.usuario_id, usuarios.id_usuario))
+            .leftJoin(empleados, eq(usuarios.empleado_id, empleados.id_empleado))
+            .leftJoin(turnos_caja, eq(facturas.turno_caja_id, turnos_caja.id_turno_caja))
+            .leftJoin(turnoUsuarios, eq(turnos_caja.usuario_id, turnoUsuarios.id_usuario))
+            .leftJoin(turnoEmpleados, eq(turnoUsuarios.empleado_id, turnoEmpleados.id_empleado))
             .where(and(eq(facturas.id_factura, id), isNull(facturas.deleted_at)))
             .limit(1);
 
         if (!row) return null;
 
         const itemRows = await this.db
-            .select()
+            .select({
+                item: factura_items,
+                productoNombre: productos.nombre,
+            })
             .from(factura_items)
+            .leftJoin(productos, eq(factura_items.producto_id, productos.id_producto))
             .where(and(eq(factura_items.factura_id, id), isNull(factura_items.deleted_at)));
 
         const pagoRows = await this.db
@@ -183,14 +215,34 @@ export class DrizzleFacturaRepository implements IFacturaRepository {
             .from(factura_pagos)
             .where(eq(factura_pagos.factura_id, id));
 
+        const devolucionRows = await this.db
+            .select()
+            .from(devoluciones_ventas)
+            .where(and(eq(devoluciones_ventas.factura_id, id), isNull(devoluciones_ventas.deleted_at)));
+
+        const cajeroNombre =
+            row.empleadoNombre ||
+            row.turnoEmpleadoNombre ||
+            row.usuarioEmail ||
+            row.turnoUsuarioEmail ||
+            'Cajero';
+        const clienteNombre = (row.clienteDocumento === '222222222222' || !row.clienteNombre) ? 'Consumidor Final' : row.clienteNombre;
+        const clienteDocumento = row.clienteDocumento || '222222222222';
+        const tipoVenta: 'POS' | 'B2B' = row.factura.turno_caja_id ? 'POS' : (row.clienteTipo === 'B2B' ? 'B2B' : 'POS');
+
         return facturaFromRow(
-            row,
-            itemRows.map(facturaItemFromRow),
+            row.factura,
+            itemRows.map((r) => facturaItemFromRow(r.item, r.productoNombre)),
             pagoRows.map(facturaPagoFromRow),
+            clienteNombre,
+            clienteDocumento,
+            cajeroNombre,
+            tipoVenta,
+            devolucionRows.map(devolucionVentaFromRow),
         );
     }
 
-    public async listar(filtros: FiltrosFacturas): Promise<Factura[]> {
+    public async listarPaginado(filtros: FiltrosFacturas): Promise<FacturasPaginadasResultado> {
         const condiciones: SQL[] = [isNull(facturas.deleted_at)];
 
         if (filtros.sucursalId !== undefined) {
@@ -205,28 +257,83 @@ export class DrizzleFacturaRepository implements IFacturaRepository {
         if (filtros.estado) {
             condiciones.push(eq(facturas.estado, filtros.estado));
         }
-        if (filtros.fechaInicio) {
-            condiciones.push(gte(facturas.fecha, filtros.fechaInicio));
+        const fechaInicio = filtros.desde ?? filtros.fechaInicio;
+        if (fechaInicio) {
+            condiciones.push(gte(facturas.fecha, fechaInicio));
         }
-        if (filtros.fechaFin) {
-            condiciones.push(lte(facturas.fecha, filtros.fechaFin));
+        const fechaFin = filtros.hasta ?? filtros.fechaFin;
+        if (fechaFin) {
+            condiciones.push(lte(facturas.fecha, fechaFin));
+        }
+
+        if (filtros.tipo) {
+            if (filtros.tipo.toUpperCase() === 'B2B') {
+                condiciones.push(eq(clientes.tipo_cliente, 'B2B'));
+            } else if (filtros.tipo.toUpperCase() === 'POS') {
+                condiciones.push(or(isNotNull(facturas.turno_caja_id), eq(clientes.tipo_cliente, 'B2C'))!);
+            }
+        }
+
+        if (filtros.texto && filtros.texto.trim()) {
+            const t = filtros.texto.trim();
+            const condicionesTexto: SQL[] = [
+                like(clientes.nombre_razon_social, `%${t}%`),
+                like(clientes.numero_documento, `%${t}%`),
+            ];
+            const num = Number(t.replace(/[^0-9]/g, ''));
+            if (!isNaN(num) && num > 0) {
+                condicionesTexto.push(eq(facturas.consecutivo, num));
+            }
+            condiciones.push(or(...condicionesTexto)!);
+        }
+
+        const [countRow] = await this.db
+            .select({ total: sql<number>`COUNT(DISTINCT ${facturas.id_factura})` })
+            .from(facturas)
+            .leftJoin(clientes, eq(facturas.cliente_id, clientes.id_cliente))
+            .where(and(...condiciones));
+
+        const total = Number(countRow?.total ?? 0);
+        if (total === 0) {
+            return { items: [], total: 0 };
         }
 
         const rows = await this.db
-            .select()
+            .select({
+                factura: facturas,
+                clienteNombre: clientes.nombre_razon_social,
+                clienteDocumento: clientes.numero_documento,
+                clienteTipo: clientes.tipo_cliente,
+                empleadoNombre: empleados.nombre,
+                usuarioEmail: usuarios.email,
+                turnoEmpleadoNombre: turnoEmpleados.nombre,
+                turnoUsuarioEmail: turnoUsuarios.email,
+            })
             .from(facturas)
+            .leftJoin(clientes, eq(facturas.cliente_id, clientes.id_cliente))
+            .leftJoin(usuarios, eq(facturas.usuario_id, usuarios.id_usuario))
+            .leftJoin(empleados, eq(usuarios.empleado_id, empleados.id_empleado))
+            .leftJoin(turnos_caja, eq(facturas.turno_caja_id, turnos_caja.id_turno_caja))
+            .leftJoin(turnoUsuarios, eq(turnos_caja.usuario_id, turnoUsuarios.id_usuario))
+            .leftJoin(turnoEmpleados, eq(turnoUsuarios.empleado_id, turnoEmpleados.id_empleado))
             .where(and(...condiciones))
             .orderBy(desc(facturas.fecha))
             .limit(filtros.limite)
             .offset(filtros.offset);
 
-        if (rows.length === 0) return [];
+        if (rows.length === 0) {
+            return { items: [], total };
+        }
 
-        const ids = rows.map((r) => r.id_factura);
+        const ids = rows.map((r) => r.factura.id_factura);
 
         const allItems = await this.db
-            .select()
+            .select({
+                item: factura_items,
+                productoNombre: productos.nombre,
+            })
             .from(factura_items)
+            .leftJoin(productos, eq(factura_items.producto_id, productos.id_producto))
             .where(and(inArray(factura_items.factura_id, ids), isNull(factura_items.deleted_at)));
 
         const allPagos = await this.db
@@ -234,11 +341,16 @@ export class DrizzleFacturaRepository implements IFacturaRepository {
             .from(factura_pagos)
             .where(inArray(factura_pagos.factura_id, ids));
 
+        const allDevoluciones = await this.db
+            .select()
+            .from(devoluciones_ventas)
+            .where(and(inArray(devoluciones_ventas.factura_id, ids), isNull(devoluciones_ventas.deleted_at)));
+
         const itemsPorFactura = new Map<string, FacturaItem[]>();
-        for (const itemRow of allItems) {
-            const list = itemsPorFactura.get(itemRow.factura_id) ?? [];
-            list.push(facturaItemFromRow(itemRow));
-            itemsPorFactura.set(itemRow.factura_id, list);
+        for (const it of allItems) {
+            const list = itemsPorFactura.get(it.item.factura_id) ?? [];
+            list.push(facturaItemFromRow(it.item, it.productoNombre));
+            itemsPorFactura.set(it.item.factura_id, list);
         }
 
         const pagosPorFactura = new Map<string, FacturaPago[]>();
@@ -248,12 +360,41 @@ export class DrizzleFacturaRepository implements IFacturaRepository {
             pagosPorFactura.set(pagoRow.factura_id, list);
         }
 
-        return rows.map((r) =>
-            facturaFromRow(
-                r,
-                itemsPorFactura.get(r.id_factura) ?? [],
-                pagosPorFactura.get(r.id_factura) ?? [],
-            ),
-        );
+        const devolucionesPorFactura = new Map<string, DevolucionVenta[]>();
+        for (const devRow of allDevoluciones) {
+            const list = devolucionesPorFactura.get(devRow.factura_id) ?? [];
+            list.push(devolucionVentaFromRow(devRow));
+            devolucionesPorFactura.set(devRow.factura_id, list);
+        }
+
+        const items = rows.map((r) => {
+            const cajeroNombre =
+                r.empleadoNombre ||
+                r.turnoEmpleadoNombre ||
+                r.usuarioEmail ||
+                r.turnoUsuarioEmail ||
+                'Cajero';
+            const clienteNombre = (r.clienteDocumento === '222222222222' || !r.clienteNombre) ? 'Consumidor Final' : r.clienteNombre;
+            const clienteDocumento = r.clienteDocumento || '222222222222';
+            const tipoVenta: 'POS' | 'B2B' = r.factura.turno_caja_id ? 'POS' : (r.clienteTipo === 'B2B' ? 'B2B' : 'POS');
+
+            return facturaFromRow(
+                r.factura,
+                itemsPorFactura.get(r.factura.id_factura) ?? [],
+                pagosPorFactura.get(r.factura.id_factura) ?? [],
+                clienteNombre,
+                clienteDocumento,
+                cajeroNombre,
+                tipoVenta,
+                devolucionesPorFactura.get(r.factura.id_factura) ?? [],
+            );
+        });
+
+        return { items, total };
+    }
+
+    public async listar(filtros: FiltrosFacturas): Promise<Factura[]> {
+        const resultado = await this.listarPaginado(filtros);
+        return resultado.items;
     }
 }
