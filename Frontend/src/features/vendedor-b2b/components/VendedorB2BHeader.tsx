@@ -1,98 +1,141 @@
 'use client';
 
 /**
- * VendedorB2BHeader.tsx — Barra superior del módulo Vendedor B2B.
+ * VendedorB2BHeader.tsx — Barra superior flotante con Glassmorphism Ejecutivo (.vidrio-fuerte)
+ * para el módulo de Vendedor B2B.
  */
 
-import React from 'react';
-import { useRouter } from 'next/navigation';
+import React, { useState, useEffect } from 'react';
+import { Sun, Moon, Menu, Briefcase } from 'lucide-react';
 import { useAuth } from '@/features/autenticacion';
+import { SelectorPaleta } from '@/components/SelectorPaleta';
+import { Insignia } from '@/components/Insignia';
 
-interface VendedorB2BHeaderProps {
-  onAbrirHistorial: () => void;
-  onAbrirCotizaciones: () => void;
+export interface VendedorB2BHeaderProps {
+  onOpenMobileMenu?: () => void;
+  onOpenProfile?: () => void;
+  className?: string;
+  // Props de compatibilidad con llamadas anteriores
+  onAbrirHistorial?: () => void;
+  onAbrirCotizaciones?: () => void;
   cotizacionesAprobadasCount?: number;
 }
 
 export function VendedorB2BHeader({
-  onAbrirHistorial,
-  onAbrirCotizaciones,
-  cotizacionesAprobadasCount = 0,
+  onOpenMobileMenu,
+  onOpenProfile,
+  className = '',
 }: VendedorB2BHeaderProps) {
-  const router = useRouter();
-  const { usuario, logout } = useAuth();
+  const { usuario } = useAuth();
+  const [modo, setModo] = useState<'dark' | 'light'>('dark');
 
-  const handleLogout = async () => {
-    await logout();
-    router.push('/acceso');
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const m = (localStorage.getItem('warengine-tema') as 'dark' | 'light') || 'dark';
+    setModo(m);
+  }, []);
+
+  const alternarModo = () => {
+    const nuevo = modo === 'dark' ? 'light' : 'dark';
+    setModo(nuevo);
+    const d = document.documentElement;
+    if (nuevo === 'light') {
+      d.classList.add('light');
+      d.classList.remove('dark');
+    } else {
+      d.classList.add('dark');
+      d.classList.remove('light');
+    }
+    localStorage.setItem('warengine-tema', nuevo);
   };
 
+  const email = usuario?.email || '';
+  const emailPrefix = email ? email.split('@')[0] : '';
+  const iniciales = (
+    usuario?.nombre
+      ? usuario.nombre
+          .split(' ')
+          .map((n) => n[0])
+          .join('')
+          .slice(0, 2)
+      : emailPrefix.slice(0, 2)
+  ).toUpperCase() || 'VB';
+  const rol = usuario?.rolNombre || 'vendedor-b2b';
+
   return (
-    <header className="w-full bg-[#14213D]/90 backdrop-blur-md border-b border-white/10 px-4 sm:px-6 py-4 sticky top-0 z-30 shadow-md">
-      <div className="max-w-7xl mx-auto flex flex-col md:flex-row md:items-center justify-between gap-3">
-        {/* Identidad de la marca y módulo */}
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#E9B949] to-[#b88a1f] flex items-center justify-center font-[family-name:var(--font-anton)] text-[#14213D] text-xl font-bold shadow-md">
-            B2B
-          </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <h1 className="text-xl sm:text-2xl font-[family-name:var(--font-anton)] text-[#E9B949] tracking-wider uppercase">
-                WarEngine &mdash; Ventas Corporativas
-              </h1>
-              <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#E9B949]/20 text-[#E9B949] border border-[#E9B949]/40 uppercase tracking-widest">
-                Catálogo Multi-Bodega
-              </span>
-            </div>
-            <p className="text-xs text-white/60 font-[family-name:var(--font-archivo)]">
-              Asesor:{' '}
-              <span className="text-white font-medium">{usuario?.email || usuario?.id || 'Vendedor Autorizado'}</span> &bull; Rol:{' '}
-              <span className="text-[#E9B949] uppercase font-semibold">{usuario?.rolNombre || 'vendedor-b2b'}</span>
-            </p>
+    <header className={`sticky top-4 z-30 w-full overflow-visible ${className}`}>
+      <div className="vidrio-fuerte px-4 sm:px-5 py-2.5 flex items-center justify-between gap-4 overflow-visible">
+        {/* Lado Izquierdo: Botón Menú Móvil + Cápsula "Ventas corporativas" + Insignia "Catálogo multi-bodega" */}
+        <div className="flex items-center gap-3 min-w-0">
+          {onOpenMobileMenu && (
+            <button
+              type="button"
+              onClick={onOpenMobileMenu}
+              className="md:hidden superficie-control rounded-xl p-2 text-text-muted hover:text-text transition-colors cursor-pointer shrink-0"
+              title="Abrir menú de navegación"
+              aria-label="Abrir menú de navegación"
+            >
+              <Menu className="w-4 h-4" />
+            </button>
+          )}
+
+          <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl superficie-control shrink-0">
+            <Briefcase className="w-3.5 h-3.5 text-brand-500" />
+            <span className="font-sans font-medium text-xs text-text">
+              Ventas corporativas
+            </span>
+            <Insignia variante="brand" tamano="sm" className="hidden sm:inline-flex">
+              Catálogo multi-bodega
+            </Insignia>
           </div>
         </div>
 
-        {/* Acciones y control de sesión */}
-        <div className="flex items-center gap-2.5">
+        {/* Lado Derecho: SelectorPaleta + Toggle Tema + Cápsula Perfil */}
+        <div className="flex items-center gap-2 shrink-0">
+          {/* Selector de Paletas y Apariencia */}
+          <SelectorPaleta />
+
+          {/* Botón Rápido Modo Oscuro / Claro */}
           <button
             type="button"
-            onClick={onAbrirCotizaciones}
-            className="px-3.5 py-1.5 rounded-xl border border-[#E9B949]/40 bg-[#E9B949]/15 hover:bg-[#E9B949]/25 text-[#E9B949] text-xs font-medium transition-colors flex items-center gap-1.5 cursor-pointer"
+            onClick={alternarModo}
+            className="superficie-control rounded-xl p-2 text-text-muted hover:text-text transition-colors cursor-pointer"
+            title={modo === 'dark' ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'}
+            aria-label="Cambiar tema de color"
           >
-            <span>Mis Cotizaciones</span>
-            {cotizacionesAprobadasCount > 0 && (
-              <span className="px-1.5 py-0.5 rounded-full bg-emerald-500 text-[#070d1a] text-[10px] font-semibold tabular-nums">
-                {cotizacionesAprobadasCount}
-              </span>
+            {modo === 'dark' ? (
+              <Sun className="w-3.5 h-3.5 text-brand-400" />
+            ) : (
+              <Moon className="w-3.5 h-3.5 text-brand-500" />
             )}
           </button>
 
-          <button
-            type="button"
-            onClick={onAbrirHistorial}
-            className="px-3.5 py-1.5 rounded-xl border border-white/20 bg-white/5 hover:bg-white/10 text-white text-xs font-[family-name:var(--font-archivo)] transition-colors flex items-center gap-1.5 cursor-pointer"
+          {/* Cápsula de Perfil de Usuario Ejecutiva */}
+          <div
+            onClick={onOpenProfile}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                onOpenProfile?.();
+              }
+            }}
+            className="flex items-center gap-2.5 pl-1.5 pr-3 py-1 rounded-xl superficie-control cursor-pointer hover:border-brand-400/30 transition-colors shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/60 select-none"
+            title={email || 'Mi perfil'}
+            role={onOpenProfile ? 'button' : undefined}
+            tabIndex={onOpenProfile ? 0 : undefined}
           >
-            <svg className="w-3.5 h-3.5 text-[#E9B949]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
-            </svg>
-            Historial de Facturas
-          </button>
-
-          <button
-            type="button"
-            onClick={() => router.push('/dashboard')}
-            className="px-3 py-1.5 rounded-xl border border-white/20 hover:border-white/40 text-white/80 hover:text-white text-xs font-[family-name:var(--font-archivo)] transition-colors cursor-pointer"
-          >
-            Panel
-          </button>
-
-          <button
-            type="button"
-            onClick={handleLogout}
-            className="px-3 py-1.5 rounded-xl border border-red-500/30 text-red-300 hover:bg-red-500/20 text-xs font-[family-name:var(--font-archivo)] transition-colors cursor-pointer"
-          >
-            Cerrar Sesión
-          </button>
+            <div className="w-7 h-7 rounded-lg bg-brand-600 text-btn-primario-texto flex items-center justify-center font-titulos font-semibold text-xs shadow-sm">
+              {iniciales}
+            </div>
+            <div className="text-left hidden lg:block leading-tight">
+              <div className="text-xs font-semibold text-text truncate max-w-[140px]">
+                {email || 'Vendedor'}
+              </div>
+              <div className="text-[10px] text-text-muted truncate max-w-[140px] capitalize">
+                {rol}
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </header>

@@ -8,7 +8,7 @@
 
 import React, { useEffect, useState } from 'react';
 import {
-  VendedorB2BHeader,
+  VendedorB2BLayout,
   CatalogoMultiBodega,
   CotizacionPanel,
   NuevoClienteB2BModal,
@@ -19,6 +19,7 @@ import {
   useClientesB2B,
 } from '@/features/vendedor-b2b';
 import { useAuth } from '@/features/autenticacion';
+import { AlertTriangle, CheckCircle2, X } from 'lucide-react';
 
 export default function VendedorB2BPage() {
   const [isHistorialOpen, setIsHistorialOpen] = useState(false);
@@ -126,117 +127,142 @@ export default function VendedorB2BPage() {
   }, [clienteSeleccionado?.id, clienteSeleccionado?.estadoCredito, recargarClientes]);
 
   return (
-    <div className="min-h-screen bg-[#0d1630] text-white flex flex-col font-[family-name:var(--font-archivo)] selection:bg-[#E9B949] selection:text-[#14213D]">
-      <VendedorB2BHeader
-        onAbrirHistorial={() => setIsHistorialOpen(true)}
-        onAbrirCotizaciones={() => {
-          void cargarCotizaciones();
-          setIsCotizacionesOpen(true);
-        }}
-        cotizacionesAprobadasCount={cotizacionesAprobadasCount}
-      />
+    <VendedorB2BLayout
+      onAbrirHistorial={() => setIsHistorialOpen(true)}
+      onAbrirCotizaciones={() => {
+        void cargarCotizaciones();
+        setIsCotizacionesOpen(true);
+      }}
+      cotizacionesAprobadasCount={cotizacionesAprobadasCount}
+    >
+      {/* Encabezado de la Vista */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-titulos font-semibold tracking-[-0.005em] text-text">
+            Terminal Comercial B2B
+          </h1>
+          <p className="text-sm font-sans font-medium text-text-muted mt-1">
+            Cotización multi-bodega con verificación de cupo de crédito y solicitud de aval.
+          </p>
+        </div>
+      </div>
 
+      {/* Banners de Notificación / Alertas como Tarjetas en Vidrio */}
       {!isAuthLoading && sucursalId === null && (
-        <div className="max-w-7xl w-full mx-auto mt-4 px-4 sm:px-6">
-          <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-200 text-sm">
+        <div className="vidrio p-4 border border-red-500/30 bg-red-500/10 text-red-700 dark:text-red-300 rounded-xl flex items-center gap-3">
+          <AlertTriangle className="w-5 h-5 text-red-500 shrink-0" />
+          <p className="text-xs font-sans font-medium">
             Tu usuario no tiene una sucursal asignada: no puedes cotizar hasta que un administrador te vincule a una sede.
-          </div>
+          </p>
         </div>
       )}
 
       {alertaSuperAdminMsg && (
-        <div className="max-w-7xl w-full mx-auto mt-4 px-4 sm:px-6">
-          <div className="p-3 rounded-xl bg-amber-500/15 border border-amber-500/40 text-amber-200 text-xs flex items-center justify-between gap-3">
-            <span>{alertaSuperAdminMsg}</span>
-            <button
-              type="button"
-              onClick={() => setAlertaSuperAdminMsg(null)}
-              className="text-amber-300 hover:text-white cursor-pointer"
-            >
-              ✕
-            </button>
+        <div className="vidrio p-4 border border-amber-500/30 bg-amber-500/10 text-amber-800 dark:text-amber-200 rounded-xl flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3 min-w-0">
+            <AlertTriangle className="w-5 h-5 text-amber-500 shrink-0" />
+            <p className="text-xs font-sans font-medium">{alertaSuperAdminMsg}</p>
           </div>
+          <button
+            type="button"
+            onClick={() => setAlertaSuperAdminMsg(null)}
+            className="p-1 rounded-lg text-amber-500 hover:text-amber-700 dark:hover:text-amber-100 hover:bg-amber-500/10 transition-colors cursor-pointer shrink-0"
+            title="Cerrar notificación"
+          >
+            <X className="w-4 h-4" />
+          </button>
         </div>
       )}
 
       {creditoLiberadoMsg && (
-        <div className="max-w-7xl w-full mx-auto mt-4 px-4 sm:px-6">
-          <div className="p-3 rounded-xl bg-emerald-500/15 border border-emerald-500/40 text-emerald-200 text-xs flex items-center justify-between gap-3">
-            <span>{creditoLiberadoMsg}</span>
-            <button
-              type="button"
-              onClick={() => setCreditoLiberadoMsg(null)}
-              className="text-emerald-300 hover:text-white cursor-pointer"
-            >
-              ✕
-            </button>
+        <div className="vidrio p-4 border border-green-500/30 bg-green-500/10 text-green-800 dark:text-green-200 rounded-xl flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3 min-w-0">
+            <CheckCircle2 className="w-5 h-5 text-green-500 shrink-0" />
+            <p className="text-xs font-sans font-medium">{creditoLiberadoMsg}</p>
           </div>
+          <button
+            type="button"
+            onClick={() => setCreditoLiberadoMsg(null)}
+            className="p-1 rounded-lg text-green-500 hover:text-green-700 dark:hover:text-green-100 hover:bg-green-500/10 transition-colors cursor-pointer shrink-0"
+            title="Cerrar notificación"
+          >
+            <X className="w-4 h-4" />
+          </button>
         </div>
       )}
 
       {cotizacionEnviada && (
-        <div className="max-w-7xl w-full mx-auto mt-4 px-4 sm:px-6">
-          <div className="p-3 rounded-xl bg-emerald-500/15 border border-emerald-500/40 text-emerald-200 text-xs flex items-center justify-between gap-3">
-            <span>
-              Cotización <strong>COT-{String(cotizacionEnviada.consecutivo).padStart(4, '0')}</strong> enviada al Administrador de Sucursal para su aval. Te aparecerá lista para facturar en &ldquo;Mis Cotizaciones&rdquo;.
-            </span>
-            <button
-              type="button"
-              onClick={() => setCotizacionEnviada(null)}
-              className="text-emerald-300 hover:text-white cursor-pointer"
-            >
-              ✕
-            </button>
+        <div className="vidrio p-4 border border-brand-500/30 bg-brand-500/10 text-brand-800 dark:text-brand-200 rounded-xl flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3 min-w-0">
+            <CheckCircle2 className="w-5 h-5 text-brand-500 shrink-0" />
+            <p className="text-xs font-sans font-medium">
+              Cotización <strong className="font-mono font-semibold">COT-{String(cotizacionEnviada.consecutivo).padStart(4, '0')}</strong> enviada al Administrador de Sucursal para su aval. Te aparecerá lista para facturar en &ldquo;Mis Cotizaciones&rdquo;.
+            </p>
           </div>
+          <button
+            type="button"
+            onClick={() => setCotizacionEnviada(null)}
+            className="p-1 rounded-lg text-brand-500 hover:text-brand-700 dark:hover:text-brand-100 hover:bg-brand-500/10 transition-colors cursor-pointer shrink-0"
+            title="Cerrar notificación"
+          >
+            <X className="w-4 h-4" />
+          </button>
         </div>
       )}
 
       {errorCatalogo && (
-        <div className="max-w-7xl w-full mx-auto mt-4 px-4 sm:px-6">
-          <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-200 text-sm">
+        <div className="vidrio p-4 border border-red-500/30 bg-red-500/10 text-red-700 dark:text-red-300 rounded-xl flex items-center gap-3">
+          <AlertTriangle className="w-5 h-5 text-red-500 shrink-0" />
+          <p className="text-xs font-sans font-medium">
             No se pudo cargar el catálogo: {errorCatalogo}
-          </div>
+          </p>
         </div>
       )}
 
-      <main className="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 flex flex-col lg:flex-row gap-6">
-        <CatalogoMultiBodega
-          productos={productos}
-          categorias={categorias}
-          filtros={filtros}
-          setFiltros={setFiltros}
-          isLoading={isLoadingCatalogo}
-          copiadoSku={copiadoSku}
-          onCopiarSku={copiarAlPortapapeles}
-          onAgregarAlCarrito={agregarAlCarrito}
-        />
+      {/* Contenido Principal: Catálogo Multi-Bodega + Panel de Cotización */}
+      <div className="flex flex-col lg:flex-row gap-6 items-start">
+        <div className="flex-1 min-w-0 w-full">
+          <CatalogoMultiBodega
+            productos={productos}
+            categorias={categorias}
+            filtros={filtros}
+            setFiltros={setFiltros}
+            isLoading={isLoadingCatalogo}
+            copiadoSku={copiadoSku}
+            onCopiarSku={copiarAlPortapapeles}
+            onAgregarAlCarrito={agregarAlCarrito}
+          />
+        </div>
 
-        <CotizacionPanel
-          items={itemsCotizacion}
-          clienteSeleccionado={clienteSeleccionado}
-          clientesDisponibles={clientes}
-          onSeleccionarCliente={setClienteSeleccionado}
-          onAbrirModalNuevoCliente={() => setIsModalClienteOpen(true)}
-          medioPago={medioPago}
-          setMedioPago={setMedioPago}
-          referenciaPago={referenciaPago}
-          setReferenciaPago={setReferenciaPago}
-          observaciones={observaciones}
-          setObservaciones={setObservaciones}
-          subtotal={subtotal}
-          iva={iva}
-          total={total}
-          onActualizarCantidad={actualizarCantidad}
-          onRemoverItem={removerItem}
-          onLimpiar={limpiarCotizacion}
-          onEnviarCotizacion={enviarCotizacionAAval}
-          isSubmitting={isSubmitting}
-          errorFactura={errorFactura}
-          onRefrescarClientes={() => void recargarClientes(undefined, false)}
-          isRefreshingClientes={isLoadingClientes}
-        />
-      </main>
+        <div className="w-full lg:w-[400px] xl:w-[440px] shrink-0">
+          <CotizacionPanel
+            items={itemsCotizacion}
+            clienteSeleccionado={clienteSeleccionado}
+            clientesDisponibles={clientes}
+            onSeleccionarCliente={setClienteSeleccionado}
+            onAbrirModalNuevoCliente={() => setIsModalClienteOpen(true)}
+            medioPago={medioPago}
+            setMedioPago={setMedioPago}
+            referenciaPago={referenciaPago}
+            setReferenciaPago={setReferenciaPago}
+            observaciones={observaciones}
+            setObservaciones={setObservaciones}
+            subtotal={subtotal}
+            iva={iva}
+            total={total}
+            onActualizarCantidad={actualizarCantidad}
+            onRemoverItem={removerItem}
+            onLimpiar={limpiarCotizacion}
+            onEnviarCotizacion={enviarCotizacionAAval}
+            isSubmitting={isSubmitting}
+            errorFactura={errorFactura}
+            onRefrescarClientes={() => void recargarClientes(undefined, false)}
+            isRefreshingClientes={isLoadingClientes}
+          />
+        </div>
+      </div>
 
+      {/* Modales del Módulo */}
       <NuevoClienteB2BModal
         isOpen={isModalClienteOpen}
         onClose={() => setIsModalClienteOpen(false)}
@@ -264,6 +290,6 @@ export default function VendedorB2BPage() {
       <ComprobanteB2BModal factura={facturaEmitida} onClose={() => setFacturaEmitida(null)} />
 
       <HistorialVentasB2BModal isOpen={isHistorialOpen} onClose={() => setIsHistorialOpen(false)} />
-    </div>
+    </VendedorB2BLayout>
   );
 }
