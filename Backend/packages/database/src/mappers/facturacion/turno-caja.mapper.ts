@@ -11,5 +11,8 @@ export function turnoCajaFromRow(row: TurnoCajaRecord): TurnoCaja {
         row.fecha_cierre,
         row.fondo_final !== null && row.fondo_final !== undefined ? Number(row.fondo_final) : null,
         row.diferencia !== null && row.diferencia !== undefined ? Number(row.diferencia) : null,
+        (row.tipo_cierre as 'normal' | 'administrativo') ?? 'normal',
+        row.cerrado_por ?? null,
+        row.motivo_cierre ?? null,
     );
 }

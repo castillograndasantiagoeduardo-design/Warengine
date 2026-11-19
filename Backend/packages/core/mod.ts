@@ -188,6 +188,9 @@ export * from './src/modules/facturacion/application/use-cases/AbrirTurnoCajaUse
 export * from './src/modules/facturacion/application/use-cases/ObtenerTurnoActualUseCase.ts';
 export * from './src/modules/facturacion/application/use-cases/ListarTurnosAbiertosUseCase.ts';
 export * from './src/modules/facturacion/application/use-cases/CerrarTurnoCajaUseCase.ts';
+export * from './src/modules/facturacion/application/use-cases/CerrarTurnoAdministrativoUseCase.ts';
+export * from './src/modules/facturacion/application/use-cases/ConsultarHistorialTurnosUseCase.ts';
+export * from './src/modules/facturacion/application/use-cases/ObtenerCorteTurnoUseCase.ts';
 export * from './src/modules/facturacion/domain/entities/Cliente.ts';
 export * from './src/modules/facturacion/domain/entities/Factura.ts';
 export * from './src/modules/facturacion/domain/entities/FacturaItem.ts';

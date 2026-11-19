@@ -115,6 +115,12 @@ export const PERMISOS = [
     modulo: 'facturacion',
     descripcion: 'Emitir alertas directas al administrador de sucursal',
   },
+  {
+    id_permiso: 30,
+    codigo: 'caja:cierre-administrativo',
+    modulo: 'facturacion',
+    descripcion: 'Cierre forzado y administrativo de turnos de caja',
+  },
 
   // Módulo: Administración
   {
@@ -244,6 +250,7 @@ export const ASIGNACIONES: Record<string, string[]> = {
     'administracion:gestionar-personal',
     'administracion:ver-metricas-sucursal',
     'administracion:gestionar-alertas',
+    'caja:cierre-administrativo',
     ...PERMISOS_LOGISTICA,
     'mcp:consultar',
     'mcp:ejecutar-herramientas',

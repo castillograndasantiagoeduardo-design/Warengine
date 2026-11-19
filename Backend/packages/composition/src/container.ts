@@ -131,6 +131,9 @@ import {
   RestablecerPasswordUsuarioUseCase,
   AbrirTurnoCajaUseCase,
   CerrarTurnoCajaUseCase,
+  CerrarTurnoAdministrativoUseCase,
+  ConsultarHistorialTurnosUseCase,
+  ObtenerCorteTurnoUseCase,
   ObtenerTurnoActualUseCase,
   ListarTurnosAbiertosUseCase,
   AsignarSucursalesUsuarioUseCase,
@@ -291,6 +294,9 @@ export interface AppContainer {
     buscarClientes: BuscarClientesUseCase;
     abrirTurnoCaja: AbrirTurnoCajaUseCase;
     cerrarTurnoCaja: CerrarTurnoCajaUseCase;
+    cerrarTurnoAdministrativo: CerrarTurnoAdministrativoUseCase;
+    consultarHistorialTurnos: ConsultarHistorialTurnosUseCase;
+    obtenerCorteTurno: ObtenerCorteTurnoUseCase;
     obtenerTurnoActual: ObtenerTurnoActualUseCase;
     listarTurnosAbiertos: ListarTurnosAbiertosUseCase;
     crearFactura: CrearFacturaUseCase;
@@ -581,6 +587,19 @@ export function createContainer(_env?: Record<string, string>): AppContainer {
     turnoCajaRepository,
   );
   const cerrarTurnoCajaUseCase = new CerrarTurnoCajaUseCase(turnoCajaRepository, auditoriaRepository);
+  const cerrarTurnoAdministrativoUseCase = new CerrarTurnoAdministrativoUseCase(
+    turnoCajaRepository,
+    resolverAlcanceSucursalUseCase,
+    auditoriaRepository,
+  );
+  const consultarHistorialTurnosUseCase = new ConsultarHistorialTurnosUseCase(
+    turnoCajaRepository,
+    resolverAlcanceSucursalUseCase,
+  );
+  const obtenerCorteTurnoUseCase = new ObtenerCorteTurnoUseCase(
+    turnoCajaRepository,
+    resolverAlcanceSucursalUseCase,
+  );
   const crearFacturaUseCase = new CrearFacturaUseCase(
     facturaRepository,
     turnoCajaRepository,
@@ -947,6 +966,9 @@ export function createContainer(_env?: Record<string, string>): AppContainer {
       buscarClientes: buscarClientesUseCase,
       abrirTurnoCaja: abrirTurnoCajaUseCase,
       cerrarTurnoCaja: cerrarTurnoCajaUseCase,
+      cerrarTurnoAdministrativo: cerrarTurnoAdministrativoUseCase,
+      consultarHistorialTurnos: consultarHistorialTurnosUseCase,
+      obtenerCorteTurno: obtenerCorteTurnoUseCase,
       obtenerTurnoActual: obtenerTurnoActualUseCase,
       listarTurnosAbiertos: listarTurnosAbiertosUseCase,
       crearFactura: crearFacturaUseCase,

@@ -24,6 +24,7 @@ export const PERMISSIONS = {
   FACTURACION_DEVOLUCION: 'facturacion:devolucion',
   FACTURACION_CONSULTAR: 'facturacion:consultar',
   FACTURACION_GESTIONAR_CLIENTES: 'facturacion:gestionar-clientes',
+  CAJA_CIERRE_ADMINISTRATIVO: 'caja:cierre-administrativo',
 
   // Administración
   ADMIN_GESTIONAR_SUCURSALES: 'administracion:gestionar-sucursales',

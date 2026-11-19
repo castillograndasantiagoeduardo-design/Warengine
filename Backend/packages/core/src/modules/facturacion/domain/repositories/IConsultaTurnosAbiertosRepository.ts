@@ -10,6 +10,7 @@ export interface TurnoAbiertoResumen {
   /** Facturas emitidas (no anuladas) dentro del turno. */
   cantidadVentas: number;
   totalVentas: number;
+  efectivoEsperado?: number;
 }
 
 export interface IConsultaTurnosAbiertosRepository {

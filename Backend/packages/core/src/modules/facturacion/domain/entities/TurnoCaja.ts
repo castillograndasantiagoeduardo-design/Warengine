@@ -8,6 +8,9 @@ export class TurnoCaja {
         public readonly fechaCierre: Date | null,
         public readonly fondoFinal: number | null = null,
         public readonly diferencia: number | null = null,
+        public readonly tipoCierre: 'normal' | 'administrativo' = 'normal',
+        public readonly cerradoPor: string | null = null,
+        public readonly motivoCierre: string | null = null,
     ) { }
 
     /** Un turno está abierto mientras no tenga fecha de cierre. */

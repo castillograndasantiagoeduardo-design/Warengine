@@ -197,7 +197,7 @@ export function BranchOverviewView({
             turnosAbiertos={data.requiereAtencion?.turnosAbiertos}
             onVerInventario={() => router.push('/admin-sucursal/inventario')}
             onVerFacturas={() => router.push('/admin-sucursal/facturacion')}
-            onVerTurnos={() => router.push('/admin-sucursal/personal')}
+            onVerTurnos={() => router.push('/admin-sucursal/personal/turnos')}
             className="flex-1"
           />
         </div>

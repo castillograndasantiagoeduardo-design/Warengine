@@ -13,7 +13,10 @@ import {
 import {
     abrirTurnoCajaController,
     cerrarTurnoCajaController,
+    cerrarTurnoAdministrativoController,
+    listarHistorialTurnosController,
     listarTurnosAbiertosController,
+    obtenerCorteTurnoController,
     obtenerTurnoActualController,
 } from '../controllers/facturacion/turno-caja.controller.ts';
 
@@ -39,9 +42,12 @@ export function createFacturacionRoutes(container: AppContainer): Hono {
     // Turnos de caja (RF-FMC-A1..A4)
     api.post('/turnos', authMiddleware(container, PERMISSIONS.FACTURACION_ABRIR_TURNO), abrirTurnoCajaController(container));
     api.post('/turnos/:id/cerrar', authMiddleware(container, PERMISSIONS.FACTURACION_ABRIR_TURNO), cerrarTurnoCajaController(container));
+    api.post('/turnos/:id/cierre-administrativo', authMiddleware(container, PERMISSIONS.CAJA_CIERRE_ADMINISTRATIVO), cerrarTurnoAdministrativoController(container));
     api.get('/turnos/actual', authMiddleware(container, PERMISSIONS.FACTURACION_FACTURAR), obtenerTurnoActualController(container));
     // Cajeros en turno de la sede (tablero del admin de sucursal); acotado por alcance
     api.get('/turnos/abiertos', authMiddleware(container, PERMISSIONS.FACTURACION_CONSULTAR), listarTurnosAbiertosController(container));
+    api.get('/turnos/historial', authMiddleware(container, PERMISSIONS.FACTURACION_CONSULTAR), listarHistorialTurnosController(container));
+    api.get('/turnos/:id/corte', authMiddleware(container, PERMISSIONS.FACTURACION_CONSULTAR), obtenerCorteTurnoController(container));
 
     // Facturación mostrador y B2B
     api.post('/facturas', authMiddleware(container, PERMISSIONS.FACTURACION_FACTURAR), crearFacturaController(container, false));

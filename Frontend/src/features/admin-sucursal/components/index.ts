@@ -46,3 +46,4 @@ export * from './FondoAmbiental';
 export * from './SelectorPaleta';
 export * from './shared';
 export * from './clients';
+export * from './staff';

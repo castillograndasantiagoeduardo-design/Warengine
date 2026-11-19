@@ -259,3 +259,21 @@ Deno.test('RNF-ADM-04: no se puede ver ni editar un empleado de otra sede', asyn
   assertEquals(cambio.error.code, 'SUCURSAL_FUERA_DE_ALCANCE');
   assertEquals(eventos.length, 0);
 });
+
+Deno.test('ListarEmpleadosUseCase: soporta paginación cuando se solicita page', async () => {
+  const lista = [
+    crearEmpleadoEjemplo('emp-1', 1, 1),
+    crearEmpleadoEjemplo('emp-2', 1, 1),
+    crearEmpleadoEjemplo('emp-3', 1, 1),
+  ];
+  const useCase = new ListarEmpleadosUseCase(crearEmpleadoRepoFalso(lista), alcance([1]));
+
+  const res = await useCase.execute({ usuarioId: 'admin-central', page: 1, limite: 2 });
+  assertEquals(res.isSuccess, true);
+  const data = res.value as any;
+  assertEquals(data.total, 3);
+  assertEquals(data.totalPaginas, 2);
+  assertEquals(data.page, 1);
+  assertEquals(data.limite, 2);
+  assertEquals(data.items.length, 2);
+});
