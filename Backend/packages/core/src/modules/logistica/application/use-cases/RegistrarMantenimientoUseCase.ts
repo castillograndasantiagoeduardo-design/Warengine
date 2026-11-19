@@ -1,4 +1,4 @@
-﻿import { Result, DomainError } from '@warengine/shared-kernel';
+import { Result, DomainError } from '@warengine/shared-kernel';
 import { MantenimientoActivo } from '../../domain/entities/MantenimientoActivo.ts';
 import { ESTADOS_ACTIVO } from '../../domain/entities/Activo.ts';
 import { IActivoRepository } from '../../domain/repositories/IActivoRepository.ts';
@@ -26,10 +26,10 @@ import { TipoMantenimiento } from '../../domain/entities/MantenimientoActivo.ts'
 export interface RegistrarMantenimientoRequest {
   activoId: string;
   tipo: TipoMantenimiento;
-  proveedorId?: number;
-  fecha?: string;
-  costo?: number;
-  descripcion?: string;
+  proveedorId?: number | null;
+  fecha?: string | null;
+  costo?: number | null;
+  descripcion?: string | null;
   actor: ActorAuditoria;
 }
 
@@ -60,7 +60,7 @@ export class RegistrarMantenimientoUseCase {
     }
 
     // Validar proveedor si viene
-    if (request.proveedorId !== undefined) {
+    if (request.proveedorId !== undefined && request.proveedorId !== null) {
       const proveedor = await this.proveedorRepository.findById(request.proveedorId);
       if (!proveedor) return Result.fail(new ProveedorNoEncontradoError());
       if (!proveedor.isActive) return Result.fail(new ProveedorInactivoError());

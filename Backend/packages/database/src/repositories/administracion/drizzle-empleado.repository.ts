@@ -13,12 +13,13 @@
  * - RF-ADM-C5: Listado de empleados con filtros combinables.
  */
 
-import { and, eq, inArray, type SQL } from 'drizzle-orm';
+import { and, eq, inArray, like, or, sql, type SQL } from 'drizzle-orm';
 import { Database } from '../../client.ts';
 import { areas, empleados, sucursales } from '../../schema/administracion.schema.ts';
 import {
   ActualizarEmpleadoData,
   Empleado,
+  EmpleadosPaginadosResultado,
   FiltrosEmpleados,
   IEmpleadoRepository,
 } from '@warengine/core';
@@ -52,7 +53,7 @@ export class DrizzleEmpleadoRepository implements IEmpleadoRepository {
       .leftJoin(areas, eq(empleados.area_id, areas.id_area));
   }
 
-  public async listar(filtros?: FiltrosEmpleados): Promise<Empleado[]> {
+  private construirCondiciones(filtros?: FiltrosEmpleados): SQL[] {
     const condiciones: SQL[] = [];
 
     if (filtros?.sucursalId !== undefined) {
@@ -67,12 +68,62 @@ export class DrizzleEmpleadoRepository implements IEmpleadoRepository {
     if (filtros?.isActive !== undefined) {
       condiciones.push(eq(empleados.is_active, filtros.isActive ? 1 : 0));
     }
+    if (filtros?.cargo) {
+      condiciones.push(eq(empleados.cargo, filtros.cargo));
+    }
+    const qTerm = filtros?.busqueda?.trim();
+    if (qTerm) {
+      const q = `%${qTerm}%`;
+      condiciones.push(
+        or(
+          like(empleados.nombre, q),
+          like(empleados.numero_documento, q),
+          like(empleados.cargo, q),
+        )!,
+      );
+    }
+
+    return condiciones;
+  }
+
+  public async listar(filtros?: FiltrosEmpleados): Promise<Empleado[]> {
+    const condiciones = this.construirCondiciones(filtros);
 
     const rows = await this.consulta()
       .where(condiciones.length > 0 ? and(...condiciones) : undefined)
       .orderBy(empleados.nombre);
 
     return rows.map(empleadoFromRow);
+  }
+
+  public async listarPaginado(filtros: FiltrosEmpleados): Promise<EmpleadosPaginadosResultado> {
+    const condiciones = this.construirCondiciones(filtros);
+    const whereClause = condiciones.length > 0 ? and(...condiciones) : undefined;
+
+    const [conteo] = await this.db
+      .select({ total: sql<number>`COUNT(*)` })
+      .from(empleados)
+      .where(whereClause);
+
+    const total = Number(conteo?.total ?? 0);
+    const limite = Math.min(Math.max(filtros.limite ?? 20, 1), 100);
+    const page = Math.max(filtros.page ?? 1, 1);
+    const totalPaginas = Math.ceil(total / limite);
+    const offset = (page - 1) * limite;
+
+    const rows = await this.consulta()
+      .where(whereClause)
+      .orderBy(empleados.nombre)
+      .limit(limite)
+      .offset(offset);
+
+    return {
+      items: rows.map(empleadoFromRow),
+      total,
+      totalPaginas,
+      page,
+      limite,
+    };
   }
 
   public async findById(id: string): Promise<Empleado | null> {

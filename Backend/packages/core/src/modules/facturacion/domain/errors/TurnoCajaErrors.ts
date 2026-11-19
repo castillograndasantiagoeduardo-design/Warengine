@@ -48,3 +48,10 @@ export class NoEsDuenioDelTurnoError extends DomainError {
         super('Solo el operador que abrió el turno puede cerrarlo.');
     }
 }
+
+export class MotivoCierreAdministrativoInvalidoError extends DomainError {
+    public readonly code = 'MOTIVO_CIERRE_INVALIDO';
+    constructor() {
+        super('El motivo del cierre administrativo es obligatorio y debe tener al menos 5 caracteres.');
+    }
+}

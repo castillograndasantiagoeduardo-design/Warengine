@@ -23,6 +23,22 @@ export interface EmpleadoSede {
   isActive: boolean;
 }
 
+export interface EmpleadosFiltros {
+  q?: string;
+  cargo?: string;
+  isActive?: boolean;
+  page?: number;
+  limite?: number;
+}
+
+export interface EmpleadosResultadoPaginado {
+  items: EmpleadoSede[];
+  total: number;
+  totalPaginas: number;
+  page: number;
+  limite: number;
+}
+
 export interface EditarEmpleadoDTO {
   nombre?: string;
   telefono?: string | null;
@@ -36,14 +52,17 @@ export interface TurnoCajaActivo {
   id: string;
   usuarioId: string;
   usuarioNombre?: string;
+  cajeroNombre?: string | null;
+  cajeroEmail?: string;
   sucursalId: number;
   fondoInicial: number;
   fondoFinal?: number | null;
   diferencia?: number | null;
   fechaApertura: string | Date;
   fechaCierre?: string | Date | null;
-  totalVentas?: number;
-  cantidadVentas?: number;
+  totalVentas: number;
+  cantidadVentas: number;
+  efectivoEsperado?: number;
   estado: 'abierto' | 'cerrado';
 }
 
@@ -53,4 +72,77 @@ export interface AbrirTurnoDTO {
 
 export interface CerrarTurnoDTO {
   fondoFinal: number;
+}
+
+export interface CierreAdministrativoInput {
+  motivo: string;
+  fondoFinal?: number;
+}
+
+export interface HistorialTurnosFiltros {
+  desde?: string;
+  hasta?: string;
+  usuarioId?: string;
+  tipoCierre?: 'normal' | 'administrativo';
+  conDiferencia?: boolean;
+  page?: number;
+  limite?: number;
+}
+
+export interface TurnoHistorialItem {
+  id: string;
+  usuarioId: string;
+  cajeroNombre: string | null;
+  cajeroEmail: string;
+  sucursalId: number;
+  sucursalNombre?: string | null;
+  cajaNombre?: string | null;
+  fondoInicial: number;
+  fondoFinal: number | null;
+  diferencia: number | null;
+  fechaApertura: string;
+  fechaCierre: string;
+  tipoCierre: 'normal' | 'administrativo';
+  cerradoPor: string | null;
+  cerradoPorNombre?: string | null;
+  motivoCierre?: string | null;
+  totalVendido: number;
+  cantidadVentas: number;
+  efectivoEsperado: number;
+}
+
+export interface HistorialTurnosResultado {
+  items: TurnoHistorialItem[];
+  total: number;
+  totalPaginas: number;
+  page: number;
+  limite: number;
+}
+
+export interface TurnoCorteDetalle {
+  id: string;
+  usuarioId: string;
+  cajeroNombre: string | null;
+  cajeroEmail: string;
+  sucursalId: number;
+  sucursalNombre: string;
+  cajaNombre?: string | null;
+  fondoInicial: number;
+  fondoFinal: number | null;
+  diferencia: number | null;
+  fechaApertura: string;
+  fechaCierre: string | null;
+  tipoCierre: 'normal' | 'administrativo';
+  cerradoPor: string | null;
+  cerradoPorNombre?: string | null;
+  motivoCierre?: string | null;
+  cantidadVentas: number;
+  totalVentas: number;
+  ventasPorMetodo: {
+    efectivo: number;
+    tarjeta: number;
+    transferencia: number;
+    credito_corporativo: number;
+  };
+  efectivoEsperado: number;
 }

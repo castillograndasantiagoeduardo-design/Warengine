@@ -1,6 +1,7 @@
 import {
   registrarMantenimientoSchema,
   finalizarMantenimientoSchema,
+  filtrosMantenimientosSchema,
 } from '@warengine/contracts';
 import { AppContainer } from '@warengine/composition';
 import { presentResult } from '../../presenters/result.presenter.ts';
@@ -10,6 +11,21 @@ import { obtenerIdentidad } from '../../utils/identidad.ts';
 
 function esUuid(val: string | undefined): val is string {
   return typeof val === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(val);
+}
+
+export function listarMantenimientosController(container: AppContainer) {
+  return safeHandler(async (c) => {
+    const parsed = filtrosMantenimientosSchema.safeParse(c.req.query());
+    if (!parsed.success) {
+      return c.json({ error: 'VALIDATION_ERROR', issues: parsed.error.errors }, 400);
+    }
+    const identidad = obtenerIdentidad(c);
+    const result = await container.logistica.listarMantenimientos.execute({
+      usuarioId: identidad.usuarioId,
+      ...parsed.data,
+    });
+    return presentResult(c, result);
+  });
 }
 
 export function registrarMantenimientoController(container: AppContainer) {

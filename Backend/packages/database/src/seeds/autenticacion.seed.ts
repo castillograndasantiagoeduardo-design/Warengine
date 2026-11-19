@@ -133,6 +133,12 @@ export const PERMISOS = [
     modulo: 'facturacion',
     descripcion: 'Aprobar o rechazar cupos de crédito corporativo B2B (exclusivo Super Admin)',
   },
+  {
+    id_permiso: 33,
+    codigo: 'caja:cierre-administrativo',
+    modulo: 'facturacion',
+    descripcion: 'Cierre forzado y administrativo de turnos de caja',
+  },
 
   // Módulo: Administración
   {
@@ -264,6 +270,7 @@ export const ASIGNACIONES: Record<string, string[]> = {
     'administracion:gestionar-personal',
     'administracion:ver-metricas-sucursal',
     'administracion:gestionar-alertas',
+    'caja:cierre-administrativo',
     ...PERMISOS_LOGISTICA,
     'mcp:consultar',
     'mcp:ejecutar-herramientas',

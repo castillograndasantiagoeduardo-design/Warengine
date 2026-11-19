@@ -1,4 +1,4 @@
-﻿import { Result, DomainError } from '@warengine/shared-kernel';
+import { Result, DomainError } from '@warengine/shared-kernel';
 import { MantenimientoActivo } from '../../domain/entities/MantenimientoActivo.ts';
 import { IActivoRepository } from '../../domain/repositories/IActivoRepository.ts';
 import { IMantenimientoActivoRepository } from '../../domain/repositories/IMantenimientoActivoRepository.ts';
@@ -19,9 +19,9 @@ import {
 
 export interface FinalizarMantenimientoRequest {
   mantenimientoId: string;
-  fechaFin?: string;
-  costo?: number;
-  descripcion?: string;
+  fechaFin?: string | null;
+  costo?: number | null;
+  descripcion?: string | null;
   actor: ActorAuditoria;
 }
 
@@ -61,8 +61,8 @@ export class FinalizarMantenimientoUseCase {
 
     const finalizado = await this.mantenimientoRepository.finalizar(mantenimiento.id, {
       fechaFin,
-      costo: request.costo,
-      descripcion: request.descripcion,
+      costo: request.costo ?? undefined,
+      descripcion: request.descripcion ?? undefined,
     });
 
     await this.auditor.registrar({

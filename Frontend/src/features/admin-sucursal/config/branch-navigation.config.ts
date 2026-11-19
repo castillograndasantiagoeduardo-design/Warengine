@@ -184,4 +184,48 @@ export const INVOICING_SECTION_TABS: readonly BranchTabItem[] = [
   },
 ] as const;
 
+/**
+ * Pestañas de navegación del submódulo de Personal (/admin-sucursal/personal/**).
+ */
+export const STAFF_SECTION_TABS: readonly BranchTabItem[] = [
+  {
+    id: 'empleados',
+    label: 'Empleados',
+    href: '/admin-sucursal/personal',
+    exact: true,
+  },
+  {
+    id: 'turnos',
+    label: 'Turnos activos',
+    href: '/admin-sucursal/personal/turnos',
+  },
+  {
+    id: 'historial',
+    label: 'Historial',
+    href: '/admin-sucursal/personal/historial',
+  },
+] as const;
+
+/**
+ * Pestañas de navegación del submódulo de Activos (/admin-sucursal/activos/**).
+ */
+export const ASSETS_SECTION_TABS: readonly BranchTabItem[] = [
+  {
+    id: 'activos',
+    label: 'Activos',
+    href: '/admin-sucursal/activos',
+    exact: true,
+  },
+  {
+    id: 'mantenimientos',
+    label: 'Mantenimientos',
+    href: '/admin-sucursal/activos/mantenimientos',
+  },
+  {
+    id: 'categorias',
+    label: 'Categorías',
+    href: '/admin-sucursal/activos/categorias',
+  },
+] as const;
+
 export const DEFAULT_DASHBOARD_PERIODO: DashboardPeriodo = 'hoy';

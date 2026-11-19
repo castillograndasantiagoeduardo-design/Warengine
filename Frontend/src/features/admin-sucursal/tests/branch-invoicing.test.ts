@@ -6,15 +6,19 @@ import {
 } from '../config/branch-navigation.config.ts';
 
 describe('branch-invoicing — Configuración de pestañas y reglas de negocio', () => {
-  it('define las pestañas de facturación (Facturas y Alertas) con rutas bajo /admin-sucursal/facturacion', () => {
-    assert.equal(INVOICING_SECTION_TABS.length, 2);
+  it('define las pestañas de facturación (Facturas, Alertas y Cotizaciones B2B) con rutas bajo /admin-sucursal/facturacion', () => {
+    assert.equal(INVOICING_SECTION_TABS.length, 3);
     assert.deepEqual(
       INVOICING_SECTION_TABS.map((t) => t.id),
-      ['facturas', 'alertas'],
+      ['facturas', 'alertas', 'cotizaciones'],
     );
     assert.deepEqual(
       INVOICING_SECTION_TABS.map((t) => t.href),
-      ['/admin-sucursal/facturacion', '/admin-sucursal/facturacion/alertas'],
+      [
+        '/admin-sucursal/facturacion',
+        '/admin-sucursal/facturacion/alertas',
+        '/admin-sucursal/facturacion/cotizaciones',
+      ],
     );
   });
 

@@ -1,6 +1,8 @@
 import {
     abrirTurnoCajaSchema,
     cerrarTurnoCajaSchema,
+    cierreAdministrativoTurnoSchema,
+    historialTurnosQuerySchema,
     listarTurnosAbiertosQuerySchema,
 } from '@warengine/contracts';
 import { AppContainer } from '@warengine/composition';
@@ -60,6 +62,54 @@ export function cerrarTurnoCajaController(container: AppContainer) {
             turnoId: id,
             fondoFinal: parsed.data.fondoFinal,
             actor: obtenerActor(c),
+        });
+        return presentResult(c, result);
+    });
+}
+
+export function cerrarTurnoAdministrativoController(container: AppContainer) {
+    return safeHandler(async (c) => {
+        const id = c.req.param('id');
+        if (!id || id.trim() === '') {
+            return c.json({ error: 'VALIDATION_ERROR', message: 'ID del turno requerido.' }, 400);
+        }
+        const parsed = cierreAdministrativoTurnoSchema.safeParse(await leerJson(c));
+        if (!parsed.success) {
+            return c.json({ error: 'VALIDATION_ERROR', issues: parsed.error.errors }, 400);
+        }
+        const result = await container.facturacion.cerrarTurnoAdministrativo.execute({
+            turnoId: id,
+            motivo: parsed.data.motivo,
+            fondoFinal: parsed.data.fondoFinal,
+            actor: obtenerActor(c),
+        });
+        return presentResult(c, result);
+    });
+}
+
+export function listarHistorialTurnosController(container: AppContainer) {
+    return safeHandler(async (c) => {
+        const parsed = historialTurnosQuerySchema.safeParse(c.req.query());
+        if (!parsed.success) {
+            return c.json({ error: 'VALIDATION_ERROR', issues: parsed.error.errors }, 400);
+        }
+        const result = await container.facturacion.consultarHistorialTurnos.execute({
+            ...parsed.data,
+            usuarioIdPeticion: obtenerIdentidad(c).usuarioId,
+        });
+        return presentResult(c, result);
+    });
+}
+
+export function obtenerCorteTurnoController(container: AppContainer) {
+    return safeHandler(async (c) => {
+        const id = c.req.param('id');
+        if (!id || id.trim() === '') {
+            return c.json({ error: 'VALIDATION_ERROR', message: 'ID del turno requerido.' }, 400);
+        }
+        const result = await container.facturacion.obtenerCorteTurno.execute({
+            turnoId: id,
+            usuarioId: obtenerIdentidad(c).usuarioId,
         });
         return presentResult(c, result);
     });

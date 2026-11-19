@@ -1,5 +1,5 @@
 import { sql } from 'drizzle-orm';
-import { char, datetime, decimal, index, int, mysqlTable } from 'drizzle-orm/mysql-core';
+import { char, datetime, decimal, index, int, mysqlTable, text, varchar } from 'drizzle-orm/mysql-core';
 import { sucursales } from './administracion.schema.ts';
 import { usuarios } from './autenticacion.schema.ts';
 
@@ -22,6 +22,10 @@ export const turnos_caja = mysqlTable('turnos_caja', {
     fondo_inicial: decimal('fondo_inicial', { precision: 14, scale: 2 }).notNull(),
     fondo_final: decimal('fondo_final', { precision: 14, scale: 2 }),
     diferencia: decimal('diferencia', { precision: 14, scale: 2 }),
+    tipo_cierre: varchar('tipo_cierre', { length: 20 }).notNull().default('normal'),
+    cerrado_por: char('cerrado_por', { length: 36 })
+        .references(() => usuarios.id_usuario, { onDelete: 'restrict' }),
+    motivo_cierre: text('motivo_cierre'),
     fecha_apertura: datetime('fecha_apertura', { mode: 'date' })
         .notNull()
         .default(sql.raw('CURRENT_TIMESTAMP')),

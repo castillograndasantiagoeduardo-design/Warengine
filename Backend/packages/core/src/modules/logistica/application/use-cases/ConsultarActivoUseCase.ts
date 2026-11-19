@@ -1,4 +1,4 @@
-﻿import { Result, DomainError } from '@warengine/shared-kernel';
+import { Result, DomainError } from '@warengine/shared-kernel';
 import type { ActivoConsultaResponse } from '@warengine/contracts';
 import { IActivoRepository } from '../../domain/repositories/IActivoRepository.ts';
 import { IAsignacionActivoRepository } from '../../domain/repositories/IAsignacionActivoRepository.ts';
@@ -34,6 +34,7 @@ export class ConsultarActivoUseCase {
 
     const asignacionActiva = await this.asignacionRepository.findActivaPorActivo(activo.id);
     const mantenimientoEnCurso = await this.mantenimientoRepository.findEnCursoPorActivo(activo.id);
+    const mantenimientos = await this.mantenimientoRepository.listarPorActivo(activo.id);
 
     const dto: ActivoConsultaResponse = {
       id: activo.id,
@@ -56,6 +57,15 @@ export class ConsultarActivoUseCase {
           }
         : null,
       mantenimientoEnCurso: mantenimientoEnCurso !== null,
+      historialMantenimientos: mantenimientos.map((m) => ({
+        id: m.id,
+        tipo: m.tipo,
+        fecha: m.fecha,
+        fechaFin: m.fechaFin,
+        costo: m.costo,
+        descripcion: m.descripcion,
+        proveedorNombre: m.proveedorNombre,
+      })),
     };
 
     return Result.ok(dto);

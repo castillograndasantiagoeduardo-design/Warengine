@@ -142,6 +142,9 @@ import {
   RestablecerPasswordUsuarioUseCase,
   AbrirTurnoCajaUseCase,
   CerrarTurnoCajaUseCase,
+  CerrarTurnoAdministrativoUseCase,
+  ConsultarHistorialTurnosUseCase,
+  ObtenerCorteTurnoUseCase,
   ObtenerTurnoActualUseCase,
   ListarTurnosAbiertosUseCase,
   AsignarSucursalesUsuarioUseCase,
@@ -187,6 +190,7 @@ import {
   EditarCategoriaActivoUseCase,
   CambiarEstadoCategoriaActivoUseCase,
   CrearActivoUseCase,
+  EditarActivoUseCase,
   ListarActivosUseCase,
   DarBajaActivoUseCase,
   AsignarActivoEmpleadoUseCase,
@@ -195,6 +199,7 @@ import {
   ConsultarHistorialAsignacionesUseCase,
   RegistrarMantenimientoUseCase,
   FinalizarMantenimientoUseCase,
+  ListarMantenimientosUseCase,
   ConsultarHistorialMantenimientosUseCase,
   ConsultarActivoUseCase,
   RegistrarDevolucionUseCase,
@@ -305,6 +310,9 @@ export interface AppContainer {
     listarCreditosPendientes: ListarCreditosPendientesUseCase;
     abrirTurnoCaja: AbrirTurnoCajaUseCase;
     cerrarTurnoCaja: CerrarTurnoCajaUseCase;
+    cerrarTurnoAdministrativo: CerrarTurnoAdministrativoUseCase;
+    consultarHistorialTurnos: ConsultarHistorialTurnosUseCase;
+    obtenerCorteTurno: ObtenerCorteTurnoUseCase;
     obtenerTurnoActual: ObtenerTurnoActualUseCase;
     listarTurnosAbiertos: ListarTurnosAbiertosUseCase;
     crearFactura: CrearFacturaUseCase;
@@ -326,6 +334,7 @@ export interface AppContainer {
     editarCategoriaActivo: EditarCategoriaActivoUseCase;
     cambiarEstadoCategoriaActivo: CambiarEstadoCategoriaActivoUseCase;
     crearActivo: CrearActivoUseCase;
+    editarActivo: EditarActivoUseCase;
     listarActivos: ListarActivosUseCase;
     darBajaActivo: DarBajaActivoUseCase;
     asignarActivoEmpleado: AsignarActivoEmpleadoUseCase;
@@ -334,6 +343,7 @@ export interface AppContainer {
     consultarHistorialAsignaciones: ConsultarHistorialAsignacionesUseCase;
     registrarMantenimiento: RegistrarMantenimientoUseCase;
     finalizarMantenimiento: FinalizarMantenimientoUseCase;
+    listarMantenimientos: ListarMantenimientosUseCase;
     consultarHistorialMantenimientos: ConsultarHistorialMantenimientosUseCase;
     consultarActivo: ConsultarActivoUseCase;
   };
@@ -602,6 +612,19 @@ export function createContainer(_env?: Record<string, string>): AppContainer {
     turnoCajaRepository,
   );
   const cerrarTurnoCajaUseCase = new CerrarTurnoCajaUseCase(turnoCajaRepository, auditoriaRepository);
+  const cerrarTurnoAdministrativoUseCase = new CerrarTurnoAdministrativoUseCase(
+    turnoCajaRepository,
+    resolverAlcanceSucursalUseCase,
+    auditoriaRepository,
+  );
+  const consultarHistorialTurnosUseCase = new ConsultarHistorialTurnosUseCase(
+    turnoCajaRepository,
+    resolverAlcanceSucursalUseCase,
+  );
+  const obtenerCorteTurnoUseCase = new ObtenerCorteTurnoUseCase(
+    turnoCajaRepository,
+    resolverAlcanceSucursalUseCase,
+  );
   const crearFacturaUseCase = new CrearFacturaUseCase(
     facturaRepository,
     turnoCajaRepository,
@@ -782,6 +805,12 @@ export function createContainer(_env?: Record<string, string>): AppContainer {
     resolverAlcanceSucursalUseCase,
     auditoriaRepository,
   );
+  const editarActivoUseCase = new EditarActivoUseCase(
+    activoRepository,
+    categoriaActivoRepository,
+    resolverAlcanceSucursalUseCase,
+    auditoriaRepository,
+  );
   const listarActivosUseCase = new ListarActivosUseCase(activoRepository, resolverAlcanceSucursalUseCase);
   const darBajaActivoUseCase = new DarBajaActivoUseCase(activoRepository, resolverAlcanceSucursalUseCase, auditoriaRepository);
   const asignarActivoEmpleadoUseCase = new AsignarActivoEmpleadoUseCase(
@@ -821,6 +850,10 @@ export function createContainer(_env?: Record<string, string>): AppContainer {
     mantenimientoActivoRepository,
     resolverAlcanceSucursalUseCase,
     auditoriaRepository,
+  );
+  const listarMantenimientosUseCase = new ListarMantenimientosUseCase(
+    mantenimientoActivoRepository,
+    resolverAlcanceSucursalUseCase,
   );
   const consultarHistorialMantenimientosUseCase = new ConsultarHistorialMantenimientosUseCase(
     activoRepository,
@@ -1020,6 +1053,9 @@ export function createContainer(_env?: Record<string, string>): AppContainer {
       listarCreditosPendientes: listarCreditosPendientesUseCase,
       abrirTurnoCaja: abrirTurnoCajaUseCase,
       cerrarTurnoCaja: cerrarTurnoCajaUseCase,
+      cerrarTurnoAdministrativo: cerrarTurnoAdministrativoUseCase,
+      consultarHistorialTurnos: consultarHistorialTurnosUseCase,
+      obtenerCorteTurno: obtenerCorteTurnoUseCase,
       obtenerTurnoActual: obtenerTurnoActualUseCase,
       listarTurnosAbiertos: listarTurnosAbiertosUseCase,
       crearFactura: crearFacturaUseCase,
@@ -1041,6 +1077,7 @@ export function createContainer(_env?: Record<string, string>): AppContainer {
       editarCategoriaActivo: editarCategoriaActivoUseCase,
       cambiarEstadoCategoriaActivo: cambiarEstadoCategoriaActivoUseCase,
       crearActivo: crearActivoUseCase,
+      editarActivo: editarActivoUseCase,
       listarActivos: listarActivosUseCase,
       darBajaActivo: darBajaActivoUseCase,
       asignarActivoEmpleado: asignarActivoEmpleadoUseCase,
@@ -1049,6 +1086,7 @@ export function createContainer(_env?: Record<string, string>): AppContainer {
       consultarHistorialAsignaciones: consultarHistorialAsignacionesUseCase,
       registrarMantenimiento: registrarMantenimientoUseCase,
       finalizarMantenimiento: finalizarMantenimientoUseCase,
+      listarMantenimientos: listarMantenimientosUseCase,
       consultarHistorialMantenimientos: consultarHistorialMantenimientosUseCase,
       consultarActivo: consultarActivoUseCase,
     },

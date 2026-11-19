@@ -26,10 +26,12 @@ export function listarEmpleadosController(container: AppContainer) {
     if (!parsed.success) {
       return c.json({ error: 'VALIDATION_ERROR', issues: parsed.error.errors }, 400);
     }
+    const busqueda = parsed.data.busqueda || parsed.data.q;
     return presentResult(
       c,
       await container.administracion.listarEmpleados.execute({
         ...parsed.data,
+        busqueda,
         usuarioId: obtenerIdentidad(c).usuarioId,
       }),
     );

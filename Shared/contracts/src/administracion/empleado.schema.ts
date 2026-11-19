@@ -62,7 +62,37 @@ export const listarEmpleadosQuerySchema = z.object({
     .enum(['true', 'false', '1', '0'])
     .transform((val) => val === 'true' || val === '1')
     .optional(),
+  busqueda: z.string().trim().optional(),
+  q: z.string().trim().optional(),
+  cargo: z.string().trim().optional(),
+  page: z.coerce.number().int().positive().optional(),
+  limite: z.coerce.number().int().positive().max(100).optional(),
 });
+
+export interface EmpleadoDto {
+  id: string;
+  tipoDocumento: string;
+  numeroDocumento: string;
+  nombre: string;
+  telefono: string | null;
+  direccion: string | null;
+  cargo: string | null;
+  areaId: number | null;
+  areaNombre: string | null;
+  sucursalId: number;
+  sucursalNombre: string;
+  fechaIngreso: string;
+  sueldoActual: number | null;
+  isActive: boolean;
+}
+
+export interface EmpleadosPaginadosDto {
+  items: EmpleadoDto[];
+  total: number;
+  totalPaginas: number;
+  page: number;
+  limite: number;
+}
 
 export type EditarEmpleadoInput = z.infer<typeof editarEmpleadoSchema>;
 export type ListarEmpleadosQuery = z.infer<typeof listarEmpleadosQuerySchema>;

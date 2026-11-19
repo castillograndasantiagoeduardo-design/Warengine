@@ -1,4 +1,4 @@
-﻿import { Hono } from 'hono';
+import { Hono } from 'hono';
 import { AppContainer } from '@warengine/composition';
 import { authMiddleware } from '../middlewares/auth.middleware.ts';
 import {
@@ -9,6 +9,7 @@ import {
 } from '../controllers/logistica/categoria-activo.controller.ts';
 import {
   crearActivoController,
+  editarActivoController,
   listarActivosController,
   consultarActivoController,
   darBajaActivoController,
@@ -20,6 +21,7 @@ import {
   consultarHistorialAsignacionesController,
 } from '../controllers/logistica/asignacion.controller.ts';
 import {
+  listarMantenimientosController,
   registrarMantenimientoController,
   finalizarMantenimientoController,
   consultarHistorialMantenimientosController,
@@ -43,6 +45,7 @@ export function createLogisticaRoutes(container: AppContainer): Hono {
   api.get('/activos', authMiddleware(container, PERMISO_LEER), listarActivosController(container));
   api.post('/activos', authMiddleware(container, PERMISO_GESTIONAR), crearActivoController(container));
   api.get('/activos/:id', authMiddleware(container, PERMISO_LEER), consultarActivoController(container));
+  api.put('/activos/:id', authMiddleware(container, PERMISO_GESTIONAR), editarActivoController(container));
   api.put('/activos/:id/baja', authMiddleware(container, PERMISO_GESTIONAR), darBajaActivoController(container));
 
   // Asignaciones (RF-LOG-B1, B2, B3, B4, B5)
@@ -52,6 +55,7 @@ export function createLogisticaRoutes(container: AppContainer): Hono {
   api.get('/activos/:id/asignaciones', authMiddleware(container, PERMISO_LEER), consultarHistorialAsignacionesController(container));
 
   // Mantenimientos (RF-LOG-C1, C2, C3)
+  api.get('/mantenimientos', authMiddleware(container, PERMISO_LEER), listarMantenimientosController(container));
   api.post('/activos/:id/mantenimientos', authMiddleware(container, PERMISO_MANTENIMIENTO), registrarMantenimientoController(container));
   api.get('/activos/:id/mantenimientos', authMiddleware(container, PERMISO_LEER), consultarHistorialMantenimientosController(container));
   api.put('/mantenimientos/:id/finalizar', authMiddleware(container, PERMISO_MANTENIMIENTO), finalizarMantenimientoController(container));

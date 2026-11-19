@@ -1,18 +1,3 @@
-/**
- * IEmpleadoRepository.ts
- *
- * Puerto (Port) de repositorio para la consulta y actualización de empleados.
- *
- * Rol en la arquitectura:
- * - Capa de Dominio (Puertos de Repositorio).
- * - Permite al caso de uso de edición de empleados interactuar con la base de datos
- *   de forma agnóstica a la tecnología subyacente.
- *
- * Requisito SRS:
- * - RF-ADM-C12: Edición independiente de datos de empleados.
- * - RF-ADM-C5: Listado y filtrado de personal.
- */
-
 import { Empleado } from '../entities/Empleado.ts';
 
 export interface FiltrosEmpleados {
@@ -21,6 +6,18 @@ export interface FiltrosEmpleados {
   sucursalIds?: number[];
   areaId?: number;
   isActive?: boolean;
+  busqueda?: string;
+  cargo?: string;
+  page?: number;
+  limite?: number;
+}
+
+export interface EmpleadosPaginadosResultado {
+  items: Empleado[];
+  total: number;
+  totalPaginas: number;
+  page: number;
+  limite: number;
 }
 
 export interface ActualizarEmpleadoData {
@@ -34,6 +31,7 @@ export interface ActualizarEmpleadoData {
 
 export interface IEmpleadoRepository {
   listar(filtros?: FiltrosEmpleados): Promise<Empleado[]>;
+  listarPaginado?(filtros: FiltrosEmpleados): Promise<EmpleadosPaginadosResultado>;
   findById(id: string): Promise<Empleado | null>;
   actualizarDatos(id: string, data: ActualizarEmpleadoData): Promise<Empleado>;
 }
