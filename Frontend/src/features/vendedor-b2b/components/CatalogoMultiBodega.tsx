@@ -12,6 +12,9 @@
  */
 
 import React from 'react';
+import { Search, X } from 'lucide-react';
+import { Tarjeta } from '@/components/Tarjeta';
+import { Insignia } from '@/components/Insignia';
 import type { ProductoCatalogoB2B, FiltrosCatalogoB2B } from '../types';
 
 interface CatalogoMultiBodegaProps {
@@ -38,51 +41,55 @@ export function CatalogoMultiBodega({
   return (
     <div className="flex-1 flex flex-col gap-4">
       {/* Barra de Filtros y Modo Solo Lectura */}
-      <div className="p-4 rounded-2xl bg-[#14213D] border border-white/10 shadow-lg flex flex-col md:flex-row md:items-center justify-between gap-3">
-        {/* Buscador de texto */}
-        <div className="relative flex-1">
-          <input
-            type="text"
-            placeholder="Buscar por nombre o SKU corporativo..."
-            value={filtros.texto}
-            onChange={(e) => setFiltros((prev) => ({ ...prev, texto: e.target.value }))}
-            className="w-full bg-[#0d1630] border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white placeholder-white/40 focus:outline-none focus:border-[#E9B949] transition-colors"
-          />
-          {filtros.texto && (
-            <button
-              onClick={() => setFiltros((prev) => ({ ...prev, texto: '' }))}
-              className="absolute right-3 top-2.5 text-xs text-white/40 hover:text-white"
-            >
-              &times;
-            </button>
-          )}
-        </div>
+      <Tarjeta sinRelleno className="p-3.5 sm:p-4 hover:translate-y-0">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
+          {/* Buscador de texto */}
+          <div className="relative flex-1">
+            <Search className="w-3.5 h-3.5 text-text-muted absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+            <input
+              type="text"
+              placeholder="Buscar por nombre o SKU corporativo..."
+              value={filtros.texto}
+              onChange={(e) => setFiltros((prev) => ({ ...prev, texto: e.target.value }))}
+              className="w-full superficie-control rounded-xl pl-9 pr-8 py-2 text-xs text-text placeholder-text-muted focus:outline-none transition-colors"
+            />
+            {filtros.texto && (
+              <button
+                type="button"
+                onClick={() => setFiltros((prev) => ({ ...prev, texto: '' }))}
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-text-muted hover:text-text p-1 cursor-pointer"
+                title="Limpiar búsqueda"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            )}
+          </div>
 
-        {/* Selector de Categoría */}
-        <select
-          value={filtros.categoriaId || ''}
-          onChange={(e) =>
-            setFiltros((prev) => ({
-              ...prev,
-              categoriaId: e.target.value ? Number(e.target.value) : null,
-            }))
-          }
-          className="bg-[#0d1630] border border-white/10 rounded-xl px-3 py-2.5 text-xs text-white focus:outline-none focus:border-[#E9B949] transition-colors cursor-pointer"
-        >
-          <option value="">Todas las Categorías</option>
-          {categorias.map((cat) => (
-            <option key={cat.id} value={cat.id}>
-              {cat.nombre}
-            </option>
-          ))}
-        </select>
+          {/* Selector de Categoría */}
+          <select
+            value={filtros.categoriaId || ''}
+            onChange={(e) =>
+              setFiltros((prev) => ({
+                ...prev,
+                categoriaId: e.target.value ? Number(e.target.value) : null,
+              }))
+            }
+            className="superficie-control rounded-xl px-3 py-2 text-xs text-text focus:outline-none cursor-pointer"
+          >
+            <option value="" className="bg-bg text-text">Todas las categorías</option>
+            {categorias.map((cat) => (
+              <option key={cat.id} value={cat.id} className="bg-bg text-text">
+                {cat.nombre}
+              </option>
+            ))}
+          </select>
 
-        {/* Indicador Visual 'Solo Lectura' (RF-FMC-C3) */}
-        <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-blue-500/10 border border-blue-500/30 text-blue-300 text-[11px] font-medium select-none">
-          <span className="w-2 h-2 rounded-full bg-blue-400 animate-pulse" />
-          Modo Consulta (Solo Lectura)
+          {/* Indicador Visual 'Solo Lectura' (RF-FMC-C3) */}
+          <Insignia variante="info" conPunto tamano="md" className="shrink-0 select-none">
+            Modo consulta (solo lectura)
+          </Insignia>
         </div>
-      </div>
+      </Tarjeta>
 
       {/* Contenido del Catálogo */}
       {isLoading ? (
