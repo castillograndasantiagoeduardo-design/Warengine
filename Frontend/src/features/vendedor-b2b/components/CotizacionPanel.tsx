@@ -8,7 +8,7 @@
  */
 
 import React from 'react';
-import { UserPlus, RefreshCw } from 'lucide-react';
+import { UserPlus, RefreshCw, Trash2 } from 'lucide-react';
 import { Tarjeta } from '@/components/Tarjeta';
 import { Insignia } from '@/components/Insignia';
 import type {
@@ -164,185 +164,192 @@ export function CotizacionPanel({
       </Tarjeta>
 
       {/* Carrito / Lista de Ítems */}
-      <div className="p-4 rounded-2xl bg-[#14213D] border border-white/10 shadow-lg flex-1 flex flex-col justify-between">
-        <div>
-          <div className="flex items-center justify-between pb-2 border-b border-white/10 mb-3">
-            <h2 className="text-xs font-bold text-[#E9B949] uppercase tracking-wider">
-              Orden Comercial ({items.length})
-            </h2>
-            {items.length > 0 && (
-              <button
-                type="button"
-                onClick={onLimpiar}
-                className="text-[10px] text-red-300 hover:underline cursor-pointer"
-              >
-                Vaciar orden
-              </button>
-            )}
-          </div>
-
-          {items.length === 0 ? (
-            <div className="py-8 text-center text-xs text-white/40">
-              No hay productos en la orden comercial. Selecciona ítems del catálogo.
-            </div>
-          ) : (
-            <div className="max-h-[260px] overflow-y-auto space-y-2 pr-1">
-              {items.map((item) => (
-                <div
-                  key={item.productoId}
-                  className="p-2.5 rounded-xl bg-[#0d1630] border border-white/5 text-xs flex items-center justify-between gap-2"
-                >
-                  <div className="flex-1 min-w-0">
-                    <p className="font-medium text-white truncate">{item.nombre}</p>
-                    <p className="text-[10px] text-white/50">
-                      ${item.precioUnitario.toLocaleString('es-CO')} c/u
-                    </p>
-                  </div>
-
-                  {/* Controles de cantidad */}
-                  <div className="flex items-center gap-1 bg-[#14213D] rounded-lg border border-white/10 px-1 py-0.5">
-                    <button
-                      type="button"
-                      onClick={() => onActualizarCantidad(item.productoId, item.cantidad - 1)}
-                      className="w-5 h-5 flex items-center justify-center text-white/70 hover:text-white"
-                    >
-                      -
-                    </button>
-                    <span className="w-5 text-center font-mono text-white text-[11px]">
-                      {item.cantidad}
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() => onActualizarCantidad(item.productoId, item.cantidad + 1)}
-                      className="w-5 h-5 flex items-center justify-center text-white/70 hover:text-white"
-                    >
-                      +
-                    </button>
-                  </div>
-
-                  <span className="font-mono text-xs font-bold text-[#E9B949]">
-                    ${item.subtotal.toLocaleString('es-CO')}
-                  </span>
-
-                  <button
-                    type="button"
-                    onClick={() => onRemoverItem(item.productoId)}
-                    className="text-red-400 hover:text-red-300 text-xs px-1"
-                  >
-                    &times;
-                  </button>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* Medio de Pago y Totales */}
-        <div className="pt-3 border-t border-white/10 mt-3 space-y-3">
-          {/* Selector de Medio de Pago Corporativo */}
+      <Tarjeta
+        titulo={`Orden comercial (${items.length})`}
+        accion={
+          items.length > 0 ? (
+            <button
+              type="button"
+              onClick={onLimpiar}
+              className="text-xs font-sans font-medium text-red-600 dark:text-red-400 hover:underline cursor-pointer transition-colors"
+            >
+              Vaciar orden
+            </button>
+          ) : undefined
+        }
+        className="flex-1 flex flex-col justify-between hover:translate-y-0"
+      >
+        <div className="flex-1 flex flex-col justify-between">
           <div>
-            <label className="text-[10px] text-white/60 block uppercase mb-1">
-              Condición / Medio de Pago
-            </label>
-            <div className="grid grid-cols-2 gap-2">
-              <button
-                type="button"
-                onClick={() => setMedioPago('credito_corporativo')}
-                disabled={!clienteSeleccionado?.creditoHabilitado}
-                title={
-                  clienteSeleccionado?.creditoHabilitado
-                    ? undefined
-                    : 'El cliente no tiene crédito corporativo habilitado por un administrador'
-                }
-                className={`disabled:opacity-40 disabled:cursor-not-allowed py-1.5 px-2 rounded-xl text-xs font-medium border transition-colors cursor-pointer ${
-                  medioPago === 'credito_corporativo'
-                    ? 'border-[#E9B949] bg-[#E9B949]/20 text-[#E9B949]'
-                    : 'border-white/10 text-white/70 hover:bg-white/5'
-                }`}
-              >
-                Crédito Corp. ({clienteSeleccionado?.plazoCreditoDias ?? 30}d)
-              </button>
+            {items.length === 0 ? (
+              <div className="py-8 text-center text-xs font-sans text-text-muted">
+                No hay productos en la orden comercial. Selecciona ítems del catálogo.
+              </div>
+            ) : (
+              <div className="max-h-[260px] overflow-y-auto space-y-2 pr-1 custom-scrollbar">
+                {items.map((item) => (
+                  <div
+                    key={item.productoId}
+                    className="p-2.5 rounded-xl superficie-control text-xs flex items-center justify-between gap-2"
+                  >
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium text-text truncate">{item.nombre}</p>
+                      <p className="text-[11px] text-text-muted tabular-nums">
+                        ${item.precioUnitario.toLocaleString('es-CO')} c/u
+                      </p>
+                    </div>
 
-              <button
-                type="button"
-                onClick={() => setMedioPago('transferencia')}
-                className={`py-1.5 px-2 rounded-xl text-xs font-medium border transition-colors cursor-pointer ${
-                  medioPago === 'transferencia'
-                    ? 'border-[#E9B949] bg-[#E9B949]/20 text-[#E9B949]'
-                    : 'border-white/10 text-white/70 hover:bg-white/5'
-                }`}
-              >
-                Transferencia
-              </button>
-            </div>
+                    {/* Controles de cantidad */}
+                    <div className="flex items-center gap-1 bg-bg/50 rounded-lg border border-border px-1 py-0.5">
+                      <button
+                        type="button"
+                        onClick={() => onActualizarCantidad(item.productoId, item.cantidad - 1)}
+                        className="w-5 h-5 flex items-center justify-center text-text-muted hover:text-text rounded transition-colors cursor-pointer"
+                        aria-label="Disminuir cantidad"
+                      >
+                        -
+                      </button>
+                      <span className="w-5 text-center font-mono text-text text-[11px] tabular-nums">
+                        {item.cantidad}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => onActualizarCantidad(item.productoId, item.cantidad + 1)}
+                        className="w-5 h-5 flex items-center justify-center text-text-muted hover:text-text rounded transition-colors cursor-pointer"
+                        aria-label="Aumentar cantidad"
+                      >
+                        +
+                      </button>
+                    </div>
 
-            {medioPago === 'transferencia' && (
-              <input
-                type="text"
-                placeholder="Número de comprobante o referencia bancaria..."
-                value={referenciaPago}
-                onChange={(e) => setReferenciaPago(e.target.value)}
-                className="w-full mt-2 bg-[#0d1630] border border-white/10 rounded-xl px-3 py-1.5 text-xs text-white focus:outline-none focus:border-[#E9B949]"
-              />
-            )}
-            {setObservaciones && (
-              <input
-                type="text"
-                placeholder="Observaciones para el Admin de Sucursal (opcional)..."
-                value={observaciones}
-                onChange={(e) => setObservaciones(e.target.value)}
-                className="w-full mt-2 bg-[#0d1630] border border-white/10 rounded-xl px-3 py-1.5 text-xs text-white focus:outline-none focus:border-[#E9B949]"
-              />
+                    <span className="font-mono text-xs font-semibold text-text tabular-nums">
+                      ${item.subtotal.toLocaleString('es-CO')}
+                    </span>
+
+                    <button
+                      type="button"
+                      onClick={() => onRemoverItem(item.productoId)}
+                      className="text-text-muted hover:text-red-500 text-xs p-1 rounded-lg transition-colors cursor-pointer"
+                      title="Eliminar producto"
+                      aria-label="Eliminar producto"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                ))}
+              </div>
             )}
           </div>
 
-          {/* Desglose de Totales */}
-          <div className="space-y-1 text-xs">
-            <div className="flex justify-between text-white/60">
-              <span>Subtotal:</span>
-              <span className="tabular-nums">${subtotal.toLocaleString('es-CO')}</span>
+          {/* Medio de Pago y Totales */}
+          <div className="pt-3 border-t border-border mt-3 space-y-3">
+            {/* Selector de Medio de Pago Corporativo */}
+            <div>
+              <label className="text-[11px] font-sans font-medium text-text-muted block mb-1.5">
+                Condición / Medio de pago
+              </label>
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  onClick={() => setMedioPago('credito_corporativo')}
+                  disabled={!clienteSeleccionado?.creditoHabilitado}
+                  title={
+                    clienteSeleccionado?.creditoHabilitado
+                      ? undefined
+                      : 'El cliente no tiene crédito corporativo habilitado por un administrador'
+                  }
+                  className={`disabled:opacity-40 disabled:cursor-not-allowed py-2 px-2.5 rounded-xl text-xs font-sans font-medium border transition-colors cursor-pointer text-center ${
+                    medioPago === 'credito_corporativo'
+                      ? 'bg-brand-600/15 dark:bg-brand-500/18 border-brand-600/40 dark:border-brand-400/40 text-brand-600 dark:text-brand-300 font-semibold shadow-xs'
+                      : 'superficie-control text-text-muted hover:text-text'
+                  }`}
+                >
+                  Crédito corp. ({clienteSeleccionado?.plazoCreditoDias ?? 30}d)
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setMedioPago('transferencia')}
+                  className={`py-2 px-2.5 rounded-xl text-xs font-sans font-medium border transition-colors cursor-pointer text-center ${
+                    medioPago === 'transferencia'
+                      ? 'bg-brand-600/15 dark:bg-brand-500/18 border-brand-600/40 dark:border-brand-400/40 text-brand-600 dark:text-brand-300 font-semibold shadow-xs'
+                      : 'superficie-control text-text-muted hover:text-text'
+                  }`}
+                >
+                  Transferencia
+                </button>
+              </div>
+
+              {medioPago === 'transferencia' && (
+                <input
+                  type="text"
+                  placeholder="Número de comprobante o referencia bancaria..."
+                  value={referenciaPago}
+                  onChange={(e) => setReferenciaPago(e.target.value)}
+                  className="w-full mt-2 superficie-control rounded-xl px-3 py-2 text-xs text-text placeholder-text-muted focus:outline-none"
+                />
+              )}
+              {setObservaciones && (
+                <input
+                  type="text"
+                  placeholder="Observaciones para el Admin de Sucursal (opcional)..."
+                  value={observaciones}
+                  onChange={(e) => setObservaciones(e.target.value)}
+                  className="w-full mt-2 superficie-control rounded-xl px-3 py-2 text-xs text-text placeholder-text-muted focus:outline-none"
+                />
+              )}
             </div>
-            <div className="flex justify-between text-white/60">
-              <span>IVA:</span>
-              <span className="tabular-nums">${iva.toLocaleString('es-CO')}</span>
+
+            {/* Desglose de Totales */}
+            <div className="space-y-1.5 text-xs pt-2 border-t border-border">
+              <div className="flex justify-between text-text-muted">
+                <span>Subtotal:</span>
+                <span className="tabular-nums">${subtotal.toLocaleString('es-CO')}</span>
+              </div>
+              <div className="flex justify-between text-text-muted">
+                <span>IVA:</span>
+                <span className="tabular-nums">${iva.toLocaleString('es-CO')}</span>
+              </div>
+              <div className="flex justify-between text-sm font-semibold text-text pt-1.5 border-t border-border">
+                <span className="font-titulos">Total cotizado:</span>
+                <span className="tabular-nums font-titulos font-semibold text-brand-600 dark:text-brand-400 text-base">
+                  ${total.toLocaleString('es-CO')}
+                </span>
+              </div>
             </div>
-            <div className="flex justify-between text-sm font-semibold text-white pt-1 border-t border-white/10">
-              <span>Total Cotizado:</span>
-              <span className="tabular-nums text-[#E9B949]">${total.toLocaleString('es-CO')}</span>
-            </div>
+
+            {excedeCupoDisponible && (
+              <div className="p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-800 dark:text-amber-200 text-[11px] font-sans">
+                El total supera el cupo de crédito disponible ($
+                {(clienteSeleccionado?.cupoCreditoDisponible ?? 0).toLocaleString('es-CO')} COP). Ajusta los productos o selecciona Transferencia.
+              </div>
+            )}
+
+            {errorFactura && (
+              <div className="p-2.5 rounded-xl bg-red-500/10 border border-red-500/30 text-red-700 dark:text-red-300 text-[11px] font-sans">
+                {errorFactura}
+              </div>
+            )}
+
+            {/* Botón Modo A: Enviar Cotización a Aval del Admin de Sucursal */}
+            <button
+              type="button"
+              disabled={isSubmitting || items.length === 0 || !clienteSeleccionado || excedeCupoDisponible}
+              onClick={onEnviarCotizacion}
+              className={`w-full py-2.5 px-4 rounded-xl font-sans font-medium text-xs transition-all cursor-pointer shadow-sm shadow-brand-600/30 flex items-center justify-center gap-2 ${
+                isSubmitting || items.length === 0 || !clienteSeleccionado || excedeCupoDisponible
+                  ? 'superficie-control text-text-muted opacity-50 cursor-not-allowed shadow-none'
+                  : 'bg-gradient-to-b from-brand-500 to-brand-600 hover:from-brand-600 hover:to-brand-700 text-btn-primario-texto'
+              }`}
+            >
+              {isSubmitting ? 'Enviando cotización...' : 'Enviar cotización a aval'}
+            </button>
+            <p className="text-[11px] text-center text-text-muted font-sans">
+              El Administrador de Sucursal debe dar el aval antes de poder facturar y pasar a pedido en proceso.
+            </p>
           </div>
-
-          {excedeCupoDisponible && (
-            <div className="p-2 rounded-xl bg-amber-500/20 border border-amber-500/40 text-amber-200 text-[11px]">
-              El total supera el cupo de crédito disponible ($
-              {(clienteSeleccionado?.cupoCreditoDisponible ?? 0).toLocaleString('es-CO')} COP). Ajusta los productos o selecciona Transferencia.
-            </div>
-          )}
-
-          {errorFactura && (
-            <div className="p-2 rounded-xl bg-red-500/20 border border-red-500/30 text-red-200 text-[11px]">
-              {errorFactura}
-            </div>
-          )}
-
-          {/* Botón Modo A: Enviar Cotización a Aval del Admin de Sucursal */}
-          <button
-            type="button"
-            disabled={isSubmitting || items.length === 0 || !clienteSeleccionado || excedeCupoDisponible}
-            onClick={onEnviarCotizacion}
-            className={`w-full py-3 rounded-xl font-semibold text-xs uppercase tracking-wider transition-all cursor-pointer shadow-lg ${
-              isSubmitting || items.length === 0 || !clienteSeleccionado || excedeCupoDisponible
-                ? 'bg-white/10 text-white/40 cursor-not-allowed'
-                : 'bg-gradient-to-r from-[#E9B949] to-[#b88a1f] hover:brightness-110 text-[#14213D]'
-            }`}
-          >
-            {isSubmitting ? 'Enviando Cotización...' : 'Enviar Cotización a Aval'}
-          </button>
-          <p className="text-[10px] text-center text-white/50">
-            El Admin de Sucursal debe dar el aval antes de poder facturar y pasar a pedido en proceso.
-          </p>
         </div>
-      </div>
+      </Tarjeta>
     </aside>
   );
 }
