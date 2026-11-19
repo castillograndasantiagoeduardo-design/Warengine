@@ -1,4 +1,5 @@
 export * from './VendedorB2BHeader';
+export * from './VendedorB2BSidebar';
 export * from './CatalogoMultiBodega';
 export * from './CotizacionPanel';
 export * from './NuevoClienteB2BModal';
