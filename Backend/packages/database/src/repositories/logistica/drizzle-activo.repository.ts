@@ -1,11 +1,13 @@
-﻿import { and, count, eq, exists, inArray, isNull, like, or, sql, type SQL } from 'drizzle-orm';
+import { and, count, eq, exists, inArray, isNull, like, or, sql, type SQL } from 'drizzle-orm';
 import { Database } from '../../client.ts';
 import { activos, categoriasActivos, asignacionesActivos } from '../../schema/logistica.schema.ts';
 import {
   Activo,
+  DatosActualizarActivo,
   DatosCrearActivo,
   FiltrosListarActivos,
   IActivoRepository,
+  ResumenActivos,
   ResultadoPaginado,
 } from '@warengine/core';
 import { activoFromRow, ActivoJoinRow } from '../../mappers/logistica/activo.mapper.ts';
@@ -126,11 +128,59 @@ export class DrizzleActivoRepository implements IActivoRepository {
     return (await this.findById(id)) as Activo;
   }
 
+  public async actualizar(id: string, datos: DatosActualizarActivo): Promise<Activo> {
+    const valores: Record<string, unknown> = {};
+    if (datos.nombre !== undefined) valores.nombre = datos.nombre;
+    if (datos.categoriaActivoId !== undefined) valores.categoria_activo_id = datos.categoriaActivoId;
+    if (datos.valorAdquisicion !== undefined) {
+      valores.valor_adquisicion = datos.valorAdquisicion === null ? null : datos.valorAdquisicion.toFixed(2);
+    }
+    if (datos.fechaAdquisicion !== undefined) valores.fecha_adquisicion = datos.fechaAdquisicion;
+    if (datos.condicion !== undefined) valores.condicion = datos.condicion;
+
+    if (Object.keys(valores).length > 0) {
+      await this.db
+        .update(activos)
+        .set(valores)
+        .where(eq(activos.id_activo, id));
+    }
+    return (await this.findById(id)) as Activo;
+  }
+
   public async marcarBaja(id: string): Promise<Activo> {
     await this.db
       .update(activos)
       .set({ estado: 'baja', is_active: 0 })
       .where(eq(activos.id_activo, id));
     return (await this.findById(id)) as Activo;
+  }
+
+  public async obtenerResumen(sucursalIds?: number[]): Promise<ResumenActivos> {
+    const condiciones: SQL[] = [];
+    if (sucursalIds && sucursalIds.length > 0) {
+      condiciones.push(inArray(activos.sucursal_id, sucursalIds));
+    }
+    const whereClause = condiciones.length > 0 ? and(...condiciones) : undefined;
+
+    const [row] = await this.db
+      .select({
+        total: count(),
+        disponibles: sql<number>`COALESCE(SUM(CASE WHEN ${activos.estado} = 'disponible' THEN 1 ELSE 0 END), 0)`,
+        asignados: sql<number>`COALESCE(SUM(CASE WHEN ${activos.estado} = 'asignado' THEN 1 ELSE 0 END), 0)`,
+        enMantenimiento: sql<number>`COALESCE(SUM(CASE WHEN ${activos.estado} = 'mantenimiento' THEN 1 ELSE 0 END), 0)`,
+        deBaja: sql<number>`COALESCE(SUM(CASE WHEN ${activos.estado} = 'baja' THEN 1 ELSE 0 END), 0)`,
+        valorTotal: sql<number>`COALESCE(SUM(CASE WHEN ${activos.estado} != 'baja' THEN ${activos.valor_adquisicion} ELSE 0 END), 0)`,
+      })
+      .from(activos)
+      .where(whereClause);
+
+    return {
+      total: Number(row?.total ?? 0),
+      disponibles: Number(row?.disponibles ?? 0),
+      asignados: Number(row?.asignados ?? 0),
+      enMantenimiento: Number(row?.enMantenimiento ?? 0),
+      deBaja: Number(row?.deBaja ?? 0),
+      valorTotal: Number(row?.valorTotal ?? 0),
+    };
   }
 }

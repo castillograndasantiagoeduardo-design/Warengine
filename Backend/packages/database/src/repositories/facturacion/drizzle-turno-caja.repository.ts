@@ -14,6 +14,7 @@ import {
     ResultadoHistorialTurnos,
     TurnoAbiertoResumen,
     TurnoCaja,
+    TurnoYaCerradoError,
 } from '@warengine/core';
 import type { TurnoCorteDetalleDto, TurnoHistorialItemDto } from '@warengine/contracts';
 import { turnoCajaFromRow } from '../../mappers/facturacion/turno-caja.mapper.ts';
@@ -173,10 +174,19 @@ export class DrizzleTurnoCajaRepository implements ITurnoCajaRepository, IConsul
             updateValues.diferencia = null;
         }
 
-        await this.db
+        const [result] = await this.db
             .update(turnos_caja)
             .set(updateValues)
-            .where(eq(turnos_caja.id_turno_caja, datos.turnoId));
+            .where(
+                and(
+                    eq(turnos_caja.id_turno_caja, datos.turnoId),
+                    isNull(turnos_caja.fecha_cierre),
+                ),
+            );
+
+        if (!result || (result as any).affectedRows === 0) {
+            throw new TurnoYaCerradoError();
+        }
 
         const turno = await this.findById(datos.turnoId);
         if (!turno) {

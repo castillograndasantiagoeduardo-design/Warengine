@@ -7,3 +7,5 @@ export * from './branch-staff.service';
 export * from './branch-invoicing.interface';
 export * from './branch-invoicing.service';
 export * from './branch-clients.service';
+export * from './branch-assets.interface';
+export * from './branch-assets.service';

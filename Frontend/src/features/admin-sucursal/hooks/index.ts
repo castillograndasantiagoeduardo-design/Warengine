@@ -7,3 +7,6 @@ export * from './useActiveShifts';
 export * from './useShiftHistory';
 export * from './useBranchInvoicing';
 export * from './useBranchClients';
+export * from './useBranchAssets';
+export * from './useAssetMaintenance';
+export * from './useAssetCategories';

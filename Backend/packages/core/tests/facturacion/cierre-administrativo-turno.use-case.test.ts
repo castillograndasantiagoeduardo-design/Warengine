@@ -9,6 +9,7 @@ import {
     ITurnoCajaRepository,
     ResolverAlcanceSucursalUseCase,
     TurnoCaja,
+    TurnoYaCerradoError,
 } from '../../mod.ts';
 
 class FakeAuditor implements IAuditor {
@@ -204,4 +205,21 @@ Deno.test('CerrarTurnoAdministrativo: rechaza si el turno pertenece a una sucurs
     });
     assertEquals(result.isFailure, true);
     assertEquals(result.error.code, 'SUCURSAL_FUERA_DE_ALCANCE');
+});
+
+Deno.test('CerrarTurnoAdministrativo: falla si el repositorio arroja TurnoYaCerradoError por condición de carrera atómica', async () => {
+    const turnoAbierto = makeTurno('turno-carrera', 'usr-cajero-1', 1, 50000);
+    const { useCase, repo } = armar(turnoAbierto, [1]);
+
+    // Simulamos que otro proceso cerró el turno justo después de la lectura
+    repo.cerrarAdministrativo = () => Promise.reject(new TurnoYaCerradoError());
+
+    const result = await useCase.execute({
+        turnoId: 'turno-carrera',
+        motivo: 'Cierre forzado en colisión concurrente',
+        actor: adminActor,
+    });
+
+    assertEquals(result.isFailure, true);
+    assertEquals(result.error.code, 'TURNO_YA_CERRADO');
 });

@@ -69,12 +69,20 @@ export class CerrarTurnoAdministrativoUseCase {
             throw new Error('Método cerrarAdministrativo no implementado');
         }
 
-        const turnoCerrado = await this.turnoRepository.cerrarAdministrativo({
-            turnoId: request.turnoId,
-            motivo,
-            fondoFinal,
-            cerradoPor: request.actor.usuarioId,
-        });
+        let turnoCerrado: TurnoCaja;
+        try {
+            turnoCerrado = await this.turnoRepository.cerrarAdministrativo({
+                turnoId: request.turnoId,
+                motivo,
+                fondoFinal,
+                cerradoPor: request.actor.usuarioId,
+            });
+        } catch (err) {
+            if (err instanceof TurnoYaCerradoError) {
+                return Result.fail(err);
+            }
+            throw err;
+        }
 
         await this.auditor.registrar({
             actor: request.actor,

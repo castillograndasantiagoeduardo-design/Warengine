@@ -162,7 +162,8 @@ export class CrearFacturaUseCase {
             if (
                 error instanceof StockInsuficienteError ||
                 error instanceof CreditoNoHabilitadoError ||
-                error instanceof PagoInvalidoError
+                error instanceof PagoInvalidoError ||
+                error instanceof FacturacionSinTurnoAbiertoError
             ) {
                 return Result.fail(error);
             }

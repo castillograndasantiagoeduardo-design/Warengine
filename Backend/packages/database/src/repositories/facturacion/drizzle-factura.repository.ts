@@ -20,6 +20,7 @@ import {
     FacturaItem,
     FacturaPago,
     FacturasPaginadasResultado,
+    FacturacionSinTurnoAbiertoError,
     FiltrosFacturas,
     IFacturaRepository,
     PagoInvalidoError,
@@ -50,6 +51,29 @@ export class DrizzleFacturaRepository implements IFacturaRepository {
     public async crear(datos: CrearFacturaDatos): Promise<Factura> {
         try {
             return await this.db.transaction(async (tx) => {
+                // Control de concurrencia: si la venta está asociada a un turno, bloquear la fila del turno y verificar que siga abierto
+                if (datos.factura.turnoCajaId) {
+                    const [turnoRow] = await tx
+                        .select({
+                            id: turnos_caja.id_turno_caja,
+                            fechaCierre: turnos_caja.fecha_cierre,
+                        })
+                        .from(turnos_caja)
+                        .where(
+                            and(
+                                eq(turnos_caja.id_turno_caja, datos.factura.turnoCajaId),
+                                isNull(turnos_caja.deleted_at),
+                            ),
+                        )
+                        .for('update');
+
+                    if (!turnoRow || turnoRow.fechaCierre !== null) {
+                        throw new FacturacionSinTurnoAbiertoError(
+                            'El turno de caja no existe o fue cerrado por supervisión antes de emitir la factura.',
+                        );
+                    }
+                }
+
                 const [maxRow] = await tx
                     .select({ maxConsecutivo: sql<number>`COALESCE(MAX(${facturas.consecutivo}), 0)` })
                     .from(facturas)

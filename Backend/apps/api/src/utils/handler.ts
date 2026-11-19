@@ -6,6 +6,7 @@ export function safeHandler(fn: (c: Context) => Promise<Response>) {
     try {
       return await fn(c);
     } catch (_e) {
+      console.error('[SAFE_HANDLER_ERROR]', _e);
       return c.json({ error: 'INTERNAL_ERROR', message: 'Error procesando la solicitud' }, 500);
     }
   };

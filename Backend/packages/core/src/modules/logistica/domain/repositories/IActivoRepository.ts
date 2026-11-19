@@ -1,4 +1,4 @@
-﻿import type { ResultadoPaginado } from '@warengine/shared-kernel';
+import type { ResultadoPaginado } from '@warengine/shared-kernel';
 import { Activo, EstadoActivo } from '../entities/Activo.ts';
 
 export interface DatosCrearActivo {
@@ -9,6 +9,23 @@ export interface DatosCrearActivo {
   valorAdquisicion: number | null;
   fechaAdquisicion: string | null;
   condicion: string | null;
+}
+
+export interface DatosActualizarActivo {
+  nombre?: string;
+  categoriaActivoId?: number | null;
+  valorAdquisicion?: number | null;
+  fechaAdquisicion?: string | null;
+  condicion?: string | null;
+}
+
+export interface ResumenActivos {
+  total: number;
+  disponibles: number;
+  asignados: number;
+  enMantenimiento: number;
+  deBaja: number;
+  valorTotal: number;
 }
 
 export interface FiltrosListarActivos {
@@ -29,6 +46,8 @@ export interface IActivoRepository {
   findByCodigo(codigoActivo: string): Promise<Activo | null>;
   /** El estado inicial 'disponible' lo fija la BD (DEFAULT). */
   crear(datos: DatosCrearActivo): Promise<Activo>;
+  actualizar(id: string, datos: DatosActualizarActivo): Promise<Activo>;
   /** Unica transicion de estado que hace el backend a mano; las demas las hacen los triggers. */
   marcarBaja(id: string): Promise<Activo>;
+  obtenerResumen?(sucursalIds?: number[]): Promise<ResumenActivos>;
 }

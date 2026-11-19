@@ -26,3 +26,10 @@ export type CrearCategoriaActivoInput = z.infer<typeof crearCategoriaActivoSchem
 export type EditarCategoriaActivoInput = z.infer<typeof editarCategoriaActivoSchema>;
 export type CambiarEstadoCategoriaActivoInput = z.infer<typeof cambiarEstadoCategoriaActivoSchema>;
 export type FiltrosCategoriasActivosInput = z.infer<typeof filtrosCategoriasActivosSchema>;
+
+export interface CategoriaActivoDto {
+  id: number;
+  nombre: string;
+  isActive: boolean;
+  cantidadActivos?: number;
+}

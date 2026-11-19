@@ -230,6 +230,7 @@ export * from './src/modules/logistica/application/use-cases/ListarCategoriasAct
 export * from './src/modules/logistica/application/use-cases/EditarCategoriaActivoUseCase.ts';
 export * from './src/modules/logistica/application/use-cases/CambiarEstadoCategoriaActivoUseCase.ts';
 export * from './src/modules/logistica/application/use-cases/CrearActivoUseCase.ts';
+export * from './src/modules/logistica/application/use-cases/EditarActivoUseCase.ts';
 export * from './src/modules/logistica/application/use-cases/ListarActivosUseCase.ts';
 export * from './src/modules/logistica/application/use-cases/ConsultarActivoUseCase.ts';
 export * from './src/modules/logistica/application/use-cases/DarBajaActivoUseCase.ts';
@@ -239,4 +240,5 @@ export * from './src/modules/logistica/application/use-cases/ConsultarHistorialA
 export * from './src/modules/logistica/application/use-cases/DevolverActivoUseCase.ts';
 export * from './src/modules/logistica/application/use-cases/RegistrarMantenimientoUseCase.ts';
 export * from './src/modules/logistica/application/use-cases/FinalizarMantenimientoUseCase.ts';
+export * from './src/modules/logistica/application/use-cases/ListarMantenimientosUseCase.ts';
 export * from './src/modules/logistica/application/use-cases/ConsultarHistorialMantenimientosUseCase.ts';

@@ -1,4 +1,4 @@
-﻿import { z } from 'zod';
+import { z } from 'zod';
 import { paginacionSchema } from '../common/index.ts';
 
 export const ESTADOS_ACTIVO_VALORES = ['disponible', 'asignado', 'mantenimiento', 'baja'] as const;
@@ -20,11 +20,11 @@ export const crearActivoSchema = z.object({
     .trim()
     .min(2, { message: 'El nombre debe tener al menos 2 caracteres.' })
     .max(200, { message: 'El nombre no puede exceder 200 caracteres.' }),
-  categoriaActivoId: z.number().int().positive().optional(),
+  categoriaActivoId: z.number().int().positive().nullable().optional(),
   sucursalId: z.number({ message: 'La sucursal es obligatoria.' }).int().positive(),
-  valorAdquisicion: z.number().nonnegative().optional(),
-  fechaAdquisicion: fechaIsoSchema.optional(),
-  condicion: z.string().trim().max(50).optional(),
+  valorAdquisicion: z.number().nonnegative().nullable().optional(),
+  fechaAdquisicion: fechaIsoSchema.nullable().optional(),
+  condicion: z.string().trim().max(50).nullable().optional(),
 });
 
 export const filtrosActivosSchema = z
@@ -34,8 +34,22 @@ export const filtrosActivosSchema = z
     areaId: z.coerce.number().int().positive().optional(),
     estado: z.enum(ESTADOS_ACTIVO_VALORES).optional(),
     busqueda: z.string().trim().optional(),
+    limite: z.coerce.number().int().positive().max(100).optional(),
   })
   .merge(paginacionSchema);
+
+export const editarActivoSchema = z.object({
+  nombre: z
+    .string({ message: 'El nombre es obligatorio.' })
+    .trim()
+    .min(2, { message: 'El nombre debe tener al menos 2 caracteres.' })
+    .max(200, { message: 'El nombre no puede exceder 200 caracteres.' })
+    .optional(),
+  categoriaActivoId: z.number().int().positive().nullable().optional(),
+  valorAdquisicion: z.number().nonnegative().nullable().optional(),
+  fechaAdquisicion: fechaIsoSchema.nullable().optional(),
+  condicion: z.string().trim().max(50).nullable().optional(),
+});
 
 export const darBajaActivoSchema = z.object({
   motivo: z
@@ -45,9 +59,20 @@ export const darBajaActivoSchema = z.object({
     .max(300, { message: 'El motivo no puede exceder 300 caracteres.' }),
 });
 
+export const resumenActivosSchema = z.object({
+  total: z.number().int().nonnegative(),
+  disponibles: z.number().int().nonnegative(),
+  asignados: z.number().int().nonnegative(),
+  enMantenimiento: z.number().int().nonnegative(),
+  deBaja: z.number().int().nonnegative(),
+  valorTotal: z.number().nonnegative(),
+});
+
 export type CrearActivoInput = z.infer<typeof crearActivoSchema>;
+export type EditarActivoInput = z.infer<typeof editarActivoSchema>;
 export type FiltrosActivosInput = z.infer<typeof filtrosActivosSchema>;
 export type DarBajaActivoInput = z.infer<typeof darBajaActivoSchema>;
+export type ResumenActivosDto = z.infer<typeof resumenActivosSchema>;
 
 /** DTO serializable para la API REST y la Tool MCP `consulta-activo` (RF-LOG-C4). */
 export interface ActivoResponse {
@@ -71,7 +96,27 @@ export interface ResponsableActivoResponse {
   desde: string;
 }
 
+export interface MantenimientoHistorialItemDto {
+  id: string;
+  tipo: string;
+  fecha: string;
+  fechaFin: string | null;
+  costo: number | null;
+  descripcion: string | null;
+  proveedorNombre: string | null;
+}
+
 export interface ActivoConsultaResponse extends ActivoResponse {
   responsableActual: ResponsableActivoResponse | null;
   mantenimientoEnCurso: boolean;
+  historialMantenimientos?: MantenimientoHistorialItemDto[];
+}
+
+export interface ActivosPaginadosResponse {
+  items: ActivoResponse[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+  resumen?: ResumenActivosDto;
 }

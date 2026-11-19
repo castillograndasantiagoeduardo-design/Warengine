@@ -30,8 +30,8 @@ export class CreditoNoHabilitadoError extends DomainError {
 
 export class FacturacionSinTurnoAbiertoError extends DomainError {
   public readonly code = 'FACTURACION_SIN_TURNO_ABIERTO';
-  constructor() {
-    super('El cajero debe tener un turno de caja abierto para facturar en mostrador.');
+  constructor(mensaje: string = 'El cajero debe tener un turno de caja abierto para facturar en mostrador.') {
+    super(mensaje);
   }
 }
 

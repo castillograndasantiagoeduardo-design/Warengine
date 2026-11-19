@@ -1,4 +1,4 @@
-﻿import { and, count, eq, like, sql, type SQL } from 'drizzle-orm';
+import { and, count, eq, like, sql, type SQL } from 'drizzle-orm';
 import { Database } from '../../client.ts';
 import { categoriasActivos } from '../../schema/logistica.schema.ts';
 import {
@@ -33,7 +33,12 @@ export class DrizzleCategoriaActivoRepository implements ICategoriaActivoReposit
     const offset = (page - 1) * limit;
 
     const rows = await this.db
-      .select()
+      .select({
+        id_categoria_activo: categoriasActivos.id_categoria_activo,
+        nombre: categoriasActivos.nombre,
+        is_active: categoriasActivos.is_active,
+        cantidad_activos: sql<number>`(SELECT COUNT(*) FROM activos WHERE activos.categoria_activo_id = ${categoriasActivos.id_categoria_activo} AND activos.is_active = 1)`,
+      })
       .from(categoriasActivos)
       .where(whereClause)
       .orderBy(categoriasActivos.nombre)

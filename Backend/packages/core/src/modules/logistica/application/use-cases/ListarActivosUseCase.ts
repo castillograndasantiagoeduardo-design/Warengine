@@ -1,6 +1,6 @@
-﻿import { Result, DomainError, ResultadoPaginado } from '@warengine/shared-kernel';
+import { Result, DomainError, ResultadoPaginado } from '@warengine/shared-kernel';
 import { Activo, EstadoActivo } from '../../domain/entities/Activo.ts';
-import { IActivoRepository } from '../../domain/repositories/IActivoRepository.ts';
+import { IActivoRepository, ResumenActivos } from '../../domain/repositories/IActivoRepository.ts';
 import { ResolverAlcanceSucursalUseCase } from '../../../autenticacion/application/use-cases/ResolverAlcanceSucursalUseCase.ts';
 import { SucursalFueraDeAlcanceError } from '../../../autenticacion/domain/errors/AlcanceErrors.ts';
 
@@ -15,7 +15,8 @@ export interface ListarActivosRequest {
   limit: number;
 }
 
-export type ListarActivosResponse = Result<ResultadoPaginado<Activo>, DomainError>;
+export type ListarActivosResultado = ResultadoPaginado<Activo> & { resumen?: ResumenActivos };
+export type ListarActivosResponse = Result<ListarActivosResultado, DomainError>;
 
 export class ListarActivosUseCase {
   constructor(
@@ -55,6 +56,18 @@ export class ListarActivosUseCase {
       limit: request.limit,
     });
 
-    return Result.ok(resultado);
+    let resumen: ResumenActivos | undefined;
+    if (this.activoRepository.obtenerResumen) {
+      try {
+        resumen = await this.activoRepository.obtenerResumen(sucursalIds);
+      } catch {
+        // Fallback resiliente
+      }
+    }
+
+    return Result.ok({
+      ...resultado,
+      resumen,
+    });
   }
 }

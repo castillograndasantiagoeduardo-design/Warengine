@@ -201,4 +201,26 @@ export const STAFF_SECTION_TABS: readonly BranchTabItem[] = [
   },
 ] as const;
 
+/**
+ * Pestañas de navegación del submódulo de Activos (/admin-sucursal/activos/**).
+ */
+export const ASSETS_SECTION_TABS: readonly BranchTabItem[] = [
+  {
+    id: 'activos',
+    label: 'Activos',
+    href: '/admin-sucursal/activos',
+    exact: true,
+  },
+  {
+    id: 'mantenimientos',
+    label: 'Mantenimientos',
+    href: '/admin-sucursal/activos/mantenimientos',
+  },
+  {
+    id: 'categorias',
+    label: 'Categorías',
+    href: '/admin-sucursal/activos/categorias',
+  },
+] as const;
+
 export const DEFAULT_DASHBOARD_PERIODO: DashboardPeriodo = 'hoy';

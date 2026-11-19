@@ -1,5 +1,6 @@
 import {
   crearActivoSchema,
+  editarActivoSchema,
   filtrosActivosSchema,
   darBajaActivoSchema,
 } from '@warengine/contracts';
@@ -52,6 +53,25 @@ export function consultarActivoController(container: AppContainer) {
     const result = await container.logistica.consultarActivo.execute({
       activoId,
       usuarioId: identidad.usuarioId,
+    });
+    return presentResult(c, result);
+  });
+}
+
+export function editarActivoController(container: AppContainer) {
+  return safeHandler(async (c) => {
+    const activoId = c.req.param('id');
+    if (!esUuid(activoId)) {
+      return c.json({ error: 'VALIDATION_ERROR', message: 'Id de activo invalido.' }, 400);
+    }
+    const parsed = editarActivoSchema.safeParse(await leerJson(c));
+    if (!parsed.success) {
+      return c.json({ error: 'VALIDATION_ERROR', issues: parsed.error.errors }, 400);
+    }
+    const result = await container.logistica.editarActivo.execute({
+      activoId,
+      ...parsed.data,
+      actor: obtenerActor(c),
     });
     return presentResult(c, result);
   });

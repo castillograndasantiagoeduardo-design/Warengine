@@ -47,3 +47,4 @@ export * from './SelectorPaleta';
 export * from './shared';
 export * from './clients';
 export * from './staff';
+export * from './assets';

@@ -81,7 +81,7 @@ export function createAdministracionRoutes(container: AppContainer): Hono {
   api.put('/sucursales/:id/estado', authMiddleware(container, PERMISO_SUCURSALES), cambiarEstadoSucursalController(container));
 
   // Áreas por Sucursal (RF-ADM-C4)
-  api.get('/sucursales/:id/areas', authMiddleware(container, PERMISO_SUCURSALES), listarAreasPorSucursalController(container));
+  api.get('/sucursales/:id/areas', authMiddleware(container, [PERMISO_SUCURSALES, PERMISO_PERSONAL, 'logistica:asignar-activos']), listarAreasPorSucursalController(container));
   api.post('/sucursales/:id/areas', authMiddleware(container, PERMISO_SUCURSALES), crearAreaController(container));
   api.put('/areas/:id', authMiddleware(container, PERMISO_SUCURSALES), editarAreaController(container));
   api.delete('/areas/:id', authMiddleware(container, PERMISO_SUCURSALES), eliminarAreaController(container));
